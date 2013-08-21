@@ -114,7 +114,7 @@ namespace {
       }
 
       // Remove filters ignored by their type
-      std::vector<FilterIndex>::iterator selectedFiltersEnd = std::remove_if(selectedFilters.begin(), selectedFilters.end(), [&](const FilterIndex& labelIndex) {
+      std::vector<FilterIndex>::iterator selectedFiltersEnd = std::remove_if(selectedFilters.begin(), selectedFilters.end(), [&](const FilterIndex& labelIndex) -> bool {
           for(const boost::regex& re: ignoreFilterTypes) {
             if(boost::regex_search(HLTCP.moduleType(std::get<0>(labelIndex)), re))
               return true;
@@ -122,7 +122,7 @@ namespace {
           return false;
         });
       // Remove filters ignored by their label
-      selectedFiltersEnd = std::remove_if(selectedFilters.begin(), selectedFiltersEnd, [&](const FilterIndex& labelIndex) {
+      selectedFiltersEnd = std::remove_if(selectedFilters.begin(), selectedFiltersEnd, [&](const FilterIndex& labelIndex) -> bool {
           for(const boost::regex& re: ignoreFilterNames) {
             if(boost::regex_search(std::get<0>(labelIndex), re))
               return true;

@@ -1,3 +1,4 @@
+// -*- c++ -*-
 /* HLTTau Path Analyzer
  Michail Bachtis
  University of Wisconsin - Madison
@@ -14,9 +15,11 @@
 
 class HLTTauDQML1Plotter : public HLTTauDQMPlotter {
 public:
-    HLTTauDQML1Plotter( const edm::ParameterSet&, int, int, int, double, bool, double, std::string );
+    HLTTauDQML1Plotter(const edm::ParameterSet&, int, int, int, double, bool, double, std::string);
     ~HLTTauDQML1Plotter();
     const std::string name() { return name_; }
+
+    void beginRun();
     void analyze( const edm::Event&, const edm::EventSetup&, const std::map<int,LVColl>& );
     
 private:

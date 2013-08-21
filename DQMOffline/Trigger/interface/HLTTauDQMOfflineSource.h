@@ -17,6 +17,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "FWCore/Utilities/interface/Digest.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+
 
 //Plotters
 #include "DQMOffline/Trigger/interface/HLTTauDQML1Plotter.h"
@@ -28,6 +30,8 @@
 
 //Automatic Configuration
 #include "DQMOffline/Trigger/interface/HLTTauDQMAutomation.h"
+
+#include<memory>
 
 //
 // class declaration
@@ -77,7 +81,11 @@ private:
 
     //Reference
     bool doRefAnalysis_;
-    std::vector<edm::ParameterSet> refObjects_;
+    struct RefObject {
+      int objID;
+      edm::InputTag src;
+    };
+    std::vector<RefObject> refObjects_;
 
     int NPtBins_;
     int NEtaBins_;
@@ -100,7 +108,7 @@ private:
     void searchEventContent(std::vector<edm::InputTag>& eventContent, const edm::ParameterSet& pset);
 
     //Define Dummy vectors of Plotters
-    std::vector<HLTTauDQML1Plotter*> l1Plotters;
+    std::vector<std::unique_ptr<HLTTauDQML1Plotter>> l1Plotters_;
     std::vector<HLTTauDQMCaloPlotter*> caloPlotters;
     std::vector<HLTTauDQMTrkPlotter*> trackPlotters; 
     std::vector<HLTTauDQMPathPlotter*> pathPlotters;

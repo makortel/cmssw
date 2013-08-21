@@ -8,7 +8,7 @@ namespace {
   };
 }
 
-HLTTauDQML1Plotter::HLTTauDQML1Plotter( const edm::ParameterSet& ps, int etbins, int etabins, int phibins, double maxpt, bool ref, double dr, std::string dqmBaseFolder ) {
+HLTTauDQML1Plotter::HLTTauDQML1Plotter(const edm::ParameterSet& ps, int etbins, int etabins, int phibins, double maxpt, bool ref, double dr, std::string dqmBaseFolder) {
     //Initialize Plotter
     name_ = "HLTTauDQML1Plotter";
     
@@ -32,7 +32,9 @@ HLTTauDQML1Plotter::HLTTauDQML1Plotter( const edm::ParameterSet& ps, int etbins,
       validity_ = false;
       return;
     }
-    
+}
+
+void HLTTauDQML1Plotter::beginRun() {
     if (store_) {
         //Create the histograms
         store_->setCurrentFolder(triggerTag());
@@ -102,6 +104,7 @@ HLTTauDQML1Plotter::HLTTauDQML1Plotter( const edm::ParameterSet& ps, int etbins,
     }
 }
 
+
 HLTTauDQML1Plotter::~HLTTauDQML1Plotter() {
 }
 
@@ -134,8 +137,8 @@ void HLTTauDQML1Plotter::analyze( const edm::Event& iEvent, const edm::EventSetu
     //Analyze L1 Objects (Tau+Jets)
     edm::Handle<l1extra::L1JetParticleCollection> taus;
     edm::Handle<l1extra::L1JetParticleCollection> jets;
-    iEvent.getByLabel(l1ExtraTaus_,taus);
-    iEvent.getByLabel(l1ExtraJets_,jets);
+    iEvent.getByLabel(l1ExtraTaus_, taus);
+    iEvent.getByLabel(l1ExtraJets_, jets);
     
     LVColl pathTaus;
     
