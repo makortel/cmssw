@@ -112,17 +112,10 @@ HLTTauDQML1Plotter::~HLTTauDQML1Plotter() {
 // member functions
 //
 
-void HLTTauDQML1Plotter::analyze( const edm::Event& iEvent, const edm::EventSetup& iSetup, const std::map<int,LVColl>& refC ) {
-  LVColl refTaus;
-    
+void HLTTauDQML1Plotter::analyze( const edm::Event& iEvent, const edm::EventSetup& iSetup, const HLTTauDQMOfflineObjects& refC ) {
     if ( doRefAnalysis_ ) {
-        std::map<int,LVColl>::const_iterator iref;
-
         //Tau reference
-        iref = refC.find(15);
-        if ( iref != refC.end() ) refTaus = iref->second;
-        
-        for ( LVColl::const_iterator iter = refTaus.begin(); iter != refTaus.end(); ++iter ) {
+        for ( LVColl::const_iterator iter = refC.taus.begin(); iter != refC.taus.end(); ++iter ) {
             l1tauEtEffDenom_->Fill(iter->pt());
             l1jetEtEffDenom_->Fill(iter->pt());
             
@@ -180,7 +173,7 @@ void HLTTauDQML1Plotter::analyze( const edm::Event& iEvent, const edm::EventSetu
     
     //Now do the efficiency matching
     if ( doRefAnalysis_ ) {
-        for ( LVColl::const_iterator i = refTaus.begin(); i != refTaus.end(); ++i ) {
+        for ( LVColl::const_iterator i = refC.taus.begin(); i != refC.taus.end(); ++i ) {
             std::pair<bool,LV> m = match(*i,l1taus,matchDeltaR_);
             if ( m.first ) {
                 l1tauEt_->Fill(m.second.pt());
@@ -197,7 +190,7 @@ void HLTTauDQML1Plotter::analyze( const edm::Event& iEvent, const edm::EventSetu
             }
         }
         
-        for ( LVColl::const_iterator i = refTaus.begin(); i != refTaus.end(); ++i ) {
+        for ( LVColl::const_iterator i = refC.taus.begin(); i != refC.taus.end(); ++i ) {
             std::pair<bool,LV> m = match(*i,l1jets,matchDeltaR_);
             if ( m.first ) {
                 l1jetEt_->Fill(m.second.pt());
