@@ -82,8 +82,8 @@ public:
 
   typedef std::tuple<std::string, size_t> FilterIndex;
 private:
-  const std::string hltProcess_;
-  const bool doRefAnalysis_;
+  std::string hltProcess_;
+  bool doRefAnalysis_;
 
   std::vector<boost::regex> pathRegexs_;
   std::vector<boost::regex> ignoreFilterTypes_;

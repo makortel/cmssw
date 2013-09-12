@@ -26,8 +26,8 @@ public:
 
   void analyze(const edm::TriggerResults& triggerResults, const trigger::TriggerEvent& triggerEvent, const HLTTauDQMOfflineObjects& refCollection);
 private:
-  const double hltMatchDr_;
-  const bool doRefAnalysis_;
+  double hltMatchDr_;
+  bool doRefAnalysis_;
 
   std::vector<const HLTTauDQMPath *> pathObjects_;
 

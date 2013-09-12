@@ -24,14 +24,14 @@ private:
     edm::InputTag l1ExtraTaus_;
     edm::InputTag l1ExtraJets_;
 
-    const bool doRefAnalysis_;
-    const double matchDeltaR_;
+    bool doRefAnalysis_;
+    double matchDeltaR_;
     double l1JetMinEt_;
 
-    const double maxEt_;
-    const int binsEt_;
-    const int binsEta_;
-    const int binsPhi_;
+    double maxEt_;
+    int binsEt_;
+    int binsEta_;
+    int binsPhi_;
 
     //MonitorElements general
     MonitorElement* l1tauEt_;

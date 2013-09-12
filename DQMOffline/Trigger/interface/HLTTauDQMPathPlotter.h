@@ -35,12 +35,12 @@ public:
 
   typedef std::tuple<std::string, size_t> FilterIndex;
 private:
-  const int ptbins_;
-  const int etabins_;
-  const int phibins_;
-  const double l1MatchDr_;
-  const double hltMatchDr_;
-  const bool doRefAnalysis_;
+  int ptbins_;
+  int etabins_;
+  int phibins_;
+  double l1MatchDr_;
+  double hltMatchDr_;
+  bool doRefAnalysis_;
 
   HLTTauDQMPath hltPath_;
 
