@@ -28,11 +28,11 @@ private:
     double matchDeltaR_;
     double l1JetMinEt_;
 
-    const double maxPt_;
-    const double maxHighPt_;
-    const int binsEt_;
-    const int binsEta_;
-    const int binsPhi_;
+    double maxPt_;
+    double maxHighPt_;
+    int binsEt_;
+    int binsEta_;
+    int binsPhi_;
 
     //MonitorElements general
     MonitorElement* l1tauEt_;

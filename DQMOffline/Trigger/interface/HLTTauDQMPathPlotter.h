@@ -39,11 +39,11 @@ private:
   int ptbins_;
   int etabins_;
   int phibins_;
-  const double ptmax_;
-  const double highptmax_;
-  const double l1MatchDr_;
-  const double hltMatchDr_;
-  const bool doRefAnalysis_;
+  double ptmax_;
+  double highptmax_;
+  double l1MatchDr_;
+  double hltMatchDr_;
+  bool doRefAnalysis_;
 
   HLTTauDQMPath hltPath_;
 
