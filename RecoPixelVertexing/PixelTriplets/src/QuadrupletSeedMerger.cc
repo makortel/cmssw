@@ -162,8 +162,10 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
 
   // k-d tree, indices are (th)eta, phi
   // build the tree
-  std::vector<KDTreeNodeInfo<unsigned int> > nodes; // re-use for searching too
+  std::vector<KDTreeNodeInfo<unsigned int> > nodes;
+  std::vector<unsigned int> foundNodes;
   nodes.reserve(2*nInputTriplets);
+  foundNodes.reserve(100);
   KDTreeLinkerAlgo<unsigned int> kdtree;
   double minEta=1e10, maxEta=-1e10;
   for(unsigned int it=0; it < nInputTriplets; ++it) {
@@ -207,15 +209,14 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
     double eta = phiEtaCache[t1].second;
 
     KDTreeBox box(eta-0.05, eta+0.05, phi-0.15, phi+0.15);
-    nodes.clear();
-    kdtree.search(box, nodes);
-    if(nodes.empty())
+    foundNodes.clear();
+    kdtree.search(box, foundNodes);
+    if(foundNodes.empty())
       continue;
 
     const SeedingHitSet& tr1 = tripletCache[t1];
 
-    for(size_t i=0; i<nodes.size(); ++i) {
-      unsigned int t2 = nodes[i].data;
+    for(unsigned int t2: foundNodes) {
       if(t1 >= t2)
         continue;
 
