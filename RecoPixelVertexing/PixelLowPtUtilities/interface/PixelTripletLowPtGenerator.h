@@ -11,12 +11,14 @@
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayer.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/EDGetToken.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayers.h"
 
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/TripletFilter.h"
 
 class TrackerGeometry;
 class TripletFilter;
+class SiPixelClusterShapeCache;
 
 #include <vector>
 
@@ -25,9 +27,7 @@ class   PixelTripletLowPtGenerator :
 
 
  public:
-   PixelTripletLowPtGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC)
-     : theTracker(0), theFilter(0), ps(cfg), thePairGenerator(0), theLayerCache(0)
-   {  }
+   PixelTripletLowPtGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
 
    virtual ~PixelTripletLowPtGenerator() { delete thePairGenerator; delete theFilter; }
 
@@ -52,6 +52,8 @@ class   PixelTripletLowPtGenerator :
   HitPairGenerator * thePairGenerator;
   std::vector<ctfseeding::SeedingLayer> theLayers;
   LayerCacheType * theLayerCache;
+
+  edm::EDGetTokenT<SiPixelClusterShapeCache> theClusterShapeCacheToken;
 
   double nSigMultipleScattering;
   double rzTolerance;
