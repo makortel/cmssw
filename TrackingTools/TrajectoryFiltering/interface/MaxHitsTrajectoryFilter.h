@@ -11,6 +11,9 @@ public:
   explicit MaxHitsTrajectoryFilter(const edm::ParameterSet & pset):
     theMaxHits( pset.getParameter<int>("maxNumberOfHits")) {}
 
+  MaxHitsTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new MaxHitsTrajectoryFilter(*this);
+  }
   
   virtual bool qualityFilter( const Trajectory& traj) const { return TrajectoryFilter::qualityFilterIfNotContributing; }
   virtual bool qualityFilter( const TempTrajectory& traj) const { return TrajectoryFilter::qualityFilterIfNotContributing; }

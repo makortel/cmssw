@@ -19,6 +19,10 @@ public:
   explicit ChargeSignificanceTrajectoryFilter( const edm::ParameterSet & pset):
     theChargeSignificance(pset.getParameter<double>("chargeSignificance")) {}
 
+   ChargeSignificanceTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new ChargeSignificanceTrajectoryFilter(*this);
+  }
+
   virtual bool qualityFilter( const Trajectory& traj) const { return traj.isValid();}
   virtual bool qualityFilter( const TempTrajectory& traj)const { return traj.isValid();}
  

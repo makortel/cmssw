@@ -28,6 +28,15 @@ public:
   
   ~CompositeTrajectoryFilter() {}
 
+  CompositeTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    std::vector<const TrajectoryFilter *> filt;
+    filt.reserve(filters.size());
+    for(const TrajectoryFilter *f: filters) {
+      filt.push_back(f->clone(iEvent, iSetup));
+    }
+    return new CompositeTrajectoryFilter(filt);
+  }
+
   virtual bool qualityFilter( const Trajectory& traj) const { return QF<Trajectory>(traj);}
   virtual bool qualityFilter( const TempTrajectory& traj) const { return QF<TempTrajectory>(traj);}
  

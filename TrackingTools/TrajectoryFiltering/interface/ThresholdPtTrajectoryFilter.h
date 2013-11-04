@@ -26,6 +26,10 @@ public:
     theMinHits(pset.getParameter<int>("minHitsThresholdPt"))
       {}
 
+  ThresholdPtTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new ThresholdPtTrajectoryFilter(*this);
+  }
+
   virtual bool qualityFilter( const Trajectory& traj) const { return !test(traj.lastMeasurement(),traj.foundHits());}
   virtual bool qualityFilter( const TempTrajectory& traj) const { return !test(traj.lastMeasurement(),traj.foundHits());}
    

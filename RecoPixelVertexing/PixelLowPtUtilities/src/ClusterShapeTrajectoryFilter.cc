@@ -36,6 +36,10 @@ ClusterShapeTrajectoryFilter::~ClusterShapeTrajectoryFilter()
 {
 }
 
+ClusterShapeTrajectoryFilter *ClusterShapeTrajectoryFilter::clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+  return new ClusterShapeTrajectoryFilter(*this);
+}
+
 /*****************************************************************************/
 bool ClusterShapeTrajectoryFilter::toBeContinued
   (Trajectory& trajectory) const 

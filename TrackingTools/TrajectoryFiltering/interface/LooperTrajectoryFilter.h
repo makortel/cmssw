@@ -23,6 +23,10 @@ public:
 
   }
 
+  LooperTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new LooperTrajectoryFilter(*this);
+  }
+
   virtual bool qualityFilter( const Trajectory& traj) const { return QF<Trajectory>(traj); }
   virtual bool qualityFilter( const TempTrajectory& traj) const { return QF<TempTrajectory>(traj);  }
 

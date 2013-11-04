@@ -17,6 +17,10 @@ public:
       pset.getParameter<double>("constantValueForLostHitsFractionFilter") : 1; 
   }
 
+  LostHitsFractionTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new LostHitsFractionTrajectoryFilter(*this);
+  }
+
   virtual bool qualityFilter( const Trajectory& traj) const { return TrajectoryFilter::qualityFilterIfNotContributing; }
   virtual bool qualityFilter( const TempTrajectory& traj) const { return TrajectoryFilter::qualityFilterIfNotContributing; }
 

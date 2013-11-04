@@ -17,6 +17,10 @@ public:
 
   explicit MinHitsTrajectoryFilter( const edm::ParameterSet & pset): theMinHits( pset.getParameter<int>("minimumNumberOfHits")) {}
     
+  MinHitsTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new MinHitsTrajectoryFilter(*this);
+  }
+
   virtual bool qualityFilter( const Trajectory& traj) const { return QF<Trajectory>(traj);}
   virtual bool qualityFilter( const TempTrajectory& traj) const { return QF<TempTrajectory>(traj);}
 

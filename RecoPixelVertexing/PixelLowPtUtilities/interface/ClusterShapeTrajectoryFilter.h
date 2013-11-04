@@ -22,6 +22,8 @@ class ClusterShapeTrajectoryFilter : public TrajectoryFilter {
 
   virtual ~ClusterShapeTrajectoryFilter();
 
+  ClusterShapeTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+
   virtual bool qualityFilter(const TempTrajectory&) const;
   virtual bool qualityFilter(const Trajectory&) const;
  

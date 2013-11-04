@@ -25,6 +25,9 @@ public:
     theNSigma(pset.getParameter<double>("nSigmaMinPt")),
     theMinHits(pset.getParameter<int>("minHitsMinPt")){}
     
+  MinPtTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new MinPtTrajectoryFilter(*this);
+  }
 
   virtual bool qualityFilter( const Trajectory& traj)const { return test(traj.lastMeasurement(),traj.foundHits()); }
   virtual bool qualityFilter( const TempTrajectory& traj) const { return test(traj.lastMeasurement(),traj.foundHits()); }

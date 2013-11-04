@@ -11,6 +11,9 @@ public:
   explicit MaxConsecLostHitsTrajectoryFilter( const edm::ParameterSet & pset):
     theMaxConsecLostHits( pset.getParameter<int>("maxConsecLostHits")) {}
 
+  MaxConsecLostHitsTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new MaxConsecLostHitsTrajectoryFilter(*this);
+  }
     
   virtual bool qualityFilter( const Trajectory& traj) const { return TrajectoryFilter::qualityFilterIfNotContributing; }
   virtual bool qualityFilter( const TempTrajectory& traj) const { return TrajectoryFilter::qualityFilterIfNotContributing; }

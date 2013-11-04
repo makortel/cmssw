@@ -15,6 +15,10 @@ public:
   /// constructor from TrackingRegion
   explicit RegionalTrajectoryFilter (const edm::ParameterSet &  pset);
   explicit RegionalTrajectoryFilter( const TrackingRegion& region);
+
+  RegionalTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new RegionalTrajectoryFilter(*this);
+  }
     
   virtual bool qualityFilter(const TempTrajectory& traj) const;
   virtual bool qualityFilter(const Trajectory& traj) const;

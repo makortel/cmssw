@@ -27,7 +27,35 @@ public:
     theLostHitsFractionTrajectoryFilter = new LostHitsFractionTrajectoryFilter(pset);
     theLooperTrajectoryFilter = new LooperTrajectoryFilter(pset);
   }
+  CkfBaseTrajectoryFilter(ChargeSignificanceTrajectoryFilter *charge,
+                          MaxLostHitsTrajectoryFilter *maxLostHits,
+                          MaxConsecLostHitsTrajectoryFilter *maxConsecLostHits,
+                          MinPtTrajectoryFilter *minPt,
+                          MaxHitsTrajectoryFilter *maxHits,
+                          MinHitsTrajectoryFilter *minHits,
+                          LostHitsFractionTrajectoryFilter *lostHitsFraction,
+                          LooperTrajectoryFilter *looper):
+    theChargeSignificanceTrajectoryFilter(charge),
+    theMaxConsecLostHitsTrajectoryFilter(maxConsecLostHits),
+    theMaxHitsTrajectoryFilter(maxHits),
+    theMaxLostHitsTrajectoryFilter(maxLostHits),
+    theLostHitsFractionTrajectoryFilter(lostHitsFraction),
+    theMinHitsTrajectoryFilter(minHits),
+    theMinPtTrajectoryFilter(minPt),
+    theLooperTrajectoryFilter(looper)
+  {}
   
+  CkfBaseTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+    return new CkfBaseTrajectoryFilter(theChargeSignificanceTrajectoryFilter->clone(iEvent, iSetup),
+                                       theMaxLostHitsTrajectoryFilter->clone(iEvent, iSetup),
+                                       theMaxConsecLostHitsTrajectoryFilter->clone(iEvent, iSetup),
+                                       theMinPtTrajectoryFilter->clone(iEvent, iSetup),
+                                       theMaxHitsTrajectoryFilter->clone(iEvent, iSetup),
+                                       theMinHitsTrajectoryFilter->clone(iEvent, iSetup),
+                                       theLostHitsFractionTrajectoryFilter->clone(iEvent, iSetup),
+                                       theLooperTrajectoryFilter->clone(iEvent, iSetup));
+  }
+
   virtual bool qualityFilter( const Trajectory& traj) const {return QF<Trajectory>(traj);}
   virtual bool qualityFilter( const TempTrajectory& traj) const {return QF<TempTrajectory>(traj);}
  
