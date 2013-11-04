@@ -79,7 +79,7 @@ public:
   BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &other) = default ;
   virtual ~BaseCkfTrajectoryBuilder();
 
-  static TrajectoryFilter *createTrajectoryFilter(const edm::ParameterSet& pset);
+  static TrajectoryFilter *createTrajectoryFilter(const edm::ParameterSet& pset, edm::ConsumesCollector& iC);
 
   // new interface returning the start Trajectory...
   virtual TempTrajectory buildTrajectories (const TrajectorySeed& seed,

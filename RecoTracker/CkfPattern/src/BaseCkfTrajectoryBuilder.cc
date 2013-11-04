@@ -71,8 +71,8 @@ BaseCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 BaseCkfTrajectoryBuilder::~BaseCkfTrajectoryBuilder(){
 }
 
-TrajectoryFilter *BaseCkfTrajectoryBuilder::createTrajectoryFilter(const edm::ParameterSet& pset) {
-  return TrajectoryFilterFactory::get()->create(pset.getParameter<std::string>("ComponentType"), pset);
+TrajectoryFilter *BaseCkfTrajectoryBuilder::createTrajectoryFilter(const edm::ParameterSet& pset, edm::ConsumesCollector& iC) {
+  return TrajectoryFilterFactory::get()->create(pset.getParameter<std::string>("ComponentType"), pset, iC);
 }
 
 void

@@ -3,7 +3,7 @@
 
 #include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilter.h"
 
-namespace edm { class EventSetup; }
+namespace edm { class ParameterSet; class EventSetup; }
 
 class SiPixelRecHit;
 class SiStripRecHit2D;
@@ -17,10 +17,13 @@ class ClusterShapeTrajectoryFilter : public TrajectoryFilter {
  public:
   //  ClusterShapeTrajectoryFilter(const edm::EventSetup& es);
 
+  ClusterShapeTrajectoryFilter(const edm::ParameterSet& iConfig, edm::ConsumesCollector& iC): theFilter(nullptr) {}
   ClusterShapeTrajectoryFilter
     (const ClusterShapeHitFilter * f):theFilter(f){}
 
   virtual ~ClusterShapeTrajectoryFilter();
+
+  void setEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   virtual bool qualityFilter(const TempTrajectory&) const;
   virtual bool qualityFilter(const Trajectory&) const;
