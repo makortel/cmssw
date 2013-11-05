@@ -17,8 +17,6 @@
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h"
 #include "RecoTracker/Record/interface/CkfComponentsRecord.h"
 
-#include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilter.h"
-
 #include <string>
 #include <memory>
 
@@ -41,8 +39,6 @@ GroupedCkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecor
   std::string propagatorOppositeName = pset_.getParameter<std::string>("propagatorOpposite");   
   std::string estimatorName          = pset_.getParameter<std::string>("estimator"); 
   std::string recHitBuilderName      = pset_.getParameter<std::string>("TTRHBuilder");     
-  std::string filterName = pset_.getParameter<std::string>("trajectoryFilterName");
-  std::string inOutFilterName = pset_.getParameter<std::string>("inOutTrajectoryFilterName");
   bool useSameTrajFilter = pset_.getParameter<bool>("useSameTrajFilter");
 
   edm::ESHandle<TrajectoryStateUpdator> updatorHandle;
@@ -50,20 +46,12 @@ GroupedCkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecor
   edm::ESHandle<Propagator>             propagatorOppositeHandle;
   edm::ESHandle<Chi2MeasurementEstimatorBase> estimatorHandle;
   edm::ESHandle<TransientTrackingRecHitBuilder> recHitBuilderHandle;
-  edm::ESHandle<TrajectoryFilter> filterHandle;
-  edm::ESHandle<TrajectoryFilter> inOutFilterHandle;
 
   iRecord.getRecord<TrackingComponentsRecord>().get(updatorName,updatorHandle);
   iRecord.getRecord<TrackingComponentsRecord>().get(propagatorAlongName,propagatorAlongHandle);
   iRecord.getRecord<TrackingComponentsRecord>().get(propagatorOppositeName,propagatorOppositeHandle);
   iRecord.getRecord<TrackingComponentsRecord>().get(estimatorName,estimatorHandle);  
   iRecord.getRecord<TransientRecHitRecord>().get(recHitBuilderName,recHitBuilderHandle);  
-  iRecord.get(filterName, filterHandle);
-  if (useSameTrajFilter) {
-    inOutFilterHandle = filterHandle;
-  } else {
-    iRecord.get(inOutFilterName, inOutFilterHandle);
-  }
 
   _trajectoryBuilder  = 
     boost::shared_ptr<TrajectoryBuilder>(new GroupedCkfTrajectoryBuilder(pset_,
@@ -72,8 +60,8 @@ GroupedCkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecor
 									 propagatorOppositeHandle.product(),
 									 estimatorHandle.product(),
 									 recHitBuilderHandle.product(),
-									 filterHandle.product(),
-									 inOutFilterHandle.product()) );  
+                                                                         useSameTrajFilter) );
+
   return _trajectoryBuilder;
 }
 

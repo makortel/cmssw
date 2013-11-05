@@ -17,7 +17,6 @@
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h"
 #include "RecoTracker/Record/interface/CkfComponentsRecord.h"
 
-#include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilter.h"
 #include <string>
 #include <memory>
 
@@ -40,7 +39,6 @@ CkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecord)
   std::string propagatorOppositeName = pset_.getParameter<std::string>("propagatorOpposite");   
   std::string estimatorName          = pset_.getParameter<std::string>("estimator"); 
   std::string recHitBuilderName      = pset_.getParameter<std::string>("TTRHBuilder");     
-  std::string filterName = pset_.getParameter<std::string>("trajectoryFilterName");
   
 
   edm::ESHandle<TrajectoryStateUpdator> updatorHandle;
@@ -48,14 +46,12 @@ CkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecord)
   edm::ESHandle<Propagator>             propagatorOppositeHandle;
   edm::ESHandle<Chi2MeasurementEstimatorBase>   estimatorHandle;
   edm::ESHandle<TransientTrackingRecHitBuilder> recHitBuilderHandle;
-  edm::ESHandle<TrajectoryFilter> filterHandle;
 
   iRecord.getRecord<TrackingComponentsRecord>().get(updatorName,updatorHandle);
   iRecord.getRecord<TrackingComponentsRecord>().get(propagatorAlongName,propagatorAlongHandle);
   iRecord.getRecord<TrackingComponentsRecord>().get(propagatorOppositeName,propagatorOppositeHandle);
   iRecord.getRecord<TrackingComponentsRecord>().get(estimatorName,estimatorHandle);  
   iRecord.getRecord<TransientRecHitRecord>().get(recHitBuilderName,recHitBuilderHandle);  
-  iRecord.get(filterName, filterHandle);
 
   _trajectoryBuilder  = 
     boost::shared_ptr<TrajectoryBuilder>(new CkfTrajectoryBuilder(pset_,
@@ -63,8 +59,7 @@ CkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecord)
 								  propagatorAlongHandle.product(),
 								  propagatorOppositeHandle.product(),
 								  estimatorHandle.product(),
-								  recHitBuilderHandle.product(),
-								  filterHandle.product()) );  
+								  recHitBuilderHandle.product()) );
   return _trajectoryBuilder;
 }
 

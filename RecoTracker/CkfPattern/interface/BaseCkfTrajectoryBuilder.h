@@ -64,8 +64,7 @@ public:
 			   const Propagator*                     propagatorOpposite,
 			   const Chi2MeasurementEstimatorBase*   estimator,
 			   const TransientTrackingRecHitBuilder* RecHitBuilder,
-			   const TrajectoryFilter*               filter,
-			   const TrajectoryFilter*               inOutFilter = 0);
+                           bool useSameTrajFilter);
 
   BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &other) = default ;
   virtual ~BaseCkfTrajectoryBuilder();
@@ -158,6 +157,7 @@ public:
   //  TrajectoryFilter*              theMaxHitsCondition;
   const TrajectoryFilter* theFilter; /** Filter used at end of complete tracking */
   const TrajectoryFilter* theInOutFilter; /** Filter used at end of in-out tracking */
+  const bool theUseSameTrajFilter; // Assing theFilter also for theInOutFilter?
 };
 
 

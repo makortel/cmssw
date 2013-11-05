@@ -31,8 +31,7 @@ class GroupedCkfTrajectoryBuilder : public BaseCkfTrajectoryBuilder {
 			      const Propagator*                     propagatorOpposite,
 			      const Chi2MeasurementEstimatorBase*   estimator,
 			      const TransientTrackingRecHitBuilder* RecHitBuilder,
-			      const TrajectoryFilter*               filter,
-			      const TrajectoryFilter*               inOutFilter);
+                              bool useSameTrajFilter);
 
   /// destructor
   virtual ~GroupedCkfTrajectoryBuilder(){}

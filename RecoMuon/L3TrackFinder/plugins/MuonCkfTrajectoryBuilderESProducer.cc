@@ -13,7 +13,6 @@
 //#include "TrackingTools/DetLayers/interface/MeasurementEstimator.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/TransientTrackingRecHitBuilder.h"
 #include "RecoTracker/MeasurementDet/interface/MeasurementTracker.h"
-#include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilter.h"
 
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h"
@@ -42,7 +41,6 @@ MuonCkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecord)
   std::string estimatorName          = pset_.getParameter<std::string>("estimator"); 
   std::string recHitBuilderName      = pset_.getParameter<std::string>("TTRHBuilder");     
   std::string measurementTrackerName = pset_.getParameter<std::string>("MeasurementTrackerName");
-  std::string filterName             = pset_.getParameter<std::string>("trajectoryFilterName");
 
   edm::ESHandle<TrajectoryStateUpdator> updatorHandle;
   edm::ESHandle<Propagator>             propagatorAlongHandle;
@@ -51,7 +49,6 @@ MuonCkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecord)
   edm::ESHandle<Chi2MeasurementEstimatorBase>   estimatorHandle;
   edm::ESHandle<TransientTrackingRecHitBuilder> recHitBuilderHandle;
   edm::ESHandle<MeasurementTracker>             measurementTrackerHandle;
-  edm::ESHandle<TrajectoryFilter>               trajectoryFilterHandle;
 
   iRecord.getRecord<TrackingComponentsRecord>().get(updatorName,updatorHandle);
   iRecord.getRecord<TrackingComponentsRecord>().get(propagatorAlongName,propagatorAlongHandle);
@@ -60,7 +57,6 @@ MuonCkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecord)
   iRecord.getRecord<TrackingComponentsRecord>().get(estimatorName,estimatorHandle);  
   iRecord.getRecord<TransientRecHitRecord>().get(recHitBuilderName,recHitBuilderHandle);  
   iRecord.get(measurementTrackerName, measurementTrackerHandle);  
-  iRecord.get(filterName,trajectoryFilterHandle);
     
   _trajectoryBuilder  = 
     boost::shared_ptr<TrajectoryBuilder>(new MuonCkfTrajectoryBuilder(pset_,
@@ -70,8 +66,7 @@ MuonCkfTrajectoryBuilderESProducer::produce(const CkfComponentsRecord& iRecord)
 								      propagatorProximityHandle.product(),
 								      estimatorHandle.product(),
 								      recHitBuilderHandle.product(),
-								      measurementTrackerHandle.product(),
-								      trajectoryFilterHandle.product()) );  
+								      measurementTrackerHandle.product()) );
   return _trajectoryBuilder;
 }
 

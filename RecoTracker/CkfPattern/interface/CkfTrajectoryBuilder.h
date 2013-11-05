@@ -43,8 +43,7 @@ public:
 		       const Propagator*                     propagatorAlong,
 		       const Propagator*                     propagatorOpposite,
 		       const Chi2MeasurementEstimatorBase*   estimator,
-		       const TransientTrackingRecHitBuilder* recHitBuilder,
-		       const TrajectoryFilter*               filter);
+		       const TransientTrackingRecHitBuilder* recHitBuilder);
 
   ~CkfTrajectoryBuilder() {}
 

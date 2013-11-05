@@ -21,9 +21,8 @@ MuonCkfTrajectoryBuilder::MuonCkfTrajectoryBuilder(const edm::ParameterSet&     
 						   const Propagator*                     propagatorProximity,
 						   const Chi2MeasurementEstimatorBase*   estimator,
 						   const TransientTrackingRecHitBuilder* RecHitBuilder,
-						   const MeasurementTracker*             measurementTracker,
-						   const TrajectoryFilter*               filter): 
-  CkfTrajectoryBuilder(conf,updator,propagatorAlong,propagatorOpposite,estimator,RecHitBuilder,filter),
+						   const MeasurementTracker*             measurementTracker):
+  CkfTrajectoryBuilder(conf,updator,propagatorAlong,propagatorOpposite,estimator,RecHitBuilder),
   theProximityPropagator(propagatorProximity)
 {
   //and something specific to me ?

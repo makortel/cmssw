@@ -114,13 +114,12 @@ GroupedCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 			    const Propagator*                     propagatorOpposite,
 			    const Chi2MeasurementEstimatorBase*   estimator,
 			    const TransientTrackingRecHitBuilder* recHitBuilder,
-			    const TrajectoryFilter*               filter,
-			    const TrajectoryFilter*               inOutFilter):
+                            bool useSameTrajFilter):
 
 
   BaseCkfTrajectoryBuilder(conf,
 			   updator, propagatorAlong,propagatorOpposite,
-			   estimator, recHitBuilder, filter, inOutFilter)
+			   estimator, recHitBuilder, useSameTrajFilter)
 {
   // fill data members from parameters (eventually data members could be dropped)
   //

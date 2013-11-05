@@ -27,15 +27,15 @@ BaseCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 			 const Propagator*                     propagatorOpposite,
 			 const Chi2MeasurementEstimatorBase*   estimator,
 			 const TransientTrackingRecHitBuilder* recHitBuilder,
-			 const TrajectoryFilter*               filter,
-                         const TrajectoryFilter*               inOutFilter):
+                         bool useSameTrajFilter):
   theUpdator(updator),
   thePropagatorAlong(propagatorAlong),thePropagatorOpposite(propagatorOpposite),
   theEstimator(estimator),theTTRHBuilder(recHitBuilder),
   theMeasurementTracker(0),
   theForwardPropagator(0),theBackwardPropagator(0),
-  theFilter(filter),
-  theInOutFilter(inOutFilter)
+  theFilter(nullptr),
+  theInOutFilter(nullptr),
+  theUseSameTrajFilter(useSameTrajFilter)
 {
   if (conf.exists("clustersToSkip")) std::cerr << "ERROR: " << typeid(*this).name() << " with label " << conf.getParameter<std::string>("@module_label") << " has a clustersToSkip parameter set" << std::endl;
 }
@@ -240,7 +240,10 @@ void BaseCkfTrajectoryBuilder::setData(const MeasurementTrackerEvent *data, cons
     // possibly do some sanity check here
     theMeasurementTracker = data;
     theFilter = filter;
-    theInOutFilter = inOutFilter;
+    if(theUseSameTrajFilter)
+      theInOutFilter = filter;
+    else
+      theInOutFilter = inOutFilter;
 }
 
 void BaseCkfTrajectoryBuilder::setEvent(const edm::Event& event) const
