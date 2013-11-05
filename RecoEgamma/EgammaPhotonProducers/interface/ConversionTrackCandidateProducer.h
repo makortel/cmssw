@@ -32,10 +32,13 @@
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgo.h"
 #include "TrackingTools/PatternTools/interface/TrajectoryBuilder.h"
 
+#include <memory>
+
 class OutInConversionSeedFinder;
 class InOutConversionSeedFinder;
 class OutInConversionTrackFinder;
 class InOutConversionTrackFinder;
+class TrajectoryFilter;
 
 // ConversionTrackCandidateProducer inherits from EDProducer, so it can be a module:
 class ConversionTrackCandidateProducer : public edm::EDProducer {
@@ -109,7 +112,10 @@ class ConversionTrackCandidateProducer : public edm::EDProducer {
 
   std::vector<edm::Ref<reco::SuperClusterCollection> > vecOfSCRefForOutIn;  
   std::vector<edm::Ref<reco::SuperClusterCollection> > vecOfSCRefForInOut;  
-  
+
+  std::unique_ptr<TrajectoryFilter> theTrajectoryFilter;
+  std::unique_ptr<TrajectoryFilter> theInOutTrajectoryFilter;
+
   void buildCollections(bool detector, 
 			const edm::Handle<edm::View<reco::CaloCluster> > & scHandle,
 			const edm::Handle<edm::View<reco::CaloCluster> > & bcHandle,

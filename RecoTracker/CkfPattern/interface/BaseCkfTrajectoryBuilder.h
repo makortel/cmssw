@@ -84,7 +84,7 @@ public:
   virtual void unset() const;
 
   // Return a clone of this, with the data pointer set
-  virtual BaseCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const = 0;
+  BaseCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data, const TrajectoryFilter *filter, const TrajectoryFilter *inOutFilter) const;
 
   virtual void setDebugger( CkfDebugger * dbg) const {;}
  
@@ -110,6 +110,7 @@ public:
                                      std::vector<TrajectoryMeasurement>::iterator end) const {;}
 
  protected:
+  virtual BaseCkfTrajectoryBuilder* clone_() const = 0;
 
   TempTrajectory createStartingTrajectory( const TrajectorySeed& seed) const;
 
@@ -132,7 +133,7 @@ public:
   void seedMeasurements(const TrajectorySeed& seed, TempTrajectory & result) const;
 
  protected:
-  void setData(const MeasurementTrackerEvent *data) ;
+  void setData(const MeasurementTrackerEvent *data, const TrajectoryFilter *filter, const TrajectoryFilter *inOutFilter);
 
  protected:
   const TrajectoryStateUpdator*         theUpdator;

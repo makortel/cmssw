@@ -27,7 +27,10 @@
 #include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
 #include "RecoTracker/MeasurementDet/interface/MeasurementTrackerEvent.h"
 
+#include <memory>
+
 class TransientInitialStateEstimator;
+class TrajectoryFilter;
 
 namespace cms
 {
@@ -92,6 +95,9 @@ namespace cms
   private:
     /// Initialize EventSetup objects at each event
     void setEventSetup( const edm::EventSetup& es ) ; 
+
+    std::unique_ptr<TrajectoryFilter> theTrajectoryFilter;
+    std::unique_ptr<TrajectoryFilter> theInOutTrajectoryFilter;
   };
 }
 

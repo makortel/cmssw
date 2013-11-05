@@ -33,6 +33,8 @@
 
 #include "RecoTracker/Record/interface/NavigationSchoolRecord.h"
 #include "TrackingTools/DetLayers/interface/NavigationSchool.h"
+#include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilter.h"
+#include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilterFactory.h"
 
 #include<algorithm>
 #include<functional>
@@ -41,6 +43,15 @@
 
 using namespace edm;
 using namespace std;
+
+namespace {
+  template <typename T>
+  T *cloneIfNotNull(T *ptr, const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+    if(ptr == nullptr)
+      return ptr;
+    return ptr->clone(iEvent, iSetup);
+  }
+}
 
 namespace cms{
   CkfTrackCandidateMakerBase::CkfTrackCandidateMakerBase(edm::ParameterSet const& conf, edm::ConsumesCollector && iC) : 
@@ -63,7 +74,9 @@ namespace cms{
     theSeedCleaner(0),
     maxSeedsBeforeCleaning_(0),
     theMTELabel(iC.consumes<MeasurementTrackerEvent>(conf.getParameter<edm::InputTag>("MeasurementTrackerEvent"))),
-    skipClusters_(false)
+    skipClusters_(false),
+    theTrajectoryFilter(createTrajectoryFilter(conf, "trajectoryFilter", iC)),
+    theInOutTrajectoryFilter(createTrajectoryFilter(conf, "inOutTrajectoryFilter", iC))
   {  
     //produces<TrackCandidateCollection>();  
     // old configuration totally descoped.
@@ -166,6 +179,9 @@ namespace cms{
     edm::Handle<MeasurementTrackerEvent> data;
     e.getByToken(theMTELabel, data);
 
+    std::unique_ptr<TrajectoryFilter> trajectoryFilter(cloneIfNotNull(theTrajectoryFilter.get(), e, es));
+    std::unique_ptr<TrajectoryFilter> inOutTrajectoryFilter(cloneIfNotNull(theInOutTrajectoryFilter.get(), e, es));
+
     std::auto_ptr<BaseCkfTrajectoryBuilder> trajectoryBuilder;
     std::auto_ptr<MeasurementTrackerEvent> dataWithMasks;
     if (skipClusters_) {
@@ -181,10 +197,10 @@ namespace cms{
             dataWithMasks.reset(new MeasurementTrackerEvent(*data, *stripMask, *pixelMask));
         }
         //std::cout << "Trajectory builder " << conf_.getParameter<std::string>("@module_label") << " created with masks, " << (!data->isStripRegional() ? "offline": "onDemand") << std::endl;
-        trajectoryBuilder.reset(theTrajectoryBuilder->clone(&*dataWithMasks));
+        trajectoryBuilder.reset(theTrajectoryBuilder->clone(&*dataWithMasks, trajectoryFilter.get(), inOutTrajectoryFilter.get()));
     } else {
         //std::cout << "Trajectory builder " << conf_.getParameter<std::string>("@module_label") << " created without masks, " << (!data->isStripRegional() ? "offline": "onDemand") << std::endl;
-        trajectoryBuilder.reset(theTrajectoryBuilder->clone(&*data));
+        trajectoryBuilder.reset(theTrajectoryBuilder->clone(&*data, trajectoryFilter.get(), inOutTrajectoryFilter.get()));
     }
     
     // Step B: Retrieve seeds

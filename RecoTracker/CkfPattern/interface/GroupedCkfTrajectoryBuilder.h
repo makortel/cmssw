@@ -34,8 +34,6 @@ class GroupedCkfTrajectoryBuilder : public BaseCkfTrajectoryBuilder {
 			      const TrajectoryFilter*               filter,
 			      const TrajectoryFilter*               inOutFilter);
 
-  virtual GroupedCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const ;
-
   /// destructor
   virtual ~GroupedCkfTrajectoryBuilder(){}
 
@@ -102,6 +100,7 @@ class GroupedCkfTrajectoryBuilder : public BaseCkfTrajectoryBuilder {
   double mass() {return theMass;}
 
 protected:
+  GroupedCkfTrajectoryBuilder * clone_() const override;
 
   virtual void analyseSeed(const TrajectorySeed& seed) const{}
 

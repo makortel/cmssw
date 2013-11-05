@@ -7,6 +7,7 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 //
@@ -44,6 +45,17 @@
 #include "RecoTracker/CkfPattern/interface/BaseCkfTrajectoryBuilder.h"
 #include "RecoTracker/MeasurementDet/interface/MeasurementTrackerEvent.h"
 
+#include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilter.h"
+#include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilterFactory.h"
+
+namespace {
+  template <typename T>
+  T *cloneIfNotNull(T *ptr, const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+    if(ptr == nullptr)
+      return ptr;
+    return ptr->clone(iEvent, iSetup);
+  }
+}
 
 ConversionTrackCandidateProducer::ConversionTrackCandidateProducer(const edm::ParameterSet& config) : 
   conf_(config), 
@@ -51,7 +63,9 @@ ConversionTrackCandidateProducer::ConversionTrackCandidateProducer(const edm::Pa
   theOutInSeedFinder_(0), 
   theOutInTrackFinder_(0), 
   theInOutSeedFinder_(0),
-  theInOutTrackFinder_(0)
+  theInOutTrackFinder_(0),
+  theTrajectoryFilter(createTrajectoryFilter(config, "trajectoryFilter", consumesCollector())),
+  theInOutTrajectoryFilter(createTrajectoryFilter(config, "inOutTrajectoryFilter", consumesCollector()))
 {  
   //std::cout << "ConversionTrackCandidateProducer CTOR " << "\n";
   nEvt_=0;  
@@ -195,7 +209,9 @@ void ConversionTrackCandidateProducer::produce(edm::Event& theEvent, const edm::
   edm::Handle<MeasurementTrackerEvent> data;
   theEvent.getByLabel(edm::InputTag("MeasurementTrackerEvent"), data);
   std::auto_ptr<BaseCkfTrajectoryBuilder> trajectoryBuilder;
-  trajectoryBuilder.reset((dynamic_cast<const BaseCkfTrajectoryBuilder &>(*theTrajectoryBuilder_)).clone(&*data));  
+  std::unique_ptr<TrajectoryFilter> trajectoryFilter(cloneIfNotNull(theTrajectoryFilter.get(), theEvent, theEventSetup));
+  std::unique_ptr<TrajectoryFilter> inOutTrajectoryFilter(cloneIfNotNull(theInOutTrajectoryFilter.get(), theEvent, theEventSetup));
+  trajectoryBuilder.reset((dynamic_cast<const BaseCkfTrajectoryBuilder &>(*theTrajectoryBuilder_)).clone(&*data, trajectoryFilter.get(), inOutTrajectoryFilter.get()));
 
   theOutInSeedFinder_->setEvent(theEvent);
   theInOutSeedFinder_->setEvent(theEvent);

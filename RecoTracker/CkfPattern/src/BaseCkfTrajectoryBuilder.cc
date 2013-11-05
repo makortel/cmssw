@@ -44,6 +44,11 @@ BaseCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 BaseCkfTrajectoryBuilder::~BaseCkfTrajectoryBuilder(){
 }
 
+BaseCkfTrajectoryBuilder *BaseCkfTrajectoryBuilder::clone(const MeasurementTrackerEvent *data, const TrajectoryFilter *filter, const TrajectoryFilter *inOutFilter) const {
+  std::unique_ptr<BaseCkfTrajectoryBuilder> ret(clone_());
+  ret->setData(data, filter, inOutFilter);
+  return ret.release();
+}
 
 void
 BaseCkfTrajectoryBuilder::seedMeasurements(const TrajectorySeed& seed,  TempTrajectory & result) const
@@ -230,10 +235,12 @@ BaseCkfTrajectoryBuilder::findStateAndLayers(const TempTrajectory& traj) const{
 }
 
 
-void BaseCkfTrajectoryBuilder::setData(const MeasurementTrackerEvent *data) 
+void BaseCkfTrajectoryBuilder::setData(const MeasurementTrackerEvent *data, const TrajectoryFilter *filter, const TrajectoryFilter *inOutFilter) 
 {
     // possibly do some sanity check here
     theMeasurementTracker = data;
+    theFilter = filter;
+    theInOutFilter = inOutFilter;
 }
 
 void BaseCkfTrajectoryBuilder::setEvent(const edm::Event& event) const

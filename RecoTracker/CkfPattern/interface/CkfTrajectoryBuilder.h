@@ -48,13 +48,6 @@ public:
 
   ~CkfTrajectoryBuilder() {}
 
-  // Return a clone of this, with the data pointer set
-  virtual CkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const {
-    CkfTrajectoryBuilder *ret = new CkfTrajectoryBuilder(*this);
-    ret->setData(data);
-    return ret;
-  }
-  
   /// trajectories building starting from a seed
   virtual TrajectoryContainer trajectories(const TrajectorySeed& seed) const;
   /// trajectories building starting from a seed
@@ -84,6 +77,11 @@ public:
 
 
  protected:
+  // Return a clone of this
+  CkfTrajectoryBuilder * clone_() const override {
+    return new CkfTrajectoryBuilder(*this);
+  }
+
   virtual void findCompatibleMeasurements(const TrajectorySeed&seed, const TempTrajectory& traj, std::vector<TrajectoryMeasurement> & result) const;
 
   void limitedCandidates(const TrajectorySeed&seed, TempTrajectory& startingTraj, TrajectoryContainer& result) const;

@@ -44,9 +44,8 @@ MuonCkfTrajectoryBuilder::~MuonCkfTrajectoryBuilder()
 }
 
 MuonCkfTrajectoryBuilder *
-MuonCkfTrajectoryBuilder::clone(const MeasurementTrackerEvent *data) const {
+MuonCkfTrajectoryBuilder::clone_() const {
     MuonCkfTrajectoryBuilder *ret = new MuonCkfTrajectoryBuilder(*this);
-    ret->setData(data);
     if (theEtaPhiEstimator) {
         ret->theEtaPhiEstimator = new EtaPhiEstimator(dynamic_cast<const EtaPhiEstimator&>(*theEtaPhiEstimator));
     }

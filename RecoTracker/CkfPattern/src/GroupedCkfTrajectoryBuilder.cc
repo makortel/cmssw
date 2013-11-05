@@ -164,10 +164,8 @@ GroupedCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 */
 
 GroupedCkfTrajectoryBuilder *
-GroupedCkfTrajectoryBuilder::clone(const MeasurementTrackerEvent *data) const {
-    GroupedCkfTrajectoryBuilder *ret = new GroupedCkfTrajectoryBuilder(*this);
-    ret->setData(data);
-    return ret;
+GroupedCkfTrajectoryBuilder::clone_() const {
+    return new GroupedCkfTrajectoryBuilder(*this);
 }
 
 GroupedCkfTrajectoryBuilder::TrajectoryContainer 
