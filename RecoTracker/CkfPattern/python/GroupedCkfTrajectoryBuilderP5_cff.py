@@ -35,9 +35,9 @@ ckfBaseTrajectoryFilterP5 = TrackingTools.TrajectoryFiltering.TrajectoryFilter_c
 )
 #replace ckfBaseTrajectoryFilterP5.filterPset.minimumNumberOfHits =  4
 #
-GroupedCkfTrajectoryBuilderP5 = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone()
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+GroupedCkfTrajectoryBuilderP5 = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone()
 ##CTF_P5_MeasurementTracker.ComponentName = 'CTF_P5' # useless duplication of MeasurementTracker
 ##GroupedCkfTrajectoryBuilderP5.MeasurementTrackerName = 'CTF_P5' # useless duplication of MeasurementTracker
-GroupedCkfTrajectoryBuilderP5.ComponentName = 'GroupedCkfTrajectoryBuilderP5'
 GroupedCkfTrajectoryBuilderP5.trajectoryFilter = ckfBaseTrajectoryFilterP5
 

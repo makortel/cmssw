@@ -21,6 +21,4 @@ from RecoLocalTracker.SiPixelRecHits.PixelCPEParmError_cfi import *
 from RecoTracker.TransientTrackingRecHit.TransientTrackingRecHitBuilder_cfi import *
 # MeasurementTracker
 from RecoTracker.MeasurementDet.MeasurementTrackerESProducer_cff import *
-#
-from RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi import *
 
