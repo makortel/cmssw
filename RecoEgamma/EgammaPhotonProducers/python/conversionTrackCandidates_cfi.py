@@ -67,7 +67,7 @@ conversionTrackCandidates = cms.EDProducer("ConversionTrackCandidateProducer",
     RecHitSeverityToBeExcludedEE = cleanedHybridSuperClusters.RecHitSeverityToBeExcluded,
                                                                                
     fractionShared = cms.double(0.5),
-    TrajectoryBuilder = cms.string('TrajectoryBuilderForConversions'),
+    TrajectoryBuilder = TrajectoryBuilderForConversions,
     TransientInitialStateEstimatorParameters = cms.PSet(
         propagatorAlongTISE = cms.string('alongMomElePropagator'),
         propagatorOppositeTISE = cms.string('oppositeToMomElePropagator'),
