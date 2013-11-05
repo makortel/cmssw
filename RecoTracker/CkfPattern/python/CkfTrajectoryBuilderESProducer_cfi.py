@@ -1,8 +1,10 @@
 import FWCore.ParameterSet.Config as cms
 
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+
 CkfTrajectoryBuilder = cms.ESProducer("CkfTrajectoryBuilderESProducer",
     propagatorAlong = cms.string('PropagatorWithMaterial'),
-    trajectoryFilterName = cms.string('ckfBaseTrajectoryFilter'),
+    trajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block,
     maxCand = cms.int32(5),
     ComponentName = cms.string('CkfTrajectoryBuilder'),
     intermediateCleaning = cms.bool(True),

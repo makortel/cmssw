@@ -68,14 +68,11 @@ pixelLessStepSeeds.SeedComparitorPSet = cms.PSet(
     )
 
 # QUALITY CUTS DURING TRACK BUILDING
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-pixelLessStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone(
-    ComponentName = 'pixelLessStepTrajectoryFilter',
-    filterPset = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.filterPset.clone(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+pixelLessStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     maxLostHits = 0,
     minimumNumberOfHits = 4,
     minPt = 0.1
-    )
     )
 
 import TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESProducer_cfi
@@ -90,7 +87,7 @@ import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
 pixelLessStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
     ComponentName = 'pixelLessStepTrajectoryBuilder',
     MeasurementTrackerName = '',
-    trajectoryFilterName = 'pixelLessStepTrajectoryFilter',
+#    trajectoryFilter = pixelLessStepTrajectoryFilter,
     minNrOfHitsForRebuild = 4,
     maxCand = 2,
     alwaysUseInvalidHits = False,
@@ -107,7 +104,8 @@ pixelLessStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckf
     ### these two parameters are relevant only for the CachingSeedCleanerBySharedInput
     numHitsForSeedCleaner = cms.int32(50),
     #onlyPixelHitsForSeedCleaner = cms.bool(True),
-    TrajectoryBuilder = 'pixelLessStepTrajectoryBuilder'
+    TrajectoryBuilder = 'pixelLessStepTrajectoryBuilder',
+    trajectoryFilter = pixelLessStepTrajectoryFilter,
 )
 
 from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import trajectoryCleanerBySharedHits

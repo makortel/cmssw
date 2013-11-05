@@ -42,22 +42,17 @@ lowPtTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet.Co
 
 
 # QUALITY CUTS DURING TRACK BUILDING
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-lowPtTripletStepStandardTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone(
-    ComponentName = 'lowPtTripletStepStandardTrajectoryFilter',
-    filterPset = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.filterPset.clone(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+lowPtTripletStepStandardTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     minimumNumberOfHits = 3,
     minPt = 0.075
     )
-    )
 
-from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeTrajectoryFilterESProducer_cfi import *
+from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeTrajectoryFilter_cff import *
 # Composite filter
-import TrackingTools.TrajectoryFiltering.CompositeTrajectoryFilterESProducer_cfi
-lowPtTripletStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.CompositeTrajectoryFilterESProducer_cfi.compositeTrajectoryFilterESProducer.clone(
-    ComponentName = cms.string('lowPtTripletStepTrajectoryFilter'),
-    filterNames   = cms.vstring('lowPtTripletStepStandardTrajectoryFilter',
-                                'clusterShapeTrajectoryFilter')
+lowPtTripletStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CompositeTrajectoryFilter_block.clone(
+    filters = [lowPtTripletStepStandardTrajectoryFilter,
+               ClusterShapeTrajectoryFilter_block]
     )
 
 import TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESProducer_cfi
@@ -72,7 +67,7 @@ import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
 lowPtTripletStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
     ComponentName = 'lowPtTripletStepTrajectoryBuilder',
     MeasurementTrackerName = '',
-    trajectoryFilterName = 'lowPtTripletStepTrajectoryFilter',
+#    trajectoryFilter = lowPtTripletStepTrajectoryFilter,
     maxCand = 4,
     estimator = cms.string('lowPtTripletStepChi2Est'),
     maxDPhiForLooperReconstruction = cms.double(2.0),
@@ -89,7 +84,8 @@ lowPtTripletStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.
     numHitsForSeedCleaner = cms.int32(50),
     onlyPixelHitsForSeedCleaner = cms.bool(True),
 
-    TrajectoryBuilder = 'lowPtTripletStepTrajectoryBuilder',
+    TrajectoryBuilder = 'lowPtTripletStepTrajectoryBuilder', 
+    trajectoryFilter = lowPtTripletStepTrajectoryFilter,
     clustersToSkip = cms.InputTag('lowPtTripletStepClusters'),
     doSeedingRegionRebuilding = True,
     useHitsSplitting = True

@@ -26,6 +26,7 @@ from RecoEgamma.EgammaPhotonProducers.propOppoMomentumWithMaterialForElectrons_c
 
 from RecoEcal.EgammaClusterProducers.hybridSuperClusters_cfi import *
 from RecoEcal.EgammaClusterProducers.multi5x5BasicClusters_cfi import *
+from RecoEgamma.EgammaPhotonProducers.trajectoryFilterForConversions_cfi import *
 
 conversionTrackCandidates = cms.EDProducer("ConversionTrackCandidateProducer",
 #    beamSpot = cms.InputTag("offlineBeamSpot"),
@@ -68,6 +69,7 @@ conversionTrackCandidates = cms.EDProducer("ConversionTrackCandidateProducer",
                                                                                
     fractionShared = cms.double(0.5),
     TrajectoryBuilder = cms.string('TrajectoryBuilderForConversions'),
+    trajectoryFilter = TrajectoryFilterForConversions,
     TransientInitialStateEstimatorParameters = cms.PSet(
         propagatorAlongTISE = cms.string('alongMomElePropagator'),
         propagatorOppositeTISE = cms.string('oppositeToMomElePropagator'),

@@ -122,14 +122,11 @@ mixedTripletStepSeeds.seedCollections = cms.VInputTag(
         )
 
 # QUALITY CUTS DURING TRACK BUILDING
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-mixedTripletStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone(
-    ComponentName = 'mixedTripletStepTrajectoryFilter',
-    filterPset = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.filterPset.clone(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+mixedTripletStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     maxLostHits = 0,
     minimumNumberOfHits = 3,
     minPt = 0.1
-    )
     )
 
 # Propagator taking into account momentum uncertainty in multiple scattering calculation.
@@ -156,7 +153,7 @@ import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
 mixedTripletStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
     ComponentName = 'mixedTripletStepTrajectoryBuilder',
     MeasurementTrackerName = '',
-    trajectoryFilterName = 'mixedTripletStepTrajectoryFilter',
+#    trajectoryFilter = mixedTripletStepTrajectoryFilter,
     propagatorAlong = cms.string('mixedTripletStepPropagator'),
     propagatorOpposite = cms.string('mixedTripletStepPropagatorOpposite'),
     maxCand = 2,
@@ -175,6 +172,7 @@ mixedTripletStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.
     #onlyPixelHitsForSeedCleaner = cms.bool(True),
 
     TrajectoryBuilder = 'mixedTripletStepTrajectoryBuilder',
+    trajectoryFilter = mixedTripletStepTrajectoryFilter,
     doSeedingRegionRebuilding = True,
     useHitsSplitting = True
 )

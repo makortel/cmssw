@@ -217,21 +217,18 @@ photonConvTrajSeedFromSingleLeg.primaryVerticesTag = cms.InputTag('pixelVertices
 # TRACKER DATA CONTROL
 
 # QUALITY CUTS DURING TRACK BUILDING
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-convCkfTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone(
-    ComponentName = 'convCkfTrajectoryFilter',
-    filterPset = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.filterPset.clone(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+convCkfTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
         maxLostHits = 1,
         minimumNumberOfHits = 3,
         minPt = 0.1
-        )
     )
 
 # TRACK BUILDING
 import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
 convCkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
     ComponentName = 'convCkfTrajectoryBuilder',
-    trajectoryFilterName = 'convCkfTrajectoryFilter',
+#    trajectoryFilter = convCkfTrajectoryFilter,
     minNrOfHitsForRebuild = 3,
     maxCand = 2
     )
@@ -241,7 +238,8 @@ import RecoTracker.CkfPattern.CkfTrackCandidates_cfi
 convTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone(
     src = cms.InputTag('photonConvTrajSeedFromSingleLeg:convSeedCandidates'),
     clustersToSkip = cms.InputTag('convClusters'),
-    TrajectoryBuilder = 'convCkfTrajectoryBuilder'
+    TrajectoryBuilder = 'convCkfTrajectoryBuilder',
+    trajectoryFilter = convCkfTrajectoryFilter,
 )
 
 import TrackingTools.TrackFitters.RungeKuttaFitters_cff
