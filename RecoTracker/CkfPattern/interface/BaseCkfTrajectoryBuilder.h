@@ -64,19 +64,10 @@ public:
   typedef TrajectoryContainer::iterator TrajectoryIterator;
 
   BaseCkfTrajectoryBuilder(const edm::ParameterSet& conf,
-                           const TrajectoryFilter *filter,
-                           const TrajectoryFilter *inOutFilter=nullptr);
+                           TrajectoryFilter *filter,
+                           TrajectoryFilter *inOutFilter=nullptr);
 
-  BaseCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-			   const TrajectoryStateUpdator*         updator,
-			   const Propagator*                     propagatorAlong,
-			   const Propagator*                     propagatorOpposite,
-			   const Chi2MeasurementEstimatorBase*   estimator,
-			   const TransientTrackingRecHitBuilder* RecHitBuilder,
-			   const TrajectoryFilter*               filter,
-			   const TrajectoryFilter*               inOutFilter = 0);
-
-  BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &other) = default ;
+  BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &other) = delete;
   virtual ~BaseCkfTrajectoryBuilder();
 
   static TrajectoryFilter *createTrajectoryFilter(const edm::ParameterSet& pset, edm::ConsumesCollector& iC);
@@ -95,8 +86,6 @@ public:
   virtual void unset() const;
 
   void setEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const MeasurementTrackerEvent *data);
-  // Return a clone of this, with the data pointer set
-  virtual BaseCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const = 0;
 
   virtual void setDebugger( CkfDebugger * dbg) const {;}
  
@@ -169,8 +158,8 @@ public:
 
   //  TrajectoryFilter*              theMinPtCondition;
   //  TrajectoryFilter*              theMaxHitsCondition;
-  const TrajectoryFilter* theFilter; /** Filter used at end of complete tracking */
-  const TrajectoryFilter* theInOutFilter; /** Filter used at end of in-out tracking */
+  std::unique_ptr<TrajectoryFilter> theFilter; /** Filter used at end of complete tracking */
+  std::unique_ptr<TrajectoryFilter> theInOutFilter; /** Filter used at end of in-out tracking */
 
   // for EventSetup
   const std::string theUpdatorName;

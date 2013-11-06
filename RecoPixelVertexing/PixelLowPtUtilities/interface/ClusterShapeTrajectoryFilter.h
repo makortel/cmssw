@@ -15,11 +15,7 @@ class ClusterShapeHitFilter;
 
 class ClusterShapeTrajectoryFilter : public TrajectoryFilter {
  public:
-  //  ClusterShapeTrajectoryFilter(const edm::EventSetup& es);
-
   ClusterShapeTrajectoryFilter(const edm::ParameterSet& iConfig, edm::ConsumesCollector& iC): theFilter(nullptr) {}
-  ClusterShapeTrajectoryFilter
-    (const ClusterShapeHitFilter * f):theFilter(f){}
 
   virtual ~ClusterShapeTrajectoryFilter();
 

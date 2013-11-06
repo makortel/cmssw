@@ -27,17 +27,6 @@ class GroupedCkfTrajectoryBuilder : public BaseCkfTrajectoryBuilder {
   /// constructor from ParameterSet
   GroupedCkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
 
-  GroupedCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-			      const TrajectoryStateUpdator*         updator,
-			      const Propagator*                     propagatorAlong,
-			      const Propagator*                     propagatorOpposite,
-			      const Chi2MeasurementEstimatorBase*   estimator,
-			      const TransientTrackingRecHitBuilder* RecHitBuilder,
-			      const TrajectoryFilter*               filter,
-			      const TrajectoryFilter*               inOutFilter);
-
-  virtual GroupedCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const ;
-
   /// destructor
   virtual ~GroupedCkfTrajectoryBuilder(){}
 
@@ -104,7 +93,7 @@ class GroupedCkfTrajectoryBuilder : public BaseCkfTrajectoryBuilder {
   double mass() {return theMass;}
 
 protected:
-  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   virtual void analyseSeed(const TrajectorySeed& seed) const{}
 

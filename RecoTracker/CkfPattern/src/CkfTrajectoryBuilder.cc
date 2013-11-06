@@ -30,35 +30,13 @@
 using namespace std;
 
 CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC):
-  BaseCkfTrajectoryBuilder(conf,
-                           BaseCkfTrajectoryBuilder::createTrajectoryFilter(conf.getParameter<edm::ParameterSet>("trajectoryFilter"), iC))
-{
-  theMaxCand              = conf.getParameter<int>("maxCand");
-  theLostHitPenalty       = conf.getParameter<double>("lostHitPenalty");
-  theIntermediateCleaning = conf.getParameter<bool>("intermediateCleaning");
-  theAlwaysUseInvalidHits = conf.getParameter<bool>("alwaysUseInvalidHits");
-  /*
-    theSharedSeedCheck = conf.getParameter<bool>("SharedSeedCheck");
-    std::stringstream ss;
-    ss<<"CkfTrajectoryBuilder_"<<conf.getParameter<std::string>("ComponentName")<<"_"<<this;
-    theUniqueName = ss.str();
-    LogDebug("CkfPattern")<<"my unique name is: "<<theUniqueName;
-  */
-}
+  CkfTrajectoryBuilder(conf,
+                       BaseCkfTrajectoryBuilder::createTrajectoryFilter(conf.getParameter<edm::ParameterSet>("trajectoryFilter"), iC),
+                       iC)
+{}
 
-
-CkfTrajectoryBuilder::
-  CkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-		       const TrajectoryStateUpdator*         updator,
-		       const Propagator*                     propagatorAlong,
-		       const Propagator*                     propagatorOpposite,
-		       const Chi2MeasurementEstimatorBase*   estimator,
-		       const TransientTrackingRecHitBuilder* recHitBuilder,
-		       const TrajectoryFilter*               filter):
-
-    BaseCkfTrajectoryBuilder(conf,
-			     updator, propagatorAlong,propagatorOpposite,
-			     estimator, recHitBuilder, filter)
+CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf, TrajectoryFilter *filter, edm::ConsumesCollector& iC):
+  BaseCkfTrajectoryBuilder(conf, filter)
 {
   theMaxCand              = conf.getParameter<int>("maxCand");
   theLostHitPenalty       = conf.getParameter<double>("lostHitPenalty");

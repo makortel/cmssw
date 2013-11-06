@@ -25,8 +25,8 @@
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h"
 
 BaseCkfTrajectoryBuilder::BaseCkfTrajectoryBuilder(const edm::ParameterSet& conf,
-                                                   const TrajectoryFilter *filter,
-                                                   const TrajectoryFilter *inOutFilter):
+                                                   TrajectoryFilter *filter,
+                                                   TrajectoryFilter *inOutFilter):
   theUpdator(nullptr),
   thePropagatorAlong(nullptr),
   thePropagatorOpposite(nullptr),
@@ -42,27 +42,6 @@ BaseCkfTrajectoryBuilder::BaseCkfTrajectoryBuilder(const edm::ParameterSet& conf
   theEstimatorName(conf.getParameter<std::string>("estimator")),
   theRecHitBuilderName(conf.getParameter<std::string>("TTRHBuilder"))
 
-{
-  if (conf.exists("clustersToSkip")) std::cerr << "ERROR: " << typeid(*this).name() << " with label " << conf.getParameter<std::string>("@module_label") << " has a clustersToSkip parameter set" << std::endl;
-}
-
-
-BaseCkfTrajectoryBuilder::
-BaseCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-			 const TrajectoryStateUpdator*         updator,
-			 const Propagator*                     propagatorAlong,
-			 const Propagator*                     propagatorOpposite,
-			 const Chi2MeasurementEstimatorBase*   estimator,
-			 const TransientTrackingRecHitBuilder* recHitBuilder,
-			 const TrajectoryFilter*               filter,
-                         const TrajectoryFilter*               inOutFilter):
-  theUpdator(updator),
-  thePropagatorAlong(propagatorAlong),thePropagatorOpposite(propagatorOpposite),
-  theEstimator(estimator),theTTRHBuilder(recHitBuilder),
-  theMeasurementTracker(0),
-  theForwardPropagator(0),theBackwardPropagator(0),
-  theFilter(filter),
-  theInOutFilter(inOutFilter)
 {
   if (conf.exists("clustersToSkip")) std::cerr << "ERROR: " << typeid(*this).name() << " with label " << conf.getParameter<std::string>("@module_label") << " has a clustersToSkip parameter set" << std::endl;
 }

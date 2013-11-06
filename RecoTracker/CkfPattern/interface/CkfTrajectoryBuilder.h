@@ -39,23 +39,9 @@ public:
   typedef std::vector<TempTrajectory>     TempTrajectoryContainer;
 
   CkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
-
-  CkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-		       const TrajectoryStateUpdator*         updator,
-		       const Propagator*                     propagatorAlong,
-		       const Propagator*                     propagatorOpposite,
-		       const Chi2MeasurementEstimatorBase*   estimator,
-		       const TransientTrackingRecHitBuilder* recHitBuilder,
-		       const TrajectoryFilter*               filter);
+  CkfTrajectoryBuilder(const edm::ParameterSet& conf, TrajectoryFilter *filter, edm::ConsumesCollector& iC);
 
   ~CkfTrajectoryBuilder() {}
-
-  // Return a clone of this, with the data pointer set
-  virtual CkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const {
-    CkfTrajectoryBuilder *ret = new CkfTrajectoryBuilder(*this);
-    ret->setData(data);
-    return ret;
-  }
 
   /// trajectories building starting from a seed
   virtual TrajectoryContainer trajectories(const TrajectorySeed& seed) const;
@@ -86,7 +72,7 @@ public:
 
 
  protected:
-  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   virtual void findCompatibleMeasurements(const TrajectorySeed&seed, const TempTrajectory& traj, std::vector<TrajectoryMeasurement> & result) const;
 
