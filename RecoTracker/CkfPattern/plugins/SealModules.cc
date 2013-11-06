@@ -20,3 +20,10 @@ DEFINE_FWK_EVENTSETUP_MODULE(CkfTrajectoryBuilderESProducer);
 DEFINE_FWK_EVENTSETUP_MODULE(GroupedCkfTrajectoryBuilderESProducer);
 DEFINE_FWK_MODULE(CkfTrackCandidateMaker);
 DEFINE_FWK_MODULE(CkfTrajectoryMaker);
+
+#include "RecoTracker/CkfPattern/interface/BaseCkfTrajectoryBuilderFactory.h"
+#include "RecoTracker/CkfPattern/interface/CkfTrajectoryBuilder.h"
+#include "RecoTracker/CkfPattern/interface/GroupedCkfTrajectoryBuilder.h"
+
+DEFINE_EDM_PLUGIN(BaseCkfTrajectoryBuilderFactory, CkfTrajectoryBuilder, "CkfTrajectoryBuilder");
+DEFINE_EDM_PLUGIN(BaseCkfTrajectoryBuilderFactory, GroupedCkfTrajectoryBuilder, "GroupedCkfTrajectoryBuilder");

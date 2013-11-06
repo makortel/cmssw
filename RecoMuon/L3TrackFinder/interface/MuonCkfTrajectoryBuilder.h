@@ -5,6 +5,8 @@
 
 class MuonCkfTrajectoryBuilder : public CkfTrajectoryBuilder {
  public:
+  MuonCkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
+
   MuonCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 			   const TrajectoryStateUpdator*         updator,
 			   const Propagator*                     propagatorAlong,
@@ -21,6 +23,8 @@ class MuonCkfTrajectoryBuilder : public CkfTrajectoryBuilder {
 
   
  protected:
+  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
   void collectMeasurement(const DetLayer * layer, const std::vector<const DetLayer*>& nl,const TrajectoryStateOnSurface & currentState, std::vector<TM>& result,int& invalidHits,const Propagator *) const;
 
   virtual void findCompatibleMeasurements(const TrajectorySeed&seed, const TempTrajectory& traj, std::vector<TrajectoryMeasurement> & result) const;
@@ -28,6 +32,9 @@ class MuonCkfTrajectoryBuilder : public CkfTrajectoryBuilder {
   //and other fields
   bool theUseSeedLayer;
   double theRescaleErrorIfFail;
+  const double theDeltaEta;
+  const double theDeltaPhi;
+  const std::string theProximityPropagatorName;
   const Propagator * theProximityPropagator;
   Chi2MeasurementEstimatorBase * theEtaPhiEstimator;
   

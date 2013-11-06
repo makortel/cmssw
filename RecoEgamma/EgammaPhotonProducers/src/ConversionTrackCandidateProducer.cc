@@ -9,6 +9,7 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 //
 #include "DataFormats/TrackCandidate/interface/TrackCandidateCollection.h"
 #include "DataFormats/EgammaTrackReco/interface/TrackCandidateSuperClusterAssociation.h"
@@ -23,6 +24,7 @@
 // Class header file
 #include "RecoEgamma/EgammaPhotonProducers/interface/ConversionTrackCandidateProducer.h"
 //
+#include "RecoTracker/CkfPattern/interface/BaseCkfTrajectoryBuilderFactory.h"
 #include "RecoTracker/Record/interface/CkfComponentsRecord.h"
 #include "RecoTracker/Record/interface/TrackerRecoGeometryRecord.h"
 #include "RecoTracker/Record/interface/NavigationSchoolRecord.h"
@@ -44,9 +46,15 @@
 #include "RecoTracker/CkfPattern/interface/BaseCkfTrajectoryBuilder.h"
 #include "RecoTracker/MeasurementDet/interface/MeasurementTrackerEvent.h"
 
+namespace {
+  BaseCkfTrajectoryBuilder *createBaseCkfTrajectoryBuilder(const edm::ParameterSet& pset, edm::ConsumesCollector&& iC) {
+    return BaseCkfTrajectoryBuilderFactory::get()->create(pset.getParameter<std::string>("ComponentType"), pset, iC);
+  }
+}
 
 ConversionTrackCandidateProducer::ConversionTrackCandidateProducer(const edm::ParameterSet& config) : 
   conf_(config), 
+  theTrajectoryBuilder_(createBaseCkfTrajectoryBuilder(config.getParameter<edm::ParameterSet>("TrajectoryBuilder"), consumesCollector())),
   theNavigationSchool_(0), 
   theOutInSeedFinder_(0), 
   theOutInTrackFinder_(0), 
@@ -121,9 +129,6 @@ ConversionTrackCandidateProducer::ConversionTrackCandidateProducer(const edm::Pa
   severitiesexclEE_= 
     StringToEnumValue<EcalSeverityLevel::SeverityLevel>(severitynamesEE);
 
-  // TrajectoryBuilder name
-  trajectoryBuilderName_ = conf_.getParameter<std::string>("TrajectoryBuilder");
-
   // Register the product
   produces< TrackCandidateCollection > (OutInTrackCandidateCollection_);
   produces< TrackCandidateCollection > (InOutTrackCandidateCollection_);
@@ -191,16 +196,14 @@ void ConversionTrackCandidateProducer::produce(edm::Event& theEvent, const edm::
   setEventSetup( theEventSetup );
 
   // get the trajectory builder and initialize it with the data
-  theEventSetup.get<CkfComponentsRecord>().get(trajectoryBuilderName_, theTrajectoryBuilder_);
   edm::Handle<MeasurementTrackerEvent> data;
   theEvent.getByLabel(edm::InputTag("MeasurementTrackerEvent"), data);
-  std::auto_ptr<BaseCkfTrajectoryBuilder> trajectoryBuilder;
-  trajectoryBuilder.reset((dynamic_cast<const BaseCkfTrajectoryBuilder &>(*theTrajectoryBuilder_)).clone(&*data));  
+  theTrajectoryBuilder_->setEvent(theEvent, theEventSetup, &*data);
 
   theOutInSeedFinder_->setEvent(theEvent);
   theInOutSeedFinder_->setEvent(theEvent);
-  theOutInTrackFinder_->setTrajectoryBuilder(*trajectoryBuilder);
-  theInOutTrackFinder_->setTrajectoryBuilder(*trajectoryBuilder);
+  theOutInTrackFinder_->setTrajectoryBuilder(*theTrajectoryBuilder_);
+  theInOutTrackFinder_->setTrajectoryBuilder(*theTrajectoryBuilder_);
 
 // Set the navigation school  
   NavigationSetter setter(*theNavigationSchool_);  

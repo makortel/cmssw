@@ -35,7 +35,9 @@ CompositeTrajectoryFilterESProducer::produce(const TrajectoryFilter::Record & re
        filters.push_back(aFilterH.product());
      }
 
-   CompositeTrajectoryFilterESProducer::ReturnType aFilter( new CompositeTrajectoryFilter(filters));
+   // Return null for now, this class will anyway be removed in a later commit
+   //CompositeTrajectoryFilterESProducer::ReturnType aFilter( new CompositeTrajectoryFilter(filters));
+   CompositeTrajectoryFilterESProducer::ReturnType aFilter;
    
    return aFilter ;
 }

@@ -29,6 +29,28 @@
 
 using namespace std;
 
+CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC):
+  CkfTrajectoryBuilder(conf,
+                       BaseCkfTrajectoryBuilder::createTrajectoryFilter(conf.getParameter<edm::ParameterSet>("trajectoryFilter"), iC),
+                       iC)
+{}
+
+CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf, TrajectoryFilter *filter, edm::ConsumesCollector& iC):
+  BaseCkfTrajectoryBuilder(conf, filter)
+{
+  theMaxCand              = conf.getParameter<int>("maxCand");
+  theLostHitPenalty       = conf.getParameter<double>("lostHitPenalty");
+  theIntermediateCleaning = conf.getParameter<bool>("intermediateCleaning");
+  theAlwaysUseInvalidHits = conf.getParameter<bool>("alwaysUseInvalidHits");
+  /*
+    theSharedSeedCheck = conf.getParameter<bool>("SharedSeedCheck");
+    std::stringstream ss;
+    ss<<"CkfTrajectoryBuilder_"<<conf.getParameter<std::string>("ComponentName")<<"_"<<this;
+    theUniqueName = ss.str();
+    LogDebug("CkfPattern")<<"my unique name is: "<<theUniqueName;
+  */
+}
+
 
 CkfTrajectoryBuilder::
   CkfTrajectoryBuilder(const edm::ParameterSet&              conf,
@@ -62,6 +84,9 @@ CkfTrajectoryBuilder::
   theMeasurementTracker->update(event);
   }
 */
+
+void CkfTrajectoryBuilder::setEvent_(const edm::Event& event, const edm::EventSetup& iSetup) {  
+}
 
 CkfTrajectoryBuilder::TrajectoryContainer 
 CkfTrajectoryBuilder::trajectories(const TrajectorySeed& seed) const

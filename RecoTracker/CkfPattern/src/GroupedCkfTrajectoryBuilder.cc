@@ -106,6 +106,47 @@ using namespace std;
 #endif
 =================================== */
 
+GroupedCkfTrajectoryBuilder::GroupedCkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC):
+  BaseCkfTrajectoryBuilder(conf,
+                           BaseCkfTrajectoryBuilder::createTrajectoryFilter(conf.getParameter<edm::ParameterSet>("trajectoryFilter"), iC),
+                           conf.getParameter<bool>("useSameTrajFilter") ?
+                             BaseCkfTrajectoryBuilder::createTrajectoryFilter(conf.getParameter<edm::ParameterSet>("trajectoryFilter"), iC) :
+                             BaseCkfTrajectoryBuilder::createTrajectoryFilter(conf.getParameter<edm::ParameterSet>("inOutTrajectoryFilter"), iC)
+                           )
+{
+  // fill data members from parameters (eventually data members could be dropped)
+  //
+  theMaxCand                  = conf.getParameter<int>("maxCand");
+
+  theLostHitPenalty           = conf.getParameter<double>("lostHitPenalty");
+  theFoundHitBonus            = conf.getParameter<double>("foundHitBonus");
+  theIntermediateCleaning     = conf.getParameter<bool>("intermediateCleaning");
+  theAlwaysUseInvalid         = conf.getParameter<bool>("alwaysUseInvalidHits");
+  theLockHits                 = conf.getParameter<bool>("lockHits");
+  theBestHitOnly              = conf.getParameter<bool>("bestHitOnly");
+  theMinNrOf2dHitsForRebuild  = 2;
+  theRequireSeedHitsInRebuild = conf.getParameter<bool>("requireSeedHitsInRebuild");
+  theKeepOriginalIfRebuildFails = conf.getParameter<bool>("keepOriginalIfRebuildFails");
+  theMinNrOfHitsForRebuild    = max(0,conf.getParameter<int>("minNrOfHitsForRebuild"));
+  maxPt2ForLooperReconstruction     = conf.existsAs<double>("maxPtForLooperReconstruction") ? 
+    conf.getParameter<double>("maxPtForLooperReconstruction") : 0;
+  maxPt2ForLooperReconstruction *=maxPt2ForLooperReconstruction;
+  maxDPhiForLooperReconstruction     = conf.existsAs<double>("maxDPhiForLooperReconstruction") ? 
+    conf.getParameter<double>("maxDPhiForLooperReconstruction") : 2.0;
+
+
+  /* ======= B.M. to be ported layer ===========
+  bool setOK = thePropagator->setMaxDirectionChange(1.6);
+  if (!setOK) 
+    cout  << "GroupedCkfTrajectoryBuilder WARNING: "
+	  << "propagator does not support setMaxDirectionChange" 
+	  << endl;
+  //   addStopCondition(theMinPtStopCondition);
+
+  theConfigurableCondition = createAlgo<TrajectoryFilter>(componentConfig("StopCondition"));
+  ===================================== */
+
+}
 
 GroupedCkfTrajectoryBuilder::
 GroupedCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
@@ -168,6 +209,9 @@ GroupedCkfTrajectoryBuilder::clone(const MeasurementTrackerEvent *data) const {
     GroupedCkfTrajectoryBuilder *ret = new GroupedCkfTrajectoryBuilder(*this);
     ret->setData(data);
     return ret;
+}
+
+void GroupedCkfTrajectoryBuilder::setEvent_(const edm::Event& event, const edm::EventSetup& iSetup) {
 }
 
 GroupedCkfTrajectoryBuilder::TrajectoryContainer 

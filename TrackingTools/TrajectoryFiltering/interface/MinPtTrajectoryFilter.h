@@ -20,12 +20,11 @@ public:
 
   explicit MinPtTrajectoryFilter( double ptMin, float nSigma = 5.F, int nH=3): thePtMin( ptMin), theNSigma(nSigma), theMinHits(nH)  {}
 
-  explicit MinPtTrajectoryFilter( const edm::ParameterSet & pset) :
+  explicit MinPtTrajectoryFilter( const edm::ParameterSet & pset, edm::ConsumesCollector& iC) :
     thePtMin(pset.getParameter<double>("minPt")),
     theNSigma(pset.getParameter<double>("nSigmaMinPt")),
     theMinHits(pset.getParameter<int>("minHitsMinPt")){}
     
-
   virtual bool qualityFilter( const Trajectory& traj)const { return test(traj.lastMeasurement(),traj.foundHits()); }
   virtual bool qualityFilter( const TempTrajectory& traj) const { return test(traj.lastMeasurement(),traj.foundHits()); }
     
