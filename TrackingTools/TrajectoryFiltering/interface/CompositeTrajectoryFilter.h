@@ -17,13 +17,13 @@ public:
 
   explicit CompositeTrajectoryFilter(){filters.clear();}
   explicit CompositeTrajectoryFilter(std::vector< const TrajectoryFilter *> & f){filters=f;}
-  explicit CompositeTrajectoryFilter( const edm::ParameterSet & pset)
+  explicit CompositeTrajectoryFilter( const edm::ParameterSet & pset, edm::ConsumesCollector& iC)
   {
     //look for VPSet of filters
     std::vector<edm::ParameterSet> vpset=pset.getParameter<std::vector<edm::ParameterSet> >("filters");
     for (unsigned int i=0;i!= vpset.size();i++)
       {filters.push_back(TrajectoryFilterFactory::get()->create(vpset[i].getParameter<std::string>("ComponentType"),
-								vpset[i]));}
+								vpset[i], iC));}
   }
   
   ~CompositeTrajectoryFilter() {}

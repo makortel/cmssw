@@ -16,7 +16,7 @@ public:
 
   explicit ChargeSignificanceTrajectoryFilter( double qsig):  theChargeSignificance(qsig) {}
 
-  explicit ChargeSignificanceTrajectoryFilter( const edm::ParameterSet & pset):
+  explicit ChargeSignificanceTrajectoryFilter( const edm::ParameterSet & pset, edm::ConsumesCollector& iC):
     theChargeSignificance(pset.getParameter<double>("chargeSignificance")) {}
 
    ChargeSignificanceTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {

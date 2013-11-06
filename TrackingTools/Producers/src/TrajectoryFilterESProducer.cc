@@ -37,7 +37,8 @@ TrajectoryFilterESProducer::produce(const TrajectoryFilter::Record &)
    edm::LogInfo("TrajectoryFilterESProducer")<<"producing: "<<componentName<<" of type: "<<componentType;
 
    //produce the filter using the plugin factory
-   TrajectoryFilterESProducer::ReturnType aFilter(TrajectoryFilterFactory::get()->create(componentType ,filterPset));
+   //TrajectoryFilterESProducer::ReturnType aFilter(TrajectoryFilterFactory::get()->create(componentType ,filterPset));
+   TrajectoryFilterESProducer::ReturnType aFilter;
    
    return aFilter ;
 }

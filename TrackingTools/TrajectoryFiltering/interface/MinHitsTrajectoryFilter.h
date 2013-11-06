@@ -15,7 +15,7 @@ public:
 
   explicit MinHitsTrajectoryFilter( int minHits=-1):theMinHits( minHits) {}
 
-  explicit MinHitsTrajectoryFilter( const edm::ParameterSet & pset): theMinHits( pset.getParameter<int>("minimumNumberOfHits")) {}
+  explicit MinHitsTrajectoryFilter( const edm::ParameterSet & pset, edm::ConsumesCollector& iC): theMinHits( pset.getParameter<int>("minimumNumberOfHits")) {}
     
   MinHitsTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
     return new MinHitsTrajectoryFilter(*this);

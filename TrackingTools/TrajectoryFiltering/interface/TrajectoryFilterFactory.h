@@ -11,7 +11,7 @@ namespace edm {
   class ConsumesCollector;
 }
 
-typedef edmplugin::PluginFactory< TrajectoryFilter* (const edm::ParameterSet&) > TrajectoryFilterFactory;
+typedef edmplugin::PluginFactory< TrajectoryFilter* (const edm::ParameterSet&, edm::ConsumesCollector& iC) > TrajectoryFilterFactory;
 
 TrajectoryFilter *createTrajectoryFilter(const edm::ParameterSet& pset, const std::string& psetName, edm::ConsumesCollector& iC);
 inline

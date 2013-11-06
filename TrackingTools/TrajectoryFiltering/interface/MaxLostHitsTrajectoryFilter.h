@@ -8,7 +8,7 @@ public:
 
   explicit MaxLostHitsTrajectoryFilter( int maxHits=-1): theMaxLostHits( maxHits) {}
   
-  explicit MaxLostHitsTrajectoryFilter( const edm::ParameterSet & pset):
+  explicit MaxLostHitsTrajectoryFilter( const edm::ParameterSet & pset, edm::ConsumesCollector& iC):
     theMaxLostHits( pset.getParameter<int>("maxLostHits")) {}
 
   MaxLostHitsTrajectoryFilter *clone(const edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
