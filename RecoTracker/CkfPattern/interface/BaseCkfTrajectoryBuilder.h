@@ -33,9 +33,14 @@ class TrajectoryFilter;
 class TrackingRegion;
 class TrajectoryMeasurementGroup;
 class TrajectoryCleaner;
+namespace edm {
+  class ConsumesCollector;
+}
 
 #include "TrackingTools/PatternTools/interface/bqueue.h"
 #include "RecoTracker/CkfPattern/interface/PrintoutHelper.h"
+
+#include <string>
 
 /** The component of track reconstruction that, strating from a seed,
  *  reconstructs all possible trajectories.
@@ -57,7 +62,11 @@ public:
   typedef std::vector<Trajectory> TrajectoryContainer;
   typedef std::vector<TempTrajectory> TempTrajectoryContainer;
   typedef TrajectoryContainer::iterator TrajectoryIterator;
-  
+
+  BaseCkfTrajectoryBuilder(const edm::ParameterSet& conf,
+                           const TrajectoryFilter *filter,
+                           const TrajectoryFilter *inOutFilter=nullptr);
+
   BaseCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 			   const TrajectoryStateUpdator*         updator,
 			   const Propagator*                     propagatorAlong,
@@ -69,6 +78,8 @@ public:
 
   BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &other) = default ;
   virtual ~BaseCkfTrajectoryBuilder();
+
+  static TrajectoryFilter *createTrajectoryFilter(const edm::ParameterSet& pset);
 
   // new interface returning the start Trajectory...
   virtual TempTrajectory buildTrajectories (const TrajectorySeed& seed,
@@ -83,6 +94,7 @@ public:
   virtual void setEvent(const edm::Event& event) const ;
   virtual void unset() const;
 
+  void setEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const MeasurementTrackerEvent *data);
   // Return a clone of this, with the data pointer set
   virtual BaseCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const = 0;
 
@@ -95,6 +107,8 @@ public:
   //  int 		maxConsecLostHit()	{return theMaxConsecLostHit;}
 
  protected:    
+  virtual void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
+
   //methods for dubugging 
   virtual bool analyzeMeasurementsDebugger(Trajectory& traj, const std::vector<TrajectoryMeasurement>& meas,
 					   const MeasurementTrackerEvent* theMeasurementTracker, 
@@ -157,6 +171,13 @@ public:
   //  TrajectoryFilter*              theMaxHitsCondition;
   const TrajectoryFilter* theFilter; /** Filter used at end of complete tracking */
   const TrajectoryFilter* theInOutFilter; /** Filter used at end of in-out tracking */
+
+  // for EventSetup
+  const std::string theUpdatorName;
+  const std::string thePropagatorAlongName;
+  const std::string thePropagatorOppositeName;
+  const std::string theEstimatorName;
+  const std::string theRecHitBuilderName;
 };
 
 

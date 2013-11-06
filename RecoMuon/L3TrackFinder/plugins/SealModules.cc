@@ -12,3 +12,7 @@
 
 DEFINE_FWK_EVENTSETUP_MODULE(MuonRoadTrajectoryBuilderESProducer);
 DEFINE_FWK_EVENTSETUP_MODULE(MuonCkfTrajectoryBuilderESProducer);
+
+#include "RecoTracker/CkfPattern/interface/BaseCkfTrajectoryBuilderFactory.h"
+
+DEFINE_EDM_PLUGIN(BaseCkfTrajectoryBuilderFactory, MuonCkfTrajectoryBuilder, "MuonCkfTrajectoryBuilder");

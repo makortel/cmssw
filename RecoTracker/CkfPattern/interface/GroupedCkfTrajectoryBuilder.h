@@ -25,6 +25,8 @@ class GroupedCkfTrajectoryBuilder : public BaseCkfTrajectoryBuilder {
   
  public:
   /// constructor from ParameterSet
+  GroupedCkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
+
   GroupedCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 			      const TrajectoryStateUpdator*         updator,
 			      const Propagator*                     propagatorAlong,
@@ -102,6 +104,7 @@ class GroupedCkfTrajectoryBuilder : public BaseCkfTrajectoryBuilder {
   double mass() {return theMass;}
 
 protected:
+  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
   virtual void analyseSeed(const TrajectorySeed& seed) const{}
 

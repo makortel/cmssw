@@ -38,6 +38,8 @@ public:
   typedef std::vector<Trajectory>         TrajectoryContainer;
   typedef std::vector<TempTrajectory>     TempTrajectoryContainer;
 
+  CkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
+
   CkfTrajectoryBuilder(const edm::ParameterSet&              conf,
 		       const TrajectoryStateUpdator*         updator,
 		       const Propagator*                     propagatorAlong,
@@ -54,7 +56,7 @@ public:
     ret->setData(data);
     return ret;
   }
-  
+
   /// trajectories building starting from a seed
   virtual TrajectoryContainer trajectories(const TrajectorySeed& seed) const;
   /// trajectories building starting from a seed
@@ -84,6 +86,8 @@ public:
 
 
  protected:
+  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
   virtual void findCompatibleMeasurements(const TrajectorySeed&seed, const TempTrajectory& traj, std::vector<TrajectoryMeasurement> & result) const;
 
   void limitedCandidates(const TrajectorySeed&seed, TempTrajectory& startingTraj, TrajectoryContainer& result) const;
