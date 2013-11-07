@@ -296,5 +296,7 @@ void BaseCkfTrajectoryBuilder::setEvent(const edm::Event& iEvent, const edm::Eve
   theTTRHBuilder = recHitBuilderHandle.product();
 
   setData(data);
+  if(theFilter) theFilter->setEvent(iEvent, iSetup);
+  if(theInOutFilter) theInOutFilter->setEvent(iEvent, iSetup);
   setEvent_(iEvent, iSetup);
 }
