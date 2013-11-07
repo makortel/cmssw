@@ -44,6 +44,9 @@ public:
     theMinPtTrajectoryFilter(minPt),
     theLooperTrajectoryFilter(looper)
   {}
+
+  CkfBaseTrajectoryFilter(const CkfBaseTrajectoryFilter&) = delete;
+  CkfBaseTrajectoryFilter& operator=(const CkfBaseTrajectoryFilter&) = delete;
   
   void setEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup) override {
     theChargeSignificanceTrajectoryFilter->setEvent(iEvent, iSetup);
