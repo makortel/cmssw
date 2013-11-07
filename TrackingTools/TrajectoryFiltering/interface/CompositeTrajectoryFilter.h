@@ -24,6 +24,8 @@ public:
       {filters.emplace_back(TrajectoryFilterFactory::get()->create(vpset[i].getParameter<std::string>("ComponentType"),
                                                                    vpset[i], iC));}
   }
+  CompositeTrajectoryFilter(const CompositeTrajectoryFilter&) = delete;
+  CompositeTrajectoryFilter& operator=(const CompositeTrajectoryFilter&) = delete;
   
   ~CompositeTrajectoryFilter() {}
 

@@ -31,6 +31,9 @@ public:
     
     }
   }
+
+  CompositeLogicalTrajectoryFilter(const CompositeLogicalTrajectoryFilter&) = delete;
+  CompositeLogicalTrajectoryFilter& operator=(const CompositeLogicalTrajectoryFilter&) = delete;
   
   ~CompositeLogicalTrajectoryFilter() {}
 

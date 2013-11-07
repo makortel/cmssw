@@ -67,7 +67,8 @@ public:
                            TrajectoryFilter *filter,
                            TrajectoryFilter *inOutFilter=nullptr);
 
-  BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &other) = delete;
+  BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder&) = delete;
+  BaseCkfTrajectoryBuilder& operator=(const BaseCkfTrajectoryBuilder&) = delete;
   virtual ~BaseCkfTrajectoryBuilder();
 
   static TrajectoryFilter *createTrajectoryFilter(const edm::ParameterSet& pset, edm::ConsumesCollector& iC);
