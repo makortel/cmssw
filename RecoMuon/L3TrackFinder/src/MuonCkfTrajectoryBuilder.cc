@@ -16,25 +16,17 @@
 
 MuonCkfTrajectoryBuilder::MuonCkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC):
   CkfTrajectoryBuilder(conf, iC),
+  theDeltaEta(conf.getParameter<double>("deltaEta")),
+  theDeltaPhi(conf.getParameter<double>("deltaPhi")),
   theProximityPropagatorName(conf.getParameter<std::string>("propagatorProximity")),
   theProximityPropagator(nullptr)
 {
   //and something specific to me ?
   theUseSeedLayer = conf.getParameter<bool>("useSeedLayer");
   theRescaleErrorIfFail = conf.getParameter<double>("rescaleErrorIfFail");
-  double dEta=conf.getParameter<double>("deltaEta");
-  double dPhi=conf.getParameter<double>("deltaPhi");
-  if (dEta>0 && dPhi>0)
-    theEtaPhiEstimator = new EtaPhiEstimator(dEta,dPhi,theEstimator);
-  else theEtaPhiEstimator = (Chi2MeasurementEstimatorBase*)0;
-
-
 }
 
-MuonCkfTrajectoryBuilder::~MuonCkfTrajectoryBuilder()
-{
-  if (theEtaPhiEstimator) delete theEtaPhiEstimator;
-}
+MuonCkfTrajectoryBuilder::~MuonCkfTrajectoryBuilder() {}
 
 void MuonCkfTrajectoryBuilder::setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   CkfTrajectoryBuilder::setEvent_(iEvent, iSetup);
@@ -42,6 +34,12 @@ void MuonCkfTrajectoryBuilder::setEvent_(const edm::Event& iEvent, const edm::Ev
   edm::ESHandle<Propagator> propagatorProximityHandle;
   iSetup.get<TrackingComponentsRecord>().get(theProximityPropagatorName, propagatorProximityHandle);
   theProximityPropagator = propagatorProximityHandle.product();
+
+  // theEstimator is set for this event in the base class
+  if (theDeltaEta>0 && theDeltaPhi>0)
+    theEtaPhiEstimator.reset(new EtaPhiEstimator(theDeltaEta, theDeltaPhi, theEstimator));
+  else
+    theEtaPhiEstimator.reset(nullptr);
 }
 
 

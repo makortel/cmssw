@@ -19,9 +19,11 @@ class MuonCkfTrajectoryBuilder : public CkfTrajectoryBuilder {
   //and other fields
   bool theUseSeedLayer;
   double theRescaleErrorIfFail;
+  const double theDeltaEta;
+  const double theDeltaPhi;
   const std::string theProximityPropagatorName;
   const Propagator * theProximityPropagator;
-  Chi2MeasurementEstimatorBase * theEtaPhiEstimator;
+  std::unique_ptr<Chi2MeasurementEstimatorBase> theEtaPhiEstimator;
   
 };
 
