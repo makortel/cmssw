@@ -15,14 +15,14 @@ class TrajectoryStateOnSurface;
 class FastHelix;
 class GlobalTrajectoryParameters;
 
-namespace edm { class EventSetup; }
+namespace edm { class Event; class EventSetup; }
 
 #include "TrackingTools/TransientTrackingRecHit/interface/TransientTrackingRecHit.h"
 
 class SeedComparitor {
  public:
   virtual ~SeedComparitor() {}
-  virtual void init(const edm::EventSetup& es) = 0;
+  virtual void init(const edm::Event& ev, const edm::EventSetup& es) = 0;
   virtual bool compatible(const SeedingHitSet  &hits, const TrackingRegion & region) const = 0;
   virtual bool compatible(const TrajectorySeed &seed) const = 0;
   virtual bool compatible(const TrajectoryStateOnSurface &,  
