@@ -15,7 +15,7 @@
 using namespace std;
 using namespace ctfseeding;
 
-CombinedMultiHitGenerator::CombinedMultiHitGenerator(const edm::ParameterSet& cfg):
+CombinedMultiHitGenerator::CombinedMultiHitGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC):
   theSeedingLayerSrc(cfg.getParameter<edm::InputTag>("SeedingLayers"))
 {
   edm::ParameterSet generatorPSet = cfg.getParameter<edm::ParameterSet>("GeneratorPSet");

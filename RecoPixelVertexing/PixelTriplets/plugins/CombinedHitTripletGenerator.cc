@@ -16,7 +16,7 @@
 using namespace std;
 using namespace ctfseeding;
 
-CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet& cfg) :
+CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC) :
   theSeedingLayerSrc(cfg.getParameter<edm::InputTag>("SeedingLayers"))
 {
   edm::ParameterSet generatorPSet = cfg.getParameter<edm::ParameterSet>("GeneratorPSet");
