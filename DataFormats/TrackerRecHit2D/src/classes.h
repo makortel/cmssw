@@ -24,6 +24,7 @@
 #include "DataFormats/TrackerRecHit2D/interface/ProjectedSiStripRecHit2D.h"
 #include "DataFormats/TrackerRecHit2D/interface/ClusterRemovalInfo.h"
 #include "DataFormats/TrackerRecHit2D/interface/SiTrackerMultiRecHit.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelClusterShapeCache.h"
 #include <vector>
 
 namespace DataFormats_TrackerRecHit2D {
@@ -151,6 +152,9 @@ namespace DataFormats_TrackerRecHit2D {
     edm::Wrapper<edmNew::DetSetVector<SiPixelRecHit> > wdstvDummy3;
 
     edm::Wrapper<reco::ClusterRemovalInfo> clusterRemovalInfo;
+
+    SiPixelClusterShapeCache clusterShapeCache;
+    edm::Wrapper<SiPixelClusterShapeCache> wclusterShapeCache;
   };
 }
 

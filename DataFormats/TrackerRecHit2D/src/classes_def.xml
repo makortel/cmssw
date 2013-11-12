@@ -142,4 +142,6 @@
   <class name="reco::ClusterRemovalInfo::SiPixelClusterRefProd" />
   <class name="reco::ClusterRemovalInfo::SiStripClusterRefProd" />
   <class name="edm::Wrapper<reco::ClusterRemovalInfo>" />
+ <class name="SiPixelClusterShapeCache"/>
+ <class name="edm::Wrapper<SiPixelClusterShapeCache>" persistent="false"/>
 </lcgdict>
