@@ -14,7 +14,7 @@
 using namespace std;
 using namespace ctfseeding;
 
-CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet& cfg)
+CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC)
   : initialised(false), theConfig(cfg)
 { }
 
