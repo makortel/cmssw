@@ -14,6 +14,7 @@
 
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
 
+namespace edm { class ConsumesCollector; }
 
 class HitTripletGeneratorFromPairAndLayers : public HitTripletGenerator {
 

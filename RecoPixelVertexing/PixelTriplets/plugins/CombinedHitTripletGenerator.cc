@@ -20,7 +20,7 @@ CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet
 {
   edm::ParameterSet generatorPSet = cfg.getParameter<edm::ParameterSet>("GeneratorPSet");
   std::string       generatorName = generatorPSet.getParameter<std::string>("ComponentName");
-  theGeneratorPrototype.reset(HitTripletGeneratorFromPairAndLayersFactory::get()->create(generatorName,generatorPSet));
+  theGeneratorPrototype.reset(HitTripletGeneratorFromPairAndLayersFactory::get()->create(generatorName,generatorPSet, iC));
 }
 
 void CombinedHitTripletGenerator::init(const edm::EventSetup& es)
