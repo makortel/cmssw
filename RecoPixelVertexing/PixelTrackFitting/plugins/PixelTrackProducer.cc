@@ -2,6 +2,7 @@
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -16,7 +17,7 @@ using namespace pixeltrackfitting;
 using edm::ParameterSet;
 
 PixelTrackProducer::PixelTrackProducer(const ParameterSet& cfg)
-  : theReconstruction(cfg)
+  : theReconstruction(cfg, consumesCollector())
 {
   edm::LogInfo("PixelTrackProducer")<<" construction...";
   produces<reco::TrackCollection>();

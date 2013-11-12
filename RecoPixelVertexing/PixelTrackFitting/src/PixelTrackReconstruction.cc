@@ -33,8 +33,8 @@ using namespace pixeltrackfitting;
 using namespace ctfseeding;
 using edm::ParameterSet;
 
-PixelTrackReconstruction::PixelTrackReconstruction(const ParameterSet& cfg)
-  : theConfig(cfg), theFitter(0), theFilter(0), theCleaner(0), theGenerator(0), theRegionProducer(0), theMerger_(0)
+PixelTrackReconstruction::PixelTrackReconstruction(const ParameterSet& cfg, edm::ConsumesCollector&& iC)
+  : theConfig(cfg), theFitter(0), theFilter(0), theCleaner(0), theRegionProducer(0), theMerger_(0)
 {
   if ( cfg.exists("SeedMergerPSet") ) {
     edm::ParameterSet mergerPSet = theConfig.getParameter<edm::ParameterSet>( "SeedMergerPSet" );
