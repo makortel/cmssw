@@ -12,12 +12,12 @@ class OrderedHitsGenerator;
 class TrackingRegionProducer;
 class QuadrupletSeedMerger;
 
-namespace edm { class Event; class EventSetup; class Run; }
+namespace edm { class Event; class EventSetup; class Run; class ConsumesCollector;}
 
 class PixelTrackReconstruction {
 public:
 
-  PixelTrackReconstruction( const edm::ParameterSet& conf);
+  PixelTrackReconstruction( const edm::ParameterSet& conf, edm::ConsumesCollector&& iC);
   ~PixelTrackReconstruction(); 
 
   void run(pixeltrackfitting::TracksWithTTRHs& tah, edm::Event& ev, const edm::EventSetup& es);
