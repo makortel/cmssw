@@ -24,7 +24,7 @@ public:
 
 public:
 
-  CombinedHitTripletGenerator( const edm::ParameterSet& cfg);
+  CombinedHitTripletGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
 
   virtual ~CombinedHitTripletGenerator();
 

@@ -11,6 +11,9 @@
 using namespace std;
 using namespace ctfseeding;
 
+CombinedHitPairGenerator::CombinedHitPairGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC):
+  CombinedHitPairGenerator(cfg)
+{}
 CombinedHitPairGenerator::CombinedHitPairGenerator(const edm::ParameterSet& cfg)
   : initialised(false), theConfig(cfg)
 {
