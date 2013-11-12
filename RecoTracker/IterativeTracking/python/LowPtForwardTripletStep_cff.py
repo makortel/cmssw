@@ -41,7 +41,8 @@ lowPtForwardTripletStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriple
 lowPtForwardTripletStepSeeds.OrderedHitsFactoryPSet.SeedingLayers = 'lowPtForwardTripletStepSeedLayers'
 
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
-lowPtForwardTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet.ComponentName = 'LowPtClusterShapeSeedComparitor'
+import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cff
+lowPtForwardTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cff.LowPtClusterShapeSeedComparitor
 
 
 # QUALITY CUTS DURING TRACK BUILDING
