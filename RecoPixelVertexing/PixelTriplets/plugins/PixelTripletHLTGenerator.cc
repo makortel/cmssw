@@ -45,7 +45,7 @@ PixelTripletHLTGenerator:: PixelTripletHLTGenerator(const edm::ParameterSet& cfg
     cfg.getParameter<edm::ParameterSet>("SeedComparitorPSet");
   std::string comparitorName = comparitorPSet.getParameter<std::string>("ComponentName");
   if(comparitorName != "none") {
-    theComparitor.reset( SeedComparitorFactory::get()->create( comparitorName, comparitorPSet) );
+    theComparitor.reset( SeedComparitorFactory::get()->create( comparitorName, comparitorPSet, iC) );
   }
 }
 
