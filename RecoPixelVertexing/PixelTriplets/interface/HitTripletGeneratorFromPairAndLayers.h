@@ -23,6 +23,7 @@ public:
   virtual ~HitTripletGeneratorFromPairAndLayers() {}
   virtual void init( const HitPairGenerator & pairs, 
     const std::vector<ctfseeding::SeedingLayer>& layers, LayerCacheType* layerCache) = 0; 
+  virtual HitTripletGeneratorFromPairAndLayers *clone() const = 0; // To be replaced by taking SeedingLayers out of EventSetup? (see CombinedHiTripletGenerator::init())
 };
 #endif
 

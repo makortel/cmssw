@@ -16,6 +16,8 @@
 #include "TrackingTools/DetLayers/interface/DetLayer.h"
 #include "DataFormats/GeometrySurface/interface/SimpleDiskBounds.h"
 
+#include <memory>
+
 typedef PixelRecoRange<float> Range;
 template<class T> T sqr(T t) { return t * t;}
 
@@ -31,6 +33,13 @@ PixelTripletNoTipGenerator:: PixelTripletNoTipGenerator(const edm::ParameterSet&
       theNSigma(cfg.getParameter<double>("nSigma")),
       theChi2Cut(cfg.getParameter<double>("chi2Cut"))
 { }
+
+PixelTripletNoTipGenerator *PixelTripletNoTipGenerator::clone() const {
+  std::unique_ptr<PixelTripletNoTipGenerator> ret(new PixelTripletNoTipGenerator(*this));
+  if(thePairGenerator)
+    ret->thePairGenerator = thePairGenerator->clone();
+  return ret.release();
+}
 
 void PixelTripletNoTipGenerator::init( const HitPairGenerator & pairs,
       const std::vector<SeedingLayer> & layers,

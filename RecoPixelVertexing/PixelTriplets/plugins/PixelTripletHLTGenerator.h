@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <vector>
+#include <memory>
 
 class SeedComparitor;
 
@@ -28,6 +29,8 @@ public:
   PixelTripletHLTGenerator( const edm::ParameterSet& cfg); 
 
   virtual ~PixelTripletHLTGenerator();
+
+  PixelTripletHLTGenerator *clone() const override;
 
   virtual void init( const HitPairGenerator & pairs,
       const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
@@ -54,7 +57,7 @@ private:
   bool useMScat;
   bool useBend;
   float dphi;
-  SeedComparitor * theComparitor;
+  std::shared_ptr<SeedComparitor> theComparitor; // shared onlye because of clone()
 
 };
 #endif

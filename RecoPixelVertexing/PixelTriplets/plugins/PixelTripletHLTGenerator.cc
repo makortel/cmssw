@@ -44,13 +44,20 @@ PixelTripletHLTGenerator:: PixelTripletHLTGenerator(const edm::ParameterSet& cfg
   edm::ParameterSet comparitorPSet =
     cfg.getParameter<edm::ParameterSet>("SeedComparitorPSet");
   std::string comparitorName = comparitorPSet.getParameter<std::string>("ComponentName");
-  theComparitor = (comparitorName == "none") ?
-    0 :  SeedComparitorFactory::get()->create( comparitorName, comparitorPSet);
+  if(comparitorName != "none") {
+    theComparitor.reset( SeedComparitorFactory::get()->create( comparitorName, comparitorPSet) );
+  }
 }
 
 PixelTripletHLTGenerator::~PixelTripletHLTGenerator() { 
   delete thePairGenerator;
-  delete theComparitor;
+}
+
+PixelTripletHLTGenerator *PixelTripletHLTGenerator::clone() const {
+  std::unique_ptr<PixelTripletHLTGenerator> ret(new PixelTripletHLTGenerator(*this));
+  if(thePairGenerator)
+    ret->thePairGenerator = thePairGenerator->clone();
+  return ret.release();
 }
 
 void PixelTripletHLTGenerator::init( const HitPairGenerator & pairs,
