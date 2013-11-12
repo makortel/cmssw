@@ -19,7 +19,7 @@ assign the parameters to some data member to avoid search at every event
 //#define mydebug_knuenz
 
 PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
-PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(const edm::ParameterSet & conf)
+PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(const edm::ParameterSet & conf, edm::ConsumesCollector&& iC)
   :_conf(conf),seedCollection(0),
    hitsfactoryPSet(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet")),   
    creatorPSet(conf.getParameter<edm::ParameterSet>("SeedCreatorPSet")),
