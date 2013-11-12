@@ -7,6 +7,7 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "RecoTracker/ConversionSeedGenerators/interface/PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo.h"
@@ -32,7 +33,7 @@ PhotonConversionTrajectorySeedProducerFromQuadruplets(const edm::ParameterSet& c
   : _conf(conf),
     _newSeedCandidates(conf.getParameter<std::string>( "newSeedCandidates"))
 {
-  _theFinder = new PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(conf);
+  _theFinder = new PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(conf, consumesCollector());
   produces<TrajectorySeedCollection>(_newSeedCandidates);
 
 }
