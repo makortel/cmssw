@@ -72,7 +72,8 @@ pixelLessStepSeeds.SeedComparitorPSet = cms.PSet(
         FilterAtHelixStage = cms.bool(True),
         FilterPixelHits = cms.bool(False),
         FilterStripHits = cms.bool(True),
-        ClusterShapeHitFilterName = cms.string('ClusterShapeHitFilter')
+        ClusterShapeHitFilterName = cms.string('ClusterShapeHitFilter'),
+        ClusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCache')
     )
 
 # QUALITY CUTS DURING TRACK BUILDING
