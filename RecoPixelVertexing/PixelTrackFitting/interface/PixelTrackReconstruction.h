@@ -29,7 +29,7 @@ public:
 private:
   edm::ParameterSet theConfig;
   const PixelFitter       * theFitter;
-  PixelTrackFilter  * theFilter;
+  std::unique_ptr<PixelTrackFilter> theFilter;
   PixelTrackCleaner * theCleaner;
   std::unique_ptr<OrderedHitsGenerator> theGenerator;
   TrackingRegionProducer* theRegionProducer;

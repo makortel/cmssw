@@ -34,7 +34,7 @@ using namespace ctfseeding;
 using edm::ParameterSet;
 
 PixelTrackReconstruction::PixelTrackReconstruction(const ParameterSet& cfg, edm::ConsumesCollector&& iC)
-  : theConfig(cfg), theFitter(0), theFilter(0), theCleaner(0), theRegionProducer(0), theMerger_(0)
+  : theConfig(cfg), theFitter(0), theCleaner(0), theRegionProducer(0), theMerger_(0)
 {
   if ( cfg.exists("SeedMergerPSet") ) {
     edm::ParameterSet mergerPSet = theConfig.getParameter<edm::ParameterSet>( "SeedMergerPSet" );
@@ -53,6 +53,15 @@ PixelTrackReconstruction::PixelTrackReconstruction(const ParameterSet& cfg, edm:
       theConfig.getParameter<ParameterSet>("OrderedHitsFactoryPSet");
   std::string orderedName = orderedPSet.getParameter<std::string>("ComponentName");
   theGenerator.reset(OrderedHitsGeneratorFactory::get()->create( orderedName, orderedPSet, iC));
+
+  ParameterSet filterPSet = theConfig.getParameter<ParameterSet>("FilterPSet");
+  std::string  filterName = filterPSet.getParameter<std::string>("ComponentName");
+  if (filterName != "none") {
+    theFilter.reset(PixelTrackFilterFactory::get()->create( filterName, filterPSet, iC));
+    if(theConfig.exists("useFilterWithES")) {
+      edm::LogInfo("Obsolete") << "useFilterWithES parameter is obsolete and can be removed";
+    }
+  }
 }
   
 PixelTrackReconstruction::~PixelTrackReconstruction() 
@@ -62,7 +71,6 @@ PixelTrackReconstruction::~PixelTrackReconstruction()
 
 void PixelTrackReconstruction::halt()
 {
-  delete theFilter; theFilter=0;
   delete theFitter; theFitter=0;
   delete theCleaner; theCleaner=0;
   delete theRegionProducer; theRegionProducer=0;
@@ -78,14 +86,6 @@ void PixelTrackReconstruction::init(const edm::EventSetup& es)
   ParameterSet fitterPSet = theConfig.getParameter<ParameterSet>("FitterPSet");
   std::string fitterName = fitterPSet.getParameter<std::string>("ComponentName");
   theFitter = PixelFitterFactory::get()->create( fitterName, fitterPSet);
-
-  ParameterSet filterPSet = theConfig.getParameter<ParameterSet>("FilterPSet");
-  std::string  filterName = filterPSet.getParameter<std::string>("ComponentName");
-  if (filterName != "none") {
-    theFilter = theConfig.getParameter<bool>("useFilterWithES") ?
-      PixelTrackFilterWithESFactory::get()->create( filterName, filterPSet, es) :
-      PixelTrackFilterFactory::get()->create( filterName, filterPSet);
-  }
 
   ParameterSet cleanerPSet = theConfig.getParameter<ParameterSet>("CleanerPSet");
   std::string  cleanerName = cleanerPSet.getParameter<std::string>("ComponentName");
@@ -107,7 +107,7 @@ void PixelTrackReconstruction::run(TracksWithTTRHs& tracks, edm::Event& ev, cons
   es.get<IdealGeometryRecord>().get(tTopoHand);
   const TrackerTopology *tTopo=tTopoHand.product();
 
-  if (theFilter) theFilter->update(ev);
+  if (theFilter) theFilter->update(ev, es);
 
   for (IR ir=regions.begin(), irEnd=regions.end(); ir < irEnd; ++ir) {
     const TrackingRegion & region = **ir;
