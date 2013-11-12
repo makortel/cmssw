@@ -14,7 +14,7 @@
 using namespace std;
 using namespace ctfseeding;
 
-CombinedMultiHitGenerator::CombinedMultiHitGenerator(const edm::ParameterSet& cfg)
+CombinedMultiHitGenerator::CombinedMultiHitGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC)
   : initialised(false), theConfig(cfg)
 { }
 

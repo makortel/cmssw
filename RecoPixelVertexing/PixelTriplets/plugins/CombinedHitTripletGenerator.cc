@@ -14,18 +14,22 @@
 using namespace std;
 using namespace ctfseeding;
 
-CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet& cfg)
-  : initialised(false), theConfig(cfg)
-{ }
+CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC)
+  : initialised(false),
+    theLayerBuilderName(cfg.getParameter<std::string>("SeedingLayers"))
+{
+  edm::ParameterSet generatorPSet = cfg.getParameter<edm::ParameterSet>("GeneratorPSet");
+  std::string       generatorName = generatorPSet.getParameter<std::string>("ComponentName");
+  theGeneratorPrototype.reset(HitTripletGeneratorFromPairAndLayersFactory::get()->create(generatorName,generatorPSet));
+}
 
-void CombinedHitTripletGenerator::init(const edm::ParameterSet & cfg, const edm::EventSetup& es)
+void CombinedHitTripletGenerator::init(const edm::EventSetup& es)
 {
 //  edm::ParameterSet leyerPSet = cfg.getParameter<edm::ParameterSet>("LayerPSet");
 //  SeedingLayerSets layerSets  = SeedingLayerSetsBuilder(leyerPSet).layers(es);
 
-  std::string layerBuilderName = cfg.getParameter<std::string>("SeedingLayers");
   edm::ESHandle<SeedingLayerSetsBuilder> layerBuilder;
-  es.get<TrackerDigiGeometryRecord>().get(layerBuilderName, layerBuilder);
+  es.get<TrackerDigiGeometryRecord>().get(theLayerBuilderName, layerBuilder);
 
   SeedingLayerSets layerSets  =  layerBuilder->layers(es);
 
@@ -38,36 +42,27 @@ void CombinedHitTripletGenerator::init(const edm::ParameterSet & cfg, const edm:
     SeedingLayer second = (*it).first.second;
     vector<SeedingLayer> thirds = (*it).second;
 
-    edm::ParameterSet generatorPSet = theConfig.getParameter<edm::ParameterSet>("GeneratorPSet");
-    std::string       generatorName = generatorPSet.getParameter<std::string>("ComponentName");
 
-    HitTripletGeneratorFromPairAndLayers * aGen =
-        HitTripletGeneratorFromPairAndLayersFactory::get()->create(generatorName,generatorPSet);
+    std::unique_ptr<HitTripletGeneratorFromPairAndLayers> aGen(theGeneratorPrototype->clone());
 
     aGen->init( HitPairGeneratorFromLayerPair( first, second, &theLayerCache),
                 thirds, &theLayerCache);
 
-    theGenerators.push_back( aGen);
+    theGenerators.push_back(std::move(aGen));
   }
 
   initialised = true;
 
 }
 
-CombinedHitTripletGenerator::~CombinedHitTripletGenerator()
-{
-  GeneratorContainer::const_iterator it;
-  for (it = theGenerators.begin(); it!= theGenerators.end(); it++) {
-    delete (*it);
-  }
-}
+CombinedHitTripletGenerator::~CombinedHitTripletGenerator() {}
 
 
 void CombinedHitTripletGenerator::hitTriplets(
    const TrackingRegion& region, OrderedHitTriplets & result,
    const edm::Event& ev, const edm::EventSetup& es)
 {
-  if (!initialised) init(theConfig,es);
+  if (!initialised) init(es);
 
   GeneratorContainer::const_iterator i;
   for (i=theGenerators.begin(); i!=theGenerators.end(); i++) {

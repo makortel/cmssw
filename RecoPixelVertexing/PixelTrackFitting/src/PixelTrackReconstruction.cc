@@ -48,6 +48,11 @@ PixelTrackReconstruction::PixelTrackReconstruction(const ParameterSet& cfg, edm:
     theMerger_->setTTRHBuilderLabel( seedmergerTTRHBuilderLabel );
     theMerger_->setLayerListName( seedmergerLayerListName );
   }
+
+  ParameterSet orderedPSet =
+      theConfig.getParameter<ParameterSet>("OrderedHitsFactoryPSet");
+  std::string orderedName = orderedPSet.getParameter<std::string>("ComponentName");
+  theGenerator.reset(OrderedHitsGeneratorFactory::get()->create( orderedName, orderedPSet, iC));
 }
   
 PixelTrackReconstruction::~PixelTrackReconstruction() 
@@ -60,7 +65,6 @@ void PixelTrackReconstruction::halt()
   delete theFilter; theFilter=0;
   delete theFitter; theFitter=0;
   delete theCleaner; theCleaner=0;
-  delete theGenerator; theGenerator=0;
   delete theRegionProducer; theRegionProducer=0;
   delete theMerger_; theMerger_=0;
 }
@@ -70,11 +74,6 @@ void PixelTrackReconstruction::init(const edm::EventSetup& es)
   ParameterSet regfactoryPSet = theConfig.getParameter<ParameterSet>("RegionFactoryPSet");
   std::string regfactoryName = regfactoryPSet.getParameter<std::string>("ComponentName");
   theRegionProducer = TrackingRegionProducerFactory::get()->create(regfactoryName,regfactoryPSet);
-
-  ParameterSet orderedPSet =
-      theConfig.getParameter<ParameterSet>("OrderedHitsFactoryPSet");
-  std::string orderedName = orderedPSet.getParameter<std::string>("ComponentName");
-  theGenerator = OrderedHitsGeneratorFactory::get()->create( orderedName, orderedPSet);
 
   ParameterSet fitterPSet = theConfig.getParameter<ParameterSet>("FitterPSet");
   std::string fitterName = fitterPSet.getParameter<std::string>("ComponentName");
