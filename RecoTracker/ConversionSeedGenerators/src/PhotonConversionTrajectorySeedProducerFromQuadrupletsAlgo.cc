@@ -28,11 +28,14 @@ PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(const edm::ParameterSe
    QuadCutPSet(conf.getParameter<edm::ParameterSet>("QuadCutPSet")),
    theSilentOnClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet").getUntrackedParameter<bool>("silentClusterCheck",false)),
    theHitsGenerator(new CombinedHitQuadrupletGeneratorForPhotonConversion(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet"), iC)),
+   theSeedCreator(new SeedForPhotonConversionFromQuadruplets(conf.getParameter<edm::ParameterSet>("SeedCreatorPSet"),
+                                                             iC,
+                                                             conf.getParameter<edm::ParameterSet>("SeedComparitorPSet"))),
    theRegionProducer(new GlobalTrackingRegionProducerFromBeamSpot(conf.getParameter<edm::ParameterSet>("RegionFactoryPSet"), iC)) {
 
   token_vertex      = iC.consumes<reco::VertexCollection>(_conf.getParameter<edm::InputTag>("primaryVerticesTag"));
 
-  init();  
+  init();
 }
      
 PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::~PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo() {
@@ -40,13 +43,10 @@ PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::~PhotonConversionTraj
 
 void PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
 clear(){
-  if(theSeedCreator!=NULL)
-    delete theSeedCreator;
 }
 
 void PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
 init(){
-  theSeedCreator    = new SeedForPhotonConversionFromQuadruplets(creatorPSet);
 }
 
 void PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
@@ -168,7 +168,7 @@ inspect(const TrackingRegion & region ){
     try{
       //FIXME (modify the interface of the seed generator if needed)
       //passing the region, that is centered around the primary vertex
-      theSeedCreator->trajectorySeed(*seedCollection, phits, mhits, region, *myEvent, *myEsetup, ss, quadVector, SeedComparitorPSet, QuadCutPSet);
+      theSeedCreator->trajectorySeed(*seedCollection, phits, mhits, region, *myEvent, *myEsetup, ss, quadVector, QuadCutPSet);
     }catch(cms::Exception& er){
       edm::LogError("SeedingConversion") << " Problem in the Quad Seed creator " <<er.what()<<std::endl;
     }catch(std::exception& er){
