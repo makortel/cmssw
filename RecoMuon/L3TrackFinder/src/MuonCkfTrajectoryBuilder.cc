@@ -27,33 +27,6 @@ MuonCkfTrajectoryBuilder::MuonCkfTrajectoryBuilder(const edm::ParameterSet& conf
   theRescaleErrorIfFail = conf.getParameter<double>("rescaleErrorIfFail");
 }
 
-MuonCkfTrajectoryBuilder::MuonCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-						   const TrajectoryStateUpdator*         updator,
-						   const Propagator*                     propagatorAlong,
-						   const Propagator*                     propagatorOpposite,
-						   const Propagator*                     propagatorProximity,
-						   const Chi2MeasurementEstimatorBase*   estimator,
-						   const TransientTrackingRecHitBuilder* RecHitBuilder,
-						   const MeasurementTracker*             measurementTracker,
-						   const TrajectoryFilter*               filter): 
-  CkfTrajectoryBuilder(conf,updator,propagatorAlong,propagatorOpposite,estimator,RecHitBuilder,filter),
-  theDeltaEta(conf.getParameter<double>("deltaEta")),
-  theDeltaPhi(conf.getParameter<double>("deltaPhi")),
-  theProximityPropagator(propagatorProximity),
-  theEtaPhiEstimator(nullptr)
-{
-  //and something specific to me ?
-  theUseSeedLayer = conf.getParameter<bool>("useSeedLayer");
-  theRescaleErrorIfFail = conf.getParameter<double>("rescaleErrorIfFail");
-  double dEta=conf.getParameter<double>("deltaEta");
-  double dPhi=conf.getParameter<double>("deltaPhi");
-  if (dEta>0 && dPhi>0)
-    theEtaPhiEstimator = new EtaPhiEstimator(dEta,dPhi,theEstimator);
-  else theEtaPhiEstimator = (Chi2MeasurementEstimatorBase*)0;
-
-
-}
-
 MuonCkfTrajectoryBuilder::~MuonCkfTrajectoryBuilder()
 {
   if (theEtaPhiEstimator) delete theEtaPhiEstimator;
@@ -71,16 +44,6 @@ void MuonCkfTrajectoryBuilder::setEvent_(const edm::Event& iEvent, const edm::Ev
     theEtaPhiEstimator = new EtaPhiEstimator(theDeltaEta, theDeltaPhi, theEstimator);
   else
     theEtaPhiEstimator = nullptr;
-}
-
-MuonCkfTrajectoryBuilder *
-MuonCkfTrajectoryBuilder::clone(const MeasurementTrackerEvent *data) const {
-    MuonCkfTrajectoryBuilder *ret = new MuonCkfTrajectoryBuilder(*this);
-    ret->setData(data);
-    if (theEtaPhiEstimator) {
-        ret->theEtaPhiEstimator = new EtaPhiEstimator(dynamic_cast<const EtaPhiEstimator&>(*theEtaPhiEstimator));
-    }
-    return ret;
 }
 
 

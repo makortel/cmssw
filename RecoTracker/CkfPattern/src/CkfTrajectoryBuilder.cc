@@ -51,33 +51,6 @@ CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf, Trajec
   */
 }
 
-
-CkfTrajectoryBuilder::
-  CkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-		       const TrajectoryStateUpdator*         updator,
-		       const Propagator*                     propagatorAlong,
-		       const Propagator*                     propagatorOpposite,
-		       const Chi2MeasurementEstimatorBase*   estimator,
-		       const TransientTrackingRecHitBuilder* recHitBuilder,
-		       const TrajectoryFilter*               filter):
-
-    BaseCkfTrajectoryBuilder(conf,
-			     updator, propagatorAlong,propagatorOpposite,
-			     estimator, recHitBuilder, filter)
-{
-  theMaxCand              = conf.getParameter<int>("maxCand");
-  theLostHitPenalty       = conf.getParameter<double>("lostHitPenalty");
-  theIntermediateCleaning = conf.getParameter<bool>("intermediateCleaning");
-  theAlwaysUseInvalidHits = conf.getParameter<bool>("alwaysUseInvalidHits");
-  /*
-    theSharedSeedCheck = conf.getParameter<bool>("SharedSeedCheck");
-    std::stringstream ss;
-    ss<<"CkfTrajectoryBuilder_"<<conf.getParameter<std::string>("ComponentName")<<"_"<<this;
-    theUniqueName = ss.str();
-    LogDebug("CkfPattern")<<"my unique name is: "<<theUniqueName;
-  */
-}
-
 /*
   void CkfTrajectoryBuilder::setEvent(const edm::Event& event) const
   {

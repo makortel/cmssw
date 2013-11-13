@@ -7,23 +7,10 @@ class MuonCkfTrajectoryBuilder : public CkfTrajectoryBuilder {
  public:
   MuonCkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
 
-  MuonCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-			   const TrajectoryStateUpdator*         updator,
-			   const Propagator*                     propagatorAlong,
-			   const Propagator*                     propagatorOpposite,
-			   const Propagator*                     propagatorProximity,
-			   const Chi2MeasurementEstimatorBase*   estimator,
-			   const TransientTrackingRecHitBuilder* RecHitBuilder,
-			   const MeasurementTracker*             measurementTracker,
-			   const TrajectoryFilter*               filter);
   virtual ~MuonCkfTrajectoryBuilder();
 
-  // Return a clone of this, with the data pointer set
-  virtual MuonCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const ;
-
-  
  protected:
-  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   void collectMeasurement(const DetLayer * layer, const std::vector<const DetLayer*>& nl,const TrajectoryStateOnSurface & currentState, std::vector<TM>& result,int& invalidHits,const Propagator *) const;
 

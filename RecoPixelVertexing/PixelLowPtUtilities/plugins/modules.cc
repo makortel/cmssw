@@ -50,9 +50,7 @@ DEFINE_EDM_PLUGIN(PixelTrackCleanerFactory, TrackCleaner, "TrackCleaner");
 //DEFINE_FWK_MODULE(SeedProducer);
 
 // TrajectoryFilter
-#include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterShapeTrajectoryFilterESProducer.h"
 #include "FWCore/Utilities/interface/typelookup.h"
-DEFINE_FWK_EVENTSETUP_MODULE(ClusterShapeTrajectoryFilterESProducer);
 
 #include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilterFactory.h"
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterShapeTrajectoryFilter.h"
