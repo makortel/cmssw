@@ -253,7 +253,7 @@ bool ClusterShapeHitFilter::isNormalOriented
 
 bool ClusterShapeHitFilter::getSizes
   (const SiPixelRecHit & recHit, const LocalVector & ldir,
-   int & part, vector<pair<int,int> > & meas, pair<float,float> & pred,
+   int & part, ClusterData::ArrayType& meas, pair<float,float> & pred,
    PixelData const * ipd) const
 {
   // Get detector
@@ -277,15 +277,15 @@ bool ClusterShapeHitFilter::getSizes
     if(data.size.front().second < 0)
       pred.second = - pred.second;
 
-    meas.reserve(data.size.size());
-    for(vector<pair<int,int> >::const_iterator s = data.size.begin();
-	s!= data.size.end(); s++)
-      {
-	meas.push_back(*s);
-	
-	if(data.size.front().second < 0)
-	  meas.back().second = - meas.back().second;
-      }
+    meas.clear();
+    assert(meas.size_max() >= data.size.size());
+    for(const auto& s: data.size) {
+      meas.push_back(s);
+    }
+    if(data.size.front().second < 0) {
+      for(auto& s: meas)
+        s.second = -s.second;
+    }
 
     // Take out drift 
     std::pair<float,float> const & drift = pd.drift;
@@ -310,15 +310,14 @@ bool ClusterShapeHitFilter::isCompatible
   const PixelData & pd = getpd(recHit,ipd);
 
   int part;
-  vector<pair<int,int> > meas;
+  ClusterData::ArrayType meas;
   pair<float,float> pred;
 
   if(getSizes(recHit, ldir, part,meas, pred,&pd))
   {
-    for(vector<pair<int,int> >::const_iterator m = meas.begin();
-                                               m!= meas.end(); m++)
+    for(const auto& m: meas)
     {
-      PixelKeys key(part, (*m).first, (*m).second);
+      PixelKeys key(part, m.first, m.second);
       if (!key.isValid()) return true; // FIXME original logic
       if (pixelLimits[key].isInside(pred)) return true;
     }

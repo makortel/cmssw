@@ -223,7 +223,7 @@ void ClusterShapeExtractor::processRec(const SiPixelRecHit & recHit,
      LocalVector ldir, vector<TH2F *> & histo)
 {
   int part;
-  vector<pair<int,int> > meas;
+  ClusterData::ArrayType meas;
   pair<float,float> pred;
  
   if(theClusterShape->getSizes(recHit,ldir, part,meas,pred))
