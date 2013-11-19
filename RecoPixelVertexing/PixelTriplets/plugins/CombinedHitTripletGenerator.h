@@ -10,6 +10,7 @@
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGenerator.h"
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
 
 class TrackingRegion;
 class HitTripletGeneratorFromPairAndLayers;
@@ -40,6 +41,7 @@ private:
   edm::ParameterSet         theConfig;
   LayerCacheType            theLayerCache;
 
+  SeedingLayerSetsBuilder theLayerBuilder;
   typedef std::vector<HitTripletGeneratorFromPairAndLayers* > GeneratorContainer;
   GeneratorContainer        theGenerators;
 };
