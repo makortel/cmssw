@@ -12,17 +12,12 @@ GenericPairGenerator::GenericPairGenerator(const edm::ParameterSet& conf, edm::C
 } 
 
 
-SeedingLayerSets GenericPairGenerator::init(const edm::EventSetup& es){
-	return theLsb.layers(es);
-}
-
-
 const OrderedSeedingHits& GenericPairGenerator::run(const TrackingRegion& region,
                           			    const edm::Event& e,
                               			    const edm::EventSetup& es){
 	hitPairs.clear();
 	hitPairs.reserve(0);
-	SeedingLayerSets lss = init(es);
+	SeedingLayerSets lss = theLsb.layers();
 	SeedingLayerSets::const_iterator iLss;
 	for (iLss = lss.begin(); iLss != lss.end(); iLss++){
 		SeedingLayers ls = *iLss;

@@ -26,9 +26,9 @@ CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet
 void CombinedHitTripletGenerator::init(const edm::EventSetup& es)
 {
 //  edm::ParameterSet leyerPSet = cfg.getParameter<edm::ParameterSet>("LayerPSet");
-//  SeedingLayerSets layerSets  = SeedingLayerSetsBuilder(leyerPSet).layers(es);
+//  SeedingLayerSets layerSets  = SeedingLayerSetsBuilder(leyerPSet).layers();
 
-  SeedingLayerSets layerSets  =  theLayerBuilder.layers(es);
+  SeedingLayerSets layerSets  =  theLayerBuilder.layers();
 
 
   vector<LayerTriplets::LayerPairAndLayers>::const_iterator it;

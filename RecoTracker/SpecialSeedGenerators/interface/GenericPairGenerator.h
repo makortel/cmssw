@@ -20,7 +20,6 @@ class GenericPairGenerator : public OrderedHitsGenerator {
 					      const edm::EventSetup& es);
         void clear() { hitPairs.clear();}
 	private:
-	ctfseeding::SeedingLayerSets init(const edm::EventSetup& es);
 	SeedingLayerSetsBuilder theLsb;
 	OrderedHitPairs hitPairs;
 };

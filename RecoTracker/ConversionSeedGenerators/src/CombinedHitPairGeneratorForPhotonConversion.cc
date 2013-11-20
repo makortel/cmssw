@@ -28,7 +28,7 @@ void CombinedHitPairGeneratorForPhotonConversion::init(const edm::ParameterSet &
   edm::ESHandle<SeedingLayerSetsBuilder> layerBuilder;
   es.get<TrackerDigiGeometryRecord>().get(layerBuilderName, layerBuilder);
 
-  SeedingLayerSets layerSets  =  layerBuilder->layers(es); 
+  SeedingLayerSets layerSets  =  layerBuilder->layers();
   init(layerSets);
 }
 
