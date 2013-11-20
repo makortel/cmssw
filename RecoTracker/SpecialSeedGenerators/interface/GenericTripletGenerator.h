@@ -22,7 +22,6 @@ class GenericTripletGenerator : public OrderedHitsGenerator {
 					      const edm::EventSetup& es);
         void clear() {hitTriplets.clear();}
 	private:
-	ctfseeding::SeedingLayerSets init(const edm::EventSetup& es);
 	std::pair<bool,float> qualityFilter(const OrderedHitTriplet& oht, 
 					    const std::map<float, OrderedHitTriplet>& map,
 					    const ctfseeding::SeedingLayers& ls) const;

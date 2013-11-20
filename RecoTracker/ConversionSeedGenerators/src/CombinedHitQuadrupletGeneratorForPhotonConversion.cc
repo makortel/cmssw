@@ -25,7 +25,7 @@ void CombinedHitQuadrupletGeneratorForPhotonConversion::init(const edm::Paramete
   edm::ESHandle<SeedingLayerSetsBuilder> layerBuilder;
   es.get<TrackerDigiGeometryRecord>().get(layerBuilderName, layerBuilder);
 
-  SeedingLayerSets layerSets  =  layerBuilder->layers(es); 
+  SeedingLayerSets layerSets  =  layerBuilder->layers();
   init(layerSets);
 }
 

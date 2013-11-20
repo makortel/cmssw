@@ -288,7 +288,7 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
   //ESTIMATOR
   TrackingRegion::Hits result;
 
-  const DetLayer * detLayer = layer->detLayer();
+  const DetLayer * detLayer = layer->detLayer(es);
   OuterEstimator * est = 0;
 
   bool measurementMethod = false;
