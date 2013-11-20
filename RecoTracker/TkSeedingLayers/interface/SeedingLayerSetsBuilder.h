@@ -7,8 +7,6 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
-#include "Geometry/CommonDetUnit/interface/GeomDetEnumerators.h"
-
 #include <string>
 #include <vector>
 namespace edm { class EventSetup; class ConsumesCollector;}
@@ -22,7 +20,7 @@ public:
   SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, edm::ConsumesCollector&& iC);
   ~SeedingLayerSetsBuilder();
 
-  ctfseeding::SeedingLayerSets layers(const edm::EventSetup& es) const; 
+  ctfseeding::SeedingLayerSets layers() const;
 
 private:
   std::vector<std::vector<std::string> > layerNamesInSets(

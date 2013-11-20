@@ -14,17 +14,12 @@ GenericTripletGenerator::GenericTripletGenerator(const edm::ParameterSet& conf, 
 } 
 
 
-SeedingLayerSets GenericTripletGenerator::init(const edm::EventSetup& es){
-	return theLsb.layers(es);
-}
-
-
 const OrderedSeedingHits& GenericTripletGenerator::run(const TrackingRegion& region,
                               				     const edm::Event& e,
                               				     const edm::EventSetup& es){
 	hitTriplets.clear();
 	hitTriplets.reserve(0);
-	SeedingLayerSets lss = init(es);
+	SeedingLayerSets lss = theLsb.layers();
 	SeedingLayerSets::const_iterator iLss;
 	std::map<float, OrderedHitTriplet> radius_triplet_map;
 	for (iLss = lss.begin(); iLss != lss.end(); iLss++){

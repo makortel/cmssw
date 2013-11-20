@@ -21,7 +21,7 @@ public:
   virtual ~HitExtractor(){}
   HitExtractor(){
     skipClusters=false;}
-  virtual Hits hits(const SeedingLayer & sl, const edm::Event& , const edm::EventSetup& ) const =0;
+  virtual Hits hits(const TransientTrackingRecHitBuilder *hitBuilder, const edm::Event& , const edm::EventSetup& ) const =0;
   virtual HitExtractor * clone() const = 0;
 
   //skip clusters
@@ -36,29 +36,27 @@ protected:
 
 class HitConv {
 public:
-  HitConv(const SeedingLayer &sl, const edm::EventSetup &es) : sl_(sl), es_(es) {}
+  HitConv(const TransientTrackingRecHitBuilder *hitBuilder) : hitBuilder_(hitBuilder) {}
   template<typename H> 
   TransientTrackingRecHit::ConstRecHitPointer operator()(const H &hit) {
     const TrackingRecHit* trh = &hit;
-    return sl_.hitBuilder()->build(trh); }
+    return hitBuilder_->build(trh); }
 private:
-  const SeedingLayer    &sl_;
-  const edm::EventSetup &es_;
-
+  const TransientTrackingRecHitBuilder *hitBuilder_;
 };
   
   template <typename DSTV, typename A, typename B>
   inline void range2SeedingHits(DSTV const & dstv,
 				HitExtractor::Hits & v,
 				std::pair<A,B> const & sel,
-				const SeedingLayer &sl, const edm::EventSetup &es) {
+				const TransientTrackingRecHitBuilder *hitBuilder) {
     typename DSTV::Range range = dstv.equal_range(sel.first,sel.second);
     size_t ts = v.size();
     for(typename DSTV::const_iterator id=range.first; id!=range.second; id++)
       ts += std::distance((*id).begin(), (*id).end());
     v.reserve(ts);
     for(typename DSTV::const_iterator id=range.first; id!=range.second; id++){
-      std::transform((*id).begin(), (*id).end(), std::back_inserter(v), HitConv(sl,es));
+      std::transform((*id).begin(), (*id).end(), std::back_inserter(v), HitConv(hitBuilder));
     }
   }
   

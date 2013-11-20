@@ -28,7 +28,7 @@ void CombinedHitPairGenerator::init(const edm::ParameterSet & cfg, const edm::Ev
   edm::ESHandle<SeedingLayerSetsBuilder> layerBuilder;
   es.get<TrackerDigiGeometryRecord>().get(layerBuilderName, layerBuilder);
 
-  SeedingLayerSets layerSets  =  layerBuilder->layers(es); 
+  SeedingLayerSets layerSets  =  layerBuilder->layers();
   init(layerSets);
 }
 
