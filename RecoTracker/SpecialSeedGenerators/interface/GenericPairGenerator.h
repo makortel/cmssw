@@ -21,7 +21,6 @@ class GenericPairGenerator : public OrderedHitsGenerator {
         void clear() { hitPairs.clear();}
 	private:
 	ctfseeding::SeedingLayerSets init(const edm::EventSetup& es);
-	//edm::ParameterSet conf_;
 	SeedingLayerSetsBuilder theLsb;
 	OrderedHitPairs hitPairs;
 };
