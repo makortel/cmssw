@@ -40,7 +40,6 @@ private:
   void init(const edm::EventSetup& es);
 
   mutable bool initialised;
-  const std::string theLayerBuilderName;
 
   LayerCacheType            theLayerCache;
 

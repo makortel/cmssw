@@ -26,7 +26,6 @@ class GenericTripletGenerator : public OrderedHitsGenerator {
 	std::pair<bool,float> qualityFilter(const OrderedHitTriplet& oht, 
 					    const std::map<float, OrderedHitTriplet>& map,
 					    const ctfseeding::SeedingLayers& ls) const;
-	//edm::ParameterSet conf_;
 	SeedingLayerSetsBuilder theLsb;	
 	OrderedHitTriplets hitTriplets;
 };
