@@ -13,9 +13,9 @@
 inline double sqr(double a){return a*a;}
 
 PhotonConversionTrajectorySeedProducerFromSingleLegAlgo::
-PhotonConversionTrajectorySeedProducerFromSingleLegAlgo(const edm::ParameterSet & conf)
+PhotonConversionTrajectorySeedProducerFromSingleLegAlgo(const edm::ParameterSet & conf, edm::ConsumesCollector&& iC)
   :_conf(conf),seedCollection(0),seedCollectionOfSourceTracks(0),
-   hitsfactoryPSet(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet")),   
+   theHitsGenerator(new CombinedHitPairGeneratorForPhotonConversion(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet"), iC)),
    creatorPSet(conf.getParameter<edm::ParameterSet>("SeedCreatorPSet")),
    regfactoryPSet(conf.getParameter<edm::ParameterSet>("RegionFactoryPSet")),
    theClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet")),
@@ -30,11 +30,11 @@ PhotonConversionTrajectorySeedProducerFromSingleLegAlgo(const edm::ParameterSet 
 {
    init();  
 }
+
+PhotonConversionTrajectorySeedProducerFromSingleLegAlgo::~PhotonConversionTrajectorySeedProducerFromSingleLegAlgo() {}
      
 void PhotonConversionTrajectorySeedProducerFromSingleLegAlgo::
 clear(){
-  if(theHitsGenerator!=NULL)
-    delete theHitsGenerator;
   if(theSeedCreator!=NULL)
     delete theSeedCreator;
   if(theRegionProducer!=NULL)
@@ -43,7 +43,6 @@ clear(){
 
 void PhotonConversionTrajectorySeedProducerFromSingleLegAlgo::
 init(){
-  theHitsGenerator  = new CombinedHitPairGeneratorForPhotonConversion(hitsfactoryPSet);
   theSeedCreator    = new SeedForPhotonConversion1Leg(creatorPSet);
   theRegionProducer = new GlobalTrackingRegionProducerFromBeamSpot(regfactoryPSet);
 }
