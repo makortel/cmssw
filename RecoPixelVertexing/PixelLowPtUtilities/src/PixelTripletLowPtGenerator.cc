@@ -28,14 +28,6 @@ PixelTripletLowPtGenerator::PixelTripletLowPtGenerator( const edm::ParameterSet&
 {}
 
 /*****************************************************************************/
-PixelTripletLowPtGenerator *PixelTripletLowPtGenerator::clone() const {
-  std::unique_ptr<PixelTripletLowPtGenerator> ret(new PixelTripletLowPtGenerator(*this));
-  if(thePairGenerator)
-    ret->thePairGenerator = thePairGenerator->clone();
-  return ret.release();
-}
-
-/*****************************************************************************/
 void PixelTripletLowPtGenerator::init(const HitPairGenerator & pairs,
       const vector<SeedingLayer> & layers,
       LayerCacheType* layerCache)

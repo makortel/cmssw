@@ -34,13 +34,6 @@ PixelTripletNoTipGenerator:: PixelTripletNoTipGenerator(const edm::ParameterSet&
       theChi2Cut(cfg.getParameter<double>("chi2Cut"))
 { }
 
-PixelTripletNoTipGenerator *PixelTripletNoTipGenerator::clone() const {
-  std::unique_ptr<PixelTripletNoTipGenerator> ret(new PixelTripletNoTipGenerator(*this));
-  if(thePairGenerator)
-    ret->thePairGenerator = thePairGenerator->clone();
-  return ret.release();
-}
-
 void PixelTripletNoTipGenerator::init( const HitPairGenerator & pairs,
       const std::vector<SeedingLayer> & layers,
       LayerCacheType* layerCache)

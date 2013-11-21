@@ -53,13 +53,6 @@ PixelTripletHLTGenerator::~PixelTripletHLTGenerator() {
   delete thePairGenerator;
 }
 
-PixelTripletHLTGenerator *PixelTripletHLTGenerator::clone() const {
-  std::unique_ptr<PixelTripletHLTGenerator> ret(new PixelTripletHLTGenerator(*this));
-  if(thePairGenerator)
-    ret->thePairGenerator = thePairGenerator->clone();
-  return ret.release();
-}
-
 void PixelTripletHLTGenerator::init( const HitPairGenerator & pairs,
 				     const std::vector<SeedingLayer> & layers,
 				     LayerCacheType* layerCache)

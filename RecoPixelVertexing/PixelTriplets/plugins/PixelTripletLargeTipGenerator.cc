@@ -54,13 +54,6 @@ PixelTripletLargeTipGenerator::PixelTripletLargeTipGenerator(const edm::Paramete
     dphi = cfg.getParameter<double>("phiPreFiltering");
 }
 
-PixelTripletLargeTipGenerator *PixelTripletLargeTipGenerator::clone() const {
-  std::unique_ptr<PixelTripletLargeTipGenerator> ret(new PixelTripletLargeTipGenerator(*this));
-  if(thePairGenerator)
-    ret->thePairGenerator = thePairGenerator->clone();
-  return ret.release();
-}
-
 void PixelTripletLargeTipGenerator::init(const HitPairGenerator & pairs,
 					 const std::vector<SeedingLayer> &layers,
 					 LayerCacheType *layerCache)

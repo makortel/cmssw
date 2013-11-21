@@ -31,8 +31,6 @@ class   PixelTripletLowPtGenerator :
 
    virtual ~PixelTripletLowPtGenerator() { delete thePairGenerator; delete theFilter; }
 
-   PixelTripletLowPtGenerator *clone() const override;
-
    virtual void init( const HitPairGenerator & pairs,
       const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
 

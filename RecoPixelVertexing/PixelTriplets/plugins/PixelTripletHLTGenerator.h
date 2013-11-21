@@ -30,8 +30,6 @@ public:
 
   virtual ~PixelTripletHLTGenerator();
 
-  PixelTripletHLTGenerator *clone() const override;
-
   virtual void init( const HitPairGenerator & pairs,
       const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
 
