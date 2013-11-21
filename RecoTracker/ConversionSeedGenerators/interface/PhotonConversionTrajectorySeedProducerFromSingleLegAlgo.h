@@ -37,7 +37,7 @@ class PhotonConversionTrajectorySeedProducerFromSingleLegAlgo{
   
   PhotonConversionTrajectorySeedProducerFromSingleLegAlgo(const edm::ParameterSet &,
 	edm::ConsumesCollector && iC);
-  ~PhotonConversionTrajectorySeedProducerFromSingleLegAlgo(){};
+  ~PhotonConversionTrajectorySeedProducerFromSingleLegAlgo();
 
   void init();
   void clear();
@@ -62,7 +62,7 @@ class PhotonConversionTrajectorySeedProducerFromSingleLegAlgo{
 
   TrajectorySeedCollection *seedCollection;
   TrajectorySeedCollection *seedCollectionOfSourceTracks;
-  CombinedHitPairGeneratorForPhotonConversion * theHitsGenerator;
+  std::unique_ptr<CombinedHitPairGeneratorForPhotonConversion> theHitsGenerator;
   SeedForPhotonConversion1Leg *theSeedCreator;
   GlobalTrackingRegionProducerFromBeamSpot* theRegionProducer;
 
