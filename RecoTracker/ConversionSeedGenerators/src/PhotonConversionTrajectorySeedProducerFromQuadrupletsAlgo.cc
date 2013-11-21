@@ -21,11 +21,11 @@ assign the parameters to some data member to avoid search at every event
 PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
 PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(const edm::ParameterSet & conf, edm::ConsumesCollector&& iC)
   :_conf(conf),seedCollection(0),
-   hitsfactoryPSet(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet")),   
    regfactoryPSet(conf.getParameter<edm::ParameterSet>("RegionFactoryPSet")),
    theClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet")),
    QuadCutPSet(conf.getParameter<edm::ParameterSet>("QuadCutPSet")),
    theSilentOnClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet").getUntrackedParameter<bool>("silentClusterCheck",false)),
+   theHitsGenerator(new CombinedHitQuadrupletGeneratorForPhotonConversion(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet"), iC)),
    theSeedCreator(new SeedForPhotonConversionFromQuadruplets(conf.getParameter<edm::ParameterSet>("SeedCreatorPSet"),
                                                              iC,
                                                              conf.getParameter<edm::ParameterSet>("SeedComparitorPSet"))) {
@@ -35,15 +35,12 @@ PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(const edm::ParameterSe
      
 void PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
 clear(){
-  if(theHitsGenerator!=NULL)
-    delete theHitsGenerator;
   if(theRegionProducer!=NULL)
     delete theRegionProducer;
 }
 
 void PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
 init(){
-  theHitsGenerator  = new CombinedHitQuadrupletGeneratorForPhotonConversion(hitsfactoryPSet);
   theRegionProducer = new GlobalTrackingRegionProducerFromBeamSpot(regfactoryPSet);
 }
 
