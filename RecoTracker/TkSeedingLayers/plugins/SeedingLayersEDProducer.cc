@@ -38,16 +38,17 @@ void SeedingLayersEDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
   }
 
   // Get hits
-  // TODO: if layer sets share some layes, the TTRHs are blatantly copied (unnecessarily)
   std::auto_ptr<SeedingLayerSetNew> prod(new SeedingLayerSetNew(nlayers));
-  std::vector<ctfseeding::SeedingLayer::Hits> hits; // re-used
   for(const ctfseeding::SeedingLayers& layers: layerSets) {
     for(const ctfseeding::SeedingLayer& layer: layers) {
-      hits.emplace_back(layer.hits(iEvent, iSetup));
+      std::pair<unsigned int, bool> index = prod->insertLayer(layer.name());
+      if(index.second) {
+        // layer was really inserted, we have to pass also the hits
+        prod->insertLayerHits(index.first, layer.hits(iEvent, iSetup));
+      }
     }
-    prod->addLayersHits(hits);
-    hits.clear();
   }
+  //prod->print();
 
   iEvent.put(prod);
 }
