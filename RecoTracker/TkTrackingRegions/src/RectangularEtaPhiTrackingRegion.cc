@@ -386,6 +386,13 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
   return result;
 }
 
+TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
+      const edm::Event& ev,
+      const edm::EventSetup& es,
+      const SeedingLayerSetNew::SeedingLayer& layer) const {
+  return TrackingRegion::Hits(); // FIXME
+}
+
 std::string RectangularEtaPhiTrackingRegion::print() const {
   std::ostringstream str;
   str << TrackingRegionBase::print() 

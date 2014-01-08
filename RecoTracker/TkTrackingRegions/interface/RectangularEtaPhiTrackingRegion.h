@@ -118,6 +118,11 @@ public:
       const edm::EventSetup& es, 
       const ctfseeding::SeedingLayer* layer) const;
 
+  virtual TrackingRegion::Hits hits(
+      const edm::Event& ev,  
+      const edm::EventSetup& es, 
+      const SeedingLayerSetNew::SeedingLayer& layer) const override;
+
   virtual HitRZCompatibility * checkRZ(const DetLayer* layer,  
 				       const Hit &  outerHit,
 				       const edm::EventSetup& iSetup,
