@@ -15,6 +15,7 @@
 <use   name="RecoTracker/TransientTrackingRecHit"/>
 <use   name="TrackingTools/DetLayers"/>
 <use   name="TrackingTools/TransientTrackingRecHit"/>
+<use   name="RecoTracker/SeedingLayerSet"/>
 <export>
   <lib   name="1"/>
 </export>
