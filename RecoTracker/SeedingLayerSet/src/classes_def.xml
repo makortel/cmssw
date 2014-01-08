@@ -1,0 +1,4 @@
+<lcgdict>
+  <class name="SeedingLayerSetNew"/>
+  <class name="edm::Wrapper<SeedingLayerSetNew>" persistent="false"/>
+</lcgdict>
