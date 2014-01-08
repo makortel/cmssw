@@ -7,6 +7,8 @@
 #include <string>
 #include <utility>
 
+class DetLayer;
+
 class SeedingLayerSetNew {
 public:
   typedef TransientTrackingRecHit::ConstRecHitPointer ConstRecHitPointer;
@@ -20,6 +22,7 @@ public:
 
     unsigned int index() const { return index_; }
     const std::string& name() const { return seedingLayerSets_->layerNames_[index_]; }
+    const DetLayer *detLayer() const { return seedingLayerSets_->layerDets_[index_]; }
     Hits hits() const { return seedingLayerSets_->hits(index_); }
 
   private:
@@ -48,7 +51,7 @@ public:
   explicit SeedingLayerSetNew(unsigned int nlayers_);
   ~SeedingLayerSetNew();
 
-  std::pair<unsigned int, bool> insertLayer(const std::string& layerName);
+  std::pair<unsigned int, bool> insertLayer(const std::string& layerName, const DetLayer *layerDet);
   void insertLayerHits(unsigned int layerIndex, const Hits& hits);
 
 
@@ -64,7 +67,7 @@ public:
   void print() const;
 
 private:
-  std::pair<unsigned int, bool> insertLayer_(const std::string& layerName);
+  std::pair<unsigned int, bool> insertLayer_(const std::string& layerName, const DetLayer *layerDet);
   Hits hits(unsigned int layerIndex) const;
 
   unsigned int nlayers_; // number of layers in a SeedingLayers
@@ -75,6 +78,7 @@ private:
   typedef std::pair<unsigned int, unsigned int> Range;
   std::vector<Range> layerHitRanges_; // maps index of a layer to an index in rechits_ for the start of the hit list
   std::vector<std::string> layerNames_;
+  std::vector<const DetLayer *> layerDets_;
 
   // index from layerIndices_
   std::vector<ConstRecHitPointer> rechits_; // list of rechits

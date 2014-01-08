@@ -41,7 +41,7 @@ void SeedingLayersEDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
   std::auto_ptr<SeedingLayerSetNew> prod(new SeedingLayerSetNew(nlayers));
   for(const ctfseeding::SeedingLayers& layers: layerSets) {
     for(const ctfseeding::SeedingLayer& layer: layers) {
-      std::pair<unsigned int, bool> index = prod->insertLayer(layer.name());
+      std::pair<unsigned int, bool> index = prod->insertLayer(layer.name(), layer.detLayer());
       if(index.second) {
         // layer was really inserted, we have to pass also the hits
         prod->insertLayerHits(index.first, layer.hits(iEvent, iSetup));

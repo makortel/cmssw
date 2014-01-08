@@ -9,17 +9,18 @@ SeedingLayerSetNew::SeedingLayerSetNew(unsigned int nlayers): nlayers_(nlayers) 
 SeedingLayerSetNew::~SeedingLayerSetNew() {}
 
 
-std::pair<unsigned int, bool> SeedingLayerSetNew::insertLayer(const std::string& layerName) {
-  std::pair<unsigned int, bool> index = insertLayer_(layerName);
+std::pair<unsigned int, bool> SeedingLayerSetNew::insertLayer(const std::string& layerName, const DetLayer *layerDet) {
+  std::pair<unsigned int, bool> index = insertLayer_(layerName, layerDet);
   layersIndices_.push_back(index.first);
   return index;
 }
 
-std::pair<unsigned int, bool> SeedingLayerSetNew::insertLayer_(const std::string& layerName) {
+std::pair<unsigned int, bool> SeedingLayerSetNew::insertLayer_(const std::string& layerName, const DetLayer *layerDet) {
   auto found = std::find(layerNames_.begin(), layerNames_.end(), layerName);
   // insert if not found
   if(found == layerNames_.end()) {
     layerNames_.push_back(layerName);
+    layerDets_.push_back(layerDet);
     const auto max = std::numeric_limits<unsigned int>::max();
     layerHitRanges_.emplace_back(max, max);
     //std::cout << "Inserted layer " << layerName << " to index " << layerNames_.size()-1 << std::endl;
