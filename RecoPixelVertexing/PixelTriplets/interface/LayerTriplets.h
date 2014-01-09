@@ -10,6 +10,7 @@
 #include <vector>
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayer.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSets.h"
+#include "RecoTracker/SeedingLayerSet/interface/SeedingLayerSetNew.h"
 
 class LayerTriplets {
 public:
@@ -23,6 +24,14 @@ public:
 private:
   ctfseeding::SeedingLayerSets theSets;
 };
+
+namespace layerTripletsNew {
+  using Layer = SeedingLayerSetNew::SeedingLayer;
+  using LayerSet = SeedingLayerSetNew::SeedingLayers;
+  using LayerSetAndLayers = std::pair<LayerSet, std::vector<Layer> >;
+
+  std::vector<LayerSetAndLayers> layers(const SeedingLayerSetNew& sets);
+}
 
 #endif
 

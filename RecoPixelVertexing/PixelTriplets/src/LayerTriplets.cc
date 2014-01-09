@@ -28,3 +28,31 @@ std::vector<LayerTriplets::LayerPairAndLayers> LayerTriplets::layers() const
   }
   return result;
 }
+
+namespace layerTripletsNew {
+  std::vector<LayerSetAndLayers> layers(const SeedingLayerSetNew& sets) {
+    std::vector<LayerSetAndLayers> result;
+    if(sets.sizeLayers() != 3)
+      return result;
+
+    for(unsigned int iLayers=0; iLayers < sets.sizeLayerSets(); ++iLayers) {
+      LayerSet set = sets.getLayers(iLayers);
+      bool added = false;
+
+      for(auto ir = result.begin(); ir < result.end(); ++ir) {
+        const LayerSet & resSet = ir->first;
+        if (resSet.getLayer(0).index() == set.getLayer(0).index() && resSet.getLayer(1).index() == set.getLayer(1).index()) {
+          std::vector<Layer>& thirds = ir->second;
+          thirds.push_back( set.getLayer(2) );
+          added = true;
+          break;
+        }
+      }
+      if (!added) {
+        LayerSetAndLayers lpl = std::make_pair(set,  std::vector<Layer>(1, set.getLayer(2)) );
+        result.push_back(lpl);
+      }
+    }
+    return result;
+  }
+}
