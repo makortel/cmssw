@@ -29,14 +29,16 @@ public:
 
   virtual ~MultiHitGeneratorFromChi2() { delete thePairGenerator; }
 
-  virtual void init( const HitPairGenerator & pairs,
-      const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
+  void init( const HitPairGenerator & pairs, LayerCacheType* layerCache) override;
+
+  void setSeedingLayers(SeedingLayerSetNew::SeedingLayers pairLayers,
+                        std::vector<SeedingLayerSetNew::SeedingLayer> thirdLayers) override;
+
 
   virtual void hitSets( const TrackingRegion& region, OrderedMultiHits & trs, 
       const edm::Event & ev, const edm::EventSetup& es);
 
   const HitPairGenerator & pairGenerator() const { return *thePairGenerator; }
-  const std::vector<ctfseeding::SeedingLayer> & thirdLayers() const { return theLayers; }
 
 private:
 
@@ -47,7 +49,7 @@ private:
 
 private:
   HitPairGenerator * thePairGenerator;
-  std::vector<ctfseeding::SeedingLayer> theLayers;
+  std::vector<SeedingLayerSetNew::SeedingLayer> theLayers;
   LayerCacheType * theLayerCache;
   const ClusterShapeHitFilter* filter;
 
