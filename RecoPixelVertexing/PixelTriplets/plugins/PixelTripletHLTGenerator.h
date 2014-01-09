@@ -29,14 +29,15 @@ public:
 
   virtual ~PixelTripletHLTGenerator();
 
-  virtual void init( const HitPairGenerator & pairs,
-      const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
+  void setSeedingLayers(SeedingLayerSetNew::SeedingLayers pairLayers,
+                        std::vector<SeedingLayerSetNew::SeedingLayer> thirdLayers) override;
+
+  void init( const HitPairGenerator & pairs, LayerCacheType* layerCache) override;
 
   virtual void hitTriplets( const TrackingRegion& region, OrderedHitTriplets & trs, 
       const edm::Event & ev, const edm::EventSetup& es);
 
   const HitPairGenerator & pairGenerator() const { return *thePairGenerator; }
-  const std::vector<ctfseeding::SeedingLayer> & thirdLayers() const { return theLayers; }
 
 private:
   bool checkPhiInRange(float phi, float phi1, float phi2) const;
@@ -45,7 +46,7 @@ private:
 
 private:
   HitPairGenerator * thePairGenerator;
-  std::vector<ctfseeding::SeedingLayer> theLayers;
+  std::vector<SeedingLayerSetNew::SeedingLayer> theLayers;
   LayerCacheType * theLayerCache;
 
   bool useFixedPreFiltering;

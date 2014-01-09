@@ -55,14 +55,17 @@ PixelTripletLargeTipGenerator::PixelTripletLargeTipGenerator(const edm::Paramete
 }
 
 void PixelTripletLargeTipGenerator::init(const HitPairGenerator & pairs,
-					 const std::vector<SeedingLayer> &layers,
 					 LayerCacheType *layerCache)
 {
   thePairGenerator = pairs.clone();
-  theLayers = layers;
   theLayerCache = layerCache;
 }
 
+void PixelTripletLargeTipGenerator::setSeedingLayers(SeedingLayerSetNew::SeedingLayers pairLayers,
+                                                     std::vector<SeedingLayerSetNew::SeedingLayer> thirdLayers) {
+  thePairGenerator->setSeedingLayers(pairLayers);
+  theLayers = thirdLayers;
+}
 
 namespace {
   inline
@@ -115,7 +118,7 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
   const RecHitsSortedInPhi * thirdHitMap[size];
 
   for(int il = 0; il < size; il++) {
-    thirdHitMap[il] = &(*theLayerCache)(&theLayers[il], region, ev, es);
+    thirdHitMap[il] = &(*theLayerCache)(theLayers[il], region, ev, es);
     auto const & hits = *thirdHitMap[il];
  
     const DetLayer *layer = theLayers[il].detLayer();
@@ -300,7 +303,7 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
       MatchedHitRZCorrectionFromBending l2rzFixup(doublets.hit(ip,HitDoublets::outer)->det()->geographicalId(), tTopo);
       MatchedHitRZCorrectionFromBending l3rzFixup = predRZ.rzPositionFixup;
 
-      thirdHitMap[il] = &(*theLayerCache)(&theLayers[il], region, ev, es);
+      thirdHitMap[il] = &(*theLayerCache)(theLayers[il], region, ev, es);
       auto const & hits = *thirdHitMap[il];
       for (auto KDdata : foundNodes) {
 	GlobalPoint p3 = hits.gp(KDdata); 

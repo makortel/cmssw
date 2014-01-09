@@ -31,13 +31,14 @@ class   PixelTripletLowPtGenerator :
 
    virtual ~PixelTripletLowPtGenerator() { delete thePairGenerator; delete theFilter; }
 
-   virtual void init( const HitPairGenerator & pairs,
-      const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
+  void setSeedingLayers(SeedingLayerSetNew::SeedingLayers pairLayers,
+                        std::vector<SeedingLayerSetNew::SeedingLayer> thirdLayers) override;
+
+  void init( const HitPairGenerator & pairs, LayerCacheType* layerCache) override;
 
    virtual void hitTriplets(const TrackingRegion& region, OrderedHitTriplets & trs,  const edm::Event & ev, const edm::EventSetup& es);
 
    const HitPairGenerator & pairGenerator() const { return *thePairGenerator; }
-   const std::vector<ctfseeding::SeedingLayer> & thirdLayers() const { return theLayers; }
 
  private:
   void getTracker (const edm::EventSetup& es);
@@ -48,7 +49,7 @@ class   PixelTripletLowPtGenerator :
 
   edm::ParameterSet         ps;
   HitPairGenerator * thePairGenerator;
-  std::vector<ctfseeding::SeedingLayer> theLayers;
+  std::vector<SeedingLayerSetNew::SeedingLayer> theLayers;
   LayerCacheType * theLayerCache;
 
   double nSigMultipleScattering;
