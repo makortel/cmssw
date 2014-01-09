@@ -33,8 +33,8 @@ namespace {
 #include "FWCore/Framework/interface/ESHandle.h"
 
 HitPairGeneratorFromLayerPair::HitPairGeneratorFromLayerPair(
-							     const Layer& inner, 
-							     const Layer& outer, 
+							     unsigned int inner,
+							     unsigned int outer,
 							     LayerCacheType* layerCache,
 							     unsigned int nSize,
 							     unsigned int max)
@@ -77,12 +77,11 @@ namespace {
 }
 
 
-
 void HitPairGeneratorFromLayerPair::hitPairs(
 					     const TrackingRegion & region, OrderedHitPairs & result,
 					     const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  
-  auto const & ds = doublets(region,iEvent,iSetup);
+
+  auto const & ds = doublets(region, iEvent, iSetup);
   for (std::size_t i=0; i!=ds.size(); ++i) {
     result.push_back( OrderedHitPair( ds.hit(i,HitDoublets::inner),ds.hit(i,HitDoublets::outer) ));
   }
@@ -93,38 +92,41 @@ void HitPairGeneratorFromLayerPair::hitPairs(
 }
 
 
-HitDoublets HitPairGeneratorFromLayerPair::doublets( const TrackingRegion& region, 
+HitDoublets HitPairGeneratorFromLayerPair::doublets( const TrackingRegion& region,
 						    const edm::Event & iEvent, const edm::EventSetup& iSetup) {
 
   typedef OrderedHitPair::InnerRecHit InnerHit;
   typedef OrderedHitPair::OuterRecHit OuterHit;
   typedef RecHitsSortedInPhi::Hit Hit;
 
-  const RecHitsSortedInPhi & innerHitsMap = theLayerCache(&theInnerLayer, region, iEvent, iSetup);
+  Layer innerLayer_ = innerLayer();
+  Layer outerLayer_ = outerLayer();
+
+  const RecHitsSortedInPhi & innerHitsMap = theLayerCache(innerLayer_, region, iEvent, iSetup);
   if (innerHitsMap.empty()) return HitDoublets(innerHitsMap,innerHitsMap);
- 
-  const RecHitsSortedInPhi& outerHitsMap = theLayerCache(&theOuterLayer, region, iEvent, iSetup);
+
+  const RecHitsSortedInPhi& outerHitsMap = theLayerCache(outerLayer_, region, iEvent, iSetup);
   if (outerHitsMap.empty()) return HitDoublets(innerHitsMap,outerHitsMap);
 
   HitDoublets result(innerHitsMap,outerHitsMap); result.reserve(std::max(innerHitsMap.size(),outerHitsMap.size()));
 
-  InnerDeltaPhi deltaPhi(*theOuterLayer.detLayer(), *theInnerLayer.detLayer(), region, iSetup);
+  InnerDeltaPhi deltaPhi(*outerLayer_.detLayer(), *innerLayer_.detLayer(), region, iSetup);
 
-  // std::cout << "layers " << theInnerLayer.detLayer()->seqNum()  << " " << theOuterLayer.detLayer()->seqNum() << std::endl;
+  // std::cout << "layers " << theInnerLayer.detLayer()->seqNum()  << " " << outerLayer.detLayer()->seqNum() << std::endl;
 
   // constexpr float nSigmaRZ = std::sqrt(12.f);
   constexpr float nSigmaPhi = 3.f;
-  for (int io = 0; io!=int(outerHitsMap.theHits.size()); ++io) { 
+  for (int io = 0; io!=int(outerHitsMap.theHits.size()); ++io) {
     Hit const & ohit =  outerHitsMap.theHits[io].hit();
-    PixelRecoRange<float> phiRange = deltaPhi(outerHitsMap.x[io], 
-					      outerHitsMap.y[io], 
-					      outerHitsMap.z[io], 
+    PixelRecoRange<float> phiRange = deltaPhi(outerHitsMap.x[io],
+					      outerHitsMap.y[io],
+					      outerHitsMap.z[io],
 					      nSigmaPhi*outerHitsMap.drphi[io]
-					      );    
+					      );
 
     if (phiRange.empty()) continue;
 
-    const HitRZCompatibility *checkRZ = region.checkRZ(theInnerLayer.detLayer(), ohit, iSetup,theOuterLayer.detLayer(), 
+    const HitRZCompatibility *checkRZ = region.checkRZ(innerLayer_.detLayer(), ohit, iSetup, outerLayer_.detLayer(), 
 						       outerHitsMap.rv(io),outerHitsMap.z[io],
 						       outerHitsMap.isBarrel ? outerHitsMap.du[io] :  outerHitsMap.dv[io],
 						       outerHitsMap.isBarrel ? outerHitsMap.dv[io] :  outerHitsMap.du[io]
@@ -170,5 +172,3 @@ HitDoublets HitPairGeneratorFromLayerPair::doublets( const TrackingRegion& regio
   LogDebug("HitPairGeneratorFromLayerPair")<<" total number of pairs provided back: "<<result.size();
   return result;
 }
-
-

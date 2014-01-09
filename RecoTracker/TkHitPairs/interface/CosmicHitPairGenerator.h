@@ -28,6 +28,8 @@ public:
 
   ~CosmicHitPairGenerator();
 
+  void setSeedingLayers(SeedingLayerSetNew::SeedingLayers layers) override {}
+
   /// add generators based on layers
     //  void  add(const DetLayer* inner, const DetLayer* outer);
     void  add(const LayerWithHits* inner, 

@@ -48,6 +48,8 @@ public:
 				const edm::EventSetup& iSetup);
   virtual ~CosmicHitPairGeneratorFromLayerPair() { }
 
+  void setSeedingLayers(SeedingLayerSetNew::SeedingLayers layers) override {}
+
 //  virtual OrderedHitPairs hitPairs( const TrackingRegion& region,const edm::EventSetup& iSetup ) {
 //    return HitPairGenerator::hitPairs(region, iSetup);
 //  }

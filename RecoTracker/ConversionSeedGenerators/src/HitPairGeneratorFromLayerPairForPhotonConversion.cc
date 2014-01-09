@@ -35,8 +35,8 @@ template<class T> inline T sqr( T t) {return t*t;}
 #include "DataFormats/Math/interface/deltaPhi.h"
 
 HitPairGeneratorFromLayerPairForPhotonConversion::HitPairGeneratorFromLayerPairForPhotonConversion(
-							     const Layer& inner, 
-							     const Layer& outer, 
+							     unsigned int inner,
+							     unsigned int outer,
 							     LayerCacheType* layerCache,
 							     unsigned int nSize,
 							     unsigned int max)
@@ -58,23 +58,26 @@ void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const Conversion
   typedef OrderedHitPair::OuterRecHit OuterHit;
   typedef RecHitsSortedInPhi::Hit Hit;
 
+  Layer innerLayer_ = innerLayer();
+  Layer outerLayer_ = outerLayer();
+
 #ifdef mydebug_Seed
-  (*ss) << "In " << theInnerLayer.name() << " Out " << theOuterLayer.name() << std::endl;
+  (*ss) << "In " << innerLayer_.name() << " Out " << outerLayer_.name() << std::endl;
 #endif
 
-  if(!checkBoundaries(*theInnerLayer.detLayer(),convRegion,40.,60.)) return; //FIXME, the maxSearchR(Z) are not optimized
-  if(!checkBoundaries(*theOuterLayer.detLayer(),convRegion,50.,60.)) return; //FIXME, the maxSearchR(Z) are not optimized
+  if(!checkBoundaries(*innerLayer_.detLayer(),convRegion,40.,60.)) return; //FIXME, the maxSearchR(Z) are not optimized
+  if(!checkBoundaries(*outerLayer_.detLayer(),convRegion,50.,60.)) return; //FIXME, the maxSearchR(Z) are not optimized
 
   /*get hit sorted in phi for each layer: NB: doesn't apply any region cut*/
-  const RecHitsSortedInPhi & innerHitsMap = theLayerCache(&theInnerLayer, region, event, es);
+  const RecHitsSortedInPhi & innerHitsMap = theLayerCache(innerLayer_, region, event, es);
   if (innerHitsMap.empty()) return;
  
-  const RecHitsSortedInPhi& outerHitsMap = theLayerCache(&theOuterLayer, region, event, es);
+  const RecHitsSortedInPhi& outerHitsMap = theLayerCache(outerLayer_, region, event, es);
   if (outerHitsMap.empty()) return;
   /*----------------*/
 
   /*This object will check the compatibility of the his in phi among the two layers. */
-  //InnerDeltaPhi deltaPhi(*theInnerLayer.detLayer(), region, es);
+  //InnerDeltaPhi deltaPhi(innerLayer_.detLayer(), region, es);
 
   static const float nSigmaRZ = std::sqrt(12.f);
   //  static const float nSigmaPhi = 3.f;
@@ -83,7 +86,7 @@ void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const Conversion
   float innerPhimin, innerPhimax;
 
   /*Getting only the Hits in the outer layer that are compatible with the conversion region*/
-  if(!getPhiRange(outerPhimin,outerPhimax,*theOuterLayer.detLayer(),convRegion,es)) return;
+  if(!getPhiRange(outerPhimin,outerPhimax,*outerLayer_.detLayer(),convRegion,es)) return;
   outerHitsMap.hits( outerPhimin, outerPhimax, outerHits);
 
 #ifdef mydebug_Seed
@@ -100,7 +103,7 @@ void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const Conversion
 #endif
 
     /*Check the compatibility of the ohit with the eta of the seeding track*/
-    if(checkRZCompatibilityWithSeedTrack(ohit,*theOuterLayer.detLayer(),convRegion)) continue;
+    if(checkRZCompatibilityWithSeedTrack(ohit,*outerLayer_.detLayer(),convRegion)) continue;
 
     /*  
     //Do I need this? it uses a compatibility that probably I wouldn't 
@@ -110,7 +113,7 @@ void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const Conversion
     if (phiRange.empty()) continue;
     */
 
-    const HitRZCompatibility *checkRZ = region.checkRZ(theInnerLayer.detLayer(), ohit, es);
+    const HitRZCompatibility *checkRZ = region.checkRZ(innerLayer_.detLayer(), ohit, es);
     if(!checkRZ) {
 #ifdef mydebug_Seed
       (*ss) << "*******\nNo valid checkRZ\n*******" << std::endl;
@@ -120,7 +123,7 @@ void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const Conversion
     
     /*Get only the inner hits compatible with the conversion region*/
     innerHits.clear();
-    if(!getPhiRange(innerPhimin,innerPhimax,*theInnerLayer.detLayer(),convRegion,es)) continue;
+    if(!getPhiRange(innerPhimin,innerPhimax,*innerLayer_.detLayer(),convRegion,es)) continue;
     innerHitsMap.hits(innerPhimin, innerPhimax, innerHits);
 
 #ifdef mydebug_Seed
@@ -137,12 +140,12 @@ void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const Conversion
 #endif
 
       /*Check the compatibility of the ohit with the eta of the seeding track*/
-      if(checkRZCompatibilityWithSeedTrack(*ih,*theInnerLayer.detLayer(),convRegion)) continue;
+      if(checkRZCompatibilityWithSeedTrack(*ih,*innerLayer_.detLayer(),convRegion)) continue;
       
       float r_reduced = std::sqrt( sqr(innPos.x()-region.origin().x())+sqr(innPos.y()-region.origin().y()));
       Range allowed;
       Range hitRZ;
-      if (theInnerLayer.detLayer()->location() == barrel) {
+      if (innerLayer_.detLayer()->location() == barrel) {
         allowed = checkRZ->range(r_reduced);
         float zErr = nSigmaRZ * (*ih)->errorGlobalZ();
         hitRZ = Range(innPos.z()-zErr, innPos.z()+zErr);
