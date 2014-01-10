@@ -9,6 +9,7 @@
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 
@@ -17,7 +18,7 @@ using namespace std;
 using namespace ctfseeding;
 
 CombinedHitTripletGenerator::CombinedHitTripletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC) :
-  theSeedingLayerSrc(cfg.getParameter<edm::InputTag>("SeedingLayers"))
+  theSeedingLayerToken(iC.consumes<SeedingLayerSetNew>(cfg.getParameter<edm::InputTag>("SeedingLayers")))
 {
   edm::ParameterSet generatorPSet = cfg.getParameter<edm::ParameterSet>("GeneratorPSet");
   std::string       generatorName = generatorPSet.getParameter<std::string>("ComponentName");
@@ -32,7 +33,7 @@ void CombinedHitTripletGenerator::hitTriplets(
    const edm::Event& ev, const edm::EventSetup& es)
 {
   edm::Handle<SeedingLayerSetNew> hlayers;
-  ev.getByLabel(theSeedingLayerSrc, hlayers);
+  ev.getByToken(theSeedingLayerToken, hlayers);
   assert(hlayers->sizeLayers() == 3);
 
   std::vector<layerTripletsNew::LayerSetAndLayers> trilayers = layerTripletsNew::layers(*hlayers);

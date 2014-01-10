@@ -6,11 +6,13 @@
 #include "RecoTracker/TkHitPairs/interface/HitPairGenerator.h"
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/EDGetToken.h"
 
 
 class TrackingRegion;
 class OrderedHitPairs;
 class HitPairGeneratorFromLayerPairForPhotonConversion;
+class SeedingLayerSetNew;
 namespace edm { class Event; class EventSetup; }
 
 #include "FWCore/Framework/interface/ESWatcher.h"
@@ -27,7 +29,7 @@ public:
   typedef LayerHitMapCache LayerCacheType;
 
 public:
-  CombinedHitPairGeneratorForPhotonConversion(const edm::ParameterSet & cfg);
+  CombinedHitPairGeneratorForPhotonConversion(const edm::ParameterSet & cfg, edm::ConsumesCollector& iC);
   virtual ~CombinedHitPairGeneratorForPhotonConversion();
 
   void setSeedingLayers(SeedingLayerSetNew::SeedingLayers layers) override;
@@ -54,7 +56,7 @@ public:
 private:
   CombinedHitPairGeneratorForPhotonConversion(const CombinedHitPairGeneratorForPhotonConversion & cb); 
 
-  edm::InputTag theSeedingLayerSrc;
+  edm::EDGetTokenT<SeedingLayerSetNew> theSeedingLayerToken;
   uint32_t maxHitPairsPerTrackAndGenerator;
 
   LayerCacheType   theLayerCache;

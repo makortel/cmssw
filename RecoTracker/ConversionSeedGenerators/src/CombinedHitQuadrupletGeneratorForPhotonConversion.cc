@@ -1,5 +1,6 @@
 #include "RecoTracker/ConversionSeedGenerators/interface/CombinedHitQuadrupletGeneratorForPhotonConversion.h"
 #include "RecoTracker/ConversionSeedGenerators/interface/HitQuadrupletGeneratorFromLayerPairForPhotonConversion.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 
@@ -7,15 +8,15 @@
 using namespace std;
 using namespace ctfseeding;
 
-CombinedHitQuadrupletGeneratorForPhotonConversion::CombinedHitQuadrupletGeneratorForPhotonConversion(const edm::ParameterSet& cfg)
-  : theSeedingLayerSrc(cfg.getParameter<edm::InputTag>("SeedingLayers"))
+CombinedHitQuadrupletGeneratorForPhotonConversion::CombinedHitQuadrupletGeneratorForPhotonConversion(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC)
+  : theSeedingLayerToken(iC.consumes<SeedingLayerSetNew>(cfg.getParameter<edm::InputTag>("SeedingLayers")))
 {
   theMaxElement = cfg.getParameter<unsigned int>("maxElement");
   theGenerator.reset(new HitQuadrupletGeneratorFromLayerPairForPhotonConversion( 0, 1, &theLayerCache, 0, theMaxElement));
 }
 
 CombinedHitQuadrupletGeneratorForPhotonConversion::CombinedHitQuadrupletGeneratorForPhotonConversion(const CombinedHitQuadrupletGeneratorForPhotonConversion & cb)
-  : theSeedingLayerSrc(cb.theSeedingLayerSrc)
+  : theSeedingLayerToken(cb.theSeedingLayerToken)
 {
   theMaxElement = cb.theMaxElement;
   theGenerator.reset(new HitQuadrupletGeneratorFromLayerPairForPhotonConversion( 0, 1, &theLayerCache, 0, theMaxElement));
@@ -41,7 +42,7 @@ void CombinedHitQuadrupletGeneratorForPhotonConversion::hitPairs(const TrackingR
 {
   size_t maxHitQuadruplets=1000000;
   edm::Handle<SeedingLayerSetNew> hlayers;
-  ev.getByLabel(theSeedingLayerSrc, hlayers);
+  ev.getByToken(theSeedingLayerToken, hlayers);
   assert(hlayers->sizeLayers() == 2);
 
   for(unsigned i=0; i<hlayers->sizeLayerSets() && result.size() < maxHitQuadruplets; ++i) {

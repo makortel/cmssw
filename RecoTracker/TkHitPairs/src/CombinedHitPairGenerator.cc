@@ -1,21 +1,19 @@
 #include "RecoTracker/TkHitPairs/interface/CombinedHitPairGenerator.h"
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 
 CombinedHitPairGenerator::CombinedHitPairGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC):
-  CombinedHitPairGenerator(cfg)
-{}
-CombinedHitPairGenerator::CombinedHitPairGenerator(const edm::ParameterSet& cfg)
-  : theSeedingLayerSrc(cfg.getParameter<edm::InputTag>("SeedingLayers"))
+  theSeedingLayerToken(iC.consumes<SeedingLayerSetNew>(cfg.getParameter<edm::InputTag>("SeedingLayers")))
 {
   theMaxElement = cfg.getParameter<unsigned int>("maxElement");
   theGenerator.reset(new HitPairGeneratorFromLayerPair(0, 1, &theLayerCache, theMaxElement));
 }
 
 CombinedHitPairGenerator::CombinedHitPairGenerator(const CombinedHitPairGenerator& cb):
-  theSeedingLayerSrc(cb.theSeedingLayerSrc),
-  theGenerator(new HitPairGeneratorFromLayerPairNew(0, 1, &theLayerCache, cb.theMaxElement))
+  theSeedingLayerToken(cb.theSeedingLayerToken),
+  theGenerator(new HitPairGeneratorFromLayerPair(0, 1, &theLayerCache, cb.theMaxElement))
 {
   theMaxElement = cb.theMaxElement;
 }
@@ -31,7 +29,7 @@ void CombinedHitPairGenerator::hitPairs(
    const edm::Event& ev, const edm::EventSetup& es)
 {
   edm::Handle<SeedingLayerSetNew> hlayers;
-  ev.getByLabel(theSeedingLayerSrc, hlayers);
+  ev.getByToken(theSeedingLayerToken, hlayers);
   assert(hlayers->sizeLayers() == 2);
   for(unsigned i=0; i<hlayers->sizeLayerSets(); ++i) {
     theGenerator->setSeedingLayers(hlayers->getLayers(i));
