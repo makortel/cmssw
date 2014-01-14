@@ -390,7 +390,102 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
       const edm::Event& ev,
       const edm::EventSetup& es,
       const SeedingLayerSetNew::SeedingLayer& layer) const {
-  return TrackingRegion::Hits(); // FIXME
+
+
+  //ESTIMATOR
+  TrackingRegion::Hits result;
+
+  const DetLayer * detLayer = layer.detLayer();
+  OuterEstimator * est = 0;
+
+  bool measurementMethod = false;
+  if ( theMeasurementTrackerUsage > 0.5) measurementMethod = true;
+  if ( theMeasurementTrackerUsage > -0.5 &&
+       !(detLayer->subDetector() == GeomDetEnumerators::PixelBarrel ||
+         detLayer->subDetector() == GeomDetEnumerators::PixelEndcap) ) measurementMethod = true;
+
+  if(measurementMethod) {
+    edm::ESHandle<MagneticField> field;
+    es.get<IdealMagneticFieldRecord>().get(field);
+    const MagneticField * magField = field.product();
+    
+    const GlobalPoint vtx = origin();
+    GlobalVector dir = direction();
+    
+    if (detLayer->subDetector() == GeomDetEnumerators::PixelBarrel || (!theUseEtaPhi  && detLayer->location() == GeomDetEnumerators::barrel)){
+      const BarrelDetLayer& bl = dynamic_cast<const BarrelDetLayer&>(*detLayer);
+      est = estimator(&bl,es);
+    } else if (detLayer->subDetector() == GeomDetEnumerators::PixelEndcap || (!theUseEtaPhi  && detLayer->location() == GeomDetEnumerators::endcap)) {
+      const ForwardDetLayer& fl = dynamic_cast<const ForwardDetLayer&>(*detLayer);
+      est = estimator(&fl,es);
+    }
+    
+    EtaPhiMeasurementEstimator etaPhiEstimator ((theEtaRange.second-theEtaRange.first)*0.5f,
+						(thePhiMargin.left()+thePhiMargin.right())*0.5f);
+    MeasurementEstimator * findDetAndHits = &etaPhiEstimator;
+    if (est){
+      LogDebug("RectangularEtaPhiTrackingRegion")<<"use pixel specific estimator.";
+      findDetAndHits = est;
+    }
+    else{
+      LogDebug("RectangularEtaPhiTrackingRegion")<<"use generic etat phi estimator.";
+    }
+    
+    // TSOS
+    float phi = phiDirection();
+    // std::cout << "dir " << direction().x()/direction().perp() <<','<< direction().y()/direction().perp() << " " << sin(phi) <<','<<cos(phi)<< std::endl;
+    Surface::RotationType rot( sin(phi), -cos(phi),           0,
+			       0,                0,          -1,
+			       cos(phi),  sin(phi),           0);
+    
+    Plane::PlanePointer surface = Plane::build(GlobalPoint(0.,0.,0.), rot);
+    //TrajectoryStateOnSurface tsos(lpar, *surface, magField);
+    
+    FreeTrajectoryState fts( GlobalTrajectoryParameters(vtx, dir, 1, magField) );
+    TrajectoryStateOnSurface tsos(fts, *surface);
+    
+    // propagator
+    StraightLinePropagator prop( magField, alongMomentum);
+    
+    edm::Handle<MeasurementTrackerEvent> mte;
+    ev.getByLabel(edm::InputTag(theMeasurementTrackerName), mte);
+    LayerMeasurements lm(mte->measurementTracker(), *mte);
+    
+    vector<TrajectoryMeasurement> meas = lm.measurements(*detLayer, tsos, prop, *findDetAndHits);
+    result.reserve(meas.size());
+    for (auto const & im : meas) {
+    auto ptrHit = im.recHit();
+    if (ptrHit->isValid())  result.push_back( std::move(ptrHit) );
+    }
+  
+    // LogDebug("RectangularEtaPhiTrackingRegion")<<" found "<< meas.size()<<" minus one measurements on layer: "<<detLayer->subDetector();
+    // std::cout << "RectangularEtaPhiTrackingRegion" <<" found "<< meas.size()<<" minus one measurements on layer: "<<detLayer->subDetector() << std::endl;
+  
+  } else {
+    //
+    // temporary solution 
+    //
+    if (detLayer->location() == GeomDetEnumerators::barrel) {
+      const BarrelDetLayer& bl = dynamic_cast<const BarrelDetLayer&>(*detLayer);
+      est = estimator(&bl,es);
+    } else {
+      const ForwardDetLayer& fl = dynamic_cast<const ForwardDetLayer&>(*detLayer);
+      est = estimator(&fl,es);
+    }
+    if (!est) return result;
+    
+    TrackingRegion::Hits layerHits = layer.hits();
+    result.reserve(layerHits.size());
+    for (auto const & ih : layerHits) {
+      if ( est->hitCompatibility()(ih.get()) ) {
+	result.push_back( std::move(ih) );
+      }
+    }
+  }
+  
+  // std::cout << "RectangularEtaPhiTrackingRegion hits "  << result.size() << std::endl;
+  delete est;
+  return result;
 }
 
 std::string RectangularEtaPhiTrackingRegion::print() const {
