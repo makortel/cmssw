@@ -187,7 +187,7 @@ SeedingLayerSetsBuilder::SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, 
         layer.extractor = std::make_shared<HitExtractorPIX>(layer.side, layer.idLayer, layer.pixelHitProducer, iC);
       }
       else if(layer.subdet != GeomDetEnumerators::invalidDet) {
-        std::shared_ptr<HitExtractorSTRP> extractor = std::make_shared<HitExtractorSTRP>(layer.side, layer.idLayer, iC);
+        std::shared_ptr<HitExtractorSTRP> extractor = std::make_shared<HitExtractorSTRP>(layer.subdet, layer.side, layer.idLayer);
         if (cfgLayer.exists("matchedRecHits")) {
           extractor->useMatchedHits(cfgLayer.getParameter<edm::InputTag>("matchedRecHits"), iC);
         }
@@ -344,10 +344,6 @@ SeedingLayerSets SeedingLayerSetsBuilder::layers(const edm::EventSetup& es) cons
 
       if(nameOK) {
         std::unique_ptr<HitExtractor> extractor(layer.extractor->clone());
-        if ( detLayer->subDetector() != GeomDetEnumerators::PixelBarrel &&
-             detLayer->subDetector() != GeomDetEnumerators::PixelEndcap) {
-          dynamic_cast<HitExtractorSTRP *>(extractor.get())->setDetLayer(detLayer);
-        }
 
         edm::ESHandle<TransientTrackingRecHitBuilder> builder;
         es.get<TransientRecHitRecord>().get(layer.hitBuilder, builder);
