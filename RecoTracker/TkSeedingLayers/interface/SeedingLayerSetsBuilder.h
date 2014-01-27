@@ -15,6 +15,7 @@
 namespace edm { class EventSetup; class ConsumesCollector;}
 class TrackerRecoGeometryRecord;
 class TransientRecHitRecord;
+class TransientTrackingRecHitBuilder;
 
 class SeedingLayerSetsBuilder {
 
@@ -60,6 +61,7 @@ private:
   std::vector<LayerSetIndex> theLayerSetIndices; // indices to theLayers to form the layer sets
   std::vector<std::string> theLayerNames;
   std::vector<const DetLayer *> theLayerDets;
+  std::vector<const TransientTrackingRecHitBuilder *> theTTRHBuilders;
   std::vector<LayerSpec> theLayers;
 };
 #endif

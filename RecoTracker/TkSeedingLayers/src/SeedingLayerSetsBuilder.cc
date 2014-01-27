@@ -240,6 +240,7 @@ SeedingLayerSetsBuilder::SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, 
     }
   }
   theLayerDets.resize(theLayers.size());
+  theTTRHBuilders.resize(theLayers.size());
 
   // debug printout
   // The following should not be set to cout
@@ -336,7 +337,11 @@ void SeedingLayerSetsBuilder::updateEventSetup(const edm::EventSetup& es) {
       throw cms::Exception("Configuration") << "Did not find DetLayer for layer " << theLayerNames[layer.nameIndex];
     }
 
+    edm::ESHandle<TransientTrackingRecHitBuilder> builder;
+    es.get<TransientRecHitRecord>().get(layer.hitBuilder, builder);
+
     theLayerDets[i] = detLayer;
+    theTTRHBuilders[i] = builder.product();
   }
 }
 
