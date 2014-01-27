@@ -359,14 +359,7 @@ SeedingLayerSets SeedingLayerSetsBuilder::layers(const edm::EventSetup& es)
       const LayerSpec& layer = theLayers[layerIndex];
       const DetLayer *detLayer = theLayerDets[layerIndex];
 
-      edm::ESHandle<TransientTrackingRecHitBuilder> builder;
-      es.get<TransientRecHitRecord>().get(layer.hitBuilder, builder);
-      if (layer.useErrorsFromParam) {
-        set.push_back( SeedingLayer( theLayerNames[layer.nameIndex], layerIndex, detLayer, builder.product(),
-                                     layer.extractor.get(), true, layer.hitErrorRPhi, layer.hitErrorRZ));
-      } else {
-        set.push_back( SeedingLayer( theLayerNames[layer.nameIndex], layerIndex, detLayer, builder.product(), layer.extractor.get()));
-      }
+      set.push_back( SeedingLayer( theLayerNames[layerIndex], layerIndex, detLayer, theTTRHBuilders[layerIndex], layer.extractor.get()));
     }
     result.push_back(set);
   }
