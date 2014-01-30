@@ -31,7 +31,7 @@ public:
     theHasPredefinedHitErrors(true),
     thePredefinedHitErrorRZ(hitErrorRZ), thePredefinedHitErrorRPhi(hitErrorRPhi) { }
 
-  ~SeedingLayerImpl() { delete theHitExtractor; }
+  ~SeedingLayerImpl() {  }
 
   SeedingLayer::Hits hits(const SeedingLayer &sl, const edm::Event& ev, 
 			  const edm::EventSetup& es) const { return theHitExtractor->hits(sl,ev,es);  }
