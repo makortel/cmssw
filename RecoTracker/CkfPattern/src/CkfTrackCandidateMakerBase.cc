@@ -23,6 +23,7 @@
 #include "RecoTracker/CkfPattern/interface/TransientInitialStateEstimator.h"
 #include "RecoTracker/Record/interface/TrackerRecoGeometryRecord.h"
 #include "RecoTracker/Record/interface/CkfComponentsRecord.h"
+#include "RecoTracker/CkfPattern/interface/BaseCkfTrajectoryBuilderFactory.h"
 
 
 #include "RecoTracker/CkfPattern/interface/SeedCleanerByHitPosition.h"
@@ -43,6 +44,12 @@
 using namespace edm;
 using namespace std;
 
+namespace {
+  BaseCkfTrajectoryBuilder *createBaseCkfTrajectoryBuilder(const edm::ParameterSet& pset) {
+    return BaseCkfTrajectoryBuilderFactory::get()->create(pset.getParameter<std::string>("ComponentType"), pset);
+  }
+}
+
 namespace cms{
   CkfTrackCandidateMakerBase::CkfTrackCandidateMakerBase(edm::ParameterSet const& conf, edm::ConsumesCollector && iC) : 
 
@@ -54,8 +61,7 @@ namespace cms{
     cleanTrajectoryAfterInOut(conf.getParameter<bool>("cleanTrajectoryAfterInOut")),
     reverseTrajectories(conf.existsAs<bool>("reverseTrajectories") && conf.getParameter<bool>("reverseTrajectories")),
     theMaxNSeeds(conf.getParameter<unsigned int>("maxNSeeds")),
-    theTrajectoryBuilderName(conf.getParameter<std::string>("TrajectoryBuilder")), 
-    theTrajectoryBuilder(0),
+    theTrajectoryBuilder(createBaseCkfTrajectoryBuilder(conf.getParameter<edm::ParameterSet>("TrajectoryBuilder"))),
     theTrajectoryCleanerName(conf.getParameter<std::string>("TrajectoryCleaner")), 
     theTrajectoryCleaner(0),
     theInitialState(0),
@@ -143,12 +149,6 @@ namespace cms{
     edm::ESHandle<NavigationSchool> navigationSchoolH;
     es.get<NavigationSchoolRecord>().get(theNavigationSchoolName, navigationSchoolH);
     theNavigationSchool = navigationSchoolH.product();
-
-    // set the TrajectoryBuilder
-    edm::ESHandle<TrajectoryBuilder> theTrajectoryBuilderHandle;
-    es.get<CkfComponentsRecord>().get(theTrajectoryBuilderName,theTrajectoryBuilderHandle);
-    theTrajectoryBuilder = dynamic_cast<const BaseCkfTrajectoryBuilder*>(theTrajectoryBuilderHandle.product());    
-    assert(theTrajectoryBuilder);
   }
 
   // Functions that gets called by framework every event
@@ -172,7 +172,6 @@ namespace cms{
     edm::Handle<MeasurementTrackerEvent> data;
     e.getByToken(theMTELabel, data);
 
-    std::auto_ptr<BaseCkfTrajectoryBuilder> trajectoryBuilder;
     std::auto_ptr<MeasurementTrackerEvent> dataWithMasks;
     if (skipClusters_) {
         edm::Handle<PixelClusterMask> pixelMask;
@@ -187,10 +186,10 @@ namespace cms{
             dataWithMasks.reset(new MeasurementTrackerEvent(*data, *stripMask, *pixelMask));
         }
         //std::cout << "Trajectory builder " << conf_.getParameter<std::string>("@module_label") << " created with masks, " << (!data->isStripRegional() ? "offline": "onDemand") << std::endl;
-        trajectoryBuilder.reset(theTrajectoryBuilder->clone(&*dataWithMasks));
+        theTrajectoryBuilder->setEvent(e, es, &*dataWithMasks);
     } else {
         //std::cout << "Trajectory builder " << conf_.getParameter<std::string>("@module_label") << " created without masks, " << (!data->isStripRegional() ? "offline": "onDemand") << std::endl;
-        trajectoryBuilder.reset(theTrajectoryBuilder->clone(&*data));
+        theTrajectoryBuilder->setEvent(e, es, &*data);
     }
     
     // Step B: Retrieve seeds
@@ -237,7 +236,7 @@ namespace cms{
 
 	// Build trajectory from seed outwards
         theTmpTrajectories.clear();
-	auto const & startTraj = trajectoryBuilder->buildTrajectories( (*collseed)[j], theTmpTrajectories, nullptr );
+	auto const & startTraj = theTrajectoryBuilder->buildTrajectories( (*collseed)[j], theTmpTrajectories, nullptr );
 	
        
 	LogDebug("CkfPattern") << "======== In-out trajectory building found " << theTmpTrajectories.size()
@@ -258,7 +257,7 @@ namespace cms{
 	// seed and if possible further inwards.
 	
 	if (doSeedingRegionRebuilding) {
-	  trajectoryBuilder->rebuildTrajectories(startTraj,(*collseed)[j],theTmpTrajectories);      
+	  theTrajectoryBuilder->rebuildTrajectories(startTraj,(*collseed)[j],theTmpTrajectories);      
 
   	  LogDebug("CkfPattern") << "======== Out-in trajectory building found " << theTmpTrajectories.size()
   			              << " valid/invalid trajectories from seed " << j << " ========"<<endl
