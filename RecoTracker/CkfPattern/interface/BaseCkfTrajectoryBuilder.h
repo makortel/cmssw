@@ -37,6 +37,8 @@ class TrajectoryCleaner;
 #include "TrackingTools/PatternTools/interface/bqueue.h"
 #include "RecoTracker/CkfPattern/interface/PrintoutHelper.h"
 
+#include <string>
+
 /** The component of track reconstruction that, strating from a seed,
  *  reconstructs all possible trajectories.
  *  The resulting trajectories may be mutually exclusive and require
@@ -57,17 +59,10 @@ public:
   typedef std::vector<Trajectory> TrajectoryContainer;
   typedef std::vector<TempTrajectory> TempTrajectoryContainer;
   typedef TrajectoryContainer::iterator TrajectoryIterator;
-  
-  BaseCkfTrajectoryBuilder(const edm::ParameterSet&              conf,
-			   const TrajectoryStateUpdator*         updator,
-			   const Propagator*                     propagatorAlong,
-			   const Propagator*                     propagatorOpposite,
-			   const Chi2MeasurementEstimatorBase*   estimator,
-			   const TransientTrackingRecHitBuilder* RecHitBuilder,
-			   const TrajectoryFilter*               filter,
-			   const TrajectoryFilter*               inOutFilter = 0);
 
-  BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &other) = default ;
+  BaseCkfTrajectoryBuilder(const edm::ParameterSet& conf);
+  BaseCkfTrajectoryBuilder(const BaseCkfTrajectoryBuilder &) = delete;
+  BaseCkfTrajectoryBuilder& operator=(const BaseCkfTrajectoryBuilder&) = delete;
   virtual ~BaseCkfTrajectoryBuilder();
 
   // new interface returning the start Trajectory...
@@ -83,8 +78,7 @@ public:
   virtual void setEvent(const edm::Event& event) const ;
   virtual void unset() const;
 
-  // Return a clone of this, with the data pointer set
-  virtual BaseCkfTrajectoryBuilder * clone(const MeasurementTrackerEvent *data) const = 0;
+  void setEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const MeasurementTrackerEvent *data);
 
   virtual void setDebugger( CkfDebugger * dbg) const {;}
  
@@ -95,6 +89,8 @@ public:
   //  int 		maxConsecLostHit()	{return theMaxConsecLostHit;}
 
  protected:    
+  virtual void setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
+
   //methods for dubugging 
   virtual bool analyzeMeasurementsDebugger(Trajectory& traj, const std::vector<TrajectoryMeasurement>& meas,
 					   const MeasurementTrackerEvent* theMeasurementTracker, 
@@ -155,8 +151,18 @@ public:
 
   //  TrajectoryFilter*              theMinPtCondition;
   //  TrajectoryFilter*              theMaxHitsCondition;
+protected:
   const TrajectoryFilter* theFilter; /** Filter used at end of complete tracking */
   const TrajectoryFilter* theInOutFilter; /** Filter used at end of in-out tracking */
+private:
+
+  // for EventSetup
+  const std::string theUpdatorName;
+  const std::string thePropagatorAlongName;
+  const std::string thePropagatorOppositeName;
+  const std::string theEstimatorName;
+  const std::string theRecHitBuilderName;
+  const std::string theFilterName;
 };
 
 
