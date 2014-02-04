@@ -36,9 +36,8 @@ convTracks = RecoTracker.TrackProducer.CTFFinalFitWithMaterial_cfi.ctfWithMateri
 convTracks.src = 'convTkCand'
 
 ##TRAJECTORY BUILDER
-import RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cfi
-convTrajectoryBuilder = RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cfi.CkfTrajectoryBuilder.clone()
-convTrajectoryBuilder.ComponentName = 'convTrajectoryBuilder'
+import RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi
+convTrajectoryBuilder = RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi.CkfTrajectoryBuilder.clone()
 convTrajectoryBuilder.trajectoryFilterName = 'convTrajectoryFilter'
 convTrajectoryBuilder.MeasurementTrackerName = 'convMeasurementTracker'
 

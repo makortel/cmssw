@@ -48,7 +48,6 @@ hiRegitMuLowPtTripletStepTrajectoryFilter.filterPset.minPt              = 0.8 # 
 
 
 hiRegitMuLowPtTripletStepTrajectoryBuilder = RecoHI.HiTracking.hiRegitLowPtTripletStep_cff.hiRegitLowPtTripletStepTrajectoryBuilder.clone(
-    ComponentName        = 'hiRegitMuLowPtTripletStepTrajectoryBuilder',
     trajectoryFilterName = 'hiRegitMuLowPtTripletStepTrajectoryFilter',
     clustersToSkip = cms.InputTag('hiRegitMuLowPtTripletStepClusters'),
 )

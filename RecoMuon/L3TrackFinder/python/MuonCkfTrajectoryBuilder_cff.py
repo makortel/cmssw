@@ -23,7 +23,7 @@ from RecoTracker.TransientTrackingRecHit.TransientTrackingRecHitBuilder_cfi impo
 # MeasurementTracker
 from RecoTracker.MeasurementDet.MeasurementTrackerESProducer_cfi import *
 #
-from RecoMuon.L3TrackFinder.MuonCkfTrajectoryBuilderESProducer_cfi import *
+from RecoMuon.L3TrackFinder.MuonCkfTrajectoryBuilder_cfi import *
 # trajectory filtering
 # do no duplicate the module in order to be able to later replace its values
 # later on, L3Muon might need a specific TrajectoryFilter adapted to online purpose

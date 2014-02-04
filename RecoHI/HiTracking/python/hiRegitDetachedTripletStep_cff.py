@@ -50,7 +50,6 @@ hiRegitDetachedTripletStepTrajectoryFilter = RecoTracker.IterativeTracking.Detac
     )
 
 hiRegitDetachedTripletStepTrajectoryBuilder = RecoTracker.IterativeTracking.DetachedTripletStep_cff.detachedTripletStepTrajectoryBuilder.clone(
-    ComponentName        = 'hiRegitDetachedTripletStepTrajectoryBuilder',
     trajectoryFilterName = 'hiRegitDetachedTripletStepTrajectoryFilter',
     clustersToSkip       = cms.InputTag('hiRegitDetachedTripletStepClusters')
 )

@@ -30,16 +30,15 @@ import RecoTracker.MeasurementDet.MeasurementTrackerESProducer_cfi
 from TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cff import *
 import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
 ckfBaseTrajectoryFilterP5 = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone()
-import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
 ckfBaseTrajectoryFilterP5.filterPset.minPt = 0.5
 ckfBaseTrajectoryFilterP5.filterPset.maxLostHits = 4
 ckfBaseTrajectoryFilterP5.filterPset.maxConsecLostHits = 3
 #replace ckfBaseTrajectoryFilterP5.filterPset.minimumNumberOfHits =  4
 #
-GroupedCkfTrajectoryBuilderP5 = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone()
+GroupedCkfTrajectoryBuilderP5 = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone()
 ckfBaseTrajectoryFilterP5.ComponentName = 'ckfBaseTrajectoryFilterP5'
 ##CTF_P5_MeasurementTracker.ComponentName = 'CTF_P5' # useless duplication of MeasurementTracker
 ##GroupedCkfTrajectoryBuilderP5.MeasurementTrackerName = 'CTF_P5' # useless duplication of MeasurementTracker
-GroupedCkfTrajectoryBuilderP5.ComponentName = 'GroupedCkfTrajectoryBuilderP5'
 GroupedCkfTrajectoryBuilderP5.trajectoryFilterName = 'ckfBaseTrajectoryFilterP5'
 

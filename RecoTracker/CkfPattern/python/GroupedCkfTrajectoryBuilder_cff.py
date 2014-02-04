@@ -27,5 +27,5 @@ from TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cff import *
 ckfBaseInOutTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone()
 ckfBaseInOutTrajectoryFilter.ComponentName = 'ckfBaseInOutTrajectoryFilter'
 #
-from RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi import *
+from RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi import *
 

@@ -95,7 +95,6 @@ ComponentName = cms.string('MeasurementTrackerTop')
 )
 GroupedCkfTrajectoryBuilderP5Top = copy.deepcopy(GroupedCkfTrajectoryBuilderP5)
 GroupedCkfTrajectoryBuilderP5Top.MeasurementTrackerName = cms.string('MeasurementTrackerTop')
-GroupedCkfTrajectoryBuilderP5Top.ComponentName = cms.string('GroupedCkfTrajectoryBuilderP5Top')
 ckfTrackCandidatesP5Top = copy.deepcopy(ckfTrackCandidatesP5)
 ckfTrackCandidatesP5Top.TrajectoryBuilder = 'GroupedCkfTrajectoryBuilderP5Top'
 ckfTrackCandidatesP5Top.NavigationSchool   = 'CosmicNavigationSchool'
@@ -179,7 +178,6 @@ ComponentName = cms.string('MeasurementTrackerBottom')
 )
 GroupedCkfTrajectoryBuilderP5Bottom = copy.deepcopy(GroupedCkfTrajectoryBuilderP5)
 GroupedCkfTrajectoryBuilderP5Bottom.MeasurementTrackerName = cms.string('MeasurementTrackerBottom')
-GroupedCkfTrajectoryBuilderP5Bottom.ComponentName = cms.string('GroupedCkfTrajectoryBuilderP5Bottom')
 ckfTrackCandidatesP5Bottom = copy.deepcopy(ckfTrackCandidatesP5)
 ckfTrackCandidatesP5Bottom.TrajectoryBuilder = 'GroupedCkfTrajectoryBuilderP5Bottom'
 ckfTrackCandidatesP5Bottom.NavigationSchool   = 'CosmicNavigationSchool'

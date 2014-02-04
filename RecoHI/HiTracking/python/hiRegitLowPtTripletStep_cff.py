@@ -51,7 +51,6 @@ hiRegitLowPtTripletStepTrajectoryFilter = RecoTracker.IterativeTracking.LowPtTri
 
 
 hiRegitLowPtTripletStepTrajectoryBuilder = RecoTracker.IterativeTracking.LowPtTripletStep_cff.lowPtTripletStepTrajectoryBuilder.clone(
-    ComponentName        = 'hiRegitLowPtTripletStepTrajectoryBuilder',
     trajectoryFilterName = 'hiRegitLowPtTripletStepTrajectoryFilter',
     clustersToSkip = cms.InputTag('hiRegitLowPtTripletStepClusters'),
 )

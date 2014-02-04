@@ -7,8 +7,7 @@ from TrackingTools.TrackFitters.KFTrajectorySmootherESProducer_cfi import *
 # KFFittingSmootherESProducer
 from TrackingTools.TrackFitters.KFFittingSmootherESProducer_cfi import *
 # TrackerTrajectoryBuilders
-#include "RecoTracker/CkfPattern/data/CkfTrajectoryBuilderESProducerP5.cff"
-from RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducerP5_cff import *
+from RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderP5_cff import *
 # TrajectoryCleaning
 from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import *
 # Navigation School

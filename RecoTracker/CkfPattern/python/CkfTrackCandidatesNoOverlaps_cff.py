@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 # TrackerTrajectoryBuilders
-from RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cff import *
+from RecoTracker.CkfPattern.CkfTrajectoryBuilder_cff import *
 # TrajectoryCleaning
 from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import *
 # navigation school

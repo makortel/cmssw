@@ -49,7 +49,6 @@ hiRegitMuDetachedTripletStepTrajectoryFilter = RecoHI.HiTracking.hiRegitDetached
 hiRegitMuDetachedTripletStepTrajectoryFilter.filterPset.minPt = 0.8 # after each new hit, apply pT cut for traj w/ at least minHitsMinPt = cms.int32(3),
 
 hiRegitMuDetachedTripletStepTrajectoryBuilder = RecoHI.HiTracking.hiRegitDetachedTripletStep_cff.hiRegitDetachedTripletStepTrajectoryBuilder.clone(
-    ComponentName        = 'hiRegitMuDetachedTripletStepTrajectoryBuilder',
     trajectoryFilterName = 'hiRegitMuDetachedTripletStepTrajectoryFilter',
     clustersToSkip       = cms.InputTag('hiRegitMuDetachedTripletStepClusters')
 )

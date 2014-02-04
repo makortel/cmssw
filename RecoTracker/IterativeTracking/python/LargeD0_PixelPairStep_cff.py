@@ -104,9 +104,8 @@ largeD0step2CkfTrajectoryFilter.filterPset.minPt = 0.6
 largeD0step2CkfTrajectoryFilter.filterPset.minHitsMinPt = 3
 
 #TRAJECTORY BUILDER
-import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
-largeD0step2CkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
-    ComponentName = 'largeD0step2CkfTrajectoryBuilder',
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+largeD0step2CkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone(
     MeasurementTrackerName = 'largeD0step2MeasurementTracker',
     trajectoryFilterName = 'largeD0step2CkfTrajectoryFilter',
     useSameTrajFilter = True,

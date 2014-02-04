@@ -206,9 +206,8 @@ conv2CkfTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESP
     )
 
 # TRACK BUILDING
-import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
-conv2CkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
-    ComponentName = 'conv2CkfTrajectoryBuilder',
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+conv2CkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone(
     trajectoryFilterName = 'conv2CkfTrajectoryFilter',
     minNrOfHitsForRebuild = 3,
     clustersToSkip = cms.InputTag('conv2Clusters'),

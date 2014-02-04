@@ -80,9 +80,8 @@ thirdMeasurementTracker.stripClusterProducer = 'thirdClusters'
 
 #################################
 # Tertiary trajectory builder
-import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
-thirdCkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone()
-thirdCkfTrajectoryBuilder.ComponentName          = 'thirdCkfTrajectoryBuilder'
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+thirdCkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone()
 thirdCkfTrajectoryBuilder.MeasurementTrackerName = 'thirdMeasurementTracker'
 thirdCkfTrajectoryBuilder.trajectoryFilterName   = 'MinBiasCkfTrajectoryFilter'
 thirdCkfTrajectoryBuilder.inOutTrajectoryFilterName   = 'MinBiasCkfTrajectoryFilter'

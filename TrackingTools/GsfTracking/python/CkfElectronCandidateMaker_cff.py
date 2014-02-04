@@ -25,9 +25,8 @@ TrajectoryFilterForElectrons.filterPset = cms.PSet(
 )
 
 # Trajectory Builder
-import RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cfi
-TrajectoryBuilderForElectrons = RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cfi.CkfTrajectoryBuilder.clone()
-TrajectoryBuilderForElectrons.ComponentName = 'TrajectoryBuilderForElectrons'
+import RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi
+TrajectoryBuilderForElectrons = RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi.CkfTrajectoryBuilder.clone()
 TrajectoryBuilderForElectrons.trajectoryFilterName = 'TrajectoryFilterForElectrons'
 TrajectoryBuilderForElectrons.maxCand = 5
 TrajectoryBuilderForElectrons.intermediateCleaning = False
