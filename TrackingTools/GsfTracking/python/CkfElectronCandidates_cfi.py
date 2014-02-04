@@ -2,6 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 import copy
 from RecoTracker.CkfPattern.CkfTrackCandidates_cfi import *
+import TrackingTools.GsfTracking.CkfElectronTrajectoryBuilder_cfi
 CkfElectronCandidates = copy.deepcopy(ckfTrackCandidates)
-CkfElectronCandidates.TrajectoryBuilder = 'CkfElectronTrajectoryBuilder'
+CkfElectronCandidates.TrajectoryBuilder = TrackingTools.GsfTracking.CkfElectronTrajectoryBuilder_cfi.CkfElectronTrajectoryBuilder
 

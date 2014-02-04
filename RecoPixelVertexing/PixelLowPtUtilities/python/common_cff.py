@@ -15,6 +15,8 @@ TransientTrackBuilderESProducer = cms.ESProducer("TransientTrackBuilderESProduce
 )
 
 # Trajectory builder
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+GroupedCkfTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone()
 GroupedCkfTrajectoryBuilder.maxCand = 5
 GroupedCkfTrajectoryBuilder.intermediateCleaning = False
 GroupedCkfTrajectoryBuilder.alwaysUseInvalidHits = False
