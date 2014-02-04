@@ -45,13 +45,10 @@ hiRegitLowPtTripletStepSeeds.RegionFactoryPSet.RegionPSet.ptMin = 0.4
 
 
 # building: feed the new-named seeds
-hiRegitLowPtTripletStepTrajectoryFilter = RecoTracker.IterativeTracking.LowPtTripletStep_cff.lowPtTripletStepStandardTrajectoryFilter.clone(
-    ComponentName = 'hiRegitLowPtTripletStepTrajectoryFilter'
-    )
-
+hiRegitLowPtTripletStepTrajectoryFilter = RecoTracker.IterativeTracking.LowPtTripletStep_cff.lowPtTripletStepStandardTrajectoryFilter.clone()
 
 hiRegitLowPtTripletStepTrajectoryBuilder = RecoTracker.IterativeTracking.LowPtTripletStep_cff.lowPtTripletStepTrajectoryBuilder.clone(
-    trajectoryFilterName = 'hiRegitLowPtTripletStepTrajectoryFilter',
+    trajectoryFilter = hiRegitLowPtTripletStepTrajectoryFilter,
     clustersToSkip = cms.InputTag('hiRegitLowPtTripletStepClusters'),
 )
 
