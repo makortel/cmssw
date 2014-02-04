@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
-GroupedCkfTrajectoryBuilder = cms.ESProducer("GroupedCkfTrajectoryBuilderESProducer",
+GroupedCkfTrajectoryBuilder = cms.PSet(
+    ComponentType = cms.string('GroupedCkfTrajectoryBuilder'),
     bestHitOnly = cms.bool(True),
     propagatorAlong = cms.string('PropagatorWithMaterialParabolicMf'),
     # Filter used on tracks at end of all tracking (in-out + out-in)
@@ -14,7 +15,6 @@ GroupedCkfTrajectoryBuilder = cms.ESProducer("GroupedCkfTrajectoryBuilderESProdu
     # Maximum number of track candidates followed at each step of
     # track building
     maxCand = cms.int32(5),
-    ComponentName = cms.string('GroupedCkfTrajectoryBuilder'),
     intermediateCleaning = cms.bool(True),
     # Chi2 added to track candidate if no hit found in layer
     lostHitPenalty = cms.double(30.0),

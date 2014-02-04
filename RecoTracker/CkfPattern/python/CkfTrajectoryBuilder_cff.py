@@ -23,6 +23,4 @@ from RecoTracker.TransientTrackingRecHit.TransientTrackingRecHitBuilder_cfi impo
 from RecoTracker.MeasurementDet.MeasurementTrackerESProducer_cff import *
 # trajectory filtering
 from TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cff import *
-#
-from RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cfi import *
 
