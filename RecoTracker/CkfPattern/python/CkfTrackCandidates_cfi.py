@@ -1,5 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
 ckfTrackCandidates = cms.EDProducer("CkfTrackCandidateMaker",
 # During tracking, eliminate seeds used by an already found track 
     RedundantSeedCleaner = cms.string('CachingSeedCleanerBySharedInput'),
@@ -20,7 +21,7 @@ ckfTrackCandidates = cms.EDProducer("CkfTrackCandidateMaker",
     src = cms.InputTag('globalMixedSeeds'),                                  
     SimpleMagneticField = cms.string('ParabolicMf'),
     NavigationSchool = cms.string('SimpleNavigationSchool'),
-    TrajectoryBuilder = cms.string('GroupedCkfTrajectoryBuilder'),
+    TrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder,
     TransientInitialStateEstimatorParameters = cms.PSet(
         propagatorAlongTISE = cms.string('PropagatorWithMaterialParabolicMf'),
         propagatorOppositeTISE = cms.string('PropagatorWithMaterialParabolicMfOpposite'),

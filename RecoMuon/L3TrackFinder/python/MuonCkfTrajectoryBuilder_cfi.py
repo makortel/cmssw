@@ -1,10 +1,10 @@
 import FWCore.ParameterSet.Config as cms
 
-MuonCkfTrajectoryBuilder = cms.ESProducer("MuonCkfTrajectoryBuilderESProducer",
+MuonCkfTrajectoryBuilder = cms.PSet(
+    ComponentType = cms.string("MuonCkfTrajectoryBuilder"),
     propagatorAlong = cms.string('PropagatorWithMaterial'),
     trajectoryFilterName = cms.string('muonCkfTrajectoryFilter'),
     maxCand = cms.int32(5),
-    ComponentName = cms.string('muonCkfTrajectoryBuilder'),
     intermediateCleaning = cms.bool(False),
     #would skip the first layer to search for measurement if bare TrajectorySeed
     useSeedLayer = cms.bool(False),
