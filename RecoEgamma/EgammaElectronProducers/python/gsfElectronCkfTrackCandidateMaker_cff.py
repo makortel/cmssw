@@ -21,9 +21,17 @@ from RecoEgamma.EgammaElectronProducers.bwdGsfElectronPropagator_cff import *
 # "forward" propagator for electrons
 from RecoEgamma.EgammaElectronProducers.fwdGsfElectronPropagator_cff import *
 # TrajectoryFilter
-from TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff import *
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-TrajectoryFilterForPixelMatchGsfElectrons = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone()
+TrajectoryFilterForPixelMatchGsfElectrons = cms.PSet(
+    chargeSignificance = cms.double(-1.0),
+    minPt = cms.double(3.0),
+    minHitsMinPt = cms.int32(-1),
+    ComponentType = cms.string('CkfBaseTrajectoryFilter'),
+    maxLostHits = cms.int32(1),
+    maxNumberOfHits = cms.int32(-1),
+    maxConsecLostHits = cms.int32(1),
+    nSigmaMinPt = cms.double(5.0),
+    minimumNumberOfHits = cms.int32(5)
+)
 
 egammaCkfTrackCandidates.src = cms.InputTag('ecalDrivenElectronSeeds')
 egammaCkfTrackCandidates.TrajectoryBuilder = TrajectoryBuilderForPixelMatchGsfElectrons
@@ -32,7 +40,7 @@ egammaCkfTrackCandidates.TrajectoryCleaner = 'TrajectoryCleanerBySharedHits'
 egammaCkfTrackCandidates.NavigationSchool = 'SimpleNavigationSchool'
 egammaCkfTrackCandidates.RedundantSeedCleaner = 'CachingSeedCleanerBySharedInput'
 
-TrajectoryBuilderForPixelMatchGsfElectrons.trajectoryFilterName = 'TrajectoryFilterForPixelMatchGsfElectrons'
+TrajectoryBuilderForPixelMatchGsfElectrons.trajectoryFilter = TrajectoryFilterForPixelMatchGsfElectrons
 TrajectoryBuilderForPixelMatchGsfElectrons.maxCand = 3
 TrajectoryBuilderForPixelMatchGsfElectrons.intermediateCleaning = False
 TrajectoryBuilderForPixelMatchGsfElectrons.propagatorAlong = 'fwdGsfElectronPropagator'
@@ -47,17 +55,4 @@ TrajectoryBuilderForPixelMatchGsfElectrons.updator = 'KFUpdator'
 gsfElectronChi2.ComponentName = 'gsfElectronChi2'
 gsfElectronChi2.MaxChi2 = 100000.
 gsfElectronChi2.nSigma = 3.
-
-TrajectoryFilterForPixelMatchGsfElectrons.ComponentName = 'TrajectoryFilterForPixelMatchGsfElectrons'
-TrajectoryFilterForPixelMatchGsfElectrons.filterPset = cms.PSet(
-    chargeSignificance = cms.double(-1.0),
-    minPt = cms.double(3.0),
-    minHitsMinPt = cms.int32(-1),
-    ComponentType = cms.string('CkfBaseTrajectoryFilter'),
-    maxLostHits = cms.int32(1),
-    maxNumberOfHits = cms.int32(-1),
-    maxConsecLostHits = cms.int32(1),
-    nSigmaMinPt = cms.double(5.0),
-    minimumNumberOfHits = cms.int32(5)
-)
 

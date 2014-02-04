@@ -23,10 +23,16 @@ import RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi
 gsStripRecHits = RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi.siStripMatchedRecHits.clone()
 gsStripRecHits.ClusterProducer = 'gsClusters'
 
+##TRAJECTORY FILTER
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+convTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone()
+convTrajectoryFilter.maxLostHits = 0
+convTrajectoryFilter.minimumNumberOfHits = 3
+
 ##TRAJECTORY BUILDER
 import RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi
 convTrajectoryBuilder = RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi.CkfTrajectoryBuilder.clone()
-convTrajectoryBuilder.trajectoryFilterName = 'convTrajectoryFilter'
+convTrajectoryBuilder.trajectoryFilter = convTrajectoryFilter
 convTrajectoryBuilder.MeasurementTrackerName = 'convMeasurementTracker'
 
 ##TK CANDIDATES
@@ -40,13 +46,6 @@ convTkCand.TrajectoryBuilder = convTrajectoryBuilder
 import RecoTracker.TrackProducer.CTFFinalFitWithMaterial_cfi
 convTracks = RecoTracker.TrackProducer.CTFFinalFitWithMaterial_cfi.ctfWithMaterialTracks.clone()
 convTracks.src = 'convTkCand'
-
-##TRAJECTORY FILTER
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-convTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone()
-convTrajectoryFilter.ComponentName = 'convTrajectoryFilter'
-convTrajectoryFilter.filterPset.maxLostHits = 0
-convTrajectoryFilter.filterPset.minimumNumberOfHits = 3
 
 ##MEASUREMENT TRACKER
 import RecoTracker.MeasurementDet.MeasurementTrackerESProducer_cfi
