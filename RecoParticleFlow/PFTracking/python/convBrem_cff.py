@@ -23,25 +23,23 @@ import RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi
 gsStripRecHits = RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi.siStripMatchedRecHits.clone()
 gsStripRecHits.ClusterProducer = 'gsClusters'
 
+##TRAJECTORY BUILDER
+import RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi
+convTrajectoryBuilder = RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi.CkfTrajectoryBuilder.clone()
+convTrajectoryBuilder.trajectoryFilterName = 'convTrajectoryFilter'
+convTrajectoryBuilder.MeasurementTrackerName = 'convMeasurementTracker'
+
 ##TK CANDIDATES
 import RecoTracker.CkfPattern.CkfTrackCandidates_cfi
 convTkCand = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone()
 convTkCand.src = 'convBremSeeds'
-convTkCand.TrajectoryBuilder = 'convTrajectoryBuilder'
+convTkCand.TrajectoryBuilder = convTrajectoryBuilder
 
 
 ##TRACKS
 import RecoTracker.TrackProducer.CTFFinalFitWithMaterial_cfi
 convTracks = RecoTracker.TrackProducer.CTFFinalFitWithMaterial_cfi.ctfWithMaterialTracks.clone()
 convTracks.src = 'convTkCand'
-
-##TRAJECTORY BUILDER
-import RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cfi
-convTrajectoryBuilder = RecoTracker.CkfPattern.CkfTrajectoryBuilderESProducer_cfi.CkfTrajectoryBuilder.clone()
-convTrajectoryBuilder.ComponentName = 'convTrajectoryBuilder'
-convTrajectoryBuilder.trajectoryFilterName = 'convTrajectoryFilter'
-convTrajectoryBuilder.MeasurementTrackerName = 'convMeasurementTracker'
-
 
 ##TRAJECTORY FILTER
 import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
