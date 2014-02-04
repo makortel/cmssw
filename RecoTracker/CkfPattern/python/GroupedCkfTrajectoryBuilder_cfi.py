@@ -1,13 +1,15 @@
 import FWCore.ParameterSet.Config as cms
 
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff as trajectoryFilters
+
 GroupedCkfTrajectoryBuilder = cms.PSet(
     ComponentType = cms.string('GroupedCkfTrajectoryBuilder'),
     bestHitOnly = cms.bool(True),
     propagatorAlong = cms.string('PropagatorWithMaterialParabolicMf'),
     # Filter used on tracks at end of all tracking (in-out + out-in)
-    trajectoryFilterName = cms.string('ckfBaseTrajectoryFilter'),
+    trajectoryFilter = trajectoryFilters.CkfBaseTrajectoryFilter_block,
     # Filter used on tracks at end of in-out tracking phase
-    inOutTrajectoryFilterName = cms.string('ckfBaseTrajectoryFilter'),
+    inOutTrajectoryFilter = trajectoryFilters.CkfBaseTrajectoryFilter_block,
 #    inOutTrajectoryFilterName = cms.string('ckfBaseInOutTrajectoryFilter'),
     # If true, then the inOutTrajectoryFilterName will be ignored
     # and the trajectoryFilterName will be used for in-out tracking too.
