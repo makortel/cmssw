@@ -8,15 +8,12 @@ ElectronChi2.MaxChi2 = 2000.
 ElectronChi2.nSigma = 3.
 
 # Trajectory Filter
-from TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff import *
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-TrajectoryFilterForElectrons = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone()
-TrajectoryFilterForElectrons.ComponentName = 'TrajectoryFilterForElectrons'
-TrajectoryFilterForElectrons.filterPset = cms.PSet(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+TrajectoryFilterForElectrons = cms.PSet(
+    ComponentType = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.ComponentType,
     chargeSignificance = cms.double(-1.0),
     minPt = cms.double(2.0),
     minHitsMinPt = cms.int32(-1),
-    ComponentType = cms.string('CkfBaseTrajectoryFilter'),
     maxLostHits = cms.int32(1),
     maxNumberOfHits = cms.int32(-1),
     maxConsecLostHits = cms.int32(1),
@@ -27,7 +24,7 @@ TrajectoryFilterForElectrons.filterPset = cms.PSet(
 # Trajectory Builder
 import RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi
 TrajectoryBuilderForElectrons = RecoTracker.CkfPattern.CkfTrajectoryBuilder_cfi.CkfTrajectoryBuilder.clone()
-TrajectoryBuilderForElectrons.trajectoryFilterName = 'TrajectoryFilterForElectrons'
+TrajectoryBuilderForElectrons.trajectoryFilter = TrajectoryFilterForElectrons
 TrajectoryBuilderForElectrons.maxCand = 5
 TrajectoryBuilderForElectrons.intermediateCleaning = False
 TrajectoryBuilderForElectrons.propagatorAlong = 'fwdGsfElectronPropagator'
