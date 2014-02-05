@@ -8,7 +8,7 @@ public:
 
   explicit MaxHitsTrajectoryFilter( int maxHits=-1): theMaxHits( maxHits) {}
     
-  explicit MaxHitsTrajectoryFilter(const edm::ParameterSet & pset):
+  explicit MaxHitsTrajectoryFilter(const edm::ParameterSet & pset, edm::ConsumesCollector& iC):
     theMaxHits( pset.getParameter<int>("maxNumberOfHits")) {}
 
   virtual bool qualityFilter( const Trajectory& traj) const { return TrajectoryFilter::qualityFilterIfNotContributing; }
