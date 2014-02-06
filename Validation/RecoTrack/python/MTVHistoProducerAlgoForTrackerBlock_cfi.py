@@ -24,9 +24,9 @@ MTVHistoProducerAlgoForTrackerBlock = cms.PSet(
     # to be added here all the other histogram settings
 
     #
-    minEta = cms.double(-2.5),
-    maxEta = cms.double(2.5),
-    nintEta = cms.int32(50),
+    minEta = cms.double(-4.5),
+    maxEta = cms.double(4.5),
+    nintEta = cms.int32(90),
     useFabsEta = cms.bool(False),
     #
     minPt = cms.double(0.1),
