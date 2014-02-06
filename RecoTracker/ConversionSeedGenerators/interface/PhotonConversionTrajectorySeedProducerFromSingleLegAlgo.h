@@ -67,7 +67,7 @@ class PhotonConversionTrajectorySeedProducerFromSingleLegAlgo{
   std::unique_ptr<GlobalTrackingRegionProducerFromBeamSpot> theRegionProducer;
 
 
-  edm::ParameterSet hitsfactoryPSet,creatorPSet;
+  edm::ParameterSet creatorPSet;
 
   ClusterChecker theClusterCheck;
   bool theSilentOnClusterCheck;
