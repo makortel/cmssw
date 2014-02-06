@@ -45,9 +45,6 @@ namespace cms
     virtual void produceBase(edm::Event& e, const edm::EventSetup& es);
 
   protected:
-
-    edm::ParameterSet conf_;
-
     bool theTrackCandidateOutput;
     bool theTrajectoryOutput;
     bool useSplitting;
