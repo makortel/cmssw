@@ -18,7 +18,6 @@ PhotonConversionTrajectorySeedProducerFromSingleLegAlgo(const edm::ParameterSet 
   :_conf(conf),seedCollection(0),seedCollectionOfSourceTracks(0),
    hitsfactoryPSet(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet")),   
    creatorPSet(conf.getParameter<edm::ParameterSet>("SeedCreatorPSet")),
-   regfactoryPSet(conf.getParameter<edm::ParameterSet>("RegionFactoryPSet")),
    theClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet"), iC),
    theSilentOnClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet").getUntrackedParameter<bool>("silentClusterCheck",false)),
    _vtxMinDoF(conf.getParameter<double>("vtxMinDoF")),
@@ -33,13 +32,11 @@ PhotonConversionTrajectorySeedProducerFromSingleLegAlgo(const edm::ParameterSet 
   token_bs          = iC.consumes<reco::BeamSpot>(_beamSpotInputTag);
   token_refitter    = iC.consumes<reco::TrackCollection>(_conf.getParameter<edm::InputTag>("TrackRefitter"));
   theHitsGenerator.reset(new CombinedHitPairGeneratorForPhotonConversion(hitsfactoryPSet, iC));
-  theRegionProducer = new GlobalTrackingRegionProducerFromBeamSpot(regfactoryPSet, iC);
+  theRegionProducer.reset(new GlobalTrackingRegionProducerFromBeamSpot(conf.getParameter<edm::ParameterSet>("RegionFactoryPSet"), iC));
   init();  
 }
 
 PhotonConversionTrajectorySeedProducerFromSingleLegAlgo::~PhotonConversionTrajectorySeedProducerFromSingleLegAlgo() {
-  if(theRegionProducer!=NULL)
-    delete theRegionProducer;
 }
 
 void PhotonConversionTrajectorySeedProducerFromSingleLegAlgo::
