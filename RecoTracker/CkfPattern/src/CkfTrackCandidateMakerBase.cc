@@ -51,8 +51,6 @@ namespace {
 
 namespace cms{
   CkfTrackCandidateMakerBase::CkfTrackCandidateMakerBase(edm::ParameterSet const& conf, edm::ConsumesCollector && iC) : 
-
-    conf_(conf),
     theTrackCandidateOutput(true),
     theTrajectoryOutput(false),
     useSplitting(conf.getParameter<bool>("useHitsSplitting")),
@@ -87,7 +85,7 @@ namespace cms{
         maskStripsLazy_ = iC.consumes<StripClusterLazyMask>(conf.getParameter<edm::InputTag>("clustersToSkip"));
       }
 
-    std::string cleaner = conf_.getParameter<std::string>("RedundantSeedCleaner");
+    std::string cleaner = conf.getParameter<std::string>("RedundantSeedCleaner");
     if (cleaner == "SeedCleanerByHitPosition") {
         theSeedCleaner = new SeedCleanerByHitPosition();
     } else if (cleaner == "SeedCleanerBySharedInput") {
@@ -95,10 +93,10 @@ namespace cms{
     } else if (cleaner == "CachingSeedCleanerByHitPosition") {
         theSeedCleaner = new CachingSeedCleanerByHitPosition();
     } else if (cleaner == "CachingSeedCleanerBySharedInput") {
-      int numHitsForSeedCleaner = conf_.existsAs<int>("numHitsForSeedCleaner") ? 
-	conf_.getParameter<int>("numHitsForSeedCleaner") : 4;
-      int onlyPixelHits = conf_.existsAs<bool>("onlyPixelHitsForSeedCleaner") ? 
-	conf_.getParameter<bool>("onlyPixelHitsForSeedCleaner") : false;
+      int numHitsForSeedCleaner = conf.existsAs<int>("numHitsForSeedCleaner") ?
+	conf.getParameter<int>("numHitsForSeedCleaner") : 4;
+      int onlyPixelHits = conf.existsAs<bool>("onlyPixelHitsForSeedCleaner") ?
+	conf.getParameter<bool>("onlyPixelHitsForSeedCleaner") : false;
       theSeedCleaner = new CachingSeedCleanerBySharedInput(numHitsForSeedCleaner,onlyPixelHits);
     } else if (cleaner == "none") {
         theSeedCleaner = 0;
