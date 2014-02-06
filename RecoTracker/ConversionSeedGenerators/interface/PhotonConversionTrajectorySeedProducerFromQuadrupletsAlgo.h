@@ -59,7 +59,7 @@ class PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo{
   const edm::ParameterSet _conf;
 
   TrajectorySeedCollection *seedCollection;
-  edm::ParameterSet hitsfactoryPSet,creatorPSet;
+  edm::ParameterSet creatorPSet;
   ClusterChecker theClusterCheck;
   edm::ParameterSet SeedComparitorPSet,QuadCutPSet;
   bool theSilentOnClusterCheck;
