@@ -22,9 +22,7 @@ PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo::
 PhotonConversionTrajectorySeedProducerFromQuadrupletsAlgo(const edm::ParameterSet & conf,
 	edm::ConsumesCollector && iC)
   :_conf(conf),seedCollection(0),
-   creatorPSet(conf.getParameter<edm::ParameterSet>("SeedCreatorPSet")),
    theClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet"), iC),
-   SeedComparitorPSet(conf.getParameter<edm::ParameterSet>("SeedComparitorPSet")),
    QuadCutPSet(conf.getParameter<edm::ParameterSet>("QuadCutPSet")),
    theSilentOnClusterCheck(conf.getParameter<edm::ParameterSet>("ClusterCheckPSet").getUntrackedParameter<bool>("silentClusterCheck",false)),
    theHitsGenerator(new CombinedHitQuadrupletGeneratorForPhotonConversion(conf.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet"), iC)),
