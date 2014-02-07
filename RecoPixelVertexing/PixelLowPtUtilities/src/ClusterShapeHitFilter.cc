@@ -280,7 +280,7 @@ bool ClusterShapeHitFilter::getSizes
     meas.clear();
     assert(meas.size_max() >= data.size.size());
     for(const auto& s: data.size) {
-      meas.push_back(s);
+      meas.push_back_unchecked(s);
     }
     if(data.size.front().second < 0) {
       for(auto& s: meas)
