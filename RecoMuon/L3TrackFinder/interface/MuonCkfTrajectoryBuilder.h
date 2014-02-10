@@ -2,6 +2,7 @@
 #define RecoMuon_L3TrackFinder_MuonCkfTrajectoryBuilder_H
 
 #include "RecoTracker/CkfPattern/interface/CkfTrajectoryBuilder.h"
+#include "FWCore/Framework/interface/ESWatcher.h"
 
 class MuonCkfTrajectoryBuilder : public CkfTrajectoryBuilder {
  public:
@@ -22,7 +23,8 @@ class MuonCkfTrajectoryBuilder : public CkfTrajectoryBuilder {
   const double theDeltaPhi;
   const std::string theProximityPropagatorName;
   const Propagator * theProximityPropagator;
-  Chi2MeasurementEstimatorBase * theEtaPhiEstimator;
+  edm::ESWatcher<BaseCkfTrajectoryBuilder::Chi2MeasurementEstimatorRecord> theEstimatorWatcher;
+  std::unique_ptr<Chi2MeasurementEstimatorBase> theEtaPhiEstimator;
   
 };
 

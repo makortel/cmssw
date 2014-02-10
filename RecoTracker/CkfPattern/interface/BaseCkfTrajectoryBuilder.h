@@ -33,6 +33,7 @@ class TrajectoryFilter;
 class TrackingRegion;
 class TrajectoryMeasurementGroup;
 class TrajectoryCleaner;
+class TrackingComponentsRecord;
 namespace edm {
   class ConsumesCollector;
 }
@@ -139,6 +140,8 @@ public:
   void setData(const MeasurementTrackerEvent *data) ;
 
  protected:
+  typedef TrackingComponentsRecord Chi2MeasurementEstimatorRecord;
+
   const TrajectoryStateUpdator*         theUpdator;
   const Propagator*                     thePropagatorAlong;
   const Propagator*                     thePropagatorOpposite;

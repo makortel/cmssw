@@ -29,7 +29,6 @@ MuonCkfTrajectoryBuilder::MuonCkfTrajectoryBuilder(const edm::ParameterSet& conf
 
 MuonCkfTrajectoryBuilder::~MuonCkfTrajectoryBuilder()
 {
-  if (theEtaPhiEstimator) delete theEtaPhiEstimator;
 }
 
 void MuonCkfTrajectoryBuilder::setEvent_(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -40,10 +39,8 @@ void MuonCkfTrajectoryBuilder::setEvent_(const edm::Event& iEvent, const edm::Ev
   theProximityPropagator = propagatorProximityHandle.product();
 
   // theEstimator is set for this event in the base class
-  if (theDeltaEta>0 && theDeltaPhi>0)
-    theEtaPhiEstimator = new EtaPhiEstimator(theDeltaEta, theDeltaPhi, theEstimator);
-  else
-    theEtaPhiEstimator = nullptr;
+  if(theEstimatorWatcher.check(iSetup) && theDeltaEta>0 && theDeltaPhi>0)
+    theEtaPhiEstimator.reset(new EtaPhiEstimator(theDeltaEta, theDeltaPhi, theEstimator));
 }
 
 
