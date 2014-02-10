@@ -179,11 +179,13 @@ void ClusterShape::determineShape
   // else
   { // FIXME do it
     assert((px+1)*(py+1) <= data.size.size_max());
+    const int pre_dx = x[1] - x[0];
+    const int pre_dy = y[1] - y[0];
     for(unsigned int ax = 0; ax <= px; ax++)
     for(unsigned int ay = 0; ay <= py; ay++)
     {
-      int dx = x[1] - x[0] + ax;
-      int dy = y[1] - y[0] + ay;
+      int dx = pre_dx + ax;
+      int dy = pre_dy + ay;
       if(odir != 0) dy *= odir;
   
       pair<int,int> s(dx,dy);
