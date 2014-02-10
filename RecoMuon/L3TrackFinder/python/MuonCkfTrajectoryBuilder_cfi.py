@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 MuonCkfTrajectoryBuilder = cms.PSet(
+    ComponentType = cms.string("MuonCkfTrajectoryBuilder"),
     propagatorAlong = cms.string('PropagatorWithMaterial'),
     trajectoryFilterName = cms.string('muonCkfTrajectoryFilter'),
     maxCand = cms.int32(5),
