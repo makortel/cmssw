@@ -79,9 +79,10 @@ bool ClusterShape::processColumn(pair<int,int> pos, bool inTheLoop)
 struct lessPixel : public binary_function<SiPixelCluster::Pixel,
                                           SiPixelCluster::Pixel,bool>
 {
-  bool operator()(SiPixelCluster::Pixel a,
-                  SiPixelCluster::Pixel b)
+  bool operator()(const SiPixelCluster::Pixel& a,
+                  const SiPixelCluster::Pixel& b) const
   {
+    /*
     if(a.x < b.x) return true;
     if(a.x > b.x) return false;
 
@@ -89,6 +90,9 @@ struct lessPixel : public binary_function<SiPixelCluster::Pixel,
     if(a.y > b.y) return false;
 
     return false;
+    */
+    // slightly faster by avoiding branches
+    return a.x < b.x | ((a.x == b.x) & (a.y < b.y));
   }
 };
 
