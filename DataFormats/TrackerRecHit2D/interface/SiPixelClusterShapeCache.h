@@ -36,12 +36,13 @@ public:
   typedef SiPixelRecHit::ClusterRef ClusterRef;
 
   struct Field {
-    Field(unsigned i, bool s, bool c, bool h):
-      straight(s), complete(c), has(h), index(i) {}
+    Field(unsigned off, unsigned siz, bool s, bool c, bool h):
+      offset(off), straight(s), complete(c), has(h), size(siz) {}
+    unsigned offset;
     unsigned straight:1;
     unsigned complete:1;
     unsigned has:1;
-    unsigned index:29;
+    unsigned size:29;
   };
 
   SiPixelClusterShapeCache() {};
@@ -50,7 +51,6 @@ public:
   ~SiPixelClusterShapeCache();
 
   void reserve(size_t size) {
-    assert(size <= 2<<29); // maximum size
     data_.reserve(size);
     sizeData_.reserve(size);
   }
@@ -66,34 +66,26 @@ public:
     data_.shrink_to_fit();
     sizeData_.shrink_to_fit();
   }
-#endif
 
   template <typename T>
   void push_back(const ClusterRef& cluster, const T& data) {
     assert(productId_ == cluster.id());
-    assert(cluster.index() == data_.size()); // ensure data are pushed in correct order
 
+    data_.emplace_back(sizeData_.size(), data.size.size(), data.isStraight, data.isComplete, data.hasBigPixelsOnlyInside);
     std::copy(data.size.begin(), data.size.end(), std::back_inserter(sizeData_));
-#if !defined(__CINT__) && !defined(__MAKECINT__) && !defined(__REFLEX__)
-    data_.emplace_back(sizeData_.size(), data.isStraight, data.isComplete, data.hasBigPixelsOnlyInside);
-#else
-    data_.push_back(Field(sizeData_.size(), data.isStraight, data.isComplete, data.hasBigPixelsOnlyInside));
-#endif
   }
 
   SiPixelClusterShapeData get(const ClusterRef& cluster) const {
     assert(productId_ == cluster.id());
     assert(cluster.index() < data_.size());
-    unsigned beg = 0;
-    if(cluster.index() > 0)
-      beg = data_[cluster.index()-1].index;
+    const Field& f = data_[cluster.index()];
 
-    Field f = data_[cluster.index()];
-    unsigned end = f.index;
+    auto beg = sizeData_.begin()+f.offset;
+    auto end = beg+f.size;
 
-    return SiPixelClusterShapeData(sizeData_.begin()+beg, sizeData_.begin()+end,
-                                   f.straight, f.complete, f.has);
+    return SiPixelClusterShapeData(beg, end, f.straight, f.complete, f.has);
   }
+#endif
 
 private:
   std::vector<Field> data_;
