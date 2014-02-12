@@ -36,13 +36,16 @@ public:
   typedef SiPixelRecHit::ClusterRef ClusterRef;
 
   struct Field {
+    Field(): offset(0), straight(false), complete(false), has(false), filled(false), size(0) {}
+
     Field(unsigned off, unsigned siz, bool s, bool c, bool h):
-      offset(off), straight(s), complete(c), has(h), size(siz) {}
+      offset(off), straight(s), complete(c), has(h), filled(true), size(siz) {}
     unsigned offset;
     unsigned straight:1;
     unsigned complete:1;
     unsigned has:1;
-    unsigned size:29;
+    unsigned filled:1;
+    unsigned size:28;
   };
 
   SiPixelClusterShapeCache() {};
@@ -50,8 +53,8 @@ public:
   explicit SiPixelClusterShapeCache(const edm::ProductID& id): productId_(id) {}
   ~SiPixelClusterShapeCache();
 
-  void reserve(size_t size) {
-    data_.reserve(size);
+  void resize(size_t size) {
+    data_.resize(size);
     sizeData_.reserve(size);
   }
 
@@ -68,10 +71,11 @@ public:
   }
 
   template <typename T>
-  void push_back(const ClusterRef& cluster, const T& data) {
+  void insert(const ClusterRef& cluster, const T& data) {
     assert(productId_ == cluster.id());
+    assert(cluster.index() < data_.size());
 
-    data_.emplace_back(sizeData_.size(), data.size.size(), data.isStraight, data.isComplete, data.hasBigPixelsOnlyInside);
+    data_[cluster.index()] = Field(sizeData_.size(), data.size.size(), data.isStraight, data.isComplete, data.hasBigPixelsOnlyInside);
     std::copy(data.size.begin(), data.size.end(), std::back_inserter(sizeData_));
   }
 
@@ -79,6 +83,9 @@ public:
     assert(productId_ == cluster.id());
     assert(cluster.index() < data_.size());
     const Field& f = data_[cluster.index()];
+    if(!f.filled) {
+      assert(0 && "on-demand filling not implemented yet");
+    }
 
     auto beg = sizeData_.begin()+f.offset;
     auto end = beg+f.size;
