@@ -92,7 +92,7 @@ struct lessPixel : public binary_function<SiPixelCluster::Pixel,
     return false;
     */
     // slightly faster by avoiding branches
-    return a.x < b.x | ((a.x == b.x) & (a.y < b.y));
+    return (a.x < b.x) | ((a.x == b.x) & (a.y < b.y));
   }
 };
 
