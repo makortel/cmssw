@@ -10,6 +10,9 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <memory>
+
+class PixelGeomDetUnit;
 
 class SiPixelClusterShapeData {
 public:
@@ -48,8 +51,16 @@ public:
     unsigned size:28;
   };
 
+  struct LazyGetter {
+    LazyGetter();
+    virtual ~LazyGetter();
+
+    virtual void fill(const ClusterRef& cluster, const PixelGeomDetUnit *pixDet, SiPixelClusterShapeCache& cache) const = 0;
+  };
+
   SiPixelClusterShapeCache() {};
   explicit SiPixelClusterShapeCache(const edm::HandleBase& handle): productId_(handle.id()) {}
+  SiPixelClusterShapeCache(const edm::HandleBase& handle, std::shared_ptr<LazyGetter> getter): getter_(getter), productId_(handle.id()) {}
   explicit SiPixelClusterShapeCache(const edm::ProductID& id): productId_(id) {}
   ~SiPixelClusterShapeCache();
 
@@ -61,6 +72,7 @@ public:
   void swap(SiPixelClusterShapeCache& other) {
     data_.swap(other.data_);
     sizeData_.swap(other.sizeData_);
+    std::swap(getter_, other.getter_);
     std::swap(productId_, other.productId_);
   }
 
@@ -79,12 +91,14 @@ public:
     std::copy(data.size.begin(), data.size.end(), std::back_inserter(sizeData_));
   }
 
-  SiPixelClusterShapeData get(const ClusterRef& cluster) const {
+  SiPixelClusterShapeData get(const ClusterRef& cluster, const PixelGeomDetUnit *pixDet) const {
     assert(productId_ == cluster.id());
     assert(cluster.index() < data_.size());
-    const Field& f = data_[cluster.index()];
+    Field f = data_[cluster.index()];
     if(!f.filled) {
-      assert(0 && "on-demand filling not implemented yet");
+      assert(getter_);
+      getter_->fill(cluster, pixDet, *(const_cast<SiPixelClusterShapeCache *>(this)));
+      f = data_[cluster.index()];
     }
 
     auto beg = sizeData_.begin()+f.offset;
@@ -97,6 +111,7 @@ public:
 private:
   std::vector<Field> data_;
   std::vector<std::pair<int, int> > sizeData_;
+  std::shared_ptr<LazyGetter> getter_;
   edm::ProductID productId_;
 };
 

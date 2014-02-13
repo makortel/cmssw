@@ -20,6 +20,24 @@
 
 #include <cassert>
 
+namespace {
+  class ClusterShapeLazyGetter: public SiPixelClusterShapeCache::LazyGetter {
+  public:
+    ClusterShapeLazyGetter() {}
+    ~ClusterShapeLazyGetter() {}
+
+    void fill(const SiPixelRecHit::ClusterRef& cluster, const PixelGeomDetUnit *pixDet, SiPixelClusterShapeCache& cache) const override {
+      data_.size.clear();
+      clusterShape_.determineShape(*pixDet, *cluster, data_);
+      cache.insert(cluster, data_);
+    }
+
+  private:
+    mutable ClusterData data_; // reused
+    mutable ClusterShape clusterShape_;
+  };
+}
+
 class SiPixelClusterShapeCacheProducer: public edm::EDProducer {
 public:
   explicit SiPixelClusterShapeCacheProducer(const edm::ParameterSet& iConfig);
@@ -31,10 +49,12 @@ private:
   using InputCollection = edmNew::DetSetVector<SiPixelCluster>;
 
   edm::EDGetTokenT<InputCollection> token_;
+  bool onDemand_;
 };
 
 SiPixelClusterShapeCacheProducer::SiPixelClusterShapeCacheProducer(const edm::ParameterSet& iConfig):
-  token_(consumes<InputCollection>(iConfig.getParameter<edm::InputTag>("src")))
+  token_(consumes<InputCollection>(iConfig.getParameter<edm::InputTag>("src"))),
+  onDemand_(iConfig.getParameter<bool>("onDemand"))
 {
   produces<SiPixelClusterShapeCache>();
 }
@@ -48,27 +68,28 @@ void SiPixelClusterShapeCacheProducer::produce(edm::Event& iEvent, const edm::Ev
   edm::ESHandle<TrackerGeometry> geom;
   iSetup.get<TrackerDigiGeometryRecord>().get(geom);
 
-  std::auto_ptr<SiPixelClusterShapeCache> output(new SiPixelClusterShapeCache(input));
+  auto filler = std::make_shared<ClusterShapeLazyGetter>();
+
+  std::auto_ptr<SiPixelClusterShapeCache> output(onDemand_ ? 
+                                                 new SiPixelClusterShapeCache(input, filler) : 
+                                                 new SiPixelClusterShapeCache(input));
   output->resize(input->data().size());
 
-  ClusterData data; // reused
-  ClusterShape clusterShape;
+  if(!onDemand_) {
+    for(const auto& detSet: *input) {
+      const GeomDetUnit *genericDet = geom->idToDetUnit(detSet.detId());
+      const PixelGeomDetUnit *pixDet = dynamic_cast<const PixelGeomDetUnit *>(genericDet);
+      assert(pixDet);
 
-  for(const auto& detSet: *input) {
-    const GeomDetUnit *genericDet = geom->idToDetUnit(detSet.detId());
-    const PixelGeomDetUnit *pixDet = dynamic_cast<const PixelGeomDetUnit *>(genericDet);
-    assert(pixDet);
-
-    edmNew::DetSet<SiPixelCluster>::const_iterator iCluster = detSet.begin(), endCluster = detSet.end();
-    for(; iCluster != endCluster; ++iCluster) {
-      clusterShape.determineShape(*pixDet, *iCluster, data);
-      SiPixelClusterShapeCache::ClusterRef clusterRef = edmNew::makeRefTo(input, iCluster);
-      output->insert(clusterRef, data);
-      data.size.clear();
+      edmNew::DetSet<SiPixelCluster>::const_iterator iCluster = detSet.begin(), endCluster = detSet.end();
+      for(; iCluster != endCluster; ++iCluster) {
+        SiPixelClusterShapeCache::ClusterRef clusterRef = edmNew::makeRefTo(input, iCluster);
+        filler->fill(clusterRef, pixDet, *output);
+      }
     }
+    output->shrink_to_fit();
   }
 
-  output->shrink_to_fit();
   iEvent.put(output);
 }
 
