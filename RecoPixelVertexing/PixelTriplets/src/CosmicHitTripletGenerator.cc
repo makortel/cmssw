@@ -29,10 +29,6 @@ CosmicHitTripletGenerator::CosmicHitTripletGenerator(CosmicLayerTriplets& layers
 
 CosmicHitTripletGenerator::~CosmicHitTripletGenerator()
 {
-  Container::const_iterator it;
-  for (it = theGenerators.begin(); it!= theGenerators.end(); it++) {
-    delete (*it);
-  }
 }
 
 
@@ -42,7 +38,7 @@ void CosmicHitTripletGenerator::add(
 				   const LayerWithHits *outer,
 				   const edm::EventSetup& iSetup) 
 { 
-  theGenerators.push_back( 
+  theGenerators.emplace_back(
   			  new CosmicHitTripletGeneratorFromLayerTriplet( inner,middle, outer, iSetup));
 }
 
