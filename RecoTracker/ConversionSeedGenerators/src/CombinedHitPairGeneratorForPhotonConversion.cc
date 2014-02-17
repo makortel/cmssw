@@ -1,31 +1,19 @@
 #include "RecoTracker/ConversionSeedGenerators/interface/CombinedHitPairGeneratorForPhotonConversion.h"
 #include "RecoTracker/ConversionSeedGenerators/interface/HitPairGeneratorFromLayerPairForPhotonConversion.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 
 CombinedHitPairGeneratorForPhotonConversion::CombinedHitPairGeneratorForPhotonConversion(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC):
-  theSeedingLayerToken(iC.consumes<SeedingLayerSetsHits>(cfg.getParameter<edm::InputTag>("SeedingLayers")))
+  theSeedingLayerToken(iC.consumes<SeedingLayerSetsHits>(cfg.getParameter<edm::InputTag>("SeedingLayers"))),
+  theMaxElement(cfg.getParameter<unsigned int>("maxElement"))
 {
-  theMaxElement = cfg.getParameter<unsigned int>("maxElement");
   maxHitPairsPerTrackAndGenerator = cfg.getParameter<unsigned int>("maxHitPairsPerTrackAndGenerator");
   theGenerator.reset(new HitPairGeneratorFromLayerPairForPhotonConversion(0, 1, &theLayerCache, 0, maxHitPairsPerTrackAndGenerator));
 }
 
-CombinedHitPairGeneratorForPhotonConversion::CombinedHitPairGeneratorForPhotonConversion(const CombinedHitPairGeneratorForPhotonConversion & cb):
-  theSeedingLayerToken(cb.theSeedingLayerToken),
-  maxHitPairsPerTrackAndGenerator(cb.maxHitPairsPerTrackAndGenerator)
-{
-  theMaxElement = cb.theMaxElement;
-  theGenerator.reset(new HitPairGeneratorFromLayerPairForPhotonConversion(0, 1, &theLayerCache, 0, maxHitPairsPerTrackAndGenerator));
-}
-
-
 CombinedHitPairGeneratorForPhotonConversion::~CombinedHitPairGeneratorForPhotonConversion() {}
-
-void CombinedHitPairGeneratorForPhotonConversion::setSeedingLayers(SeedingLayerSetsHits::SeedingLayerSet layers) {
-  assert(0 == "not implemented");
-}
 
 const OrderedHitPairs & CombinedHitPairGeneratorForPhotonConversion::run(
 									 const ConversionRegion& convRegion,
