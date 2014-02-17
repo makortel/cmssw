@@ -1,7 +1,6 @@
 #ifndef HitPairGeneratorFromLayerPairForPhotonConversion_h
 #define HitPairGeneratorFromLayerPairForPhotonConversion_h
 
-#include "RecoTracker/TkHitPairs/interface/HitPairGenerator.h"
 #include "RecoTracker/TkHitPairs/interface/CombinedHitPairGenerator.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
@@ -10,7 +9,7 @@
 class DetLayer;
 class TrackingRegion;
 
-class HitPairGeneratorFromLayerPairForPhotonConversion : public HitPairGenerator {
+class HitPairGeneratorFromLayerPairForPhotonConversion {
 
 public:
 
@@ -21,25 +20,13 @@ public:
   HitPairGeneratorFromLayerPairForPhotonConversion(unsigned int inner,
                                 unsigned int outer,
 				LayerCacheType* layerCache,
-				unsigned int nSize=30000,
 				unsigned int max=0);
 
-  virtual ~HitPairGeneratorFromLayerPairForPhotonConversion() { }
-
-  void setSeedingLayers(Layers layers) override { theSeedingLayers = layers; }
+  ~HitPairGeneratorFromLayerPairForPhotonConversion();
 
   void hitPairs( const ConversionRegion& convRegion, const TrackingRegion& reg, OrderedHitPairs & prs, 
+                 const Layers& layers,
 			 const edm::Event & ev,  const edm::EventSetup& es);
-
-  virtual void hitPairs( const TrackingRegion& reg, OrderedHitPairs & prs, 
-			 const edm::Event & ev,  const edm::EventSetup& es){};
-
-  virtual HitPairGeneratorFromLayerPairForPhotonConversion* clone() const {
-    return new HitPairGeneratorFromLayerPairForPhotonConversion(*this);
-  }
-
-  Layer innerLayer() const { return theSeedingLayers[theInnerLayer]; }
-  Layer outerLayer() const { return theSeedingLayers[theOuterLayer]; }
 
   float getLayerRadius(const DetLayer& layer);
   float getLayerZ(const DetLayer& layer);
@@ -55,9 +42,9 @@ private:
   double getCot(double dz, double dr);
   
   LayerCacheType & theLayerCache;
-  Layers theSeedingLayers;
   const unsigned int theOuterLayer;
   const unsigned int theInnerLayer;
+  const unsigned int theMaxElement;
 
   std::stringstream *ss;
 

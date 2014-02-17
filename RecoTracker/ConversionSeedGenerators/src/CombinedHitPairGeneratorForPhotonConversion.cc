@@ -10,7 +10,7 @@ CombinedHitPairGeneratorForPhotonConversion::CombinedHitPairGeneratorForPhotonCo
   theMaxElement(cfg.getParameter<unsigned int>("maxElement"))
 {
   maxHitPairsPerTrackAndGenerator = cfg.getParameter<unsigned int>("maxHitPairsPerTrackAndGenerator");
-  theGenerator.reset(new HitPairGeneratorFromLayerPairForPhotonConversion(0, 1, &theLayerCache, 0, maxHitPairsPerTrackAndGenerator));
+  theGenerator.reset(new HitPairGeneratorFromLayerPairForPhotonConversion(0, 1, &theLayerCache, maxHitPairsPerTrackAndGenerator));
 }
 
 CombinedHitPairGeneratorForPhotonConversion::~CombinedHitPairGeneratorForPhotonConversion() {}
@@ -38,8 +38,7 @@ void CombinedHitPairGeneratorForPhotonConversion::hitPairs(
   resultTmp.reserve(maxHitPairsPerTrackAndGenerator);
   for(SeedingLayerSetsHits::LayerSetIndex i=0; i<hlayers->size(); ++i) {
     resultTmp.clear();
-    theGenerator->setSeedingLayers((*hlayers)[i]);
-    theGenerator->hitPairs( convRegion, region, resultTmp, ev, es); // why resultTmp and not result?
+    theGenerator->hitPairs( convRegion, region, resultTmp, (*hlayers)[i], ev, es); // why resultTmp and not result?
     result.insert(result.end(),resultTmp.begin(),resultTmp.end());
   }
 
