@@ -32,13 +32,14 @@ void CombinedHitPairGeneratorForPhotonConversion::hitPairs(
 {
   edm::Handle<SeedingLayerSetsHits> hlayers;
   ev.getByToken(theSeedingLayerToken, hlayers);
-  assert(hlayers->numberOfLayersInSet() == 2);
+  const SeedingLayerSetsHits& layers = *hlayers;
+  assert(layers.numberOfLayersInSet() == 2);
 
   OrderedHitPairs  resultTmp; // why is this needed?
   resultTmp.reserve(maxHitPairsPerTrackAndGenerator);
   for(SeedingLayerSetsHits::LayerSetIndex i=0; i<hlayers->size(); ++i) {
     resultTmp.clear();
-    theGenerator->hitPairs( convRegion, region, resultTmp, (*hlayers)[i], ev, es); // why resultTmp and not result?
+    theGenerator->hitPairs( convRegion, region, resultTmp, layers[i], ev, es); // why resultTmp and not result?
     result.insert(result.end(),resultTmp.begin(),resultTmp.end());
   }
 
