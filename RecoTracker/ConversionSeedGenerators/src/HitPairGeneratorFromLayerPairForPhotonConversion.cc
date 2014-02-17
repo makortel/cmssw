@@ -36,17 +36,18 @@ HitPairGeneratorFromLayerPairForPhotonConversion::HitPairGeneratorFromLayerPairF
 							     unsigned int inner,
 							     unsigned int outer,
 							     LayerCacheType* layerCache,
-							     unsigned int nSize,
 							     unsigned int max)
-  : HitPairGenerator(nSize),
-    theLayerCache(*layerCache), theOuterLayer(outer), theInnerLayer(inner)
+  : theLayerCache(*layerCache), theOuterLayer(outer), theInnerLayer(inner),
+    theMaxElement(max)
 {
-  theMaxElement=max;
   ss = new std::stringstream;
 }
 
+HitPairGeneratorFromLayerPairForPhotonConversion::~HitPairGeneratorFromLayerPairForPhotonConversion() {}
+
 void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const ConversionRegion& convRegion,
 								const TrackingRegion & region, OrderedHitPairs & result,
+								const Layers& layers,
 								const edm::Event& event, const edm::EventSetup& es)
 {
 
@@ -56,8 +57,8 @@ void HitPairGeneratorFromLayerPairForPhotonConversion::hitPairs(const Conversion
   typedef OrderedHitPair::OuterRecHit OuterHit;
   typedef RecHitsSortedInPhi::Hit Hit;
 
-  Layer innerLayerObj = innerLayer();
-  Layer outerLayerObj = outerLayer();
+  Layer innerLayerObj = layers[theInnerLayer];
+  Layer outerLayerObj = layers[theOuterLayer];
 
 #ifdef mydebug_Seed
   (*ss) << "In " << innerLayerObj.name() << " Out " << outerLayerObj.name() << std::endl;
