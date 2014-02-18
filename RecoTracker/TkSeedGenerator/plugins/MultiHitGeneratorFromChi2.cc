@@ -110,8 +110,6 @@ void MultiHitGeneratorFromChi2::hitSets(const TrackingRegion& region,
 					SeedingLayerSetsHits::SeedingLayerSet pairLayers,
 					std::vector<SeedingLayerSetsHits::SeedingLayer> thirdLayers)
 { 
-  thePairGenerator->setSeedingLayers(pairLayers);
-
   //gc: why is this here and not in some initialization???
   edm::ESHandle<TrackerGeometry> tracker;
   es.get<TrackerDigiGeometryRecord>().get(tracker);
@@ -133,12 +131,12 @@ void MultiHitGeneratorFromChi2::hitSets(const TrackingRegion& region,
   //es.get<IdealGeometryRecord>().get(tTopoHand);
   //const TrackerTopology *tTopo=tTopoHand.product();
 
-  if (debug) cout << "pair: " << thePairGenerator->innerLayer().name() << "+" <<  thePairGenerator->outerLayer().name() << " 3rd lay size: " << thirdLayers.size() << endl;
+  if (debug) cout << "pair: " << thePairGenerator->innerLayer(pairLayers).name() << "+" <<  thePairGenerator->outerLayer(pairLayers).name() << " 3rd lay size: " << thirdLayers.size() << endl;
 
   //gc: first get the pairs
   OrderedHitPairs pairs;
   pairs.reserve(30000);
-  thePairGenerator->hitPairs(region,pairs,ev,es);
+  thePairGenerator->hitPairs(region,pairs,ev,es, pairLayers);
   if (pairs.empty()) {
     //cout << "empy pairs" << endl;
     return;

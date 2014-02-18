@@ -23,8 +23,6 @@ public:
 
   virtual ~HitPairGenerator() { }
 
-  virtual void setSeedingLayers(SeedingLayerSetsHits::SeedingLayerSet layers) = 0;
-
   virtual const OrderedHitPairs & run(
     const TrackingRegion& region, const edm::Event & ev, const edm::EventSetup& es);
 
