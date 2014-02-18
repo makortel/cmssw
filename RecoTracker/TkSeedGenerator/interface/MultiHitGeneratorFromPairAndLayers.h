@@ -8,21 +8,35 @@
  */
 
 #include <vector>
-#include "RecoTracker/TkSeedGenerator/interface/MultiHitGenerator.h"
-#include "RecoTracker/TkHitPairs/interface/HitPairGenerator.h"
+#include "RecoTracker/TkSeedingLayers/interface/OrderedMultiHits.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
 
-class MultiHitGeneratorFromPairAndLayers : public MultiHitGenerator {
+namespace edm { class ParameterSet; class Event; class EventSetup; }
+class TrackingRegion;
+class HitPairGeneratorFromLayerPair;
+
+class MultiHitGeneratorFromPairAndLayers {
 
 public:
   typedef LayerHitMapCache  LayerCacheType;
 
-  virtual ~MultiHitGeneratorFromPairAndLayers() {}
-  virtual void init( const HitPairGenerator & pairs, LayerCacheType* layerCache) = 0; 
+  explicit MultiHitGeneratorFromPairAndLayers(const edm::ParameterSet& pset);
+  virtual ~MultiHitGeneratorFromPairAndLayers();
 
-  virtual void setSeedingLayers(SeedingLayerSetsHits::SeedingLayerSet pairLayers,
-                                std::vector<SeedingLayerSetsHits::SeedingLayer> thirdLayers) = 0;
+  void init(std::unique_ptr<HitPairGeneratorFromLayerPair>&& pairGenerator, LayerCacheType *layerCache);
+
+  virtual void hitSets( const TrackingRegion& region, OrderedMultiHits & trs,
+                        const edm::Event & ev, const edm::EventSetup& es,
+                        SeedingLayerSetsHits::SeedingLayerSet pairLayers,
+                        std::vector<SeedingLayerSetsHits::SeedingLayer> thirdLayers) = 0;
+
+  const HitPairGeneratorFromLayerPair& pairGenerator() const { return *thePairGenerator; }
+
+protected:
+  std::unique_ptr<HitPairGeneratorFromLayerPair> thePairGenerator;
+  LayerCacheType *theLayerCache;
+  const unsigned int theMaxElement;
 };
 #endif
 
