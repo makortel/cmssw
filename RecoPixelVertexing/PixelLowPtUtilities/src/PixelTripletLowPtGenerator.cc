@@ -4,6 +4,7 @@
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/HitInfo.h"
 
 #include "RecoTracker/TkMSParametrization/interface/PixelRecoPointRZ.h"
+#include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
 
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
@@ -18,26 +19,23 @@ using namespace std;
 using namespace ctfseeding;
 
 /*****************************************************************************/
-void PixelTripletLowPtGenerator::init(const HitPairGenerator & pairs,
-      LayerCacheType* layerCache)
+PixelTripletLowPtGenerator::PixelTripletLowPtGenerator( const edm::ParameterSet& cfg):
+  HitTripletGeneratorFromPairAndLayers(), // no theMaxElement used in this class
+  theTracker(nullptr)
 {
-  thePairGenerator = pairs.clone();
-  theLayerCache    = layerCache;
-
-  checkMultipleScattering = ps.getParameter<bool>("checkMultipleScattering");
-  nSigMultipleScattering  = ps.getParameter<double>("nSigMultipleScattering");
-  checkClusterShape       = ps.getParameter<bool>("checkClusterShape"); 
-  rzTolerance             = ps.getParameter<double>("rzTolerance");
-  maxAngleRatio           = ps.getParameter<double>("maxAngleRatio");
-  builderName             = ps.getParameter<string>("TTRHBuilder");
+  checkMultipleScattering = cfg.getParameter<bool>("checkMultipleScattering");
+  nSigMultipleScattering  = cfg.getParameter<double>("nSigMultipleScattering");
+  checkClusterShape       = cfg.getParameter<bool>("checkClusterShape"); 
+  rzTolerance             = cfg.getParameter<double>("rzTolerance");
+  maxAngleRatio           = cfg.getParameter<double>("maxAngleRatio");
+  builderName             = cfg.getParameter<string>("TTRHBuilder");
 }
 
 /*****************************************************************************/
-void PixelTripletLowPtGenerator::setSeedingLayers(SeedingLayerSetsHits::SeedingLayerSet pairLayers,
-                                                  std::vector<SeedingLayerSetsHits::SeedingLayer> thirdLayers) {
-  thePairGenerator->setSeedingLayers(pairLayers);
-  theLayers = thirdLayers;
-}
+PixelTripletLowPtGenerator::~PixelTripletLowPtGenerator() {}
+
+/*****************************************************************************/
+
 
 /*****************************************************************************/
 void PixelTripletLowPtGenerator::getTracker
@@ -52,9 +50,9 @@ void PixelTripletLowPtGenerator::getTracker
     theTracker = tracker.product();
   }
 
-  if(theFilter == 0)
+  if(!theFilter)
   {
-    theFilter = new TripletFilter(es); 
+    theFilter.reset(new TripletFilter(es));
   }
 }
 
@@ -73,7 +71,9 @@ void PixelTripletLowPtGenerator::hitTriplets(
     const TrackingRegion& region,
     OrderedHitTriplets & result,
     const edm::Event & ev,
-    const edm::EventSetup& es) 
+    const edm::EventSetup& es,
+    SeedingLayerSetsHits::SeedingLayerSet pairLayers,
+    const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers)
 {
 
   //Retrieve tracker topology from geometry
@@ -83,16 +83,17 @@ void PixelTripletLowPtGenerator::hitTriplets(
 
   // Generate pairs
   OrderedHitPairs pairs; pairs.reserve(30000);
+  thePairGenerator->setSeedingLayers(pairLayers);
   thePairGenerator->hitPairs(region,pairs,ev,es);
 
   if (pairs.size() == 0) return;
 
-  int size = theLayers.size(); 
+  int size = thirdLayers.size();
 
   // Set aliases
   const RecHitsSortedInPhi **thirdHitMap = new const RecHitsSortedInPhi*[size]; 
   for(int il=0; il<size; il++)
-    thirdHitMap[il] = &(*theLayerCache)(theLayers[il], region, ev, es);
+    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, ev, es);
 
   // Get tracker
   getTracker(es);
@@ -125,7 +126,7 @@ void PixelTripletLowPtGenerator::hitTriplets(
     // Look at all layers
     for(int il=0; il<size; il++)
     {
-      const DetLayer * layer = theLayers[il].detLayer();
+      const DetLayer * layer = thirdLayers[il].detLayer();
 
 #ifdef Debug
       cerr << "  check layer " << layer->subDetector()
