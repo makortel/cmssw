@@ -7,7 +7,7 @@
 class DetLayer;
 class TrackingRegion;
 
-class HitPairGeneratorFromLayerPair : public HitPairGenerator {
+class HitPairGeneratorFromLayerPair {
 
 public:
 
@@ -18,31 +18,24 @@ public:
   HitPairGeneratorFromLayerPair(unsigned int inner,
                                 unsigned int outer,
                                 LayerCacheType* layerCache,
-				unsigned int nSize=30000,
 				unsigned int max=0);
 
-  virtual ~HitPairGeneratorFromLayerPair() { }
+  ~HitPairGeneratorFromLayerPair();
 
-  void setSeedingLayers(Layers layers) override { theSeedingLayers = layers; }
+  HitDoublets doublets( const TrackingRegion& reg,
+                        const edm::Event & ev,  const edm::EventSetup& es, Layers layers);
 
-  virtual HitDoublets doublets( const TrackingRegion& reg,
-			     const edm::Event & ev,  const edm::EventSetup& es);
+  void hitPairs( const TrackingRegion& reg, OrderedHitPairs & prs,
+                 const edm::Event & ev,  const edm::EventSetup& es, Layers layers);
 
-  virtual void hitPairs( const TrackingRegion& reg, OrderedHitPairs & prs,
-      const edm::Event & ev,  const edm::EventSetup& es);
-
-  virtual HitPairGeneratorFromLayerPair* clone() const {
-    return new HitPairGeneratorFromLayerPair(*this);
-  }
-
-  Layer innerLayer() const { return theSeedingLayers[theInnerLayer]; }
-  Layer outerLayer() const { return theSeedingLayers[theOuterLayer]; }
+  Layer innerLayer(const Layers& layers) const { return layers[theInnerLayer]; }
+  Layer outerLayer(const Layers& layers) const { return layers[theOuterLayer]; }
 
 private:
   LayerCacheType & theLayerCache;
-  Layers theSeedingLayers;
   const unsigned int theOuterLayer;
   const unsigned int theInnerLayer;
+  const unsigned int theMaxElement;
 };
 
 #endif

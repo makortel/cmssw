@@ -84,8 +84,7 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
   es.get<IdealGeometryRecord>().get(tTopoHand);
   const TrackerTopology *tTopo=tTopoHand.product();
 
-  thePairGenerator->setSeedingLayers(pairLayers);
-  auto const & doublets = thePairGenerator->doublets(region,ev,es);
+  auto const & doublets = thePairGenerator->doublets(region,ev,es, pairLayers);
   
   if (doublets.empty()) return;
    
