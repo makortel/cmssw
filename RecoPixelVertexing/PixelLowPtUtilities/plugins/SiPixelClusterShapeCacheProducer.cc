@@ -15,6 +15,9 @@
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
 
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterShape.h"
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterData.h"
 
@@ -43,6 +46,8 @@ public:
   explicit SiPixelClusterShapeCacheProducer(const edm::ParameterSet& iConfig);
   ~SiPixelClusterShapeCacheProducer();
 
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 private:
@@ -60,6 +65,13 @@ SiPixelClusterShapeCacheProducer::SiPixelClusterShapeCacheProducer(const edm::Pa
 }
 
 SiPixelClusterShapeCacheProducer::~SiPixelClusterShapeCacheProducer() {}
+
+void SiPixelClusterShapeCacheProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+  desc.add<edm::InputTag>("src", edm::InputTag("siPixelClusters"));
+  desc.add<bool>("onDemand", false);
+  descriptions.add("siPixelClusterShapeCache", desc);
+}
 
 void SiPixelClusterShapeCacheProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::Handle<InputCollection> input;
