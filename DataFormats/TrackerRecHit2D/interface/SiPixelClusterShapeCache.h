@@ -39,16 +39,16 @@ public:
   typedef SiPixelRecHit::ClusterRef ClusterRef;
 
   struct Field {
-    Field(): offset(0), straight(false), complete(false), has(false), filled(false), size(0) {}
+    Field(): offset(0), size(0), straight(false), complete(false), has(false), filled(false) {}
 
     Field(unsigned off, unsigned siz, bool s, bool c, bool h):
-      offset(off), straight(s), complete(c), has(h), filled(true), size(siz) {}
-    unsigned offset;
+      offset(off), size(siz), straight(s), complete(c), has(h), filled(true) {}
+    unsigned offset: 24; // room for 2^24/9 = ~2.8e6 clusters, should be enough
+    unsigned size: 4; // max 9 elements / cluster (2^4=16)
     unsigned straight:1;
     unsigned complete:1;
     unsigned has:1;
     unsigned filled:1;
-    unsigned size:28;
   };
 
   struct LazyGetter {
@@ -84,6 +84,7 @@ public:
 
   template <typename T>
   void insert(const ClusterRef& cluster, const T& data) {
+    static_assert(T::ArrayType::maxSize() <= 16, "T::ArrayType::max_size() more than 16, bit field too narrow");
     assert(productId_ == cluster.id());
     assert(cluster.index() < data_.size());
 
