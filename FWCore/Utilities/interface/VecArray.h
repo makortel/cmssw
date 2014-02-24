@@ -68,7 +68,7 @@ namespace edm {
 
     constexpr bool empty() noexcept { return size_ == 0; }
     constexpr size_type size() noexcept { return size_; }
-    constexpr size_type maxSize() noexcept { return N; }
+    static constexpr size_type maxSize() noexcept { return N; }
 
     void clear() {
       size_ = 0;
