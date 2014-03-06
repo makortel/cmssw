@@ -116,7 +116,8 @@ void ClusterShape::determineShape
   pair<int,int> pos;
  
   // Get sorted pixels
-  vector<SiPixelCluster::Pixel> pixels = recHit.cluster()->pixels();
+  const SiPixelCluster *cluster = recHit.cluster().get();
+  vector<SiPixelCluster::Pixel> pixels = cluster->pixels();
   sort(pixels.begin(),pixels.end(),lessPixel());
 
   // Look at all the pixels
@@ -151,14 +152,14 @@ void ClusterShape::determineShape
     data.isStraight = false;
 
   // Treat clusters with big pixel(s) inside
-  const int minPixelRow = recHit.cluster()->minPixelRow();
-  const int maxPixelRow = recHit.cluster()->maxPixelRow();
+  const int minPixelRow = cluster->minPixelRow();
+  const int maxPixelRow = cluster->maxPixelRow();
   for(int ix = minPixelRow + 1;
           ix < maxPixelRow; ix++)
     x[1] += theTopology->isItBigPixelInX(ix);
  
-  const int minPixelCol = recHit.cluster()->minPixelCol();
-  const int maxPixelCol = recHit.cluster()->maxPixelCol();
+  const int minPixelCol = cluster->minPixelCol();
+  const int maxPixelCol = cluster->maxPixelCol();
   for(int iy = minPixelCol + 1;
           iy < maxPixelCol; iy++)
     y[1] += theTopology->isItBigPixelInY(iy);
