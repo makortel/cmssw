@@ -76,11 +76,11 @@ bool ClusterShape::processColumn(pair<int,int> pos, bool inTheLoop)
 }
 
 /*****************************************************************************/
-struct lessPixel : public binary_function<SiPixelCluster::Pixel,
-                                          SiPixelCluster::Pixel,bool>
+struct lessPixel /*: public binary_function<SiPixelCluster::Pixel,
+                   SiPixelCluster::Pixel,bool>*/
 {
-  bool operator()(const SiPixelCluster::Pixel& a,
-                  const SiPixelCluster::Pixel& b) const
+  static bool compare(const SiPixelCluster::Pixel& a,
+                      const SiPixelCluster::Pixel& b)
   {
     /*
     if(a.x < b.x) return true;
@@ -118,16 +118,19 @@ void ClusterShape::determineShape
   // Get sorted pixels
   const SiPixelCluster *cluster = recHit.cluster().get();
   size_t npixels = cluster->pixelADC().size();
-  pixels_.reserve(npixels);
+  pixelIndices_.reserve(npixels);
   for(size_t i=0; i<npixels; ++i) {
-    pixels_.push_back(cluster->pixel(i));
+    pixelIndices_.push_back(i);
   }
-  sort(pixels_.begin(),pixels_.end(),lessPixel());
+  sort(pixelIndices_.begin(),pixelIndices_.end(), [cluster](int a, int b) {
+      return lessPixel::compare(cluster->pixel(a), cluster->pixel(b));
+    });
 
   // Look at all the pixels
-  for(const auto& pixel: pixels_)
+  for(const auto& index: pixelIndices_)
   {
     // Position
+    const SiPixelCluster::Pixel& pixel = cluster->pixel(index);
     pos.first  = (int)pixel.x;
     pos.second = (int)pixel.y;
 
@@ -150,7 +153,7 @@ void ClusterShape::determineShape
       hig = pos.second;
     }
   }
-  pixels_.clear();
+  pixelIndices_.clear();
 
   // Check if straight, process last column
   if(processColumn(pos, false) == false)
