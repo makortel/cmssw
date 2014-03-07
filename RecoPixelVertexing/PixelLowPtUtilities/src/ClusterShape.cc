@@ -117,11 +117,15 @@ void ClusterShape::determineShape
  
   // Get sorted pixels
   const SiPixelCluster *cluster = recHit.cluster().get();
-  vector<SiPixelCluster::Pixel> pixels = cluster->pixels();
-  sort(pixels.begin(),pixels.end(),lessPixel());
+  size_t npixels = cluster->pixelADC().size();
+  pixels_.reserve(npixels);
+  for(size_t i=0; i<npixels; ++i) {
+    pixels_.push_back(cluster->pixel(i));
+  }
+  sort(pixels_.begin(),pixels_.end(),lessPixel());
 
   // Look at all the pixels
-  for(const auto& pixel: pixels)
+  for(const auto& pixel: pixels_)
   {
     // Position
     pos.first  = (int)pixel.x;
@@ -146,6 +150,7 @@ void ClusterShape::determineShape
       hig = pos.second;
     }
   }
+  pixels_.clear();
 
   // Check if straight, process last column
   if(processColumn(pos, false) == false)

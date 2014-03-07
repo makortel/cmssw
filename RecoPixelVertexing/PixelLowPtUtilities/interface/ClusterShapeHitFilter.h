@@ -11,6 +11,7 @@
 
 #include "Geometry/CommonDetUnit/interface/GeomDetUnit.h"
 
+#include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterShape.h"
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterData.h"
 
 #include <utility>
@@ -237,6 +238,8 @@ class ClusterShapeHitFilter
   StripLimits stripLimits[StripKeys::N+1]; // [2][2]
 
   float theAngle[6];
+
+  mutable ClusterShape theClusterShape; // just to test
 };
 
 #endif

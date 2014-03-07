@@ -6,7 +6,6 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/HitInfo.h"
-#include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterShape.h"
 #include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterData.h"
 
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
@@ -261,7 +260,6 @@ bool ClusterShapeHitFilter::getSizes
 
   // Get shape information
   ClusterData data;
-  ClusterShape theClusterShape;
   theClusterShape.determineShape(*pd.det, recHit, data);
   bool usable = (data.isStraight && data.isComplete);
  
