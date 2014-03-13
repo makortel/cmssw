@@ -120,6 +120,7 @@ class Process(object):
         self.__dict__['_Process__esproducers'] = {}
         self.__dict__['_Process__esprefers'] = {}
         self.__dict__['_Process__aliases'] = {}
+        self.__dict__['_Process__plugins'] = {}
         self.__dict__['_Process__psets']={}
         self.__dict__['_Process__vpsets']={}
         self.__dict__['_cloneToObjectDict'] = {}
@@ -256,6 +257,10 @@ class Process(object):
         """returns a dict of the aliases that have been added to the Process"""
         return DictTypes.FixedKeysDict(self.__aliases)
     aliases = property(aliases_,doc="dictionary containing the aliases for the process")
+    def plugins_(self):
+       """returns a dict of the plugins that have been added to the Process"""
+       return DictTypes.FixedKeysDict(self.__plugins)
+    plugins = property(plugins_,doc="dictionary containing the plugins for the process")
     def psets_(self):
         """returns a dict of the PSets which have been added to the Process"""
         return DictTypes.FixedKeysDict(self.__psets)
@@ -478,6 +483,8 @@ class Process(object):
         self._place(name, mod, self.__essources)
     def _placeAlias(self,name,mod):
         self._place(name, mod, self.__aliases)
+    def _placePlugin(self,name,mod):
+       self._place(name, mod, self.__plugins)
     def _placePSet(self,name,mod):
         self._place(name, mod, self.__psets)
     def _placeVPSet(self,name,mod):
@@ -872,6 +879,7 @@ class Process(object):
         self._insertManyInto(processPSet, "@all_essources", self.es_sources_(), True)
         self._insertManyInto(processPSet, "@all_esprefers", self.es_prefers_(), True)
         self._insertManyInto(processPSet, "@all_aliases", self.aliases_(), True)
+        self._insertManyInto(processPSet, "@all_plugins", self.plugins_(), True)
         self._insertPaths(processPSet)
         #handle services differently
         services = []
