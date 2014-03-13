@@ -37,6 +37,7 @@ class PluginFactory<R*(Args...)> : public PluginFactoryBase
       friend class DummyFriend;
    public:
       typedef R* TemplateArgType(Args...);
+      typedef R* ReturnType;
 
       struct PMakerBase {
         virtual R* create(Args...) const = 0;
