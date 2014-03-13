@@ -192,6 +192,11 @@ class Looper(_ConfigureComponent,_TypedParameterizable):
         return "@main_looper"
 
 
+class Plugin(_ConfigureComponent,_TypedParameterizable,_Labelable):
+    def __init__(self,type_,*args,**kargs):
+        super(Plugin,self).__init__(type_,*args,**kargs)
+    def _placeImpl(self,name,proc):
+        proc._placePlugin(name,self)
 
 if __name__ == "__main__":
     import unittest
@@ -262,6 +267,15 @@ if __name__ == "__main__":
             n.setLabel("n")
             s1 = Sequence(m*n)
             options = PrintOptions()
+        def testPlugin(self):
+            m = Plugin("MPlugin")
+            n = Plugin("NPlugin", foo=int32(1), bar=string("it"))
+            m.setLabel("m")
+            n.setLabel("n")
+            self.assertEqual(n.foo.value(), 1);
+            self.assertEqual(n.bar.value(), "it")
+            self.assertEqual(m.dumpPython(), "cms.Plugin(\"MPlugin\")\n")
+            self.assertEqual(n.dumpPython(), "cms.Plugin(\"NPlugin\",\n    foo = cms.int32(1),\n    bar = cms.string(\'it\')\n)\n")
 
 
 
