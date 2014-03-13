@@ -7,6 +7,7 @@
 #include "FWCore/Framework/interface/ExceptionActions.h"
 #include "FWCore/Framework/interface/CommonParams.h"
 #include "FWCore/Framework/interface/ConstProductRegistry.h"
+#include "FWCore/Framework/interface/PluginFactoryService.h"
 #include "FWCore/Framework/interface/SubProcess.h"
 #include "FWCore/Framework/interface/Schedule.h"
 #include "FWCore/Framework/interface/TriggerNamesService.h"
@@ -106,8 +107,22 @@ namespace edm {
     boost::shared_ptr<w_TNS> tnsptr
       (new w_TNS(std::auto_ptr<TNS>(new TNS(parameterSet))));
 
-    return ServiceRegistry::createContaining(tnsptr,
-                                             tempToken,
+    ServiceToken tempToken2 = ServiceRegistry::createContaining(tnsptr,
+                                                                tempToken,
+                                                                serviceregistry::kOverlapIsError);
+
+    // the next thing is also ugly: pull out the pset of named plugins
+    // and create a service and extra token for it (service is
+    // intended to be used only in the constructors of EDModules)
+
+    typedef service::PluginFactoryService PFS;
+    typedef serviceregistry::ServiceWrapper<PFS> w_PFS;
+
+    boost::shared_ptr<w_PFS> pfsptr
+      (new w_PFS(std::auto_ptr<PFS>(new PFS(parameterSet))));
+
+    return ServiceRegistry::createContaining(pfsptr,
+                                             tempToken2,
                                              serviceregistry::kOverlapIsError);
   }
 
