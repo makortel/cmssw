@@ -2,17 +2,17 @@
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-#include "RecoTracker/CkfPattern/interface/CkfTrackCandidateMaker.h"
+#include "RecoTracker/CkfPattern/interface/CkfTrackCandidateMakerNew.h"
 #include "RecoTracker/CkfPattern/interface/CkfTrajectoryMaker.h"
 
 
 #include "FWCore/Framework/interface/ModuleFactory.h"
 #include "FWCore/Utilities/interface/typelookup.h"
 
-using cms::CkfTrackCandidateMaker;
+using cms::CkfTrackCandidateMakerNew;
 using cms::CkfTrajectoryMaker;
 
-DEFINE_FWK_MODULE(CkfTrackCandidateMaker);
+DEFINE_FWK_MODULE(CkfTrackCandidateMakerNew);
 DEFINE_FWK_MODULE(CkfTrajectoryMaker);
 
 #include "RecoTracker/CkfPattern/interface/BaseCkfTrajectoryBuilderFactory.h"

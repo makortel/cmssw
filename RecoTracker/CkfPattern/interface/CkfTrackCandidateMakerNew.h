@@ -24,16 +24,16 @@ class TransientInitialStateEstimator;
 
 namespace cms
 {
-  class CkfTrackCandidateMaker : public edm::EDProducer, public CkfTrackCandidateMakerBase
+  class CkfTrackCandidateMakerNew : public edm::EDProducer, public CkfTrackCandidateMakerBase
   {
   public:
 
-    explicit CkfTrackCandidateMaker(const edm::ParameterSet& conf):
+    explicit CkfTrackCandidateMakerNew(const edm::ParameterSet& conf):
       CkfTrackCandidateMakerBase(conf, consumesCollector()){
       produces<TrackCandidateCollection>();
     }
 
-    virtual ~CkfTrackCandidateMaker(){;}
+    virtual ~CkfTrackCandidateMakerNew(){;}
 
     virtual void beginRun (edm::Run const& r, edm::EventSetup const & es) override {beginRunBase(r,es);}
 

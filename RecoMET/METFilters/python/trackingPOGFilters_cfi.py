@@ -96,8 +96,8 @@ logErrorTooManySeedsMainIterations = cms.EDFilter("LogErrorEventFilter",
                                                   maxErrorFractionInRun  = cms.double(1.0),
                                                   maxSavedEventsPerLumiAndError = cms.uint32(100000),
                                                   categoriesToWatch = cms.vstring("TooManySeeds"),
-                                                  modulesToWatch = cms.vstring("CkfTrackCandidateMaker:initialStepTrackCandidate",
-                                                                               "CkfTrackCandidateMaker:pixelPairTrackCandidate"
+                                                  modulesToWatch = cms.vstring("CkfTrackCandidateMakerNew:initialStepTrackCandidate",
+                                                                               "CkfTrackCandidateMakerNew:pixelPairTrackCandidate"
                                                                                )
                                                   )
 
