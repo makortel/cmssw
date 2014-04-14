@@ -19,3 +19,6 @@
 <bin file="PixelTriplets_InvPrbl_prec.cpp">
   <use   name="RecoPixelVertexing/PixelTriplets"/>
 </bin>
+<bin file="KDTree_t.cpp">
+  <use   name="cppunit"/>
+</bin>
