@@ -22,3 +22,7 @@
 <bin file="KDTree_t.cpp">
   <use   name="cppunit"/>
 </bin>
+<bin file="KDTree_time.cpp">
+  <use name="sockets"/>       <!-- needed for -lrt -->
+  <Flags NO_TESTRUN="1"/>
+</bin>
