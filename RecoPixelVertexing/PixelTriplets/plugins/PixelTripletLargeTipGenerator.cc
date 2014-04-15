@@ -12,10 +12,7 @@
 #include "RecoTracker/TkHitPairs/interface/RecHitsSortedInPhi.h"
 
 #include "MatchedHitRZCorrectionFromBending.h"
-//#include "RecoParticleFlow/PFProducer/interface/KDTreeLinkerAlgo.h"
-//#include "RecoParticleFlow/PFProducer/interface/KDTreeLinkerTools.h"
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h" //amend to point at your copy...
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerTools.h"
+#include "RecoPixelVertexing/PixelTriplets/plugins/KDTree.h"
 
 #include <algorithm>
 #include <iostream>
@@ -109,10 +106,10 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
   std::vector<unsigned int> foundNodes; // re-used throughout
   foundNodes.reserve(100);
   #ifdef __clang__
-  std::vector<KDTreeLinkerAlgo<unsigned int>> hitTree(size);
+  std::vector<KDTree<unsigned int>> hitTree(size);
   std::vector<LayerRZPredictions> mapPred(size);
   #else
-  KDTreeLinkerAlgo<unsigned int> hitTree[size];
+  KDTree<unsigned int> hitTree[size];
   LayerRZPredictions mapPred[size];
   #endif
 

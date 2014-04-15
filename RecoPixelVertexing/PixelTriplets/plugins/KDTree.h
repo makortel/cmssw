@@ -1,7 +1,7 @@
 #ifndef KDTreeLinkerAlgoTemplated_h
 #define KDTreeLinkerAlgoTemplated_h
 
-#include "KDTreeLinkerTools.h"
+#include "KDTreeTools.h"
 
 #include <cassert>
 #include <vector>
@@ -10,11 +10,11 @@
 // a closest point search algorithme.
 
 template <typename DATA>
-class KDTreeLinkerAlgo
+class KDTree
 {
  public:
-  KDTreeLinkerAlgo();
-  ~KDTreeLinkerAlgo();
+  KDTree();
+  ~KDTree();
   
   // Build the k-d tree from nodeList
   void build(std::vector<KDTreeNodeInfo<DATA> > &nodeList);
@@ -62,7 +62,7 @@ class KDTreeLinkerAlgo
 
 template < typename DATA >
 void
-KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> > &nodeList)
+KDTree<DATA>::build(std::vector<KDTreeNodeInfo<DATA> > &nodeList)
 {
   if(!nodeList.empty()) {
     size_t size = nodeList.size();
@@ -76,10 +76,10 @@ KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> > &nodeList)
  
 template < typename DATA >
 int
-KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
-                                     const int high,
-                                     const int treeDepth,
-                                     std::vector<KDTreeNodeInfo<DATA> >& initialList) const
+KDTree<DATA>::medianSearch(const int low,
+                           const int high,
+                           const int treeDepth,
+                           std::vector<KDTreeNodeInfo<DATA> >& initialList) const
 {
   int nbrElts = high - low;
   int median = (nbrElts & 1)	? nbrElts / 2 
@@ -122,8 +122,8 @@ KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
 
 template < typename DATA >
 void
-KDTreeLinkerAlgo<DATA>::search(const KDTreeBox& trackBox,
-                               std::vector<DATA>& recHits) const
+KDTree<DATA>::search(const KDTreeBox& trackBox,
+                     std::vector<DATA>& recHits) const
 {
   if (!empty()) {
     recSearch(0, trackBox.dim1min, trackBox.dim1max, trackBox.dim2min, trackBox.dim2max, recHits);
@@ -133,10 +133,10 @@ KDTreeLinkerAlgo<DATA>::search(const KDTreeBox& trackBox,
 
 template < typename DATA >
 void 
-KDTreeLinkerAlgo<DATA>::recSearch(int current,
-                                  float dimCurrMin, float dimCurrMax,
-                                  float dimOtherMin, float dimOtherMax,
-                                  std::vector<DATA>& output) const
+KDTree<DATA>::recSearch(int current,
+                        float dimCurrMin, float dimCurrMax,
+                        float dimOtherMin, float dimOtherMax,
+                        std::vector<DATA>& output) const
 {
   // Iterate until leaf is found, or there are no children in the
   // search window. If search has to proceed on both children, proceed
@@ -189,21 +189,21 @@ KDTreeLinkerAlgo<DATA>::recSearch(int current,
 }
 
 template <typename DATA>
-KDTreeLinkerAlgo<DATA>::KDTreeLinkerAlgo()
+KDTree<DATA>::KDTree()
 {
 }
 
 template <typename DATA>
-KDTreeLinkerAlgo<DATA>::~KDTreeLinkerAlgo()
+KDTree<DATA>::~KDTree()
 {
 }
 
 template <typename DATA>
 int
-KDTreeLinkerAlgo<DATA>::recBuild(const int low, 
-                                 const int high, 
-                                 int depth,
-                                 std::vector<KDTreeNodeInfo<DATA> >& initialList)
+KDTree<DATA>::recBuild(const int low,
+                       const int high,
+                       int depth,
+                       std::vector<KDTreeNodeInfo<DATA> >& initialList)
 {
   const int portionSize = high - low;
   const int dimIndex = depth&1;

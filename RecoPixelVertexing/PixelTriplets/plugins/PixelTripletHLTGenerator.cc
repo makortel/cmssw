@@ -16,10 +16,7 @@
 #include "RecoTracker/TkSeedingLayers/interface/SeedComparitor.h"
 
 #include "DataFormats/GeometryVector/interface/Pi.h"
-//#include "RecoParticleFlow/PFProducer/interface/KDTreeLinkerAlgo.h"
-//#include "RecoParticleFlow/PFProducer/interface/KDTreeLinkerTools.h"
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h" //amend to point at your copy...
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerTools.h"
+#include "RecoPixelVertexing/PixelTriplets/plugins/KDTree.h"
 
 #include<cstdio>
 
@@ -101,9 +98,9 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
   foundNodes.reserve(100);
 
   #ifdef __clang__
-  std::vector<KDTreeLinkerAlgo<unsigned int>> hitTree(size);
+  std::vector<KDTree<unsigned int>> hitTree(size);
   #else
-  KDTreeLinkerAlgo<unsigned int> hitTree[size];
+  KDTree<unsigned int> hitTree[size];
   #endif
   float rzError[size]; //save maximum errors
   float maxphi = Geom::ftwoPi(), minphi = -maxphi; // increase to cater for any range

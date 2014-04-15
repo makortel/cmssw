@@ -1,4 +1,4 @@
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h"
+#include "RecoPixelVertexing/PixelTriplets/plugins/KDTree.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -88,7 +88,7 @@ void testKDTree::test() {
   }
 
   // build the tree
-  KDTreeLinkerAlgo<int> kdtree;
+  KDTree<int> kdtree;
   CPPUNIT_ASSERT(kdtree.empty());
   kdtree.build(nodes);
   CPPUNIT_ASSERT(kdtree.size() == static_cast<int>(2*nodes.size()-1));

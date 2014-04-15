@@ -1,4 +1,4 @@
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h"
+#include "RecoPixelVertexing/PixelTriplets/plugins/KDTree.h"
 
 #include <iostream>
 #include <time.h>
@@ -34,7 +34,7 @@ namespace {
       }
 
       // build tree
-      KDTreeLinkerAlgo<int> kdtree;
+      KDTree<int> kdtree;
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
       kdtree.build(nodes);
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
@@ -51,8 +51,8 @@ namespace {
       search_time += delta(start, stop);
     }
 
-    std::cout << "Total time in KDTreeLinkerAlgo<>::build() " << build_time << " s" << std::endl;
-    std::cout << "Total time in KDTreeLinkerAlgo<>::search() " << search_time << " s" << std::endl;
+    std::cout << "Total time in KDTree<>::build() " << build_time << " s" << std::endl;
+    std::cout << "Total time in KDTree<>::search() " << search_time << " s" << std::endl;
   }
 }
 

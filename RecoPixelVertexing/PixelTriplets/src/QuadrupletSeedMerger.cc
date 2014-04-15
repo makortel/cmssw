@@ -1,6 +1,5 @@
 #include "RecoPixelVertexing/PixelTriplets/interface/QuadrupletSeedMerger.h"
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h"
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerTools.h"
+#include "RecoPixelVertexing/PixelTriplets/plugins/KDTree.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
@@ -178,7 +177,7 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
   std::vector<unsigned int> foundNodes;
   nodes.reserve(2*nInputTriplets);
   foundNodes.reserve(100);
-  KDTreeLinkerAlgo<unsigned int> kdtree;
+  KDTree<unsigned int> kdtree;
   for(unsigned int it=0; it < nInputTriplets; ++it) {
     double phi = phiEtaCache[it].first;
     double eta = phiEtaCache[it].second;
