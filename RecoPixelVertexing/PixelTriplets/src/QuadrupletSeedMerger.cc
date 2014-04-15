@@ -179,13 +179,13 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
   foundNodes.reserve(100);
   KDTree<unsigned int> kdtree;
   for(unsigned int it=0; it < nInputTriplets; ++it) {
-    double phi = phiEtaCache[it].first;
-    double eta = phiEtaCache[it].second;
+    float phi = phiEtaCache[it].first;
+    float eta = phiEtaCache[it].second;
     nodes.push_back(KDTreeNodeInfo<unsigned int>(it, eta, phi));
 
     // to wrap all points in phi
     // if(phi < 0) phi += twoPi(); else phi -= twoPi();
-    double twoPi = std::copysign(Geom::twoPi(), phi);
+    float twoPi = std::copysign(Geom::twoPi(), phi);
     nodes.push_back(KDTreeNodeInfo<unsigned int>(it, eta, phi-twoPi));
   }
   kdtree.build(nodes);
@@ -212,10 +212,10 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
   typedef std::tuple<unsigned int, short, short> T2NonSharedTuple;
   std::vector<T2NonSharedTuple> t2Tmp; // temporary to sort t2's before insertion to t2List
   for(unsigned int t1=0; t1<nInputTriplets; ++t1) {
-    double phi = phiEtaCache[t1].first;
-    double eta = phiEtaCache[t1].second;
+    float phi = phiEtaCache[t1].first;
+    float eta = phiEtaCache[t1].second;
 
-    KDTreeBox box(eta-0.05, eta+0.05, phi-0.15, phi+0.15);
+    KDTreeBox<> box(std::make_tuple(eta-0.05f, eta+0.05f), std::make_tuple(phi-0.15f, phi+0.15f));
     foundNodes.clear();
     kdtree.search(box, foundNodes);
     if(foundNodes.empty())

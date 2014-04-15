@@ -21,17 +21,17 @@ CPPUNIT_TEST_SUITE_REGISTRATION(testKDTree);
 
 namespace {
   template <typename T>
-  void simpleSearch(const std::vector<KDTreeNodeInfo<T> >& nodes, const KDTreeBox& searchBox, std::vector<KDTreeNodeInfo<T> >& output) {
+  void simpleSearch(const std::vector<KDTreeNodeInfo<T> >& nodes, const KDTreeBox<>& searchBox, std::vector<KDTreeNodeInfo<T> >& output) {
     for(const auto& node: nodes) {
-      if(node.dim[0] >= searchBox.dim1min && node.dim[0] <= searchBox.dim1max &&
-         node.dim[1] >= searchBox.dim2min && node.dim[1] <= searchBox.dim2max) {
+      if(node.dim[0] >= std::get<0>(searchBox.dims[0]) && node.dim[0] <= std::get<1>(searchBox.dims[0]) &&
+         node.dim[1] >= std::get<0>(searchBox.dims[1]) && node.dim[1] <= std::get<1>(searchBox.dims[1])) {
         output.push_back(node);
       }
     }
   }
 
   template <typename T>
-  bool compareResults(const std::vector<T>& kdtreeResult, const std::vector<KDTreeNodeInfo<T> >& simpleResult, const KDTreeBox& searchBox) {
+  bool compareResults(const std::vector<T>& kdtreeResult, const std::vector<KDTreeNodeInfo<T> >& simpleResult, const KDTreeBox<>& searchBox) {
     std::vector<bool> kdtreeExists(kdtreeResult.size(), false);
     std::vector<bool> simpleExists(simpleResult.size(), false);
     size_t sameCount = 0;
@@ -50,7 +50,7 @@ namespace {
 
     // print some diagnostic
     std::cout << std::endl
-              << "search box [" << searchBox.dim1min << ", " << searchBox.dim1max << "] x [" << searchBox.dim2min << ", " << searchBox.dim2max << "]" << std::endl
+              << "search box [" << std::get<0>(searchBox.dims[0]) << ", " << std::get<1>(searchBox.dims[0]) << "] x [" << std::get<0>(searchBox.dims[1]) << ", " << std::get<1>(searchBox.dims[1]) << "]" << std::endl
               << "kdtreeResult.size() " << kdtreeResult.size() << " simpleResult.size() " << simpleResult.size() << " sameCount " << sameCount << std::endl
               << "only in kdtree:";
     for(size_t i=0; i<kdtreeExists.size(); ++i) {
@@ -78,7 +78,7 @@ void testKDTree::test() {
   size_t id=0;
   for(size_t i=0; i<100; ++i) {
     for(size_t j=0; j<100; ++j) {
-      nodes.emplace_back(id, i*0.1+0.05, j*0.1+0.05);
+      nodes.emplace_back(id, i*0.1f+0.05f, j*0.1f+0.05f);
       /*
       if(nodes.back().dim[0] <= 1.0 && nodes.back().dim[1] <= 1.0)
         std::cout << "Node " << nodes.back().data << " dim0 " << nodes.back().dim[0] << " dim1 " << nodes.back().dim[1] << std::endl;
@@ -98,7 +98,7 @@ void testKDTree::test() {
   std::vector<KDTreeNodeInfo<int> > foundNodes2;
   auto runTest = [&](float window, float offset) {
     for(const auto& node: nodes) {
-      KDTreeBox box(node.dim[0]-window+offset, node.dim[0]+window+offset, node.dim[1]-window+offset, node.dim[1]+window+offset);
+      KDTreeBox<> box(node.dim[0]-window+offset, node.dim[0]+window+offset, node.dim[1]-window+offset, node.dim[1]+window+offset);
       kdtree.search(box, foundNodes);
       simpleSearch(nodes, box, foundNodes2);
       CPPUNIT_ASSERT(compareResults(foundNodes, foundNodes2, box));
@@ -118,7 +118,7 @@ void testKDTree::test() {
   runTest(0.1, 0.1);
 
   // do one manual search test
-  kdtree.search(KDTreeBox(0,1, 0,1), foundNodes);
+  kdtree.search(KDTreeBox<>(0,1, 0,1), foundNodes);
   CPPUNIT_ASSERT(foundNodes.size() == 100);
   auto myFind = [&](int value) {
     return std::find(foundNodes.begin(), foundNodes.end(), value) != foundNodes.end();

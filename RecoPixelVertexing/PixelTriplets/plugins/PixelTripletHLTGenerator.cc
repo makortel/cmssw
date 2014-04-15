@@ -248,14 +248,14 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
 	  correction.correctRZRange(regMin);
 	  correction.correctRZRange(regMax);
 	  if (regMax.min() < regMin.min()) { swap(regMax, regMin);}
-	  KDTreeBox phiZ(prmin, prmax, regMin.min()-nSigmaRZ*rzError[il], regMax.max()+nSigmaRZ*rzError[il]);
+	  KDTreeBox<> phiZ(prmin, prmax, regMin.min()-nSigmaRZ*rzError[il], regMax.max()+nSigmaRZ*rzError[il]);
 	  hitTree[il].search(phiZ, foundNodes);
 	}
       else
 	{
-	  KDTreeBox phiZ(prmin, prmax,
-			 rzRange.min()-regOffset-nSigmaRZ*rzError[il],
-			 rzRange.max()+regOffset+nSigmaRZ*rzError[il]);
+	  KDTreeBox<> phiZ(prmin, prmax,
+                           rzRange.min()-regOffset-nSigmaRZ*rzError[il],
+                           rzRange.max()+regOffset+nSigmaRZ*rzError[il]);
 	  hitTree[il].search(phiZ, foundNodes);
 	}
 

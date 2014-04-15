@@ -29,7 +29,7 @@ namespace {
       int id = 0;
       for(int i=0; i<100; ++i) {
         for(int j=0; j<100; ++j) {
-          nodes.emplace_back(id, i*0.1, j*0.1);
+          nodes.emplace_back(id, i*0.1f, j*0.1f);
         }
       }
 
@@ -44,7 +44,7 @@ namespace {
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
       std::vector<int> values;
       for(const auto& node: nodes) {
-        kdtree.search(KDTreeBox(node.dim[0]-0.1f, node.dim[0]+0.1f, node.dim[1]-0.1f, node.dim[1]+0.1f), values);
+        kdtree.search(KDTreeBox<>(node.dim[0]-0.1f, node.dim[0]+0.1f, node.dim[1]-0.1f, node.dim[1]+0.1f), values);
         values.clear();
       }
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);

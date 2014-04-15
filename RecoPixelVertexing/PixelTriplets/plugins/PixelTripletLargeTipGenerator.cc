@@ -287,15 +287,15 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
 	correction.correctRZRange(regMin);
 	correction.correctRZRange(regMax);
 	if (regMax.min() < regMin.min()) { swap(regMax, regMin);}
-	KDTreeBox phiZ(prmin, prmax,
-		       regMin.min()-fnSigmaRZ*rzError[il],
-		       regMax.max()+fnSigmaRZ*rzError[il]);
+	KDTreeBox<> phiZ(prmin, prmax,
+                         regMin.min()-fnSigmaRZ*rzError[il],
+                         regMax.max()+fnSigmaRZ*rzError[il]);
 	hitTree[il].search(phiZ, foundNodes);
       }
       else {
-	KDTreeBox phiZ(prmin, prmax,
-		       rzRange.min()-fnSigmaRZ*rzError[il],
-		       rzRange.max()+fnSigmaRZ*rzError[il]);
+	KDTreeBox<> phiZ(prmin, prmax,
+                         rzRange.min()-fnSigmaRZ*rzError[il],
+                         rzRange.max()+fnSigmaRZ*rzError[il]);
 	hitTree[il].search(phiZ, foundNodes);
       }
       

@@ -2,57 +2,81 @@
 #define KDTreeLinkerToolsTemplated_h
 
 #include <algorithm>
+#include <array>
+#include <tuple>
 
-// Box structure used to define 2D field.
+// Box structure used to define DIM-dimensional field.
 // It's used in KDTree building step to divide the detector
 // space (ECAL, HCAL...) and in searching step to create a bounding
 // box around the demanded point (Track collision point, PS projection...).
+template <size_t DIM=2>
 struct KDTreeBox
 {
-  float dim1min, dim1max;
-  float dim2min, dim2max;
-  
-  public:
+  using ArrayType = std::array<std::tuple<float, float>, DIM>; // min, max in tuple
+  ArrayType dims;
 
-  KDTreeBox(float d1min, float d1max, 
-	    float d2min, float d2max)
-    : dim1min (d1min), dim1max(d1max)
-    , dim2min (d2min), dim2max(d2max)
-  {}
+  // by default initialize to 0
+  KDTreeBox(): dims{} {}
 
-  KDTreeBox()
-    : dim1min (0), dim1max(0)
-    , dim2min (0), dim2max(0)
-  {}
+  // Construct from a list of tuple arguments
+  template <typename ...Args>
+  KDTreeBox(Args&&...args)
+  {
+    fill<0>(dims, std::forward<Args>(args)...);
+  }
+
+  KDTreeBox(ArrayType dim): dims(dim) {}
+
+private:
+  // Recursive filler from a list of tuples
+  template <size_t INDEX, typename ...Args>
+  constexpr void fill(ArrayType& arr, std::tuple<float, float> d, Args&&...args) {
+    arr[INDEX] = d;
+    fill<INDEX+1>(arr, std::forward<Args>(args)...);
+  }
+  // Recursive filler from a list of floats
+  template <size_t INDEX, typename ...Args>
+  constexpr void fill(ArrayType& arr, float dmin, float dmax, Args&&...args) {
+    arr[INDEX] = std::make_tuple(dmin, dmax);
+    fill<INDEX+1>(arr, std::forward<Args>(args)...);
+  }
+
+  // Terminate the recursion
+  template <size_t INDEX>
+  constexpr void fill(ArrayType& arr) {
+    static_assert(INDEX <= DIM, "Got more arguments than the dimension DIM");
+  }
 };
 
   
 // Data stored in each KDTree node.
-// The dim1/dim2 fields are usually the duplication of some PFRecHit values
-// (eta/phi or x/y). But in some situations, phi field is shifted by +-2.Pi
-template <typename DATA>
+template <typename DATA, size_t DIM=2>
 struct KDTreeNodeInfo 
 {
   DATA data;
-  float dim[2];
-  enum {kDim1=0, kDim2=1};
+  std::array<float, DIM> dim;
 
   public:
   KDTreeNodeInfo()
   {}
-  
-  KDTreeNodeInfo(const DATA&	d,
-		 float		dim_1,
-		 float		dim_2)
-    : data(d), dim{dim_1, dim_2}
+
+  // Construct from an array of coordinates
+  KDTreeNodeInfo(const DATA& d, std::array<float, DIM> dim_):
+    data(d), dim(dim_)
+  {}
+
+  // Construct from a list of coordinate arguments
+  template <typename ...Args>
+  KDTreeNodeInfo(const DATA& d, Args&&...args):
+    data(d), dim{{std::forward<Args>(args)...}}
   {}
 };
 
-template <typename DATA>
+template <typename DATA, size_t DIM=2>
 struct KDTreeNodes {
   std::vector<float> median; // or dimCurrent;
   std::vector<int> right;
-  std::vector<float> dimOther;
+  std::vector<std::array<float, DIM-1> > dimOthers;
   std::vector<DATA> data;
 
   int poolSize;
@@ -66,7 +90,7 @@ struct KDTreeNodes {
   void clear() {
     median.clear();
     right.clear();
-    dimOther.clear();
+    dimOthers.clear();
     data.clear();
     poolSize = -1;
     poolPos = -1;
@@ -81,7 +105,7 @@ struct KDTreeNodes {
     poolSize = sizeData*2-1;
     median.resize(poolSize);
     right.resize(poolSize);
-    dimOther.resize(poolSize);
+    dimOthers.resize(poolSize);
     data.resize(poolSize);
   };
 
@@ -97,5 +121,49 @@ struct KDTreeNodes {
     return isLeaf(right[index]);
   }
 };
+
+namespace kdtreetraits {
+  template <size_t INDEX, size_t DIM>
+  bool isInside_(std::array<float, DIM-1> dimOthers,
+                 std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
+    return (dimOthers[INDEX] >= std::get<0>(dimOthersLimits[INDEX])) &
+           (dimOthers[INDEX] <= std::get<1>(dimOthersLimits[INDEX]));
+  }
+  template <size_t INDEX, size_t DIM>
+  struct IsInside_ {
+    static bool call(std::array<float, DIM-1> dimOthers,
+                     std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
+      return IsInside_<INDEX-1, DIM>::call(dimOthers, dimOthersLimits) &
+        isInside_<INDEX, DIM>(dimOthers, dimOthersLimits);
+    }
+  };
+  // break recursion
+  template <size_t DIM>
+  struct IsInside_<0, DIM> {
+    static bool call(std::array<float, DIM-1> dimOthers,
+                     std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
+      return isInside_<0, DIM>(dimOthers, dimOthersLimits);
+    }
+  };
+}
+template <typename DATA, size_t DIM>
+struct KDTreeTraits {
+  static void rewindIndices(const std::vector<KDTreeNodeInfo<DATA, DIM> >& initialList, const KDTreeNodeInfo<DATA, DIM>& item, int& i, int& j, const int dimIndex) {
+    while (initialList[i].dim[dimIndex] < item.dim[dimIndex]) i++;
+    while (initialList[j].dim[dimIndex] > item.dim[dimIndex]) j--;
+  }
+
+  static bool isInside(std::array<float, DIM-1> dimOthers,
+                       std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
+    return kdtreetraits::IsInside_<DIM-2, DIM>::call(dimOthers, dimOthersLimits);
+  }
+
+  static void swapLimits(int depth, std::tuple<float, float>& dimCurrLimits,
+                         std::array<std::tuple<float, float>, DIM-1>& dimOthersLimits) {
+    const int dimIndex = depth % (DIM-1);
+    std::swap(dimCurrLimits, dimOthersLimits[dimIndex]);
+  }
+};
+
 
 #endif
