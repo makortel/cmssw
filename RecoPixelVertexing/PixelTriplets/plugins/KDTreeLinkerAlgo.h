@@ -24,7 +24,7 @@ class KDTreeLinkerAlgo
   // Here we search in the KDTree for all points that would be 
   // contained in the given searchbox. The founded points are stored in resRecHitList.
   void search(const KDTreeBox& searchBox,
-              std::vector<DATA>& resRecHitList);
+              std::vector<DATA>& resRecHitList) const;
 
   // This reurns true if the tree is empty
   bool empty() const {return nodePool_.empty();}
@@ -39,8 +39,6 @@ class KDTreeLinkerAlgo
  private:
   // The node pool allow us to do just 1 call to new for each tree building.
   KDTreeNodes<DATA> nodePool_;
-
-  std::vector<DATA>    *closestNeighbour;
 
   //Fast median search with Wirth algorithm in eltList between low and high indexes.
   int medianSearch(const int low,
@@ -57,7 +55,8 @@ class KDTreeLinkerAlgo
   // Recursif kdtree search. Is called by search()
   void recSearch(int current,
                  float dimCurrMin, float dimCurrMax,
-                 float dimOtherMin, float dimOtherMax);
+                 float dimOtherMin, float dimOtherMax,
+                 std::vector<DATA>& output) const;
 };
 
 
@@ -127,12 +126,10 @@ KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
 template < typename DATA >
 void
 KDTreeLinkerAlgo<DATA>::search(const KDTreeBox& trackBox,
-                               std::vector<DATA>& recHits)
+                               std::vector<DATA>& recHits) const
 {
   if (!empty()) {
-    closestNeighbour = &recHits;
-    recSearch(0, trackBox.dim1min, trackBox.dim1max, trackBox.dim2min, trackBox.dim2max);
-    closestNeighbour = 0;
+    recSearch(0, trackBox.dim1min, trackBox.dim1max, trackBox.dim2min, trackBox.dim2max, recHits);
   }
 }
 
@@ -141,7 +138,8 @@ template < typename DATA >
 void 
 KDTreeLinkerAlgo<DATA>::recSearch(int current,
                                   float dimCurrMin, float dimCurrMax,
-                                  float dimOtherMin, float dimOtherMax)
+                                  float dimOtherMin, float dimOtherMax,
+                                  std::vector<DATA>& output) const
 {
   // Iterate until leaf is found, or there are no children in the
   // search window. If search has to proceed on both children, proceed
@@ -160,7 +158,7 @@ KDTreeLinkerAlgo<DATA>::recSearch(int current,
       if((dimCurr >= dimCurrMin) & (dimCurr <= dimCurrMax)) {
         float dimOther = nodePool_.dimOther[current];
         if((dimOther >= dimOtherMin) & (dimOther <= dimOtherMax)) {
-          closestNeighbour->push_back(nodePool_.data[current]);
+          output.push_back(nodePool_.data[current]);
         }
       }
       break;
@@ -176,7 +174,7 @@ KDTreeLinkerAlgo<DATA>::recSearch(int current,
       std::swap(dimCurrMax, dimOtherMax);
       if(goLeft & goRight) {
         int left = current+1;
-        recSearch(left, dimCurrMin, dimCurrMax, dimOtherMin, dimOtherMax);
+        recSearch(left, dimCurrMin, dimCurrMax, dimOtherMin, dimOtherMax, output);
         // continue with right
         current = right;
       }
