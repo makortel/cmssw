@@ -14,19 +14,17 @@ class KDTreeLinkerAlgo
 {
  public:
   KDTreeLinkerAlgo();
-  
-  // Dtor calls clear()
   ~KDTreeLinkerAlgo();
   
-  // Here we build the KD tree from the "eltList" in the space define by "region".
-  void build(std::vector<KDTreeNodeInfo<DATA> > &eltList);
+  // Build the k-d tree from nodeList
+  void build(std::vector<KDTreeNodeInfo<DATA> > &nodeList);
   
-  // Here we search in the KDTree for all points that would be 
-  // contained in the given searchbox. The founded points are stored in resRecHitList.
+  // Search for all items contained in the given rectangular
+  // searchBox. The found data elements are stored in resRecHitList.
   void search(const KDTreeBox& searchBox,
               std::vector<DATA>& resRecHitList) const;
 
-  // This reurns true if the tree is empty
+  // Return true if the tree is empty
   bool empty() const {return nodePool_.empty();}
 
   // This returns the number of nodes + leaves in the tree
@@ -40,19 +38,19 @@ class KDTreeLinkerAlgo
   // The node pool allow us to do just 1 call to new for each tree building.
   KDTreeNodes<DATA> nodePool_;
 
-  //Fast median search with Wirth algorithm in eltList between low and high indexes.
+  //Fast median search with Wirth algorithm in initialList between low and high indexes.
   int medianSearch(const int low,
                    const int high,
                    const int treeDepth,
                    std::vector<KDTreeNodeInfo<DATA> >& initialList) const;
 
-  // Recursif kdtree builder. Is called by build()
+  // Recursive builder. Is called by build()
   int recBuild(const int low,
                const int hight,
                int depth,
                std::vector<KDTreeNodeInfo<DATA> >& initialList);
 
-  // Recursif kdtree search. Is called by search()
+  // Recursive search. Is called by search()
   void recSearch(int current,
                  float dimCurrMin, float dimCurrMax,
                  float dimOtherMin, float dimOtherMax,
@@ -64,19 +62,18 @@ class KDTreeLinkerAlgo
 
 template < typename DATA >
 void
-KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> > &eltList)
+KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> > &nodeList)
 {
-  if (eltList.size()) {
-    size_t size = eltList.size();
+  if(!nodeList.empty()) {
+    size_t size = nodeList.size();
     nodePool_.build(size);
     
     // Here we build the KDTree
-    int root = recBuild(0, size, 0, eltList);
+    int root = recBuild(0, size, 0, nodeList);
     assert(root == 0);
   }
 }
  
-//Fast median search with Wirth algorithm in eltList between low and high indexes.
 template < typename DATA >
 int
 KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
