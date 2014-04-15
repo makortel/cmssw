@@ -179,21 +179,17 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
   nodes.reserve(2*nInputTriplets);
   foundNodes.reserve(100);
   KDTreeLinkerAlgo<unsigned int> kdtree;
-  double minEta=1e10, maxEta=-1e10;
   for(unsigned int it=0; it < nInputTriplets; ++it) {
     double phi = phiEtaCache[it].first;
     double eta = phiEtaCache[it].second;
     nodes.push_back(KDTreeNodeInfo<unsigned int>(it, eta, phi));
-    minEta = std::min(minEta, eta);
-    maxEta = std::max(maxEta, eta);
 
     // to wrap all points in phi
     // if(phi < 0) phi += twoPi(); else phi -= twoPi();
     double twoPi = std::copysign(Geom::twoPi(), phi);
     nodes.push_back(KDTreeNodeInfo<unsigned int>(it, eta, phi-twoPi));
   }
-  KDTreeBox kdEtaPhi(minEta-0.01, maxEta+0.01, -1*Geom::twoPi(), Geom::twoPi());
-  kdtree.build(nodes, kdEtaPhi);
+  kdtree.build(nodes);
   nodes.clear();
   
   // loop over triplets, search for close-by triplets by using the k-d tree

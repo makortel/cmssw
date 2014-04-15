@@ -137,13 +137,11 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
     predRZ.rzPositionFixup = MatchedHitRZCorrectionFromBending(layer,tTopo);
     
     layerTree.clear();
-    float minv=999999.0; float maxv = -999999.0; // Initialise to extreme values in case no hits
     float maxErr=0.0f;
     for (unsigned int i=0; i!=hits.size(); ++i) {
       auto angle = hits.phi(i);
       auto v =  hits.gv(i);
       //use (phi,r) for endcaps rather than (phi,z)
-      minv = std::min(minv,v);  maxv = std::max(maxv,v);
       float myerr = hits.dv[i];
       maxErr = std::max(maxErr,myerr);
       layerTree.emplace_back(i, angle, v); // save it
@@ -152,9 +150,8 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
       else
 	{ layerTree.emplace_back(i, angle-Geom::ftwoPi(), v);}
     }
-    KDTreeBox phiZ(minphi, maxphi, minv-0.01f, maxv+0.01f);  // declare our bounds
     //add fudge factors in case only one hit and also for floating-point inaccuracy
-    hitTree[il].build(layerTree, phiZ); // make KDtree
+    hitTree[il].build(layerTree); // make KDtree
     rzError[il] = maxErr; //save error
   }
 

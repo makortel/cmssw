@@ -19,50 +19,44 @@ class KDTreeLinkerAlgo
   ~KDTreeLinkerAlgo();
   
   // Here we build the KD tree from the "eltList" in the space define by "region".
-  void build(std::vector<KDTreeNodeInfo<DATA> > 	&eltList,
-	     const KDTreeBox				&region);
+  void build(std::vector<KDTreeNodeInfo<DATA> > &eltList);
   
   // Here we search in the KDTree for all points that would be 
   // contained in the given searchbox. The founded points are stored in resRecHitList.
-  void search(const KDTreeBox				&searchBox,
-	      std::vector<DATA>	&resRecHitList);
+  void search(const KDTreeBox& searchBox,
+              std::vector<DATA>& resRecHitList);
 
   // This reurns true if the tree is empty
-  bool empty() {return nodePool_.empty();}
+  bool empty() const {return nodePool_.empty();}
 
   // This returns the number of nodes + leaves in the tree
   // (nElements should be (size() +1)/2)
-  int size() { return nodePool_.size();}
+  int size() const { return nodePool_.size();}
 
   // This method clears all allocated structures.
-  void clear();
+  void clear() {   nodePool_.clear(); }
   
  private:
   // The node pool allow us to do just 1 call to new for each tree building.
   KDTreeNodes<DATA> nodePool_;
-  
-  std::vector<DATA>	*closestNeighbour;
-  std::vector<KDTreeNodeInfo<DATA> >	*initialEltList;
-  
- private:
- 
+
+  std::vector<DATA>    *closestNeighbour;
+  std::vector<KDTreeNodeInfo<DATA> >   *initialEltList;
+
   //Fast median search with Wirth algorithm in eltList between low and high indexes.
-  int medianSearch(int					low,
-		   int					high,
-		   int					treeDepth);
+  int medianSearch(const int low,
+                   const int high,
+                   const int treeDepth);
 
   // Recursif kdtree builder. Is called by build()
-  int recBuild(int				low,
-               int				hight,
-               int				depth);
+  int recBuild(const int low,
+               const int hight,
+               int depth);
 
   // Recursif kdtree search. Is called by search()
-  void recSearch(int			current,
+  void recSearch(int current,
                  float dimCurrMin, float dimCurrMax,
                  float dimOtherMin, float dimOtherMax);
-
-  // This method frees the KDTree.     
-  void clearTree();
 };
 
 
@@ -70,19 +64,18 @@ class KDTreeLinkerAlgo
 
 template < typename DATA >
 void
-KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> >	&eltList, 
-			      const KDTreeBox				&region)
+KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> > &eltList)
 {
   if (eltList.size()) {
     initialEltList = &eltList;
-    
-    size_t size = initialEltList->size();
+
+    size_t size = eltList.size();
     nodePool_.build(size);
     
     // Here we build the KDTree
     int root = recBuild(0, size, 0);
     assert(root == 0);
-    
+
     initialEltList = 0;
   }
 }
@@ -90,9 +83,9 @@ KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> >	&eltList,
 //Fast median search with Wirth algorithm in eltList between low and high indexes.
 template < typename DATA >
 int
-KDTreeLinkerAlgo<DATA>::medianSearch(int	low,
-				     int	high,
-				     int	treeDepth)
+KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
+                                     const int high,
+                                     const int treeDepth)
 {
   int nbrElts = high - low;
   int median = (nbrElts & 1)	? nbrElts / 2 
@@ -135,8 +128,8 @@ KDTreeLinkerAlgo<DATA>::medianSearch(int	low,
 
 template < typename DATA >
 void
-KDTreeLinkerAlgo<DATA>::search(const KDTreeBox		&trackBox,
-			 std::vector<DATA> &recHits)
+KDTreeLinkerAlgo<DATA>::search(const KDTreeBox& trackBox,
+                               std::vector<DATA>& recHits)
 {
   if (!empty()) {
     closestNeighbour = &recHits;
@@ -148,7 +141,7 @@ KDTreeLinkerAlgo<DATA>::search(const KDTreeBox		&trackBox,
 
 template < typename DATA >
 void 
-KDTreeLinkerAlgo<DATA>::recSearch(int	current,
+KDTreeLinkerAlgo<DATA>::recSearch(int current,
                                   float dimCurrMin, float dimCurrMax,
                                   float dimOtherMin, float dimOtherMax)
 {
@@ -210,36 +203,19 @@ KDTreeLinkerAlgo<DATA>::KDTreeLinkerAlgo()
 template <typename DATA>
 KDTreeLinkerAlgo<DATA>::~KDTreeLinkerAlgo()
 {
-  clear();
 }
-
-
-template <typename DATA>
-void 
-KDTreeLinkerAlgo<DATA>::clearTree()
-{
-  nodePool_.clear();
-}
-
-template <typename DATA>
-void 
-KDTreeLinkerAlgo<DATA>::clear()
-{
-  clearTree();
-}
-
 
 template <typename DATA>
 int
-KDTreeLinkerAlgo<DATA>::recBuild(int					low, 
-                                 int					high, 
-                                 int					depth)
+KDTreeLinkerAlgo<DATA>::recBuild(const int low, 
+                                 const int high, 
+                                 int depth)
 {
-  int portionSize = high - low;
-  int dimIndex = depth&1;
+  const int portionSize = high - low;
+  const int dimIndex = depth&1;
 
   if (portionSize == 1) { // Leaf case
-    int leaf = nodePool_.getNextNode();
+    const int leaf = nodePool_.getNextNode();
     const KDTreeNodeInfo<DATA>& info = (*initialEltList)[low];
     nodePool_.right[leaf] = 0;
     nodePool_.median[leaf] = info.dim[dimIndex]; // dimCurrent

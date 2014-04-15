@@ -36,7 +36,7 @@ namespace {
       // build tree
       KDTreeLinkerAlgo<int> kdtree;
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-      kdtree.build(nodes, KDTreeBox(0, 10, 0, 10));
+      kdtree.build(nodes);
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
       build_time += delta(start, stop);
 
