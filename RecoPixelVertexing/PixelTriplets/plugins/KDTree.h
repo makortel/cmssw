@@ -215,10 +215,10 @@ KDTree<DATA, DIM>::recBuild(const int low,
     // The even depth is associated to dim1 dimension
     // The odd one to dim2 dimension
     int medianId = medianSearch(low, high, depth, initialList);
-    float medianVal = initialList[medianId].dim[dimIndex];
+    const float medianVal = initialList[medianId].dim[dimIndex];
 
     // We create the node
-    int nodeInd = nodePool_.getNextNode();
+    const int nodeInd = nodePool_.getNextNode();
     nodePool_.median[nodeInd] = medianVal;
 
     ++depth;
