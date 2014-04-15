@@ -41,17 +41,18 @@ class KDTreeLinkerAlgo
   KDTreeNodes<DATA> nodePool_;
 
   std::vector<DATA>    *closestNeighbour;
-  std::vector<KDTreeNodeInfo<DATA> >   *initialEltList;
 
   //Fast median search with Wirth algorithm in eltList between low and high indexes.
   int medianSearch(const int low,
                    const int high,
-                   const int treeDepth);
+                   const int treeDepth,
+                   std::vector<KDTreeNodeInfo<DATA> >& initialList) const;
 
   // Recursif kdtree builder. Is called by build()
   int recBuild(const int low,
                const int hight,
-               int depth);
+               int depth,
+               std::vector<KDTreeNodeInfo<DATA> >& initialList);
 
   // Recursif kdtree search. Is called by search()
   void recSearch(int current,
@@ -67,16 +68,12 @@ void
 KDTreeLinkerAlgo<DATA>::build(std::vector<KDTreeNodeInfo<DATA> > &eltList)
 {
   if (eltList.size()) {
-    initialEltList = &eltList;
-
     size_t size = eltList.size();
     nodePool_.build(size);
     
     // Here we build the KDTree
-    int root = recBuild(0, size, 0);
+    int root = recBuild(0, size, 0, eltList);
     assert(root == 0);
-
-    initialEltList = 0;
   }
 }
  
@@ -85,7 +82,8 @@ template < typename DATA >
 int
 KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
                                      const int high,
-                                     const int treeDepth)
+                                     const int treeDepth,
+                                     std::vector<KDTreeNodeInfo<DATA> >& initialList) const
 {
   int nbrElts = high - low;
   int median = (nbrElts & 1)	? nbrElts / 2 
@@ -96,7 +94,7 @@ KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
   int m = high - 1;
   
   while (l < m) {
-    KDTreeNodeInfo<DATA> elt = (*initialEltList)[median];
+    KDTreeNodeInfo<DATA> elt = initialList[median];
     int i = l;
     int j = m;
 
@@ -104,15 +102,15 @@ KDTreeLinkerAlgo<DATA>::medianSearch(const int low,
       // The even depth is associated to dim1 dimension
       // The odd one to dim2 dimension
       if (treeDepth & 1) {
-	while ((*initialEltList)[i].dim[1] < elt.dim[1]) i++;
-	while ((*initialEltList)[j].dim[1] > elt.dim[1]) j--;
+	while (initialList[i].dim[1] < elt.dim[1]) i++;
+	while (initialList[j].dim[1] > elt.dim[1]) j--;
       } else {
-	while ((*initialEltList)[i].dim[0] < elt.dim[0]) i++;
-	while ((*initialEltList)[j].dim[0] > elt.dim[0]) j--;
+	while (initialList[i].dim[0] < elt.dim[0]) i++;
+	while (initialList[j].dim[0] > elt.dim[0]) j--;
       }
 
       if (i <= j){
-	std::swap((*initialEltList)[i], (*initialEltList)[j]);
+	std::swap(initialList[i], initialList[j]);
 	i++; 
 	j--;
       }
@@ -209,14 +207,15 @@ template <typename DATA>
 int
 KDTreeLinkerAlgo<DATA>::recBuild(const int low, 
                                  const int high, 
-                                 int depth)
+                                 int depth,
+                                 std::vector<KDTreeNodeInfo<DATA> >& initialList)
 {
   const int portionSize = high - low;
   const int dimIndex = depth&1;
 
   if (portionSize == 1) { // Leaf case
     const int leaf = nodePool_.getNextNode();
-    const KDTreeNodeInfo<DATA>& info = (*initialEltList)[low];
+    const KDTreeNodeInfo<DATA>& info = initialList[low];
     nodePool_.right[leaf] = 0;
     nodePool_.median[leaf] = info.dim[dimIndex]; // dimCurrent
     nodePool_.dimOther[leaf] = info.dim[1-dimIndex];
@@ -227,8 +226,8 @@ KDTreeLinkerAlgo<DATA>::recBuild(const int low,
     
     // The even depth is associated to dim1 dimension
     // The odd one to dim2 dimension
-    int medianId = medianSearch(low, high, depth);
-    float medianVal = (*initialEltList)[medianId].dim[dimIndex];
+    int medianId = medianSearch(low, high, depth, initialList);
+    float medianVal = initialList[medianId].dim[dimIndex];
 
     // We create the node
     int nodeInd = nodePool_.getNextNode();
@@ -238,9 +237,9 @@ KDTreeLinkerAlgo<DATA>::recBuild(const int low,
     ++medianId;
 
     // We recursively build the son nodes
-    int left = recBuild(low, medianId, depth);
+    int left = recBuild(low, medianId, depth, initialList);
     assert(nodeInd+1 == left);
-    nodePool_.right[nodeInd] = recBuild(medianId, high, depth);
+    nodePool_.right[nodeInd] = recBuild(medianId, high, depth, initialList);
 
     return nodeInd;
   }
