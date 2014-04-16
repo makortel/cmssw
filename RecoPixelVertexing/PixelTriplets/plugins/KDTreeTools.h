@@ -164,6 +164,31 @@ struct KDTreeTraits {
     std::swap(dimCurrLimits, dimOthersLimits[dimIndex]);
   }
 };
+// Specialization for 2D for performance
+template <typename DATA>
+struct KDTreeTraits<DATA, 2> {
+  inline
+  static void rewindIndices(const std::vector<KDTreeNodeInfo<DATA, 2> >& initialList, const KDTreeNodeInfo<DATA, 2>& item, int& i, int& j, const int dimIndex) {
+    if(dimIndex == 0) {
+      while (initialList[i].dim[0] < item.dim[0]) i++;
+      while (initialList[j].dim[0] > item.dim[0]) j--;
+    }
+    else {
+      while (initialList[i].dim[1] < item.dim[1]) i++;
+      while (initialList[j].dim[1] > item.dim[1]) j--;
+    }
+  }
 
+  inline
+  static bool isInside(std::array<float, 1> dimOthers,
+                       std::array<std::tuple<float, float>, 1> dimOthersLimits) {
+    return kdtreetraits::IsInside_<0, 2>::call(dimOthers, dimOthersLimits);
+  }
 
+  inline
+  static void swapLimits(int depth, std::tuple<float, float>& dimCurrLimits,
+                         std::array<std::tuple<float, float>, 1>& dimOthersLimits) {
+    std::swap(dimCurrLimits, dimOthersLimits[0]);
+  }
+};
 #endif
