@@ -117,7 +117,6 @@ void testKDTree::test2D() {
   KDTree<int> kdtree;
   CPPUNIT_ASSERT(kdtree.empty());
   kdtree.build(nodes);
-  CPPUNIT_ASSERT(kdtree.size() == static_cast<int>(2*nodes.size()-1));
 
   // search in a window around all items, compare result to simple
   std::vector<int> foundNodes;
@@ -182,7 +181,6 @@ void testKDTree::test3D() {
   KDTree<int, 3> kdtree;
   CPPUNIT_ASSERT(kdtree.empty());
   kdtree.build(nodes);
-  CPPUNIT_ASSERT(kdtree.size() == static_cast<int>(2*nodes.size()-1));
 
   // search in a window around all items, compare result to simple
   std::vector<int> foundNodes;
