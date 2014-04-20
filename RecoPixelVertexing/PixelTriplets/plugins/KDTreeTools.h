@@ -74,9 +74,8 @@ struct KDTreeNodeInfo
 
 template <typename DATA, size_t DIM=2>
 struct KDTreeNodes {
-  std::vector<float> median; // or dimCurrent;
   std::vector<int> right;
-  std::vector<std::array<float, DIM-1> > dimOthers;
+  std::vector<std::array<float, DIM> > dimensions;
   std::vector<DATA> data;
 
   int poolSize;
@@ -88,9 +87,8 @@ struct KDTreeNodes {
   int size() const { return poolPos + 1; }
 
   void clear() {
-    median.clear();
     right.clear();
-    dimOthers.clear();
+    dimensions.clear();
     data.clear();
     poolSize = -1;
     poolPos = -1;
@@ -102,13 +100,22 @@ struct KDTreeNodes {
   }
 
   void build(int sizeData) {
-    poolSize = sizeData*2-1;
-    median.resize(poolSize);
+    //poolSize = sizeData*2-1;
+    poolSize = sizeData;
     right.resize(poolSize);
-    dimOthers.resize(poolSize);
+    dimensions.resize(poolSize);
     data.resize(poolSize);
   };
 
+  constexpr bool isLeaf(int right) const {
+    return right == 0;
+  }
+
+  constexpr bool hasOneDaughter(int right) const {
+    return right == 1;
+  }
+
+  /*
   constexpr bool isLeaf(int right) const {
     // Valid values of right are always >= 2
     // index 0 is the root, and 1 is the first left node
@@ -120,6 +127,7 @@ struct KDTreeNodes {
   bool isLeafIndex(int index) const {
     return isLeaf(right[index]);
   }
+  */
 };
 
 namespace kdtreetraits {
@@ -165,6 +173,7 @@ struct KDTreeTraits {
   }
 };
 // Specialization for 2D for performance
+/*
 template <typename DATA>
 struct KDTreeTraits<DATA, 2> {
   inline
@@ -191,4 +200,5 @@ struct KDTreeTraits<DATA, 2> {
     std::swap(dimCurrLimits, dimOthersLimits[0]);
   }
 };
+*/
 #endif

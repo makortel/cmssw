@@ -6,6 +6,8 @@
 #include <cassert>
 #include <vector>
 
+#include <iostream>
+
 // Class that implements the KDTree partition of DIM-dimensional space and 
 // a closest point search algorithme.
 
@@ -53,8 +55,7 @@ class KDTree
   // Recursive search. Is called by search()
   void recSearch(int current,
                  int depth,
-                 std::tuple<float, float> dimCurrLimits,
-                 std::array<std::tuple<float, float>, DIM-1> dimOthersLimits,
+                 const std::array<std::tuple<float, float>, DIM>& dimOthersLimits,
                  std::vector<DATA>& output) const;
 };
 
@@ -121,9 +122,7 @@ KDTree<DATA, DIM>::search(const KDTreeBox<DIM>& trackBox,
                           std::vector<DATA>& recHits) const
 {
   if (!empty()) {
-    std::array<std::tuple<float, float>, DIM-1> otherDims;
-    std::copy(trackBox.dims.begin()+1, trackBox.dims.end(), otherDims.begin());
-    recSearch(0, 0, trackBox.dims[0], otherDims, recHits);
+    recSearch(0, 0, trackBox.dims, recHits);
   }
 }
 
@@ -131,8 +130,7 @@ KDTree<DATA, DIM>::search(const KDTreeBox<DIM>& trackBox,
 template <typename DATA, size_t DIM>
 void 
 KDTree<DATA, DIM>::recSearch(int current, int depth,
-                             std::tuple<float, float> dimCurrLimits,
-                             std::array<std::tuple<float, float>, DIM-1> dimOthersLimits,
+                             const std::array<std::tuple<float, float>, DIM>& dimLimits,
                              std::vector<DATA>& output) const
 {
   // Iterate until leaf is found, or there are no children in the
@@ -140,47 +138,60 @@ KDTree<DATA, DIM>::recSearch(int current, int depth,
   // the search to left child via recursion. Swap search window
   // dimension on alternate levels.
   while(true) {
-    int right = nodePool_.right[current];
-    if(nodePool_.isLeaf(right)) {
-      float dimCurr = nodePool_.median[current];
+    const int right = nodePool_.right[current];
+    const int dimIndex = depth % DIM;
+    const float median = nodePool_.dimensions[current][dimIndex];
 
+    const bool isLeaf = nodePool_.isLeaf(right);
+    bool goLeft = (std::get<0>(dimLimits[dimIndex]) <= median);
+    bool goRight = (std::get<1>(dimLimits[dimIndex]) >= median);
+
+    //std::cout << "current " << current << " right " << right << " depth " << depth << " goLeft " << goLeft << " goRight " << goRight << std::endl;
+
+    if(goLeft & goRight) {
       // If point inside the rectangle/area
       // Use intentionally bit-wise & instead of logical && for better
       // performance. It is faster to always do all comparisons than to
       // allow use of branches to not do some if any of the first ones
       // is false.
-      if((dimCurr >= std::get<0>(dimCurrLimits)) & (dimCurr <= std::get<1>(dimCurrLimits))) {
-        std::array<float, DIM-1> dimOthers = nodePool_.dimOthers[current];
-        if(KDTreeTraits<DATA, DIM>::isInside(dimOthers, dimOthersLimits)) {
-          output.push_back(nodePool_.data[current]);
-        }
+      /*
+      const float other = nodePool_.dimensions[current][1-dimIndex];
+      if((std::get<0>(dimLimits[1-dimIndex]) <= other) & (std::get<1>(dimLimits[1-dimIndex]) >= other)) {
+      */
+      bool inside = true;
+      for(size_t i=0; i<DIM; ++i) {
+        //if(i == dimIndex) continue;
+        //if(!inside) break;
+        const float other = nodePool_.dimensions[current][i];
+        const std::tuple<float, float>& limits = dimLimits[i];
+        inside = inside & (std::get<0>(limits) <= other) & (std::get<1>(limits) >= other);
       }
+      if(inside) {
+        output.push_back(nodePool_.data[current]);
+      }
+    }
+    if(isLeaf)
       break;
+    if(nodePool_.hasOneDaughter(right)) {
+      ++current;
+      continue;
+    }
+
+    ++depth;
+    if(goLeft & goRight) {
+      const int left = current+1;
+      recSearch(left, depth, dimLimits, output);
+      // continue with right
+      current = right;
+    }
+    else if(goLeft) {
+      ++current;
+    }
+    else if(goRight) {
+      current = right;
     }
     else {
-      float median = nodePool_.median[current];
-
-      const bool goLeft = (std::get<0>(dimCurrLimits) <= median);
-      const bool goRight = (std::get<1>(dimCurrLimits) >= median);
-
-      // Swap dimension for the next search level
-      KDTreeTraits<DATA, DIM>::swapLimits(depth, dimCurrLimits, dimOthersLimits);
-      ++depth;
-      if(goLeft & goRight) {
-        int left = current+1;
-        recSearch(left, depth, dimCurrLimits, dimOthersLimits, output);
-        // continue with right
-        current = right;
-      }
-      else if(goLeft) {
-        ++current;
-      }
-      else if(goRight) {
-        current = right;
-      }
-      else {
-        break;
-      }
+      break;
     }
   }
 }
@@ -192,45 +203,44 @@ KDTree<DATA, DIM>::recBuild(const int low,
                             int depth,
                             std::vector<KDTreeNodeInfo<DATA, DIM> >& initialList)
 {
-  const int portionSize = high - low;
-  const int dimIndex = depth % DIM;
+  const bool isLeaf = (low+1 == high);
+  const int nodeInd = nodePool_.getNextNode();
+  const int medianId = isLeaf ? low : medianSearch(low, high, depth, initialList);
 
-  if (portionSize == 1) { // Leaf case
-    const int leaf = nodePool_.getNextNode();
-    const KDTreeNodeInfo<DATA, DIM>& info = initialList[low];
-    nodePool_.right[leaf] = 0;
-    nodePool_.median[leaf] = info.dim[dimIndex]; // dimCurrent
-    const int otherStart = (depth/DIM) % (DIM-1); // there is peculiar rotation happening
-    for(size_t i=0, j=otherStart; i<DIM; ++i) {
-      if(i != dimIndex) { // skip the "current" dimension
-        nodePool_.dimOthers[leaf][j] = info.dim[i];
-        j = (j+1) % (DIM-1);
-      }
-    }
-    nodePool_.data[leaf] = info.data;
-    return leaf;
+  const KDTreeNodeInfo<DATA, DIM>& info = initialList[medianId];
+  nodePool_.data[nodeInd] = info.data;
+  nodePool_.dimensions[nodeInd] = info.dim;
 
-  } else { // Node case
-    
-    // The even depth is associated to dim1 dimension
-    // The odd one to dim2 dimension
-    int medianId = medianSearch(low, high, depth, initialList);
-    const float medianVal = initialList[medianId].dim[dimIndex];
+  //std::cout << "depth " << depth << " low " << low << " high " << high << " medianId " << medianId << std::endl;
 
-    // We create the node
-    const int nodeInd = nodePool_.getNextNode();
-    nodePool_.median[nodeInd] = medianVal;
-
-    ++depth;
-    ++medianId;
-
-    // We recursively build the son nodes
-    int left = recBuild(low, medianId, depth, initialList);
-    assert(nodeInd+1 == left);
-    nodePool_.right[nodeInd] = recBuild(medianId, high, depth, initialList);
-
-    return nodeInd;
+  if(isLeaf) {
+    nodePool_.right[nodeInd] = 0;
   }
+  else {
+    // We recursively build the son nodes
+    ++depth;
+    int ndaughters = 0;
+    if(medianId > low) {
+      int left = recBuild(low, medianId, depth, initialList);
+      assert(nodeInd+1 == left);
+      ndaughters = 1;
+    }
+    if(high > medianId) {
+      int right = recBuild(medianId+1, high, depth, initialList);
+      if(ndaughters == 0) {
+        assert(nodeInd+1 == right);
+        ndaughters = 1;
+      }
+      else {
+        ndaughters = right;
+      }
+      
+    }
+
+    nodePool_.right[nodeInd] = ndaughters;
+  }
+
+  return nodeInd;
 }
 
 #endif
