@@ -131,45 +131,83 @@ struct KDTreeNodes {
 };
 
 namespace kdtreetraits {
+  template <typename DATA, size_t DIM>
+  void rewindIndices(const std::vector<KDTreeNodeInfo<DATA, DIM> >& initialList, const KDTreeNodeInfo<DATA, DIM>& item, int& i, int& j, const int dimIndex) {
+    while (initialList[i].dim[dimIndex] < item.dim[dimIndex]) i++;
+    while (initialList[j].dim[dimIndex] > item.dim[dimIndex]) j--;
+  }
+
   template <size_t INDEX, size_t DIM>
-  bool isInside_(std::array<float, DIM-1> dimOthers,
-                 std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
-    return (dimOthers[INDEX] >= std::get<0>(dimOthersLimits[INDEX])) &
-           (dimOthers[INDEX] <= std::get<1>(dimOthersLimits[INDEX]));
+  bool isInside_(const std::array<float, DIM>& dimensions,
+                 const std::array<std::tuple<float, float>, DIM>& limits) {
+    return (dimensions[INDEX] >= std::get<0>(limits[INDEX])) &&
+           (dimensions[INDEX] <= std::get<1>(limits[INDEX]));
   }
   template <size_t INDEX, size_t DIM>
   struct IsInside_ {
-    static bool call(std::array<float, DIM-1> dimOthers,
-                     std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
-      return IsInside_<INDEX-1, DIM>::call(dimOthers, dimOthersLimits) &
-        isInside_<INDEX, DIM>(dimOthers, dimOthersLimits);
+    static bool call(const std::array<float, DIM>& dimensions,
+                     const std::array<std::tuple<float, float>, DIM>& limits) {
+      return IsInside_<INDEX-1, DIM>::call(dimensions, limits) &
+        isInside_<INDEX, DIM>(dimensions, limits);
     }
   };
   // break recursion
   template <size_t DIM>
   struct IsInside_<0, DIM> {
-    static bool call(std::array<float, DIM-1> dimOthers,
-                     std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
-      return isInside_<0, DIM>(dimOthers, dimOthersLimits);
+    static bool call(const std::array<float, DIM>& dimensions,
+                     const std::array<std::tuple<float, float>, DIM>& limits) {
+      return isInside_<0, DIM>(dimensions, limits);
     }
   };
-}
-template <typename DATA, size_t DIM>
-struct KDTreeTraits {
-  static void rewindIndices(const std::vector<KDTreeNodeInfo<DATA, DIM> >& initialList, const KDTreeNodeInfo<DATA, DIM>& item, int& i, int& j, const int dimIndex) {
-    while (initialList[i].dim[dimIndex] < item.dim[dimIndex]) i++;
-    while (initialList[j].dim[dimIndex] > item.dim[dimIndex]) j--;
+
+  template <size_t DIM>
+  bool isInside(const std::array<float, DIM>& dimensions,
+                const std::array<std::tuple<float, float>, DIM>& limits,
+                const int dimIndex) {
+    return kdtreetraits::IsInside_<DIM-1, DIM>::call(dimensions, limits);
+    /*
+    bool inside = true;
+    for(size_t i=0; i<DIM; ++i) {
+      const float other = dimensions[i];
+      const std::tuple<float, float>& lim = limits[i];
+      inside = inside & (std::get<0>(lim) <= other) & (std::get<1>(lim) >= other);
+    }
+    return inside;
+    */
   }
 
-  static bool isInside(std::array<float, DIM-1> dimOthers,
-                       std::array<std::tuple<float, float>, DIM-1> dimOthersLimits) {
-    return kdtreetraits::IsInside_<DIM-2, DIM>::call(dimOthers, dimOthersLimits);
+  template <>
+  inline
+  bool isInside<2>(const std::array<float, 2>& dimensions,
+                   const std::array<std::tuple<float, float>, 2>& limits,
+                   const int dimIndex) {
+    const int otherIndex = 1 - dimIndex;
+    return (dimensions[otherIndex] >= std::get<0>(limits[otherIndex])) &
+           (dimensions[otherIndex] <= std::get<1>(limits[otherIndex]));
   }
 
-  static void swapLimits(int depth, std::tuple<float, float>& dimCurrLimits,
-                         std::array<std::tuple<float, float>, DIM-1>& dimOthersLimits) {
-    const int dimIndex = depth % (DIM-1);
-    std::swap(dimCurrLimits, dimOthersLimits[dimIndex]);
+  template <>
+  inline
+  bool isInside<3>(const std::array<float, 3>& dimensions,
+                   const std::array<std::tuple<float, float>, 3>& limits,
+                   const int dimIndex) {
+    /*
+    bool ret = true;
+    int otherIndex = (dimIndex+1) % 3;
+    ret &= (dimensions[otherIndex] >= std::get<0>(limits[otherIndex])) &
+           (dimensions[otherIndex] <= std::get<1>(limits[otherIndex]));
+
+    otherIndex = (otherIndex+1) % 3;
+    ret &= (dimensions[otherIndex] >= std::get<0>(limits[otherIndex])) &
+           (dimensions[otherIndex] <= std::get<1>(limits[otherIndex]));
+    return ret;    
+    */
+    if(dimIndex == 0)
+      return isInside_<1>(dimensions, limits) && isInside_<2>(dimensions, limits);
+    else if(dimIndex == 1)
+      return isInside_<0>(dimensions, limits) && isInside_<2>(dimensions, limits);
+    else
+      return isInside_<0>(dimensions, limits) && isInside_<1>(dimensions, limits);
   }
 };
 // Specialization for 2D for performance
@@ -192,12 +230,6 @@ struct KDTreeTraits<DATA, 2> {
   static bool isInside(std::array<float, 1> dimOthers,
                        std::array<std::tuple<float, float>, 1> dimOthersLimits) {
     return kdtreetraits::IsInside_<0, 2>::call(dimOthers, dimOthersLimits);
-  }
-
-  inline
-  static void swapLimits(int depth, std::tuple<float, float>& dimCurrLimits,
-                         std::array<std::tuple<float, float>, 1>& dimOthersLimits) {
-    std::swap(dimCurrLimits, dimOthersLimits[0]);
   }
 };
 */

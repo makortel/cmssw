@@ -99,7 +99,7 @@ KDTree<DATA, DIM>::medianSearch(const int low,
     int j = m;
 
     do {
-      KDTreeTraits<DATA, DIM>::rewindIndices(initialList, item, i, j, dimIndex);
+      kdtreetraits::rewindIndices(initialList, item, i, j, dimIndex);
 
       if (i <= j){
 	std::swap(initialList[i], initialList[j]);
@@ -158,6 +158,7 @@ KDTree<DATA, DIM>::recSearch(int current, int depth,
       const float other = nodePool_.dimensions[current][1-dimIndex];
       if((std::get<0>(dimLimits[1-dimIndex]) <= other) & (std::get<1>(dimLimits[1-dimIndex]) >= other)) {
       */
+      /*
       bool inside = true;
       for(size_t i=0; i<DIM; ++i) {
         //if(i == dimIndex) continue;
@@ -167,6 +168,8 @@ KDTree<DATA, DIM>::recSearch(int current, int depth,
         inside = inside & (std::get<0>(limits) <= other) & (std::get<1>(limits) >= other);
       }
       if(inside) {
+      */
+      if(kdtreetraits::isInside(nodePool_.dimensions[current], dimLimits, dimIndex)) {
         output.push_back(nodePool_.data[current]);
       }
     }
