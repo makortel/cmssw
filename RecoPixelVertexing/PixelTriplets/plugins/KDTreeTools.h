@@ -147,7 +147,7 @@ namespace kdtreetraits {
   struct IsInside_ {
     static bool call(const std::array<float, DIM>& dimensions,
                      const std::array<std::tuple<float, float>, DIM>& limits) {
-      return IsInside_<INDEX-1, DIM>::call(dimensions, limits) &
+      return IsInside_<INDEX-1, DIM>::call(dimensions, limits) &&
         isInside_<INDEX, DIM>(dimensions, limits);
     }
   };
