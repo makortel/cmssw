@@ -7,7 +7,7 @@
 
 
 class RunManager;
-class RunManagerMT;
+class RunManagerMTMaster;
 class SimTrackManager;
 class RunAction;
 class EventAction;
@@ -21,7 +21,7 @@ public:
 
   SimRunInterface(RunManager* run, bool master);
 
-  SimRunInterface(RunManagerMT* run, bool master);
+  SimRunInterface(RunManagerMTMaster* run, bool master);
 
   ~SimRunInterface();
 
@@ -44,7 +44,7 @@ public:
 private:
 
   RunManager* m_runManager;
-  RunManagerMT* m_runManagerMT;
+  RunManagerMTMaster* m_runManagerMT;
 
   SimTrackManager* m_SimTrackManager;
 

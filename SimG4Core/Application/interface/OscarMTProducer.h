@@ -9,6 +9,7 @@
 #include "FWCore/Framework/interface/Run.h"
 
 #include "SimG4Core/Application/interface/RunManagerMT.h"
+#include "SimG4Core/Application/interface/RunManagerMTMaster.h"
 #include "SimG4Core/Application/interface/CustomUIsession.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"

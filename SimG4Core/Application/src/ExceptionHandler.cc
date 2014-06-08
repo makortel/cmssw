@@ -1,6 +1,6 @@
 #include "SimG4Core/Application/interface/ExceptionHandler.h"
 #include "SimG4Core/Application/interface/RunManager.h"
-#include "SimG4Core/Application/interface/RunManagerMT.h"
+#include "SimG4Core/Application/interface/RunManagerMTMaster.h"
 
 #include "SimG4Core/Notification/interface/SimG4Exception.h"
 
@@ -16,7 +16,7 @@ ExceptionHandler::ExceptionHandler(RunManager* rm)
   : fRunManager(rm),fRunManagerMT(0)
 {}
 
-ExceptionHandler::ExceptionHandler(RunManagerMT* rm) 
+ExceptionHandler::ExceptionHandler(RunManagerMTMaster* rm) 
   : fRunManager(0),fRunManagerMT(rm)
 {}
 

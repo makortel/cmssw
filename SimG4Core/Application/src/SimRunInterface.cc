@@ -1,6 +1,6 @@
 #include "SimG4Core/Application/interface/SimRunInterface.h"
 #include "SimG4Core/Application/interface/RunManager.h"
-#include "SimG4Core/Application/interface/RunManagerMT.h"
+#include "SimG4Core/Application/interface/RunManagerMTMaster.h"
 #include "SimG4Core/Application/interface/RunAction.h"
 #include "SimG4Core/Application/interface/EventAction.h"
 #include "SimG4Core/Application/interface/TrackingAction.h"
@@ -18,7 +18,7 @@ SimRunInterface::SimRunInterface(RunManager* runm, bool master)
   } 
 }
 
-SimRunInterface::SimRunInterface(RunManagerMT* runm, bool master)
+SimRunInterface::SimRunInterface(RunManagerMTMaster* runm, bool master)
   : m_runManager(0),m_runManagerMT(runm),m_SimTrackManager(0),
     m_isMaster(master)
 {

@@ -5,13 +5,13 @@
 #include "G4ExceptionSeverity.hh"
 
 class RunManager;
-class RunManagerMT;
+class RunManagerMTMaster;
  
 class ExceptionHandler : public G4VExceptionHandler
 {
 public:
     ExceptionHandler(RunManager * rm);
-    ExceptionHandler(RunManagerMT * rm);
+    ExceptionHandler(RunManagerMTMaster * rm);
     ExceptionHandler() {} ;
     virtual ~ExceptionHandler();
     int operator==(const ExceptionHandler & right) const { return (this == &right); }
@@ -22,7 +22,7 @@ private:
     ExceptionHandler(const ExceptionHandler &) : G4VExceptionHandler() {}
     ExceptionHandler& operator=(const ExceptionHandler &right) { return *this; }
     RunManager * fRunManager;
-    RunManagerMT * fRunManagerMT;
+    RunManagerMTMaster * fRunManagerMT;
     //bool override;
     //int verbose;
 };
