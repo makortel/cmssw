@@ -15,13 +15,35 @@
 
 #include <memory>
 
-class OscarMTProducer : public edm::stream::EDProducer<>
+#include <thread>
+class OscarMTMasterThread {
+public:
+  explicit OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager);
+  ~OscarMTMasterThread();
+
+  const RunManagerMT& runManager() const { return *m_runManager; }
+  
+private:
+  std::shared_ptr<RunManagerMT> m_runManager;
+  std::thread m_masterThread;
+};
+
+class OscarMTProducer : public edm::stream::EDProducer<
+  edm::GlobalCache<edm::ParameterSet>,
+  edm::RunCache<OscarMTMasterThread>
+>
 {
 public:
   typedef std::vector<boost::shared_ptr<SimProducer> > Producers;
 
-  explicit OscarMTProducer(edm::ParameterSet const & p);
+  explicit OscarMTProducer(edm::ParameterSet const & p, const edm::ParameterSet *);
   virtual ~OscarMTProducer();
+
+  static std::unique_ptr<edm::ParameterSet> initializeGlobalCache(const edm::ParameterSet& iConfig);
+  static std::shared_ptr<OscarMTMasterThread> globalBeginRun(const edm::Run& iRun, const edm::EventSetup& iSetup, const edm::ParameterSet *iConfig);
+  static void globalEndRun(const edm::Run& iRun, const edm::EventSetup& iSetup, const RunContext *iContext);
+  static void globalEndJob(edm::ParameterSet *iConfig);
+
   virtual void beginRun(const edm::Run & r,const edm::EventSetup& c) override;
   virtual void endRun(const edm::Run & r,const edm::EventSetup& c) override;
   virtual void produce(edm::Event & e, const edm::EventSetup& c) override;

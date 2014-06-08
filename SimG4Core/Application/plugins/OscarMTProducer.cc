@@ -58,7 +58,16 @@ namespace {
     };
 }
 
-OscarMTProducer::OscarMTProducer(edm::ParameterSet const & p)
+OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager):
+  m_runManager(runManager),
+  m_masterThread([](){})
+{}
+
+OscarMTMasterThread::~OscarMTMasterThread() {
+  m_masterThread.join();
+}
+
+OscarMTProducer::OscarMTProducer(edm::ParameterSet const & p, const edm::ParameterSet *)
 {
 #ifdef MK_SERIAL
   // Random number generation not allowed here
@@ -130,6 +139,23 @@ OscarMTProducer::OscarMTProducer(edm::ParameterSet const & p)
 
 OscarMTProducer::~OscarMTProducer() 
 { }
+
+std::unique_ptr<edm::ParameterSet> OscarMTProducer::initializeGlobalCache(const edm::ParameterSet& iConfig) {
+  return std::unique_ptr<edm::ParameterSet>(new edm::ParameterSet(iConfig));
+}
+
+std::shared_ptr<OscarMTMasterThread> OscarMTProducer::globalBeginRun(const edm::Run& iRun, const edm::EventSetup& iSetup, const edm::ParameterSet *iConfig) {
+  auto runManager = std::make_shared<RunManagerMT>(*iConfig);
+  auto masterThread = std::make_shared<OscarMTMasterThread>(runManager);
+  return masterThread;
+}
+
+void OscarMTProducer::globalEndRun(const edm::Run& iRun, const edm::EventSetup& iSetup, const RunContext *iContext) {
+
+}
+
+void OscarMTProducer::globalEndJob(edm::ParameterSet *iConfig) {
+}
 
 void 
 OscarMTProducer::beginRun(const edm::Run & r, const edm::EventSetup & es)
