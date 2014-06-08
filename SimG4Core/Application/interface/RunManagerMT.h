@@ -6,12 +6,20 @@
 #include <string>
 #include <vector>
 
+class SimActivityRegistry;
+
 class RunManagerMT {
 public:
   RunManagerMT(const edm::ParameterSet& iConfig);
   ~RunManagerMT();
 
+  const edm::ParameterSet& parameterSet() const { return m_p; }
+  const SimActivityRegistry *registry() const;
+
 private:
+  edm::ParameterSet m_p;
+
+  /*
   const bool m_nonBeam;
   const bool m_pUseMagneticField;
   const std::string m_PhysicsTablesDir;
@@ -30,6 +38,7 @@ private:
   //edm::ParameterSet m_p;
 
   edm::InputTag m_theLHCTlinkTag;
+  */
 };
 
 #endif

@@ -1,6 +1,12 @@
 #include "SimG4Core/Application/interface/RunManagerMT.h"
 
+#include "SimG4Core/Notification/interface/SimActivityRegistry.h"
+
+#include "FWCore/ServiceRegistry/interface/Service.h"
+
 RunManagerMT::RunManagerMT(const edm::ParameterSet& iConfig):
+  m_p(iConfig)
+  /*
   m_nonBeam(iConfig.getParameter<bool>("NonBeamEvent")),
   m_pUseMagneticField(iConfig.getParameter<bool>("UseMagneticField")),
   m_PhysicsTablesDir(iConfig.getParameter<std::string>("PhysicsTablesDirectory")),
@@ -18,8 +24,15 @@ RunManagerMT::RunManagerMT(const edm::ParameterSet& iConfig):
   m_G4Commands(iConfig.getParameter<std::vector<std::string> >("G4Commands")),
 //m_p(p)
   m_theLHCTlinkTag(iConfig.getParameter<edm::InputTag>("theLHCTlinkTag"))
+  */
 {
 }
 
 RunManagerMT::~RunManagerMT() {}
 
+const SimActivityRegistry *RunManagerMT::registry() const {
+  edm::Service<SimActivityRegistry> otherRegistry;
+  if(otherRegistry)
+    return otherRegistry.operator->();
+  return nullptr;
+}

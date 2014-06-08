@@ -60,12 +60,12 @@ namespace {
 
 OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager, const edm::EventSetup& iSetup):
 //OscarMTMasterThread::OscarMTMasterThread(const edm::ParameterSet& iConfig, const edm::EventSetup& iSetup):
-  m_runManager(runManager),
-  m_masterThread([](){
+  m_runManager(runManager)
+{
+  m_masterThread = std::thread([](){
       //auto runManager = std::make_shared<RunManagerMT>(iConfig);
       //m_runManager = runManager;
-    })
-{
+    });
   //m_runManager->initG4(iSetup);
 }
 
