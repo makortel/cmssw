@@ -65,11 +65,14 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
 
   const edm::ParameterSet& pset = m_runManager->parameterSet();
   SimActivityRegistry *registry = m_runManager->registry(); // must be done in the current thread
+  //RunManagerMT::ESProducts esprod = m_runManager->readES(iSetup);
+  m_runManager->readES(iSetup);
 
   m_masterThread = std::thread([&](){
       auto runManagerMaster = std::make_shared<RunManagerMTMaster>(pset, registry);
       //auto runManager = std::make_shared<RunManagerMT>(iConfig);
       m_runManagerMaster = runManagerMaster;
+      //m_runManagerMaster->initG4(iSetup);
     });
   //m_runManager->initG4(iSetup);
 }

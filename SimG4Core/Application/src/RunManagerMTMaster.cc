@@ -23,7 +23,6 @@
 #include "SimG4Core/MagneticField/interface/Field.h"
 
 #include "MagneticField/Engine/interface/MagneticField.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
 #include "SimG4Core/Notification/interface/SimG4Exception.h"
 #include "SimG4Core/Notification/interface/BeginOfJob.h"
@@ -32,7 +31,6 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/ESTransientHandle.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
 
 #include "DetectorDescription/Core/interface/DDCompactView.h"
 
@@ -169,34 +167,15 @@ RunManagerMTMaster::~RunManagerMTMaster()
   delete m_runInterface;
 }
 
-void RunManagerMTMaster::initG4(const edm::EventSetup & es)
+void RunManagerMTMaster::initG4(const DDCompactView *pDD, const MagneticField *pMF, const HepPDT::ParticleDataTable *fPDGTable)
 {
-  bool geomChanged = idealGeomRcdWatcher_.check(es);
-  if (geomChanged && (!firstRun)) {
-    throw cms::Exception("BadConfig") 
-      << "[SimG4Core RunManagerMTMaster]\n"
-      << "The Geometry configuration is changed during the job execution\n"
-      << "this is not allowed, the geometry must stay unchanged\n";
-  }
-  if (m_pUseMagneticField) {
-    bool magChanged = idealMagRcdWatcher_.check(es);
-    if (magChanged && (!firstRun)) {
-      throw cms::Exception("BadConfig") 
-	<< "[SimG4Core RunManagerMTMaster]\n"
-	<< "The MagneticField configuration is changed during the job execution\n"
-	<< "this is not allowed, the MagneticField must stay unchanged\n";
-    }
-  }
-
   if (m_managerInitialized) return;
   
-  // DDDWorld: get the DDCV from the ES and use it to build the World
-  edm::ESTransientHandle<DDCompactView> pDD;
-  es.get<IdealGeometryRecord>().get(pDD);
-   
+  // DDDWorld: use the DDCV to build the World
   G4LogicalVolumeToDDLogicalPartMap map_;
   SensitiveDetectorCatalog catalog_;
-  const DDDWorld * world = new DDDWorld(&(*pDD), map_, catalog_, m_check);
+  // pDD
+  const DDDWorld * world = new DDDWorld(pDD, map_, catalog_, m_check);
   m_registry.dddWorldSignal_(world);
 
   if("" != m_WriteFile) {
@@ -207,11 +186,9 @@ void RunManagerMTMaster::initG4(const edm::EventSetup & es)
   if (m_pUseMagneticField)
     {
       // setup the magnetic field
-      edm::ESHandle<MagneticField> pMF;
-      es.get<IdealMagneticFieldRecord>().get(pMF);
       const GlobalPoint g(0.,0.,0.);
 
-      m_fieldBuilder = new sim::FieldBuilder(&(*pMF), m_pField);
+      m_fieldBuilder = new sim::FieldBuilder(pMF, m_pField);
       G4TransportationManager * tM = 
 	G4TransportationManager::GetTransportationManager();
       m_fieldBuilder->build( tM->GetFieldManager(),
@@ -242,10 +219,6 @@ void RunManagerMTMaster::initG4(const edm::EventSetup & es)
     << " Tk type Producers, and " 
     << m_sensCaloDets.size() 
     << " Calo type producers ";
-
-  edm::ESHandle<HepPDT::ParticleDataTable> fTable;
-  es.get<PDTRecord>().get(fTable);
-  const HepPDT::ParticleDataTable *fPDGTable = &(*fTable);
 
   m_primaryTransformer = new PrimaryTransformer();
 

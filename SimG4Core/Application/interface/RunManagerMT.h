@@ -2,11 +2,22 @@
 #define SimG4Core_RunManagerMT_H
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Framework/interface/ESWatcher.h"
+
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
+#include "Geometry/Records/interface/IdealGeometryRecord.h"
 
 #include <string>
 #include <vector>
 
 class SimActivityRegistry;
+
+class DDCompactView;
+class MagneticField;
+
+namespace HepPDT {
+  class ParticleDataTable;
+}
 
 class RunManagerMT {
 public:
@@ -16,12 +27,25 @@ public:
   const edm::ParameterSet& parameterSet() const { return m_p; }
   SimActivityRegistry *registry();
 
+  struct ESProducts {
+    ESProducts(): pDD(nullptr), pMF(nullptr), pTable(nullptr) {}
+    const DDCompactView *pDD;
+    const MagneticField *pMF;
+    const HepPDT::ParticleDataTable *pTable;
+  };
+  ESProducts readES(const edm::EventSetup& iSetup);
+
 private:
   edm::ParameterSet m_p;
 
+  bool firstRun;
+
+  edm::ESWatcher<IdealGeometryRecord> idealGeomRcdWatcher_;
+  edm::ESWatcher<IdealMagneticFieldRecord> idealMagRcdWatcher_;
+
+  const bool m_pUseMagneticField;
   /*
   const bool m_nonBeam;
-  const bool m_pUseMagneticField;
   const std::string m_PhysicsTablesDir;
   const bool m_StorePhysicsTables;
   const bool m_RestorePhysicsTables;

@@ -21,11 +21,6 @@
 #include <memory>
 #include "boost/shared_ptr.hpp"
 
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
-
-#include "FWCore/Framework/interface/ESWatcher.h"
-
 namespace CLHEP {
   class HepJamesRandom;
 }
@@ -49,6 +44,7 @@ class TrackingAction;
 class SteppingAction;
 
 class DDDWorld;
+class MagneticField;
 
 class G4RunManagerKernel;
 class G4Run;
@@ -59,15 +55,19 @@ class RunAction;
 class SimRunInterface;
 //class ExceptionHandler;
 
+namespace HepPDT {
+  class ParticleDataTable;
+}
+
 class RunManagerMTMaster 
 {
 public:
 
   //RunManagerMTMaster(edm::ParameterSet const & p, edm::ConsumesCollector && iC);
   //RunManagerMTMaster(edm::ParameterSet const & p);
-  RunManagerMTMaster(edm::ParameterSet const & p, SimActivityRegistry *registry);
+  RunManagerMTMaster(edm::ParameterSet const & p, SimActivityRegistry *otherRegistry);
   ~RunManagerMTMaster();
-  void initG4(const edm::EventSetup & es);
+  void initG4(const DDCompactView *pDD, const MagneticField *pMF, const HepPDT::ParticleDataTable *fPDGTable);
   void initializeUserActions();
   void initializeRun();
 
@@ -155,9 +155,6 @@ private:
     
   std::auto_ptr<SimTrackManager> m_trackManager;
   sim::FieldBuilder             *m_fieldBuilder;
-    
-  edm::ESWatcher<IdealGeometryRecord> idealGeomRcdWatcher_;
-  edm::ESWatcher<IdealMagneticFieldRecord> idealMagRcdWatcher_;
     
   edm::InputTag m_theLHCTlinkTag;
 
