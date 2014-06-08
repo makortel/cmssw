@@ -21,43 +21,37 @@ namespace {
     return sum;
   }
 
-  struct CondVar {
-    std::mutex mutex;
-    std::condition_variable cv;
-  };
-
-  void threadWork(CondVar& cv) {
-    {
-      //std::lock_guard<std::mutex>(cv.mutex);
-      edm::LogPrint("Test") << "Hello from thread " << std::this_thread::get_id();
-      double sum = doWork();
-      edm::LogPrint("Test") << "Hello again from thread " << std::this_thread::get_id() << " sum " << sum;
-    }
-    //cv.cv.notify_one();
-  }
-
   class ThreadWork {
   public:
-    ThreadWork(CondVar& cv): m_cv(cv) {};
+    ThreadWork() {};
+
+    std::mutex& mutex() { return m_mutex; }
+    std::condition_variable& cv() { return m_cv; }
+
     void run() {
       {
-        std::lock_guard<std::mutex>(m_cv.mutex);
         edm::LogPrint("Test") << "Hello from thread " << std::this_thread::get_id();
+        std::lock_guard<std::mutex> lk(m_mutex);
+        edm::LogPrint("Test") << "Hello from thread " << std::this_thread::get_id() << " got lock";
         double sum = doWork();
-        edm::LogPrint("Test") << "Hello again from thread " << std::this_thread::get_id() << " sum " << sum;
+        edm::LogPrint("Test") << "Hello from thread " << std::this_thread::get_id() << " sum " << sum;
       }
-      m_cv.cv.notify_one();
+      m_cv.notify_one();
+      edm::LogPrint("Test") << "Hello from thread " << std::this_thread::get_id() << " cv signaled";
     }
   private:
-    CondVar& m_cv;
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
   };
 
   class MasterThread {
   public:
-    explicit MasterThread(CondVar& cv):
+    explicit MasterThread(std::shared_ptr<ThreadWork> work):
       count(0),
-      m_threadWork(cv),
-      m_masterThread(&ThreadWork::run, m_threadWork)
+      m_threadWork(work),
+      m_masterThread([work](){
+          work->run();
+        })
     {}
     ~MasterThread() {
       m_masterThread.join();
@@ -65,7 +59,7 @@ namespace {
     
     mutable std::atomic<unsigned int> count;
   private:
-    ThreadWork m_threadWork;
+    std::shared_ptr<ThreadWork> m_threadWork;
     std::thread m_masterThread;
   };
 
@@ -79,11 +73,16 @@ namespace {
     virtual ~OscarMTTest() {}
 
     static std::shared_ptr<MasterThread> globalBeginRun(const edm::Run& iRun, const edm::EventSetup& iSetup, const GlobalCache *iCache) {
-      CondVar cv;
-      std::unique_lock<std::mutex> lk(cv.mutex);
+      auto work = std::make_shared<ThreadWork>();
 
-      auto masterThread = std::make_shared<MasterThread>(cv);
-      cv.cv.wait(lk);
+      std::unique_lock<std::mutex> lk(work->mutex());
+      edm::LogPrint("Test") << "globalBeginRun(): created lock";
+
+      auto masterThread = std::make_shared<MasterThread>(work);
+      edm::LogPrint("Test") << "globalBeginRun(): Created MasterThread, waiting on cv";
+      work->cv().wait(lk);
+      edm::LogPrint("Test") << "globalBeginRun(): Wait finished";
+      lk.unlock();
 
       return masterThread;
     };
