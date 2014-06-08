@@ -64,7 +64,8 @@ class RunManagerMTMaster
 public:
 
   //RunManagerMTMaster(edm::ParameterSet const & p, edm::ConsumesCollector && iC);
-  RunManagerMTMaster(edm::ParameterSet const & p);
+  //RunManagerMTMaster(edm::ParameterSet const & p);
+  RunManagerMTMaster(edm::ParameterSet const & p, SimActivityRegistry *registry);
   ~RunManagerMTMaster();
   void initG4(const edm::EventSetup & es);
   void initializeUserActions();

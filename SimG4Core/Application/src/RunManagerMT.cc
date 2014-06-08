@@ -30,7 +30,7 @@ RunManagerMT::RunManagerMT(const edm::ParameterSet& iConfig):
 
 RunManagerMT::~RunManagerMT() {}
 
-const SimActivityRegistry *RunManagerMT::registry() const {
+SimActivityRegistry *RunManagerMT::registry() {
   edm::Service<SimActivityRegistry> otherRegistry;
   if(otherRegistry)
     return otherRegistry.operator->();

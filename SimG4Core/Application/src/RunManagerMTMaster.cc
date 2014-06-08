@@ -107,7 +107,8 @@ void createWatchers(const edm::ParameterSet& iP,
 }
 
 //RunManagerMTMaster::RunManagerMTMaster(edm::ParameterSet const & p, edm::ConsumesCollector && iC) 
-RunManagerMTMaster::RunManagerMTMaster(edm::ParameterSet const & p) 
+//RunManagerMTMaster::RunManagerMTMaster(edm::ParameterSet const & p) 
+RunManagerMTMaster::RunManagerMTMaster(edm::ParameterSet const & p, SimActivityRegistry *otherRegistry) 
   :   m_generator(0), m_nonBeam(p.getParameter<bool>("NonBeamEvent")), 
       m_primaryTransformer(0), 
       m_managerInitialized(false), 
@@ -148,7 +149,6 @@ RunManagerMTMaster::RunManagerMTMaster(edm::ParameterSet const & p)
 
   //Look for an outside SimActivityRegistry
   // this is used by the visualization code
-  edm::Service<SimActivityRegistry> otherRegistry;
   if(otherRegistry){
     m_registry.connect(*otherRegistry);
   }

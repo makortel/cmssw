@@ -14,7 +14,7 @@ public:
   ~RunManagerMT();
 
   const edm::ParameterSet& parameterSet() const { return m_p; }
-  const SimActivityRegistry *registry() const;
+  SimActivityRegistry *registry();
 
 private:
   edm::ParameterSet m_p;

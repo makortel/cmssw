@@ -24,9 +24,11 @@ public:
   ~OscarMTMasterThread();
 
   const RunManagerMT& runManager() const { return *m_runManager; }
+  const RunManagerMTMaster& runManagerMaster() const { return *m_runManagerMaster; }
   
 private:
   std::shared_ptr<RunManagerMT> m_runManager;
+  std::shared_ptr<RunManagerMTMaster> m_runManagerMaster;
   std::thread m_masterThread;
 };
 

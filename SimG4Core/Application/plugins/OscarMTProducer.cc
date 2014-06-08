@@ -62,9 +62,14 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
 //OscarMTMasterThread::OscarMTMasterThread(const edm::ParameterSet& iConfig, const edm::EventSetup& iSetup):
   m_runManager(runManager)
 {
-  m_masterThread = std::thread([](){
+
+  const edm::ParameterSet& pset = m_runManager->parameterSet();
+  SimActivityRegistry *registry = m_runManager->registry(); // must be done in the current thread
+
+  m_masterThread = std::thread([&](){
+      auto runManagerMaster = std::make_shared<RunManagerMTMaster>(pset, registry);
       //auto runManager = std::make_shared<RunManagerMT>(iConfig);
-      //m_runManager = runManager;
+      m_runManagerMaster = runManagerMaster;
     });
   //m_runManager->initG4(iSetup);
 }
