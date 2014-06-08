@@ -18,7 +18,8 @@
 #include <thread>
 class OscarMTMasterThread {
 public:
-  explicit OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager);
+  OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager, const edm::EventSetup& iSetup);
+  //OscarMTMasterThread(const edm::ParameterSet& iConfig, const edm::EventSetup& iSetup);
   ~OscarMTMasterThread();
 
   const RunManagerMT& runManager() const { return *m_runManager; }

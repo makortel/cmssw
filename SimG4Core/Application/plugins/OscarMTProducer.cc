@@ -58,10 +58,16 @@ namespace {
     };
 }
 
-OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager):
+OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager, const edm::EventSetup& iSetup):
+//OscarMTMasterThread::OscarMTMasterThread(const edm::ParameterSet& iConfig, const edm::EventSetup& iSetup):
   m_runManager(runManager),
-  m_masterThread([](){})
-{}
+  m_masterThread([](){
+      //auto runManager = std::make_shared<RunManagerMT>(iConfig);
+      //m_runManager = runManager;
+    })
+{
+  //m_runManager->initG4(iSetup);
+}
 
 OscarMTMasterThread::~OscarMTMasterThread() {
   m_masterThread.join();
@@ -146,7 +152,7 @@ std::unique_ptr<edm::ParameterSet> OscarMTProducer::initializeGlobalCache(const 
 
 std::shared_ptr<OscarMTMasterThread> OscarMTProducer::globalBeginRun(const edm::Run& iRun, const edm::EventSetup& iSetup, const edm::ParameterSet *iConfig) {
   auto runManager = std::make_shared<RunManagerMT>(*iConfig);
-  auto masterThread = std::make_shared<OscarMTMasterThread>(runManager);
+  auto masterThread = std::make_shared<OscarMTMasterThread>(runManager, iSetup);
   return masterThread;
 }
 
