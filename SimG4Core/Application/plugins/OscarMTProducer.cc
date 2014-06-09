@@ -68,14 +68,16 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
 
   const edm::ParameterSet& pset = m_runManager->parameterSet();
   SimActivityRegistry *registry = m_runManager->registry(); // must be done in the current thread
-  //RunManagerMT::ESProducts esprod = m_runManager->readES(iSetup);
-  m_runManager->readES(iSetup);
+  RunManagerMT::ESProducts esprod = m_runManager->readES(iSetup);
+  //m_runManager->readES(iSetup);
 
   std::mutex mutex;
   std::condition_variable cv;
 
   // Lock the mutex
   std::unique_lock<std::mutex> lk(mutex);
+
+  edm::LogWarning("Test") << "Main thread, address " << esprod.pDD;
 
   // Create thread
   m_masterThread = std::thread([&](){
@@ -87,6 +89,7 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
         //auto runManager = std::make_shared<RunManagerMT>(iConfig);
         m_runManagerMaster = runManagerMaster;
         //m_runManagerMaster->initG4(iSetup);
+        edm::LogWarning("Test") << "Master thread, address " << esprod.pDD;
       }
       // G4 initialization finish, send signal to the other thread to continue
       cv.notify_one();
@@ -97,6 +100,7 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
   cv.wait(lk);
   // Unlock the lock
   lk.unlock();
+  edm::LogWarning("Test") << "Main thread, again address " << esprod.pDD;
 }
 
 OscarMTMasterThread::~OscarMTMasterThread() {
