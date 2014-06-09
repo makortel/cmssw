@@ -167,7 +167,7 @@ RunManagerMTMaster::~RunManagerMTMaster()
   delete m_runInterface;
 }
 
-void RunManagerMTMaster::initG4(const DDCompactView *pDD, const MagneticField *pMF, const HepPDT::ParticleDataTable *fPDGTable)
+void RunManagerMTMaster::initG4(const DDCompactView *pDD, const MagneticField *pMF, const HepPDT::ParticleDataTable *fPDGTable, const edm::EventSetup& es)
 {
   if (m_managerInitialized) return;
   

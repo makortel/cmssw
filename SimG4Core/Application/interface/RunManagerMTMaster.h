@@ -67,7 +67,7 @@ public:
   //RunManagerMTMaster(edm::ParameterSet const & p);
   RunManagerMTMaster(edm::ParameterSet const & p, SimActivityRegistry *otherRegistry);
   ~RunManagerMTMaster();
-  void initG4(const DDCompactView *pDD, const MagneticField *pMF, const HepPDT::ParticleDataTable *fPDGTable);
+  void initG4(const DDCompactView *pDD, const MagneticField *pMF, const HepPDT::ParticleDataTable *fPDGTable, const edm::EventSetup& es);
   void initializeUserActions();
   void initializeRun();
 
