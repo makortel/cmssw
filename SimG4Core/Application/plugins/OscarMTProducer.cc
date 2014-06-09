@@ -25,6 +25,9 @@
 
 #include <iostream>
 
+#include <mutex>
+#include <condition_variable>
+
 namespace edm {
     class StreamID;
 }
@@ -68,13 +71,32 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
   //RunManagerMT::ESProducts esprod = m_runManager->readES(iSetup);
   m_runManager->readES(iSetup);
 
+  std::mutex mutex;
+  std::condition_variable cv;
+
+  // Lock the mutex
+  std::unique_lock<std::mutex> lk(mutex);
+
+  // Create thread
   m_masterThread = std::thread([&](){
-      auto runManagerMaster = std::make_shared<RunManagerMTMaster>(pset, registry);
-      //auto runManager = std::make_shared<RunManagerMT>(iConfig);
-      m_runManagerMaster = runManagerMaster;
-      //m_runManagerMaster->initG4(iSetup);
+      {
+        // Lock the mutex (i.e. wait until the creating thread has called cv.wait()
+        std::lock_guard<std::mutex> lk(mutex);
+
+        auto runManagerMaster = std::make_shared<RunManagerMTMaster>(pset, registry);
+        //auto runManager = std::make_shared<RunManagerMT>(iConfig);
+        m_runManagerMaster = runManagerMaster;
+        //m_runManagerMaster->initG4(iSetup);
+      }
+      // G4 initialization finish, send signal to the other thread to continue
+      cv.notify_one();
     });
   //m_runManager->initG4(iSetup);
+
+  // Start waiting a signal from the condition variable (releases the lock temporarily)
+  cv.wait(lk);
+  // Unlock the lock
+  lk.unlock();
 }
 
 OscarMTMasterThread::~OscarMTMasterThread() {
