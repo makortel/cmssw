@@ -25,9 +25,6 @@
 
 #include <iostream>
 
-#include <mutex>
-#include <condition_variable>
-
 namespace edm {
     class StreamID;
 }
@@ -71,40 +68,75 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
   RunManagerMT::ESProducts esprod = m_runManager->readES(iSetup);
   //m_runManager->readES(iSetup);
 
-  std::mutex mutex;
-  std::condition_variable cv;
-
+#define MK_THREADS
+#ifdef MK_THREADS
   // Lock the mutex
-  std::unique_lock<std::mutex> lk(mutex);
+  std::unique_lock<std::mutex> lk(m_mutex);
 
   edm::LogWarning("Test") << "Main thread, address " << esprod.pDD;
 
   // Create thread
   m_masterThread = std::thread([&](){
+#endif
+      std::shared_ptr<RunManagerMTMaster> runManagerMaster;
+#ifdef MK_THREADS
       {
         // Lock the mutex (i.e. wait until the creating thread has called cv.wait()
-        std::lock_guard<std::mutex> lk(mutex);
-
-        auto runManagerMaster = std::make_shared<RunManagerMTMaster>(pset, registry);
+        std::lock_guard<std::mutex> lk2(m_mutex);
+#endif
+        runManagerMaster = std::make_shared<RunManagerMTMaster>(pset, registry);
         //auto runManager = std::make_shared<RunManagerMT>(iConfig);
         m_runManagerMaster = runManagerMaster;
-        //m_runManagerMaster->initG4(iSetup);
+        runManagerMaster->initG4(esprod.pDD, esprod.pMF, esprod.pTable, iSetup);
+#ifdef MK_THREADS
         edm::LogWarning("Test") << "Master thread, address " << esprod.pDD;
       }
       // G4 initialization finish, send signal to the other thread to continue
-      cv.notify_one();
+      m_cv.notify_one();
+      edm::LogWarning("Test") << "Master thread, notified main thread";
+
+      // Lock mutex again, and wait a signal via the condition variable
+      std::unique_lock<std::mutex> lk2(m_mutex);
+      edm::LogWarning("Test") << "Master thread, locked mutex, starting wait";
+      m_cv.wait(lk2);
+
+      // Then do clean-up
+      edm::LogWarning("Test") << "Master thread, woke up, starting cleanup";
+#endif
+      runManagerMaster->stopG4();
+      edm::LogWarning("Test") << "Master thread, stopped G4, am I unique owner?" << runManagerMaster.unique();
+      runManagerMaster.reset(); // must be done in this thread, segfault otherwise
+#ifdef MK_THREADS
+      edm::LogWarning("Test") << "Master thread, reseted shared_ptr";
+      lk2.unlock();
+      edm::LogWarning("Test") << "Master thread, finished";
     });
   //m_runManager->initG4(iSetup);
 
   // Start waiting a signal from the condition variable (releases the lock temporarily)
-  cv.wait(lk);
+  m_cv.wait(lk);
   // Unlock the lock
   lk.unlock();
+#endif
   edm::LogWarning("Test") << "Main thread, again address " << esprod.pDD;
 }
 
 OscarMTMasterThread::~OscarMTMasterThread() {
+#ifdef MK_THREADS
+  edm::LogWarning("Test") << "Main thread, destructor";
+  {
+    std::lock_guard<std::mutex> lk(m_mutex);
+#endif
+    m_runManagerMaster.reset();
+#ifdef MK_THREADS
+    edm::LogWarning("Test") << "Main thread, reseted shared_ptr";
+  }
+  edm::LogWarning("Test") << "Main thread, going to signal master thread";
+  m_cv.notify_one();
+  edm::LogWarning("Test") << "Main thread, going to join master thread";
   m_masterThread.join();
+  edm::LogWarning("Test") << "Main thread, finished";
+#endif
 }
 
 OscarMTProducer::OscarMTProducer(edm::ParameterSet const & p, const edm::ParameterSet *)

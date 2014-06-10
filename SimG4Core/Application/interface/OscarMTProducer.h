@@ -17,6 +17,8 @@
 #include <memory>
 
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 class OscarMTMasterThread {
 public:
   OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManager, const edm::EventSetup& iSetup);
@@ -29,6 +31,8 @@ public:
 private:
   std::shared_ptr<RunManagerMT> m_runManager;
   std::shared_ptr<RunManagerMTMaster> m_runManagerMaster;
+  std::mutex m_mutex;
+  std::condition_variable m_cv;
   std::thread m_masterThread;
 };
 
