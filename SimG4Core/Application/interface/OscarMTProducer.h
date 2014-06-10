@@ -34,6 +34,7 @@ private:
   std::mutex m_mutex;
   std::condition_variable m_cv;
   std::thread m_masterThread;
+  bool m_canProceed;
 };
 
 class OscarMTProducer : public edm::stream::EDProducer<

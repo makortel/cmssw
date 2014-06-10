@@ -92,13 +92,15 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
         edm::LogWarning("Test") << "Master thread, address " << esprod.pDD;
       }
       // G4 initialization finish, send signal to the other thread to continue
+      m_canProceed = true;
       m_cv.notify_one();
       edm::LogWarning("Test") << "Master thread, notified main thread";
 
       // Lock mutex again, and wait a signal via the condition variable
       std::unique_lock<std::mutex> lk2(m_mutex);
       edm::LogWarning("Test") << "Master thread, locked mutex, starting wait";
-      m_cv.wait(lk2);
+      m_canProceed = false;
+      m_cv.wait(lk2, [&](){return m_canProceed;});
 
       // Then do clean-up
       edm::LogWarning("Test") << "Master thread, woke up, starting cleanup";
@@ -114,7 +116,9 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
   //m_runManager->initG4(iSetup);
 
   // Start waiting a signal from the condition variable (releases the lock temporarily)
-  m_cv.wait(lk);
+
+  m_canProceed = false;
+  m_cv.wait(lk, [&](){return m_canProceed;});
   // Unlock the lock
   lk.unlock();
 #endif
@@ -132,6 +136,7 @@ OscarMTMasterThread::~OscarMTMasterThread() {
     edm::LogWarning("Test") << "Main thread, reseted shared_ptr";
   }
   edm::LogWarning("Test") << "Main thread, going to signal master thread";
+  m_canProceed = true;
   m_cv.notify_one();
   edm::LogWarning("Test") << "Main thread, going to join master thread";
   m_masterThread.join();
