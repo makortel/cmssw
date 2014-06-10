@@ -46,7 +46,7 @@ class SteppingAction;
 class DDDWorld;
 class MagneticField;
 
-class G4RunManagerKernel;
+class G4MTRunManagerKernel;
 class G4Run;
 class G4Event;
 class G4Field;
@@ -104,7 +104,7 @@ protected:
  
 private:
 
-  G4RunManagerKernel * m_kernel;
+  G4MTRunManagerKernel * m_kernel;
     
   Generator * m_generator;
   std::string m_InTag ;

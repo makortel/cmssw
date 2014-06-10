@@ -46,7 +46,7 @@
 #include "G4GeometryManager.hh"
 #include "G4StateManager.hh"
 #include "G4ApplicationState.hh"
-#include "G4RunManagerKernel.hh"
+#include "G4MTRunManagerKernel.hh"
 #include "G4UImanager.hh"
 
 #include "G4EventManager.hh"
@@ -132,8 +132,12 @@ RunManagerMTMaster::RunManagerMTMaster(edm::ParameterSet const & p, SimActivityR
 {    
   //m_HepMC = iC.consumes<edm::HepMCProduct>(p.getParameter<edm::InputTag>("HepMCProduct"));
 
-  m_kernel = G4RunManagerKernel::GetRunManagerKernel();
-  if (m_kernel==0) m_kernel = new G4RunManagerKernel();
+  G4RunManagerKernel *kernel = G4MTRunManagerKernel::GetRunManagerKernel();
+  if(!kernel) m_kernel = new G4MTRunManagerKernel();
+  else {
+    m_kernel = dynamic_cast<G4MTRunManagerKernel *>(kernel);
+    assert(m_kernel);
+  }
 
   //m_CustomExceptionHandler = new ExceptionHandler(this) ;
     
