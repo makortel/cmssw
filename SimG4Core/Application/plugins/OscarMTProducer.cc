@@ -71,7 +71,7 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
 #define MK_THREADS
 #ifdef MK_THREADS
   // Lock the mutex
-  std::unique_lock<std::mutex> lk(m_mutex);
+  std::unique_lock<std::mutex> lk(m_startMutex);
 
   edm::LogWarning("Test") << "Main thread, address " << esprod.pDD;
 
@@ -82,7 +82,7 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
 #ifdef MK_THREADS
       {
         // Lock the mutex (i.e. wait until the creating thread has called cv.wait()
-        std::lock_guard<std::mutex> lk2(m_mutex);
+        std::lock_guard<std::mutex> lk2(m_startMutex);
 #endif
         runManagerMaster = std::make_shared<RunManagerMTMaster>(pset, registry);
         //auto runManager = std::make_shared<RunManagerMT>(iConfig);
@@ -92,15 +92,15 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
         edm::LogWarning("Test") << "Master thread, address " << esprod.pDD;
       }
       // G4 initialization finish, send signal to the other thread to continue
-      m_canProceed = true;
-      m_cv.notify_one();
+      m_startCanProceed = true;
+      m_startCv.notify_one();
       edm::LogWarning("Test") << "Master thread, notified main thread";
 
-      // Lock mutex again, and wait a signal via the condition variable
-      std::unique_lock<std::mutex> lk2(m_mutex);
+      // Lock the other mutex, and wait a signal via the condition variable
+      std::unique_lock<std::mutex> lk2(m_stopMutex);
       edm::LogWarning("Test") << "Master thread, locked mutex, starting wait";
-      m_canProceed = false;
-      m_cv.wait(lk2, [&](){return m_canProceed;});
+      m_stopCanProceed = false;
+      m_stopCv.wait(lk2, [&](){return m_stopCanProceed;});
 
       // Then do clean-up
       edm::LogWarning("Test") << "Master thread, woke up, starting cleanup";
@@ -117,8 +117,8 @@ OscarMTMasterThread::OscarMTMasterThread(std::shared_ptr<RunManagerMT> runManage
 
   // Start waiting a signal from the condition variable (releases the lock temporarily)
 
-  m_canProceed = false;
-  m_cv.wait(lk, [&](){return m_canProceed;});
+  m_startCanProceed = false;
+  m_startCv.wait(lk, [&](){return m_startCanProceed;});
   // Unlock the lock
   lk.unlock();
 #endif
@@ -129,15 +129,15 @@ OscarMTMasterThread::~OscarMTMasterThread() {
 #ifdef MK_THREADS
   edm::LogWarning("Test") << "Main thread, destructor";
   {
-    std::lock_guard<std::mutex> lk(m_mutex);
+    std::lock_guard<std::mutex> lk(m_stopMutex);
 #endif
     m_runManagerMaster.reset();
 #ifdef MK_THREADS
     edm::LogWarning("Test") << "Main thread, reseted shared_ptr";
   }
   edm::LogWarning("Test") << "Main thread, going to signal master thread";
-  m_canProceed = true;
-  m_cv.notify_one();
+  m_stopCanProceed = true;
+  m_stopCv.notify_one();
   edm::LogWarning("Test") << "Main thread, going to join master thread";
   m_masterThread.join();
   edm::LogWarning("Test") << "Main thread, finished";

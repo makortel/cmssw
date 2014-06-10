@@ -31,10 +31,13 @@ public:
 private:
   std::shared_ptr<RunManagerMT> m_runManager;
   std::shared_ptr<RunManagerMTMaster> m_runManagerMaster;
-  std::mutex m_mutex;
-  std::condition_variable m_cv;
+  std::mutex m_startMutex;
+  std::mutex m_stopMutex;
+  std::condition_variable m_startCv;
+  std::condition_variable m_stopCv;
   std::thread m_masterThread;
-  bool m_canProceed;
+  bool m_startCanProceed;
+  bool m_stopCanProceed;
 };
 
 class OscarMTProducer : public edm::stream::EDProducer<
