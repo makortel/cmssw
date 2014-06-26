@@ -45,6 +45,7 @@
 #include <atomic>
 #include <thread>
 #include <sstream>
+#include <mutex>
 
 // from https://hypernews.cern.ch/HyperNews/CMS/get/edmFramework/3302/2.html
 namespace {
@@ -125,18 +126,24 @@ void RunManagerMTWorker::initializeThread(const RunManagerMT& runManagerMaster, 
   es.get<IdealGeometryRecord>().get(pDD);
 
   // attach sensitive detector
-  AttachSD attach;
-  std::pair< std::vector<SensitiveTkDetector*>,
-    std::vector<SensitiveCaloDetector*> > sensDets =
-    attach.create(runManagerMaster.world(),
-                  (*pDD),
-                  runManagerMaster.catalog(),
-                  m_p,
-                  m_trackManager,
-                  m_registry);
+  static std::mutex ddStoreMutex;
+  {
+    // Need to protect because DD Store is being set to read-write
+    // e.g. in DDExpandedView.
+    std::lock_guard<std::mutex> lk(ddStoreMutex);
+    AttachSD attach;
+    std::pair< std::vector<SensitiveTkDetector*>,
+               std::vector<SensitiveCaloDetector*> > sensDets =
+      attach.create(runManagerMaster.world(),
+                    (*pDD),
+                    runManagerMaster.catalog(),
+                    m_p,
+                    m_trackManager,
+                    m_registry);
 
-  m_sensTkDets.swap(sensDets.first);
-  m_sensCaloDets.swap(sensDets.second);
+    m_sensTkDets.swap(sensDets.first);
+    m_sensCaloDets.swap(sensDets.second);
+  }
 
   edm::LogInfo("SimG4CoreApplication")
     << " RunManagerMTWorker: Sensitive Detector "
