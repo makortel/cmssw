@@ -96,6 +96,11 @@ public:
     return m_physicsList.get();
   }
 
+  // Discussion above applies also here
+  sim::ChordFinderSetter *chordFinderSetterForWorker() const {
+    return m_chordFinderSetter.get();
+  }
+
 private:
   void terminateRun();
   void DumpMagneticField( const G4Field*) const;
