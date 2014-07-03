@@ -114,9 +114,9 @@ void RunManagerMT::initG4(const DDCompactView *pDD, const MagneticField *pMF, co
       m_fieldBuilder = new sim::FieldBuilder(pMF, m_pField);
       G4TransportationManager * tM =
 	G4TransportationManager::GetTransportationManager();
-      m_fieldBuilder->build( *m_chordFinderSetter,
-                             tM->GetFieldManager(),
-			     tM->GetPropagatorInField());
+      m_fieldBuilder->build( tM->GetFieldManager(),
+			     tM->GetPropagatorInField(),
+                             m_chordFinderSetter.get());
       if("" != m_FieldFile) {
 	DumpMagneticField(tM->GetFieldManager()->GetDetectorField());
       }

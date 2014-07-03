@@ -25,9 +25,9 @@ namespace sim {
       void readFieldParameters(DDLogicalPart theLogicalPart,
                                const std::string& keywordField);
     */
-    void build(ChordFinderSetter& setter,
-               G4FieldManager* fM = 0,
-	       G4PropagatorInField* fP = 0) ;
+    void build(G4FieldManager* fM = nullptr,
+	       G4PropagatorInField* fP = nullptr,
+               ChordFinderSetter *setter = nullptr);
 
     /*
       void configure(const std::string& keywordField,
@@ -36,13 +36,13 @@ namespace sim {
     */
     void configureForVolume( const std::string& volName, 
 			     edm::ParameterSet& volPSet,
-                             ChordFinderSetter& setter,
-			     G4FieldManager * fM = 0,
-			     G4PropagatorInField * fP = 0);
+			     G4FieldManager * fM = nullptr,
+			     G4PropagatorInField * fP = nullptr,
+                             ChordFinderSetter *setter = nullptr);
     G4LogicalVolume * fieldTopVolume();
 
   private:
-    void configureFieldManager(G4FieldManager * fM, ChordFinderSetter& setter);
+    void configureFieldManager(G4FieldManager * fM, ChordFinderSetter *setter);
     void configurePropagatorInField(G4PropagatorInField * fP);  
   private:
     std::auto_ptr<Field> theField;

@@ -45,7 +45,7 @@ FieldBuilder::FieldBuilder(const MagneticField * f,
   theField->fieldEquation(theFieldEquation);
 }
 
-void FieldBuilder::build( ChordFinderSetter& setter, G4FieldManager* fM, G4PropagatorInField* fP) 
+void FieldBuilder::build( G4FieldManager* fM, G4PropagatorInField* fP, ChordFinderSetter *setter) 
 {    
   edm::ParameterSet thePSetForGMFM =
     thePSet.getParameter<edm::ParameterSet>("ConfGlobalMFM");
@@ -55,7 +55,7 @@ void FieldBuilder::build( ChordFinderSetter& setter, G4FieldManager* fM, G4Propa
   edm::ParameterSet volPSet =
     thePSetForGMFM.getParameter< edm::ParameterSet >( volName );
     
-  configureForVolume( volName, volPSet, setter, fM, fP );
+  configureForVolume( volName, volPSet, fM, fP, setter );
     
   // configure( "MagneticFieldType", fM, fP ) ;
 
@@ -83,7 +83,7 @@ void FieldBuilder::build( ChordFinderSetter& setter, G4FieldManager* fM, G4Propa
     for (unsigned int i = 0; i < ListOfVolumes.size(); ++ i )   {
       volPSet = thePSetForLMFM.getParameter< edm::ParameterSet >(ListOfVolumes[i]);
       G4FieldManager* fAltM = new G4FieldManager() ;
-      configureForVolume( ListOfVolumes[i], volPSet, setter, fAltM ) ;
+      configureForVolume( ListOfVolumes[i], volPSet, fAltM, nullptr, setter ) ;
       //configureLocalFM( ListOfVolumes[i], fAltM ) ;
       LocalFieldManager* fLM = new LocalFieldManager( theField.get(), fM, fAltM ) ;
       fLM->SetVerbosity(thePSet.getUntrackedParameter<bool>("Verbosity",false));
@@ -97,9 +97,9 @@ void FieldBuilder::build( ChordFinderSetter& setter, G4FieldManager* fM, G4Propa
 
 void FieldBuilder::configureForVolume( const std::string& volName,
                                        edm::ParameterSet& volPSet,
-                                       ChordFinderSetter& setter,
 				       G4FieldManager * fM,
-				       G4PropagatorInField * fP ) 
+				       G4PropagatorInField * fP,
+                                       ChordFinderSetter *setter) 
 {
   G4LogicalVolumeStore* theStore = G4LogicalVolumeStore::GetInstance();
   for (unsigned int i=0; i<(*theStore).size(); ++i ) {
@@ -136,7 +136,7 @@ void FieldBuilder::configureForVolume( const std::string& volName,
 
 G4LogicalVolume * FieldBuilder::fieldTopVolume() { return theTopVolume; }
 
-void FieldBuilder::configureFieldManager(G4FieldManager * fM, ChordFinderSetter& setter) {
+void FieldBuilder::configureFieldManager(G4FieldManager * fM, ChordFinderSetter *setter) {
 
   if (fM!=0) {
     fM->SetDetectorField(theField.get());
@@ -151,7 +151,7 @@ void FieldBuilder::configureFieldManager(G4FieldManager * fM, ChordFinderSetter&
     if (dIntersectionAndOneStep != -1.) 
       fM->SetAccuraciesWithDeltaOneStep(dIntersectionAndOneStep);
   }
-  if(!setter.monopoleSet()) {
+  if(setter && !setter->isMonopoleSet()) {
     G4MonopoleEquation* fMonopoleEquation = 
       new G4MonopoleEquation(theField.get());
     G4MagIntegratorStepper* theStepper = 
@@ -159,7 +159,7 @@ void FieldBuilder::configureFieldManager(G4FieldManager * fM, ChordFinderSetter&
     G4ChordFinder *chordFinderMonopole = 
       new G4ChordFinder(theField.get(),minStep,theStepper);
     chordFinderMonopole->SetDeltaChord(dChord);
-    setter.setMonopole(chordFinderMonopole);
+    setter->setMonopole(chordFinderMonopole);
   }
 }
 

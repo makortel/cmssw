@@ -10,7 +10,7 @@ namespace sim {
     ChordFinderSetter();
     ~ChordFinderSetter();
 
-    bool monopoleSet() const { return fChordFinderMonopole; }
+    bool isMonopoleSet() const { return fChordFinderMonopole; }
     void setMonopole(G4ChordFinder *cfm) { fChordFinderMonopole = cfm; }
 
     void setStepperAndChordFinder(G4FieldManager * fM, int val);
