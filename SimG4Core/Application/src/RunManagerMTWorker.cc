@@ -188,8 +188,7 @@ void RunManagerMTWorker::initializeThread(const RunManagerMT& runManagerMaster, 
       m_fieldBuilder = new sim::FieldBuilder(pMF.product(), m_pField);
       G4TransportationManager * tM =
 	G4TransportationManager::GetTransportationManager();
-      m_fieldBuilder->build( *(runManagerMaster.chordFinderSetterForWorker()),
-                             tM->GetFieldManager(),
+      m_fieldBuilder->build( tM->GetFieldManager(),
 			     tM->GetPropagatorInField());
     }
 
