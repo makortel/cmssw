@@ -7,6 +7,7 @@
 #include "TrackingTools/DetLayers/interface/PeriodicBinFinderInZ.h"
 #include "SubLayerCrossings.h"
 
+#include <utility>
 
 /** A concrete implementation for PixelBlade
  */
@@ -71,19 +72,23 @@ class PixelBlade GCC11_FINAL : public GeometricSearchDet {
   // of a GeneralBinFinderInR
 
   int findBin( float R,int layer) const;
-  
+  int findBin2( GlobalPoint thispoint,int layer) const;
+
   GlobalPoint findPosition(int index,int diskSectorIndex) const ;
 
   const std::vector<const GeomDet*>& subBlade( int ind) const {
     return (ind==0 ? theFrontDets : theBackDets);
   }
 
+  std::pair<float, float> computeRadiusRanges(const std::vector<const GeomDet*>&);
 
 private:
   std::vector<const GeomDet*> theDets;
   std::vector<const GeomDet*> theFrontDets;
   std::vector<const GeomDet*> theBackDets;
-  
+  std::pair<float, float> front_radius_range_;
+  std::pair<float, float> back_radius_range_;
+
   ReferenceCountingPointer<BoundDiskSector> theDiskSector;
   ReferenceCountingPointer<BoundDiskSector> theFrontDiskSector;
   ReferenceCountingPointer<BoundDiskSector> theBackDiskSector;
