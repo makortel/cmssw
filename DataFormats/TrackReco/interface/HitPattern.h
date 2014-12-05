@@ -252,6 +252,9 @@ public:
     int numberOfValidStripTIDHits() const;                        // not-null, valid, strip TID
     int numberOfValidStripTOBHits() const;                        // not-null, valid, strip TOB
     int numberOfValidStripTECHits() const;                        // not-null, valid, strip TEC
+    int numberOfValidPixelHits(uint32_t maxLayer,uint32_t maxDisk) const;       // not-null, valid, pixel layer<=maxLayer, disk<=maxDisk
+    int numberOfValidPixelBarrelHits(uint32_t maxLayer) const; // not-null, valid, pixel PXB layer<=maxLayer
+    int numberOfValidPixelEndcapHits(uint32_t maxDisk) const; // not-null, valid, pixel PXF disk<=maxDisk
 
     int numberOfLostHits(HitCategory category) const;             // not-null, not valid
     int numberOfLostTrackerHits(HitCategory category) const;      // not-null, not valid, tracker
@@ -307,6 +310,10 @@ public:
     int stripTIDLayersWithMeasurement() const;       // case 0: strip TID
     int stripTOBLayersWithMeasurement() const;       // case 0: strip TOB
     int stripTECLayersWithMeasurement() const;       // case 0: strip TEC
+    int trackerLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const;// case 0: tracker
+    int pixelLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const;// case 0: pixel
+    int pixelBarrelLayersWithMeasurement(uint32_t MaxPixBarrelLayer) const;// case 0: pixel PXB
+    int pixelEndcapLayersWithMeasurement(uint32_t MaxPixForwardDisk) const;// case 0: pixel PXF
 
     int trackerLayersWithoutMeasurement(HitCategory category) const;     // case 1: tracker
     int trackerLayersWithoutMeasurementOld(HitCategory category) const;     // case 1: tracker 
@@ -419,6 +426,7 @@ private:
 
     int countHits(HitCategory category, filterType filter) const;
     int countTypedHits(HitCategory category, filterType typeFilter, filterType filter) const;
+    int countTypedHits(HitCategory category, filterType typeFilter, filterType filter, uint32_t maxElement) const;
 
     bool insertTrackHit(const uint16_t pattern);
     bool insertExpectedInnerHit(const uint16_t pattern);
@@ -510,6 +518,19 @@ inline int HitPattern::countTypedHits(HitCategory category, filterType typeFilte
     for (int i = range.first; i < range.second; ++i) {
         uint16_t pattern = getHitPatternByAbsoluteIndex(i);
         if (typeFilter(pattern) && filter(pattern)) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+  inline int HitPattern::countTypedHits(HitCategory category, filterType typeFilter, filterType filter, uint32_t maxElement) const
+{
+    int count = 0;
+    std::pair<uint8_t, uint8_t> range = getCategoryIndexRange(category);
+    for (int i = range.first; i < range.second; ++i) {
+        uint16_t pattern = getHitPatternByAbsoluteIndex(i);
+        if (typeFilter(pattern) && filter(pattern) && getSubSubStructure(pattern)<=maxElement) {
             ++count;
         }
     }
@@ -955,6 +976,24 @@ inline int HitPattern::trackerLayersWithMeasurementOld() const
     return pixelLayersWithMeasurement() + stripLayersWithMeasurement();
 }
 
+inline int HitPattern::trackerLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const {
+  return pixelLayersWithMeasurement(MaxPixBarrelLayer,MaxPixForwardDisk) +
+    stripLayersWithMeasurement();
+}
+
+inline int HitPattern::pixelLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const {
+  return pixelBarrelLayersWithMeasurement(MaxPixBarrelLayer) +
+    pixelEndcapLayersWithMeasurement(MaxPixForwardDisk);
+}
+
+inline int HitPattern::pixelBarrelLayersWithMeasurement() const {
+  return pixelBarrelLayersWithMeasurement(10);//all layers are "pixel" is SLHC geometry - fixme hardcoded
+}
+
+inline int HitPattern::pixelEndcapLayersWithMeasurement() const {
+  return pixelEndcapLayersWithMeasurement(15);//all layers are "pixel" is SLHC geometry - fixme hardcoded
+}
+
 inline int HitPattern::pixelLayersWithMeasurementOld() const
 {
     return pixelBarrelLayersWithMeasurement() + pixelEndcapLayersWithMeasurement();
@@ -1034,6 +1073,18 @@ inline int HitPattern::muonStationsWithValidHits() const
 inline int HitPattern::muonStationsWithBadHits() const
 {
     return muonStations(0, 3);
+}
+
+inline int HitPattern::numberOfValidPixelHits(uint32_t maxLayer,uint32_t maxDisk) const {
+  return numberOfValidPixelBarrelHits(maxLayer)+numberOfValidPixelEndcapHits(maxDisk);
+}
+
+inline int HitPattern::numberOfValidPixelBarrelHits(uint32_t maxLayer) const {
+  return countTypedHits(TRACK_HITS, validHitFilter, pixelBarrelHitFilter, maxLayer);
+}
+
+inline int HitPattern::numberOfValidPixelEndcapHits(uint32_t maxDisk) const {
+  return countTypedHits(TRACK_HITS, validHitFilter, pixelEndcapHitFilter, maxDisk);
 }
 
 inline int HitPattern::gemStationsWithValidHits()  const { return muonStations(4, 0); }
