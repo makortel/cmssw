@@ -95,7 +95,7 @@ MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset):MultiTra
   runStandalone = pset.getParameter<bool>("runStandalone");
 
   _simHitTpMapTag = mayConsume<SimHitTPAssociationProducer::SimHitTPAssociationList>(pset.getParameter<edm::InputTag>("simHitTpMapTag"));
-
+    
   labelTokenForDrCalculation = consumes<edm::View<reco::Track> >(pset.getParameter<edm::InputTag>("trackCollectionForDrCalculation"));
 
   if (!UseAssociators) {
@@ -185,6 +185,14 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
     edm::Handle<SimHitTPAssociationProducer::SimHitTPAssociationList> simHitsTPAssoc;
     //warning: make sure the TP collection used in the map is the same used in the MTV!
     event.getByToken(_simHitTpMapTag,simHitsTPAssoc);
+    parametersDefinerTP->initEvent(simHitsTPAssoc);
+    cosmictpSelector.initEvent(simHitsTPAssoc);
+  }
+
+  if(parametersDefiner=="CosmicParametersDefinerForTP") {
+    edm::Handle<SimHitTPAssociationProducer::SimHitTPAssociationList> simHitsTPAssoc;
+    //warning: make sure the TP collection used in the map is the same used in the MTV!
+    event.getByLabel(_simHitTpMapTag,simHitsTPAssoc);
     parametersDefinerTP->initEvent(simHitsTPAssoc);
     cosmictpSelector.initEvent(simHitsTPAssoc);
   }
