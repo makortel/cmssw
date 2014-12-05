@@ -9,6 +9,7 @@
 #include "DataFormats/MuonDetId/interface/DTLayerId.h"
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
 #include "DataFormats/MuonDetId/interface/RPCDetId.h"
+#include "DataFormats/MuonDetId/interface/GEMDetId.h"
 
 #include<bitset>
 
@@ -97,7 +98,7 @@ uint16_t HitPattern::encode(const DetId &id, TrackingRecHit::Type hitType)
     // adding tracker/muon detector bit
     pattern |= (detid & SubDetectorMask) << SubDetectorOffset;
 
-    // adding substructure (PXB, PXF, TIB, TID, TOB, TEC, or DT, CSC, RPC) bits
+    // adding substructure (PXB, PXF, TIB, TID, TOB, TEC, or DT, CSC, RPC, GEM) bits
     uint16_t subdet = id.subdetId();
     pattern |= (subdet & SubstrMask) << SubstrOffset;
 
@@ -141,6 +142,10 @@ uint16_t HitPattern::encode(const DetId &id, TrackingRecHit::Type hitType)
                 layer |= (rpcid.station() <= 2) ? ((rpcid.layer() - 1) << 1) : 0x0;
                 layer |= abs(rpcid.region());
             }
+            break;
+         case MuonSubdetId::GEM:
+            GEMDetId gemid(id.rawId());
+            layer = ((gemid.roll()-1)<<1) + abs(gemid.layer()-1);
             break;
         }
     }
@@ -808,6 +813,8 @@ void HitPattern::printHitPattern(HitCategory category, int position, std::ostrea
         } else if (muonRPCHitFilter(pattern)) {
             stream << "\trpc " << (getRPCregion(pattern) ? "endcaps" : "barrel")
                    << ", layer " << getRPCLayer(pattern);
+        } else if (muonGEMHitFilter(pattern)) {
+            stream << "\tgem " << (getGEMLayer(pattern) ? "layer1" : "layer2") << ", roll " << getGEMRoll(pattern);
         } else {
             stream << "(UNKNOWN Muon SubStructure!) \tsubsubstructure "
                    << getSubStructure(pattern);
