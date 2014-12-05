@@ -11,12 +11,18 @@ ForwardDetLayer* PixelForwardLayerBuilder::build(const GeometricDet* aPixelForwa
   int panelsSize = theGeometricPanels.size();
 
   /*
-  for(vector<const GeometricDet*>::const_iterator it= theGeometricPanels.begin(); 
-      it!=theGeometricPanels.end();it++){
-    
-    edm::LogInfo(TkDetLayers) << "panel.phi(): " << (*it)->positionBounds().phi() << " , " 
-	 << "panel.z():   " << (*it)->positionBounds().z()   << " , "
-	 << "comp.size(): " << (*it)->components().size()    ;    
+  int num = 0;
+  for(vector<const GeometricDet*>::const_iterator it= theGeometricPanels.begin();
+      it!=theGeometricPanels.end(); it++, ++num) {
+    edm::LogInfo("TkDetLayers") << "PanelsSize: " << panelsSize << " , "
+                                << "PanelNum: " << num  << " , "
+                                << "panel.phi(): " << (*it)->positionBounds().phi()  << " , "
+                                << "panel.z():   " << (*it)->positionBounds().z()    << " , "
+                                << "panel.y():   " << (*it)->positionBounds().y() << " , "
+                                << "panel.x():   " << (*it)->positionBounds().x() << " , "
+                                << "panel.r():   " << (*it)->positionBounds().perp() << " , "
+                                << "panel.rmax():   " << (*it)->bounds()->rSpan().second << " , "
+                                << "comp.size(): " << (*it)->components().size();
   }
   */
 
