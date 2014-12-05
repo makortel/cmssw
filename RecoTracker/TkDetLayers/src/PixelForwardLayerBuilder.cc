@@ -6,7 +6,7 @@ using namespace edm;
 using namespace std;
 
 ForwardDetLayer* PixelForwardLayerBuilder::build(const GeometricDet* aPixelForwardLayer,
-						   const TrackerGeometry* theGeomDetGeometry){
+                                                 const TrackerGeometry* theGeomDetGeometry) {
   vector<const GeometricDet*>  theGeometricPanels = aPixelForwardLayer->components();
   int panelsSize = theGeometricPanels.size();
 
@@ -20,18 +20,18 @@ ForwardDetLayer* PixelForwardLayerBuilder::build(const GeometricDet* aPixelForwa
   }
   */
 
-  //edm::LogInfo(TkDetLayers) << "pixelFwdLayer.panels().size(): " << panelsSize ;  
+  //edm::LogInfo(TkDetLayers) << "pixelFwdLayer.panels().size(): " << panelsSize ;
 
   vector<const PixelBlade*> theBlades;
   PixelBladeBuilder myBladeBuilder;
 
-  for(int i=0; i< (panelsSize/2); i++){
+  for(int i=0; i< (panelsSize/2); i++) {
     theBlades.push_back( myBladeBuilder.build( theGeometricPanels[i],
 					       theGeometricPanels[i+(panelsSize/2)],
 					       theGeomDetGeometry ) );
   }
-  
-  if ( aPixelForwardLayer->type()==GeometricDet::PixelEndCapPhase1 ) 
+
+  if ( aPixelForwardLayer->type()==GeometricDet::PixelEndCapPhase1 )
     return new PixelForwardLayerPhase1(theBlades);
-  return new PixelForwardLayer(theBlades);  
+  return new PixelForwardLayer(theBlades);
 }
