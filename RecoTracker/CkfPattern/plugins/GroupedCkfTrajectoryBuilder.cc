@@ -856,11 +856,12 @@ GroupedCkfTrajectoryBuilder::rebuildSeedingRegion(const TrajectorySeed&seed,
     // (e.g. because no Tracker layers outside seeding region) 
     //
 
-    if ( it->measurements().size()<=startingTraj.measurements().size() ) {
-      rebuiltTrajectories.push_back(std::move(*it));
-      LogDebug("CkfPattern")<< "RebuildSeedingRegion skipped as in-out trajectory does not exceed seed size.";
-      continue;
-    }
+    //fixme gc patched for SLHC - skip this check to avoid overlaps (to be tested for standard geom)
+    //if ( it->measurements().size()<=startingTraj.measurements().size() ) {
+    //rebuiltTrajectories.push_back(std::move(*it));
+    //LogDebug("CkfPattern")<< "RebuildSeedingRegion skipped as in-out trajectory does not exceed seed size.";
+    //continue;
+    //}
     //
     // Refit - keep existing trajectory in case fit is not possible
     // or fails
@@ -1021,7 +1022,8 @@ GroupedCkfTrajectoryBuilder::backwardFit (TempTrajectory& candidate, unsigned in
   // skip candidates which are not exceeding the seed size
   // (e.g. Because no Tracker layers exist outside seeding region)
   //
-  if unlikely( candidate.measurements().size()<=nSeed ) return TempTrajectory();
+  //fixme gc patched for SLHC - skip this check to avoid overlaps (to be tested for standard geom)
+  //if unlikely( candidate.measurements().size()<=nSeed ) return TempTrajectory();
 
   LogDebug("CkfPattern")<<"nSeed " << nSeed << endl
 			<< "Old traj direction = " << candidate.direction() << endl
