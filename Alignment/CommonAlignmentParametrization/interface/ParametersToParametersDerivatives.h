@@ -31,6 +31,26 @@
 /// - mother: rigid body parameters,
 /// - component: rigid body, bowed surface or two bowed surfaces parameters.
 ///
+/// / dp1_l/dp1_i dp1_l/dp2_i  ...  dp1_l/dpn_i |
+/// | dp2_l/dp1_i dp2_l/dp2_i  ...  dp2_l/dpn_i |
+/// |      .           .                 .      |
+/// |      .           .                 .      |
+/// |      .           .                 .      |
+/// \ dpm_l/dpm_i dpm_l/dpm_i  ...  dpm_l/dpn_i /
+///
+/// where 
+/// p1_l, p2_l, ..., pn_l are the n parameters of the composite 'mother' object
+/// and
+/// p1_i, p2_i, ..., pm_i are the m parameters of its component.
+///
+/// Note that not all combinations of parameters are supported:
+/// Please check method isOK() before accessing the derivatives via 
+/// operator(unsigned int indParMother, unsigned int indParComp).
+///
+/// Currently these parameters are supported:
+/// - mother: rigid body parameters,
+/// - component: rigid body, bowed surface or two bowed surfaces parameters.
+///
 ///  $Date: 2010/12/09 19:53:42 $
 ///  $Revision: 1.1 $
 /// (last update by $Author: flucke $)
