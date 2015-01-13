@@ -9,6 +9,7 @@
 #include "DataFormats/MuonDetId/interface/DTLayerId.h"
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
 #include "DataFormats/MuonDetId/interface/RPCDetId.h"
+#include "DataFormats/MuonDetId/interface/GEMDetId.h"
 
 #include<bitset>
 
@@ -97,10 +98,12 @@ uint16_t HitPattern::encode(const DetId &id, TrackingRecHit::Type hitType)
     // adding tracker/muon detector bit
     pattern |= (detid & SubDetectorMask) << SubDetectorOffset;
 
-    // adding substructure (PXB, PXF, TIB, TID, TOB, TEC, or DT, CSC, RPC) bits
+    // adding substructure (PXB, PXF, TIB, TID, TOB, TEC, or DT, CSC, RPC, GEM) bits
     uint16_t subdet = id.subdetId();
     pattern |= (subdet & SubstrMask) << SubstrOffset;
 
+  //std::cout<<"Pattern: "<<pattern<<std::endl;
+  
     // adding layer/disk/wheel bits
     uint16_t layer = 0x0;
     if (detid == DetId::Tracker) {
@@ -143,6 +146,10 @@ uint16_t HitPattern::encode(const DetId &id, TrackingRecHit::Type hitType)
             }
             break;
         }
+    else if (subdet == (uint32_t) MuonSubdetId::GEM) {
+      GEMDetId gemid(id.rawId());
+      layer = ((gemid.roll()-1)<<1) + abs(gemid.layer()-1);
+    }
     }
 
     pattern |= (layer & LayerMask) << LayerOffset;
@@ -229,6 +236,10 @@ bool HitPattern::appendHit(const DetId &id, TrackingRecHit::Type hitType)
     }
 
     return false;
+
+    else if (subdet == (uint32_t) MuonSubdetId::GEM) {
+      hits.push_back(&hit);
+    }
 }
 
 uint16_t HitPattern::getHitPatternByAbsoluteIndex(int position) const
@@ -473,7 +484,6 @@ int HitPattern::pixelLayersWithMeasurement() const {
    return layerOk.count();
 }
 
-
 int HitPattern::trackerLayersWithMeasurement() const {
    auto category = TRACK_HITS;
    std::bitset<128> layerOk;
@@ -514,11 +524,10 @@ int HitPattern::trackerLayersWithoutMeasurement(HitCategory category) const {
 }
 
 
-int HitPattern::pixelBarrelLayersWithMeasurement() const
+int HitPattern::pixelBarrelLayersWithMeasurement(uint32_t MaxPixBarrelLayer) const {
 {
     int count = 0;
-    uint16_t NPixBarrel = 4;
-    for (uint16_t layer = 1; layer <= NPixBarrel; layer++) {
+    for (uint32_t layer = 1; layer <= MaxPixBarrelLayer; layer++) {
         if (getTrackerLayerCase(TRACK_HITS, PixelSubdetector::PixelBarrel, layer) == HIT_TYPE::VALID) {
             count++;
         }
@@ -526,11 +535,10 @@ int HitPattern::pixelBarrelLayersWithMeasurement() const
     return count;
 }
 
-int HitPattern::pixelEndcapLayersWithMeasurement() const
+int HitPattern::pixelEndcapLayersWithMeasurement(uint32_t MaxPixForwardDisk) const {
 {
     int count = 0;
-    uint16_t NPixForward = 3;
-    for (uint16_t layer = 1; layer <= NPixForward; layer++) {
+    for (uint32_t layer = 1; layer <= MaxPixForwardDisk; layer++) {
         if (getTrackerLayerCase(TRACK_HITS, PixelSubdetector::PixelEndcap, layer) == HIT_TYPE::VALID) {
             count++;
         }
@@ -585,7 +593,7 @@ int HitPattern::stripTECLayersWithMeasurement() const
 int HitPattern::pixelBarrelLayersWithoutMeasurement(HitCategory category) const
 {
     int count = 0;
-    uint16_t NPixBarrel = 4;
+    uint16_t NPixBarrel = 10;
     for (uint16_t layer = 1; layer <= NPixBarrel; layer++) {
         if (getTrackerLayerCase(category, PixelSubdetector::PixelBarrel, layer) == HIT_TYPE::MISSING) {
             count++;
@@ -597,7 +605,7 @@ int HitPattern::pixelBarrelLayersWithoutMeasurement(HitCategory category) const
 int HitPattern::pixelEndcapLayersWithoutMeasurement(HitCategory category) const
 {
     int count = 0;
-    uint16_t NPixForward = 3;
+    uint16_t NPixForward = 10;
     for (uint16_t layer = 1; layer <= NPixForward; layer++) {
         if (getTrackerLayerCase(category, PixelSubdetector::PixelEndcap, layer) == HIT_TYPE::MISSING) {
             count++;
@@ -654,7 +662,7 @@ int HitPattern::stripTECLayersWithoutMeasurement(HitCategory category) const
 int HitPattern::pixelBarrelLayersTotallyOffOrBad() const
 {
     int count = 0;
-    uint16_t NPixBarrel = 4;
+    uint16_t NPixBarrel = 10;
     for (uint16_t layer = 1; layer <= NPixBarrel; layer++) {
         if (getTrackerLayerCase(TRACK_HITS, PixelSubdetector::PixelBarrel, layer) == HIT_TYPE::INACTIVE) {
             count++;
@@ -666,7 +674,7 @@ int HitPattern::pixelBarrelLayersTotallyOffOrBad() const
 int HitPattern::pixelEndcapLayersTotallyOffOrBad() const
 {
     int count = 0;
-    uint16_t NPixForward = 3;
+    uint16_t NPixForward = 10;
     for (uint16_t layer = 1; layer <= NPixForward; layer++) {
         if (getTrackerLayerCase(TRACK_HITS, PixelSubdetector::PixelEndcap, layer) == HIT_TYPE::INACTIVE) {
             count++;
@@ -723,7 +731,7 @@ int HitPattern::stripTECLayersTotallyOffOrBad() const
 int HitPattern::pixelBarrelLayersNull() const
 {
     int count = 0;
-    uint16_t NPixBarrel = 4;
+    uint16_t NPixBarrel = 10;
     for (uint16_t layer = 1; layer <= NPixBarrel; layer++) {
         if (getTrackerLayerCase(TRACK_HITS, PixelSubdetector::PixelBarrel, layer) == NULL_RETURN) {
             count++;
@@ -735,7 +743,7 @@ int HitPattern::pixelBarrelLayersNull() const
 int HitPattern::pixelEndcapLayersNull() const
 {
     int count = 0;
-    uint16_t NPixForward = 3;
+    uint16_t NPixForward = 10;
     for (uint16_t layer = 1; layer <= NPixForward; layer++) {
         if (getTrackerLayerCase(TRACK_HITS, PixelSubdetector::PixelEndcap, layer) == NULL_RETURN) {
             count++;
@@ -808,6 +816,8 @@ void HitPattern::printHitPattern(HitCategory category, int position, std::ostrea
         } else if (muonRPCHitFilter(pattern)) {
             stream << "\trpc " << (getRPCregion(pattern) ? "endcaps" : "barrel")
                    << ", layer " << getRPCLayer(pattern);
+        } else if (muonGEMHitFilter(pattern)) {
+            stream << "\tgem " << (getGEMLayer(pattern) ? "layer1" : "layer2") << ", roll " << getGEMRoll(pattern);
         } else {
             stream << "(UNKNOWN Muon SubStructure!) \tsubsubstructure "
                    << getSubStructure(pattern);

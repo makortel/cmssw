@@ -33,6 +33,7 @@
 // | mu = 0 |    DT  = 1    | 4*(stat-1)+superlayer     |                 | hit type = 0-3 |
 // | mu = 0 |    CSC = 2    | 4*(stat-1)+(ring-1)       |                 | hit type = 0-3 |
 // | mu = 0 |    RPC = 3    | 4*(stat-1)+2*layer+region |                 | hit type = 0-3 |
+// |mu = 0  |    GEM = 4    |                           |                 | hit type = 0-3 |
 // +--------+---------------+---------------------------+-----------------+----------------+
 //
 //  hit type, see DataFormats/TrackingRecHit/interface/TrackingRecHit.h
@@ -196,6 +197,17 @@ public:
     /// DT superlayer (1-3). Where the "hit" was a DT segment, superlayer is 0. Only valid for muon DT patterns, of course.
     static uint16_t getDTSuperLayer(uint16_t pattern); // only for DT patterns
 
+    int countTypedHits(filterType typeFilter, filterType filter, uint32_t maxElement) const {
+      int count = 0;
+      for (int i=0; i<(PatternSize * 32) / HitSize; i++) {
+	uint32_t pattern = getHitPattern(i);
+	if (pattern == 0) break;
+	if (typeFilter(pattern)&&filter(pattern)&&getSubSubStructure(pattern)<=maxElement) ++count;
+      }
+      return count;
+    }
+
+
     /// CSC ring (1-4). Only valid for muon CSC patterns, of course.
     static uint16_t getCSCRing(uint16_t pattern) ;
 
@@ -210,6 +222,7 @@ public:
     ~HitPattern();
 
     HitPattern(const HitPattern &other);
+    static bool muonGEMHitFilter(uint32_t pattern);     // muon GEM
 
     HitPattern &operator=(const HitPattern &other);
 
@@ -218,6 +231,10 @@ public:
     bool appendHit(const TrackingRecHit &hit);
     bool appendHit(const TrackingRecHitRef &ref);
     bool appendHit(const DetId &id, TrackingRecHit::Type hitType);
+    /// GEM roll: (1-8). Only valid for muon GEM patterns, of course.
+    static uint32_t getGEMRoll(uint32_t pattern);
+    /// GEM layer: 1,2. Only valid for muon GEM patterns, of course.
+    static uint32_t getGEMLayer(uint32_t pattern);
 
     // get the pattern of the position-th hit
     uint16_t getHitPattern(HitCategory category, int position) const;
@@ -261,18 +278,24 @@ public:
     int numberOfValidMuonDTHits() const;      // not-null, valid, muon DT
     int numberOfValidMuonCSCHits() const;     // not-null, valid, muon CSC
     int numberOfValidMuonRPCHits() const;     // not-null, valid, muon RPC
+    int numberOfValidMuonGEMHits() const;     // not-null, valid, muon GEM
     int numberOfLostMuonHits() const;         // not-null, not valid, muon
     int numberOfLostMuonDTHits() const;       // not-null, not valid, muon DT
     int numberOfLostMuonCSCHits() const;      // not-null, not valid, muon CSC
     int numberOfLostMuonRPCHits() const;      // not-null, not valid, muon RPC
+    int numberOfLostMuonGEMHits() const;      // not-null, not valid, muon GEM
     int numberOfBadHits() const;              // not-null, bad (only used in Muon Ch.)
     int numberOfBadMuonHits() const;          // not-null, bad, muon
     int numberOfBadMuonDTHits() const;        // not-null, bad, muon DT
     int numberOfBadMuonCSCHits() const;       // not-null, bad, muon CSC
     int numberOfBadMuonRPCHits() const;       // not-null, bad, muon RPC
-
+    int numberOfBadMuonGEMHits() const;       // not-null, bad, muon GEM
     int numberOfInactiveHits() const;         // not-null, inactive
     int numberOfInactiveTrackerHits() const;  // not-null, inactive, tracker
+
+    int numberOfValidPixelHits(uint32_t maxLayer,uint32_t maxDisk) const;       // not-null, valid, pixel layer<=maxLayer, disk<=maxDisk
+    int numberOfValidPixelBarrelHits(uint32_t maxLayer) const; // not-null, valid, pixel PXB layer<=maxLayer
+    int numberOfValidPixelEndcapHits(uint32_t maxDisk) const; // not-null, valid, pixel PXF disk<=maxDisk
 
     // count strip layers that have non-null, valid mono and stereo hits
     int numberOfValidStripLayersWithMonoAndStereo(uint16_t stripdet, uint16_t layer) const;
@@ -317,6 +340,10 @@ public:
     int stripTIDLayersTotallyOffOrBad() const;       // case 2: strip TID
     int stripTOBLayersTotallyOffOrBad() const;       // case 2: strip TOB
     int stripTECLayersTotallyOffOrBad() const;       // case 2: strip TEC
+    int trackerLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const;// case 0: tracker
+    int pixelLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const;// case 0: pixel
+    int pixelBarrelLayersWithMeasurement(uint32_t MaxPixBarrelLayer) const;// case 0: pixel PXB
+    int pixelEndcapLayersWithMeasurement(uint32_t MaxPixForwardDisk) const;// case 0: pixel PXF
 
     int trackerLayersNull() const;                   // case NULL_RETURN: tracker
     int pixelLayersNull() const;                     // case NULL_RETURN: pixel
@@ -346,6 +373,9 @@ public:
     int rpcStationsWithValidHits() const;
     int rpcStationsWithBadHits() const;
     int rpcStationsWithAnyHits() const;
+    int gemStationsWithValidHits() const ;
+    int gemStationsWithBadHits() const ;
+    int gemStationsWithAnyHits() const ;
 
     /// hitType=-1(all), 0=valid, 3=bad; 0 = no stations at all
     int innermostMuonStationWithHits(int hitType) const;
@@ -603,6 +633,14 @@ inline bool HitPattern::trackerHitFilter(uint16_t pattern)
   return pattern > minTrackerWord;
 }
 
+inline bool HitPattern::muonGEMHitFilter(uint32_t pattern) { 
+  if  unlikely(!muonHitFilter(pattern)) return false;
+  uint32_t substructure = getSubStructure(pattern);
+  if (substructure == (uint32_t) MuonSubdetId::GEM) return true; 
+  return false;
+}
+  
+
 inline bool HitPattern::muonHitFilter(uint16_t pattern)
 {
     if unlikely(pattern == HitPattern::EMPTY_PATTERN) {
@@ -699,7 +737,19 @@ inline bool HitPattern::validHitFilter(uint16_t pattern)
 {
     return getHitType(pattern) == HitPattern::VALID;
 }
+////////////////////////////// GEM
 
+inline uint32_t HitPattern::getGEMRoll(uint32_t pattern) {
+  uint32_t sss = getSubSubStructure(pattern), stat = sss >> 1;
+  return stat + 1;
+}
+
+inline uint32_t HitPattern::getGEMLayer(uint32_t pattern) {
+  return (getSubSubStructure(pattern) & 1) + 1;
+}
+
+////////////////////////////// 
+  
 inline bool HitPattern::missingHitFilter(uint16_t pattern)
 {
     return getHitType(pattern) == HitPattern::MISSING;
@@ -786,6 +836,10 @@ inline int HitPattern::numberOfValidStripTECHits() const
     return countTypedHits(TRACK_HITS, validHitFilter, stripTECHitFilter);
 }
 
+inline int HitPattern::numberOfValidMuonGEMHits() const {
+  return countTypedHits(validHitFilter, muonGEMHitFilter);
+}
+
 inline int HitPattern::numberOfValidMuonDTHits() const
 {
     return countTypedHits(TRACK_HITS, validHitFilter, muonDTHitFilter);
@@ -856,6 +910,10 @@ inline int HitPattern::numberOfLostStripTECHits(HitCategory category) const
     return countTypedHits(category, missingHitFilter, stripTECHitFilter);
 }
 
+inline int HitPattern::numberOfLostMuonGEMHits() const {
+  return countTypedHits(type_1_HitFilter, muonGEMHitFilter);
+}
+
 inline int HitPattern::numberOfLostMuonDTHits() const
 {
     return countTypedHits(TRACK_HITS, missingHitFilter, muonDTHitFilter);
@@ -879,6 +937,10 @@ inline int HitPattern::numberOfBadHits() const
 inline int HitPattern::numberOfBadMuonHits() const
 {
     return countTypedHits(TRACK_HITS, inactiveHitFilter, muonHitFilter);
+}
+
+inline int HitPattern::numberOfBadMuonGEMHits() const {
+  return countTypedHits(type_2_HitFilter, muonGEMHitFilter);
 }
 
 inline int HitPattern::numberOfBadMuonDTHits() const
@@ -910,6 +972,25 @@ inline int HitPattern::trackerLayersWithMeasurementOld() const
 {
     return pixelLayersWithMeasurement() + stripLayersWithMeasurement();
 }
+
+inline int HitPattern::trackerLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const {
+  return pixelLayersWithMeasurement(MaxPixBarrelLayer,MaxPixForwardDisk) + 
+    stripLayersWithMeasurement();
+}
+
+inline int HitPattern::pixelLayersWithMeasurement(uint32_t MaxPixBarrelLayer,uint32_t MaxPixForwardDisk) const {
+  return pixelBarrelLayersWithMeasurement(MaxPixBarrelLayer) +
+    pixelEndcapLayersWithMeasurement(MaxPixForwardDisk);
+}
+
+inline int HitPattern::pixelBarrelLayersWithMeasurement() const {
+  return pixelBarrelLayersWithMeasurement(10);//all layers are "pixel" is SLHC geometry - fixme hardcoded
+}
+
+inline int HitPattern::pixelEndcapLayersWithMeasurement() const {
+  return pixelEndcapLayersWithMeasurement(15);//all layers are "pixel" is SLHC geometry - fixme hardcoded
+}
+
 
 inline int HitPattern::pixelLayersWithMeasurementOld() const
 {
@@ -991,6 +1072,23 @@ inline int HitPattern::muonStationsWithBadHits() const
 {
     return muonStations(0, 3);
 }
+
+inline int HitPattern::numberOfValidPixelHits(uint32_t maxLayer,uint32_t maxDisk) const {
+  return numberOfValidPixelBarrelHits(maxLayer)+numberOfValidPixelEndcapHits(maxDisk);
+}
+
+inline int HitPattern::numberOfValidPixelBarrelHits(uint32_t maxLayer) const {
+  return countTypedHits(validHitFilter, pixelBarrelHitFilter, maxLayer);
+}
+
+inline int HitPattern::numberOfValidPixelEndcapHits(uint32_t maxDisk) const {
+  return countTypedHits(validHitFilter, pixelEndcapHitFilter, maxDisk);
+}
+
+
+inline int HitPattern::gemStationsWithValidHits()  const { return muonStations(4, 0); }
+inline int HitPattern::gemStationsWithBadHits()    const { return muonStations(4, 3); }
+inline int HitPattern::gemStationsWithAnyHits()    const { return muonStations(4,-1); }
 
 inline int HitPattern::muonStationsWithAnyHits() const
 {
