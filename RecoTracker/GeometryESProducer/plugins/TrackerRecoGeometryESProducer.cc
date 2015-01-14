@@ -42,6 +42,8 @@ TrackerRecoGeometryESProducer::produce(const TrackerRecoGeometryRecord & iRecord
   iRecord.getRecord<IdealGeometryRecord>().get(tTopoHand);
   const TrackerTopology *tTopo=tTopoHand.product();
 
+
+
   GeometricSearchTrackerBuilder builder;
   _tracker  = boost::shared_ptr<GeometricSearchTracker>(builder.build( tG->trackerDet(), &(*tG), tTopo ));
   return _tracker;

@@ -32,7 +32,7 @@ bool TkPixelMeasurementDet::measurements( const TrajectoryStateOnSurface& stateO
     result.add(theInactiveHit, 0.F);
     return true;
   }
-  
+
   auto oldSize = result.size();
   MeasurementDet::RecHitContainer && allHits = recHits(stateOnThisDet, data);
   for (auto && hit : allHits) {
@@ -61,7 +61,7 @@ TkPixelMeasurementDet::buildRecHit( const SiPixelClusterRef & cluster,
   return std::make_shared<SiPixelRecHit>( std::get<0>(params), std::get<1>(params), std::get<2>(params), fastGeomDet(), cluster);
 }
 
-TkPixelMeasurementDet::RecHitContainer 
+TkPixelMeasurementDet::RecHitContainer
 TkPixelMeasurementDet::recHits( const TrajectoryStateOnSurface& ts, const MeasurementTrackerEvent & data ) const
 {
   RecHitContainer result;
@@ -74,7 +74,7 @@ TkPixelMeasurementDet::recHits( const TrajectoryStateOnSurface& ts, const Measur
   const detset & detSet = data.pixelData().detSet(index());
   result.reserve(detSet.size());
   for ( const_iterator ci = detSet.begin(); ci != detSet.end(); ++ ci ) {
-    
+
     if (ci < begin){
       edm::LogError("IndexMisMatch")<<"TkPixelMeasurementDet cannot create hit because of index mismatch.";
       return result;
@@ -87,7 +87,7 @@ TkPixelMeasurementDet::recHits( const TrajectoryStateOnSurface& ts, const Measur
      if(data.pixelClustersToSkip().empty() or (not data.pixelClustersToSkip()[index]) ) {
        SiPixelClusterRef cluster = edmNew::makeRefTo( data.pixelData().handle(), ci );
        result.push_back( buildRecHit( cluster, ts.localParameters() ) );
-     }else{   
+     }else{
        LogDebug("TkPixelMeasurementDet")<<"skipping this cluster from last iteration on "<<fastGeomDet().geographicalId().rawId()<<" key: "<<index;
      }
   }
@@ -103,6 +103,6 @@ TkPixelMeasurementDet::hasBadComponents( const TrajectoryStateOnSurface &tsos, c
     for (std::vector<LocalPoint>::const_iterator it = badRocPositions_.begin(), ed = badRocPositions_.end(); it != ed; ++it) {
         if ( (std::abs(it->x() - lp.x()) < dx) &&
              (std::abs(it->y() - lp.y()) < dy) ) return true;
-    } 
+    }
     return false;
 }
