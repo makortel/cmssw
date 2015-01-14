@@ -6,6 +6,8 @@
 #include "Geometry/TrackerNumberingBuilder/plugins/CmsTrackerLayerBuilder.h"
 #include "Geometry/TrackerNumberingBuilder/plugins/CmsTrackerWheelBuilder.h"
 #include "Geometry/TrackerNumberingBuilder/plugins/CmsTrackerDiskBuilder.h"  
+#include "Geometry/TrackerNumberingBuilder/plugins/CmsTrackerPhase1DiskBuilder.h"  
+#include "Geometry/TrackerNumberingBuilder/plugins/CmsTrackerOTDiscBuilder.h"  
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include <vector>
 
@@ -20,8 +22,11 @@ CmsTrackerSubStrctBuilder::buildComponent( DDFilteredView& fv, GeometricDet* g, 
   CmsTrackerLayerBuilder theCmsTrackerLayerBuilder;
   CmsTrackerWheelBuilder theCmsTrackerWheelBuilder;
   CmsTrackerDiskBuilder  theCmsTrackerDiskBuilder;   
+  CmsTrackerPhase1DiskBuilder  theCmsTrackerPhase1DiskBuilder;   
+  CmsTrackerOTDiscBuilder  theCmsTrackerOTDiscBuilder;   
 
   GeometricDet * subdet = new GeometricDet( &fv, theCmsTrackerStringToEnum.type( ExtractStringFromDDD::getString( s, &fv )));
+  std::string subdet_name = subdet->name();
   switch( theCmsTrackerStringToEnum.type( ExtractStringFromDDD::getString( s, &fv )))
   {
   case GeometricDet::layer:
@@ -34,7 +39,13 @@ CmsTrackerSubStrctBuilder::buildComponent( DDFilteredView& fv, GeometricDet* g, 
     theCmsTrackerWheelBuilder.build(fv,subdet,s);      
     break;
   case GeometricDet::disk:    
-    theCmsTrackerDiskBuilder.build(fv,subdet,s);
+    LogDebug("DiskNames") << "The name of the components is: " << subdet_name;
+    if(subdet_name.find("PixelForwardDisk") < subdet_name.size()) {
+      if(m_totalBlade == 24) theCmsTrackerDiskBuilder.build(fv,subdet,s);
+      else theCmsTrackerPhase1DiskBuilder.build(fv,subdet,s);
+    }
+    else if(subdet_name.find("Disc") < subdet_name.size()) theCmsTrackerOTDiscBuilder.build(fv,subdet,s);
+    else edm::LogError("WrongDiskType")<<" ERROR - I was expecting a PixelForwardDisk or a Disc... I got a "<< subdet_name;
     break;
 
   default:
@@ -62,7 +73,7 @@ CmsTrackerSubStrctBuilder::sortNS( DDFilteredView& fv, GeometricDet* det )
     std::sort( comp.begin(), comp.end(), LessModZ());
     break;	
   case GeometricDet::disk:
-    std::sort( comp.begin(), comp.end(), LessModZ());
+    std::sort( comp.begin(), comp.end(), LessModExtPhase2Z());
     break;
   default:
     edm::LogError( "CmsTrackerSubStrctBuilder" ) << "ERROR - wrong SubDet to sort..... " << det->components().front()->type(); 
