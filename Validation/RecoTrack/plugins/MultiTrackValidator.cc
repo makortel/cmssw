@@ -34,6 +34,8 @@
 
 //#include <iostream>
 
+//#define MKDEBUGTREE
+
 using namespace std;
 using namespace edm;
 
@@ -315,6 +317,11 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	    edm::LogVerbatim("TrackValidator") << "TrackingParticle #" << st 
 					       << " with pt=" << sqrt(momentumTP.perp2()) 
 					       << " associated with quality:" << rt.begin()->second <<"\n";
+#if defined MKDEBUGTREE || defined MKDEBUGTREE2
+            for(const auto& foo: rt) {
+              std::cout << "MTV: TrackingParticle " << st << " matched to track " << foo.first.key() << std::endl;
+            }
+#endif            
 	  }
 	}else{
 	  edm::LogVerbatim("TrackValidator") 

@@ -29,6 +29,8 @@
 
 #include <vector>
 
+//#define MKDEBUGTREE
+
 using namespace pixeltrackfitting;
 using namespace ctfseeding;
 using edm::ParameterSet;
@@ -145,6 +147,25 @@ void PixelTrackReconstruction::run(TracksWithTTRHs& tracks, edm::Event& ev, cons
 
   // skip ovelrapped tracks
   if (theCleaner) tracks = PixelTrackCleanerWrapper(theCleaner).clean(tracks,tTopo);
+
+#ifdef MKDEBUGTREE2
+  size_t iTrack=0;
+  for(const TrackWithTTRHs& tmp: tracks) {
+    const SeedingHitSet& hits = tmp.second;
+
+    std::cout << "Track " << iTrack << " nhits " << hits.size();
+    for(size_t i=0; i<hits.size(); ++i) {
+      std::cout << " " << hits[i]->globalPosition();
+    }
+    std::cout << std::endl;
+
+    ++iTrack;
+  }
+#endif
+
+#if defined MKDEBUGTREE || defined MKDEBUGTREE2
+  std::cout << "Produced " << tracks.size() << " pixel tracks" << std::endl;
+#endif
 
   // clean memory
   for (IR ir=regions.begin(), irEnd=regions.end(); ir < irEnd; ++ir) delete (*ir);
