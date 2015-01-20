@@ -47,7 +47,12 @@ TracksWithRecHits PixelTrackCleanerBySharedHits::cleanTracks(const TracksWithRec
           if (recHitsAreEqual(recHits1.at(iRecHit1), recHits2.at(iRecHit2))) commonRecHits++;
         }
       }
-      if (commonRecHits > 1) cleanTrack();
+      if(commonRecHits >= 1) {
+        if     (recHits1.size() > recHits2.size()) trackOk.at(iTrack2) = false;
+        else if(recHits1.size() < recHits2.size()) trackOk.at(iTrack1) = false;
+        else if(recHits1.size() == 3) cleanTrack(); // same number of hits
+        else if(commonRecHits > 1) cleanTrack(); // same number of hits, size != 3 (i.e. == 4)
+      }
     }
   }
 
