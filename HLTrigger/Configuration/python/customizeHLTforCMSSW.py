@@ -44,6 +44,11 @@ def customiseFor12387(process):
             setattr(producer,'LegacyUnpacker',cms.bool(False))
     return process
 
+def customiseForXXXXX(process):
+    for producer in producers_by_type(process, "PixelTrackProducer"):
+        if not hasattr(producer.CleanerPSet, "useQuadrupletAlgo"):
+            producer.CleanerPSet.useQuadrupletAlgo = cms.bool("False")
+
 #
 # CMSSW version specific customizations
 def customiseHLTforCMSSW(process, menuType="GRun", fastSim=False):
@@ -55,5 +60,6 @@ def customiseHLTforCMSSW(process, menuType="GRun", fastSim=False):
         process = customiseFor11920(process)
         process = customiseFor12718(process)
         process = customiseFor12387(process)
+        process = customiseForXXXXX(process)
 
     return process
