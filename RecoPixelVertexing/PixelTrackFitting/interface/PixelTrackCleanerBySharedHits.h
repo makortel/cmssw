@@ -33,6 +33,7 @@ private:
   reco::Track *track1, *track2;
   int iTrack1, iTrack2;
 
+  const bool useNewAlgo_;
 };
 
 #endif

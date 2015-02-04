@@ -9,7 +9,8 @@ using namespace std;
 using namespace reco;
 using namespace pixeltrackfitting;
 
-PixelTrackCleanerBySharedHits::PixelTrackCleanerBySharedHits( const edm::ParameterSet& cfg)
+PixelTrackCleanerBySharedHits::PixelTrackCleanerBySharedHits( const edm::ParameterSet& cfg):
+  useNewAlgo_(cfg.exists("useNewAlgo") ? cfg.getParameter<bool>("useNewAlgo") : false)
 {}
 
 PixelTrackCleanerBySharedHits::~PixelTrackCleanerBySharedHits()
@@ -47,12 +48,15 @@ TracksWithRecHits PixelTrackCleanerBySharedHits::cleanTracks(const TracksWithRec
           if (recHitsAreEqual(recHits1.at(iRecHit1), recHits2.at(iRecHit2))) commonRecHits++;
         }
       }
-      if(commonRecHits >= 1) {
-        if     (recHits1.size() > recHits2.size()) trackOk.at(iTrack2) = false;
-        else if(recHits1.size() < recHits2.size()) trackOk.at(iTrack1) = false;
-        else if(recHits1.size() == 3) cleanTrack(); // same number of hits
-        else if(commonRecHits > 1) cleanTrack(); // same number of hits, size != 3 (i.e. == 4)
+      if(useNewAlgo_) {
+        if(commonRecHits >= 1) {
+          if     (recHits1.size() > recHits2.size()) trackOk.at(iTrack2) = false;
+          else if(recHits1.size() < recHits2.size()) trackOk.at(iTrack1) = false;
+          else if(recHits1.size() == 3) cleanTrack(); // same number of hits
+          else if(commonRecHits > 1) cleanTrack(); // same number of hits, size != 3 (i.e. == 4)
+        }
       }
+      else if (commonRecHits > 1) cleanTrack();
     }
   }
 
