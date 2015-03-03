@@ -1,7 +1,14 @@
 import FWCore.ParameterSet.Config as cms
 
 from SimTracker.TrackerHitAssociation.clusterTpAssociationProducer_cfi import tpClusterProducer
-from Validation.RecoTrack.TrackValidation_cff import trackAssociatorByHitsRecoDenom
+#from Validation.RecoTrack.TrackValidation_cff import trackAssociatorByHitsRecoDenom
+from SimTracker.TrackAssociatorProducers.quickTrackAssociatorByHits_cfi import *
+from SimTracker.TrackAssociation.trackingParticleRecoTrackAsssociation_cfi import *
+
+# MTV uses trackAssociatorBuHitsRecoDenom whose configuration is equivalent to quickTrackAssociatorByHits
+# MTV is, by default, configured to make the associations by itself
+# trackingParticleRecoTrackAsssociation is configured to use quickTrackAssociatorByHits
+# TODO: this mess needs to be resolved if we want to gain anything from this common use of TP-track association
 
 selectedOfflinePrimaryVertices = cms.EDFilter("VertexSelector",
                                                src = cms.InputTag('offlinePrimaryVertices'),
@@ -17,7 +24,6 @@ selectedOfflinePrimaryVerticesWithBS.src = cms.InputTag('offlinePrimaryVerticesW
 
 vertexAnalysis = cms.EDAnalyzer("PrimaryVertexAnalyzer4PUSlimmed",
                                 use_only_charged_tracks = cms.untracked.bool(True),
-                                use_TP_associator = cms.untracked.bool(True),
                                 verbose = cms.untracked.bool(False),
                                 sigma_z_match = cms.untracked.double(3.0),
                                 abs_z_match = cms.untracked.double(0.1),
@@ -25,6 +31,7 @@ vertexAnalysis = cms.EDAnalyzer("PrimaryVertexAnalyzer4PUSlimmed",
                                 recoTrackProducer = cms.untracked.InputTag("generalTracks"),
                                 trackingParticleCollection = cms.untracked.InputTag("mix", "MergedTrackTruth"),
                                 trackingVertexCollection = cms.untracked.InputTag("mix", "MergedTrackTruth"),
+                                trackAssociatorMap = cms.untracked.InputTag("trackingParticleRecoTrackAsssociation"),
                                 vertexRecoCollections = cms.VInputTag("offlinePrimaryVertices",
                                                                       "offlinePrimaryVerticesWithBS",
 #                                                                      "pixelVertices",
@@ -35,7 +42,10 @@ vertexAnalysis = cms.EDAnalyzer("PrimaryVertexAnalyzer4PUSlimmed",
 )
 
 vertexAnalysisSequence = cms.Sequence(tpClusterProducer
-                                      * trackAssociatorByHitsRecoDenom
+#                                      * trackAssociatorByHitsRecoDenom
+                                      * quickTrackAssociatorByHits
+                                      * trackingParticleRecoTrackAsssociation
+                                      * cms.ignore(selectedOfflinePrimaryVertices)
                                       * cms.ignore(selectedOfflinePrimaryVertices)
                                       * cms.ignore(selectedOfflinePrimaryVerticesWithBS)
 #                                      * cms.ignore(selectedPixelVertices)
