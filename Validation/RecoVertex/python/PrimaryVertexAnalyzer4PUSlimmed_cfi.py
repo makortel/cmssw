@@ -1,5 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
+from SimTracker.TrackerHitAssociation.clusterTpAssociationProducer_cfi import tpClusterProducer
+from Validation.RecoTrack.TrackValidation_cff import trackAssociatorByHitsRecoDenom
+
 selectedOfflinePrimaryVertices = cms.EDFilter("VertexSelector",
                                                src = cms.InputTag('offlinePrimaryVertices'),
                                                cut = cms.string("isValid & ndof > 4 & tracksSize > 0 & abs(z) <= 24 & abs(position.Rho) <= 2."),
@@ -15,7 +18,7 @@ selectedOfflinePrimaryVerticesWithBS.src = cms.InputTag('offlinePrimaryVerticesW
 vertexAnalysis = cms.EDAnalyzer("PrimaryVertexAnalyzer4PUSlimmed",
                                 simG4 = cms.InputTag("g4SimHits"),
                                 use_only_charged_tracks = cms.untracked.bool(True),
-                                use_TP_associator = cms.untracked.bool(False),
+                                use_TP_associator = cms.untracked.bool(True),
                                 verbose = cms.untracked.bool(False),
                                 sigma_z_match = cms.untracked.double(3.0),
                                 abs_z_match = cms.untracked.double(0.1),
@@ -30,7 +33,9 @@ vertexAnalysis = cms.EDAnalyzer("PrimaryVertexAnalyzer4PUSlimmed",
                                 ),
 )
 
-vertexAnalysisSequence = cms.Sequence(cms.ignore(selectedOfflinePrimaryVertices)
+vertexAnalysisSequence = cms.Sequence(tpClusterProducer
+                                      * trackAssociatorByHitsRecoDenom
+                                      * cms.ignore(selectedOfflinePrimaryVertices)
                                       * cms.ignore(selectedOfflinePrimaryVerticesWithBS)
 #                                      * cms.ignore(selectedPixelVertices)
                                       * vertexAnalysis
