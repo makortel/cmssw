@@ -37,7 +37,7 @@ multiTrackValidator = cms.EDAnalyzer(
 #        ),
 ## example of associator
         cms.PSet(
-            src = cms.InputTag("trackAssociatorByHitsRecoDenom"),
+            src = cms.InputTag("quickTrackAssociatorByHits"),
             label = cms.string("trackAssociatorByHitsRecoDenom"),
         ),
     ),
