@@ -30,9 +30,9 @@ hltMultiTrackValidator.parametersDefiner = cms.string('hltLhcParametersDefinerFo
 hltMultiTrackValidator.trackCollectionForDrCalculation = cms.InputTag("hltPixelTracks")
 hltMultiTrackValidator.ignoremissingtrackcollection = cms.untracked.bool(True)
 
-hltMultiTrackValidator.associators = cms.untracked.VPSet(
+hltMultiTrackValidator.associators = [
     cms.PSet(
         src = cms.InputTag('hltTrackAssociatorByHits'),
         label = cms.string('hltTrackAssociatorByHits'),
     )
-)
+]

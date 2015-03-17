@@ -147,7 +147,12 @@ process.multiTrackValidator.label = ['ctfWithMaterialTracks']
 #process.multiTrackValidator.label = ['cutsRecoTracks']
 #process.multiTrackValidator.label_tp_effic = cms.InputTag("cutsTPEffic")
 #process.multiTrackValidator.label_tp_fake = cms.InputTag("cutsTPFake")
-process.multiTrackValidator.associators = ['trackAssociatorByHits']
+process.multiTrackValidator.associators = [
+    cms.PSet(
+        src = cms.InputTag('trackAssociatorByHits'),
+        label = cms.string('trackAssociatorByHits'),
+    )
+]
 process.multiTrackValidator.UseAssociators = True
 process.multiTrackValidator.outputFile = "validfullLB_muon_50GeV.root"
 process.multiTrackValidator.nint = cms.int32(20)

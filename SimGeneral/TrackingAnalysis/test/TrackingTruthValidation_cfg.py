@@ -36,7 +36,12 @@ from SimTracker.TrackHistory.CategorySelectors_cff import *
 # Configuration MultiTrackValidator
 
 process.multiTrackValidator.outputFile = 'TrackingTruthValidation.root'
-process.multiTrackValidator.associators = ['trackAssociatorByHits']
+process.multiTrackValidator.associators = [
+    cms.PSet(
+        src = cms.InputTag('trackAssociatorByHits'),
+        label = cms.string('trackAssociatorByHits')
+    )
+]
 process.multiTrackValidator.skipHistoFit = cms.untracked.bool(False)
 process.multiTrackValidator.useLogPt = cms.untracked.bool(True)
 process.multiTrackValidator.minpT = cms.double(-1)
