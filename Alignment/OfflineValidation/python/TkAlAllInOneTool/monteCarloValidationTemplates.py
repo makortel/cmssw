@@ -35,7 +35,12 @@ process.load("SimGeneral.TrackingAnalysis.trackingParticles_cfi")
 ### configuration MultiTrackValidator ###
 process.multiTrackValidator.outputFile = '.oO[outputFile]Oo.'
 
-process.multiTrackValidator.associators = ['trackAssociatorByHits']
+process.multiTrackValidator.associators = [
+    cms.PSet(
+       src = cms.InputTag('trackAssociatorByHits'),
+       label = cms.string('trackAssociatorByHits'),
+    )
+]
 process.multiTrackValidator.UseAssociators = cms.bool(True)
 process.multiTrackValidator.label = ['generalTracks']
 
