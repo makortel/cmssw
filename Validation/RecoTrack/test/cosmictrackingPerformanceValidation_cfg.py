@@ -67,7 +67,12 @@ process.cutsRecoRSTracksP5.maxChi2 = cms.double(CHISQRECOTRKMAX)
 ### configuration MultiTrackValidator ###
 process.multiTrackValidator.outputFile = 'val.SAMPLE.root'
 process.multiTrackValidator.UseAssociators = cms.bool(True)
-process.multiTrackValidator.associators = ['quickTrackAssociatorByHits']
+process.multiTrackValidator.associators = [
+    cms.PSet(
+        src = cms.InputTag('quickTrackAssociatorByHits'),
+        label = cms.string('quickTrackAssociatorByHits')
+    )
+]
 process.multiTrackValidator.parametersDefiner = cms.string('CosmicParametersDefinerForTP')
 process.multiTrackValidator.label = ['cutsRecoCTFTracksP5', 'cutsRecoCosmicTFTracksP5', 'cutsRecoRSTracksP5']
 process.multiTrackValidator.useLogPt=cms.untracked.bool(False)

@@ -30,7 +30,12 @@ cutsRecoTracks.quality = ['highPurity']
 
 # pass only high purity tracks
 multiTrackValidator.label = ['cutsRecoTracks']
-multiTrackValidator.associators = ['trackAssociatorByHits']
+multiTrackValidator.associators = [
+    cms.PSet(
+        src = cms.InputTag('trackAssociatorByHits'),
+        label = cms.string('trackAssociatorByHits')
+    )
+]
 multiTrackValidator.UseAssociators = True
 
 
