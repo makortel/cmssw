@@ -107,7 +107,12 @@ process.quickTrackAssociatorByHits.SimToRecoDenominator = 'reco'
 
 
 ########### configuration MultiTrackValidator ########
-process.multiTrackValidator.associators = ['quickTrackAssociatorByHits']
+process.multiTrackValidator.associators = [
+    cms.PSet(
+        src = cms.InputTag('quickTrackAssociatorByHits'),
+        label = cms.string('quickTrackAssociatorByHits'),
+    )
+]
 process.multiTrackValidator.skipHistoFit = False
 #process.cutsRecoTracks.quality = ['','highPurity']
 #process.cutsRecoTracks.quality = ['']
