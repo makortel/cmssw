@@ -166,7 +166,12 @@ process.multiTrackValidator.label = ['ctfWithMaterialTracks']
 #process.multiTrackValidator.label_tp_effic = cms.InputTag("cutsTPEffic")
 #process.multiTrackValidator.label_tp_fake = cms.InputTag("cutsTPFake")
 process.multiTrackValidator.sim = 'famosSimHits'
-process.multiTrackValidator.associators = ['TrackAssociatorByHits']
+process.multiTrackValidator.associators = [
+    cms.PSet(
+        src = cms.InputTag('TrackAssociatorByHits'),
+        label = cms.string('TrackAssociatorByHits')
+    )
+]
 process.multiTrackValidator.UseAssociators = True
 process.multiTrackValidator.outputFile = "validstdgeom_muon_50GeV.root"
 process.multiTrackValidator.nint = cms.int32(20)
