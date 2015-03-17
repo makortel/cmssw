@@ -2,7 +2,9 @@ import FWCore.ParameterSet.Config as cms
 
 # track associator settings
 from SimTracker.TrackAssociatorProducers.quickTrackAssociatorByHits_cfi import *
+from SimTracker.TrackAssociation.trackingParticleRecoTrackAsssociation_cfi import *
 from Validation.RecoTrack.TrackValidation_cff import tracksValidationTruth
+trackingParticleRecoTrackAsssociation.label_tr = "hiGeneralTracks"
 
 # reco track quality cuts
 from Validation.RecoTrack.cuts_cff import *
