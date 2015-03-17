@@ -28,7 +28,11 @@ hltMultiTrackValidator.parametersDefiner = cms.string('hltLhcParametersDefinerFo
 #hltMultiTrackValidator.parametersDefiner = cms.string('LhcParametersDefinerForTP')
 ### for fake rate vs dR ###
 hltMultiTrackValidator.trackCollectionForDrCalculation = cms.InputTag("hltPixelTracks")
-hltMultiTrackValidator.associatormap = cms.InputTag("tpToHLTpixelTrackAssociation")
 hltMultiTrackValidator.ignoremissingtrackcollection = cms.untracked.bool(True)
 
-hltMultiTrackValidator.associators = cms.vstring('hltTrackAssociatorByHits')
+hltMultiTrackValidator.associators = cms.untracked.VPSet(
+    cms.PSet(
+        src = cms.InputTag('hltTrackAssociatorByHits'),
+        label = cms.string('hltTrackAssociatorByHits'),
+    )
+)
