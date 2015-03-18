@@ -7,82 +7,82 @@ import Validation.RecoTrack.MultiTrackValidator_cfi
 from SimTracker.TrackAssociation.LhcParametersDefinerForTP_cfi import *
 from SimTracker.TrackAssociation.CosmicParametersDefinerForTP_cfi import *
 from Validation.RecoTrack.PostProcessorTracker_cfi import *
-import PhysicsTools.RecoAlgos.recoTrackSelector_cfi
+import CommonTools.RecoAlgos.recoTrackRefSelector_cfi
 
 from SimTracker.TrackerHitAssociation.clusterTpAssociationProducer_cfi import *
 
 # Validation iterative steps
-cutsRecoTracksZero = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksZero = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksZero.algorithm=cms.vstring("initialStep")
 
-cutsRecoTracksFirst = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFirst = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksFirst.algorithm=cms.vstring("lowPtTripletStep")
 
-cutsRecoTracksSecond = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSecond = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksSecond.algorithm=cms.vstring("pixelPairStep")
 
-cutsRecoTracksThird = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksThird = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksThird.algorithm=cms.vstring("detachedTripletStep")
 
-cutsRecoTracksFourth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFourth = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksFourth.algorithm=cms.vstring("mixedTripletStep")
 
-cutsRecoTracksFifth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFifth = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksFifth.algorithm=cms.vstring("pixelLessStep")
 
-cutsRecoTracksSixth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSixth = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksSixth.algorithm=cms.vstring("tobTecStep")
 
-cutsRecoTracksSeventh = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSeventh = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksSeventh.algorithm=cms.vstring("jetCoreRegionalStep")
 
-cutsRecoTracksNinth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksNinth = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksNinth.algorithm=cms.vstring("muonSeededStepInOut")
 
-cutsRecoTracksTenth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksTenth = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksTenth.algorithm=cms.vstring("muonSeededStepOutIn")
 
 # high purity
-cutsRecoTracksHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksZeroHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksZeroHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksZeroHp.algorithm=cms.vstring("initialStep")
 cutsRecoTracksZeroHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksFirstHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFirstHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksFirstHp.algorithm=cms.vstring("lowPtTripletStep")
 cutsRecoTracksFirstHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksSecondHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSecondHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksSecondHp.algorithm=cms.vstring("pixelPairStep")
 cutsRecoTracksSecondHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksThirdHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksThirdHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksThirdHp.algorithm=cms.vstring("detachedTripletStep")
 cutsRecoTracksThirdHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksFourthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFourthHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksFourthHp.algorithm=cms.vstring("mixedTripletStep")
 cutsRecoTracksFourthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksFifthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFifthHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksFifthHp.algorithm=cms.vstring("pixelLessStep")
 cutsRecoTracksFifthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksSixthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSixthHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksSixthHp.algorithm=cms.vstring("tobTecStep")
 cutsRecoTracksSixthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksSeventhHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSeventhHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksSeventhHp.algorithm=cms.vstring("jetCoreRegionalStep")
 cutsRecoTracksSeventhHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksNinthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksNinthHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksNinthHp.algorithm=cms.vstring("muonSeededStepInOut")
 cutsRecoTracksNinthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksTenthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksTenthHp = CommonTools.RecoAlgos.recoTrackRefSelector_cfi.recoTrackRefSelector.clone()
 cutsRecoTracksTenthHp.algorithm=cms.vstring("muonSeededStepOutIn")
 cutsRecoTracksTenthHp.quality=cms.vstring("highPurity")
 
