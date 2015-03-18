@@ -5,7 +5,6 @@ from Validation.RecoTrack.TrackValidation_cff import *
 quickTrackAssociatorByHits.associateStrip = False
 quickTrackAssociatorByHits.associatePixel = False
 #TrackAssociatorByHitsRecoDenom.ROUList = ['famosSimHitsTrackerHits']
-trackValidator.UseAssociators = True
 trackValidator.skipHistoFit=cms.untracked.bool(True)
 trackValidator.useLogPt=cms.untracked.bool(True)
 
