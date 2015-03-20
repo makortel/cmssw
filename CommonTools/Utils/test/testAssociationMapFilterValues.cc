@@ -31,6 +31,7 @@ void testAssociationMapFilterValues::checkOneToOne() {
   map.insert(edm::Ref<CKey>(&keys, 1), edm::Ref<CVal>(&values, 1));
   map.insert(edm::Ref<CKey>(&keys, 2), edm::Ref<CVal>(&values, 2));
 
+  // vector of Refs
   std::vector<edm::Ref<CVal>> keep{edm::Ref<CVal>(&values, 0), edm::Ref<CVal>(&values, 2)};
   Assoc filtered = associationMapFilterValues(map, keep);
   CPPUNIT_ASSERT( filtered.size() == 2 );
@@ -38,6 +39,7 @@ void testAssociationMapFilterValues::checkOneToOne() {
   CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 1)) == filtered.end() );
   CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 2)) != filtered.end() );
 
+  // RefVector
   edm::RefVector<CVal> keep2;
   keep2.push_back(edm::Ref<CVal>(&values, 1));
   filtered = associationMapFilterValues(map, keep2);
@@ -45,6 +47,11 @@ void testAssociationMapFilterValues::checkOneToOne() {
   CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 0)) == filtered.end() );
   CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 1)) != filtered.end() );
   CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 2)) == filtered.end() );
+
+  // Mostly check that it compiles
+  edm::View<CVal> keepView;
+  filtered = associationMapFilterValues(map, keepView);
+  CPPUNIT_ASSERT( filtered.size() == 0 );
 }
 
 void testAssociationMapFilterValues::checkOneToMany() {

@@ -48,7 +48,32 @@ namespace associationMapFilterValuesHelpers {
       }
     }
   };
+
+  // Default implementation for RefVector or vector<Ref>
+  template <typename T_RefVector>
+  struct FillIndices {
+    template <typename T_Set>
+    static
+    void fill(T_Set& set, const T_RefVector& valueRefs) {
+      for(const auto& ref: valueRefs) {
+        set.insert(ref.key());
+      }
+    }
+  };
+
+  // Specialize for View
+  template <typename T>
+  struct FillIndices<edm::View<T> > {
+    template <typename T_Set>
+    static
+    void fill(T_Set& set, const edm::View<T>& valueView) {
+      for(size_t i=0; i<valueView.size(); ++i) {
+        set.insert(valueView.refAt(i).key());
+      }
+    }
+  };
 }
+
 
 template <typename T_AssociationMap, typename T_RefVector>
 T_AssociationMap associationMapFilterValues(const T_AssociationMap& map, const T_RefVector& valueRefs) {
@@ -56,9 +81,7 @@ T_AssociationMap associationMapFilterValues(const T_AssociationMap& map, const T
 
   // First copy the keys of values to a set for faster lookup of their existence in the map
   std::unordered_set<typename T_AssociationMap::index_type> value_indices;
-  for(const auto& ref: valueRefs) {
-    value_indices.insert(ref.key());
-  }
+  associationMapFilterValuesHelpers::FillIndices<T_RefVector>::fill(value_indices, valueRefs);
 
   for(const auto& keyValue: map) {
     associationMapFilterValuesHelpers::IfFound<typename T_AssociationMap::value_type::value_type>::insert(ret, keyValue, value_indices);
