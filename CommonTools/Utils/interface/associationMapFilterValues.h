@@ -7,11 +7,13 @@
 #include <unordered_set>
 
 namespace associationMapFilterValuesHelpers {
-  // Common implementation for Ref and RefToBase
-  template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
-  void ref_insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
-    if(value_indices.find(keyValue.val.key()) != value_indices.end()) {
-      ret.insert(keyValue);
+  // Common implementation
+  template <typename T_AssociationMap, typename T_Key, typename T_Value,
+            typename T_ValueIndices>
+  void findInsert(T_AssociationMap& ret, const T_Key& key, const T_Value& value,
+                     const T_ValueIndices& value_indices) {
+    if(value_indices.find(value.key()) != value_indices.end()) {
+      ret.insert(key, value);
     }
   }
 
@@ -24,7 +26,7 @@ namespace associationMapFilterValuesHelpers {
   struct IfFound<edm::Ref<C, T, F>> {
     template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
     static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
-      ref_insert(ret, keyValue, value_indices);
+      findInsert(ret, keyValue.key, keyValue.val, value_indices);
     }
   };
 
@@ -32,7 +34,7 @@ namespace associationMapFilterValuesHelpers {
   struct IfFound<edm::RefToBase<T>> {
     template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
     static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
-      ref_insert(ret, keyValue, value_indices);
+      findInsert(ret, keyValue.key, keyValue.val, value_indices);
     }
   };
 
@@ -42,9 +44,7 @@ namespace associationMapFilterValuesHelpers {
     template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
     static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
       for(const auto& value: keyValue.val) {
-        if(value_indices.find(value.key()) != value_indices.end()) {
-          ret.insert(keyValue.key, value);
-        }
+        findInsert(ret, keyValue.key, value, value_indices);
       }
     }
   };
@@ -62,11 +62,6 @@ T_AssociationMap associationMapFilterValues(const T_AssociationMap& map, const T
 
   for(const auto& keyValue: map) {
     associationMapFilterValuesHelpers::IfFound<typename T_AssociationMap::value_type::value_type>::insert(ret, keyValue, value_indices);
-    /*
-    if(value_indices.find(keyValue.val.key()) != value_indices.end()) {
-      ret.insert(keyValue);
-    }
-    */
   }
     
 
