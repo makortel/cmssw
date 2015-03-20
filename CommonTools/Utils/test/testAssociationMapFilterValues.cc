@@ -48,7 +48,6 @@ void testAssociationMapFilterValues::checkOneToOne() {
 }
 
 void testAssociationMapFilterValues::checkOneToMany() {
-/*
   typedef std::vector<int> CKey;
   typedef std::vector<double> CVal;
   typedef edm::AssociationMap<edm::OneToMany<CKey, CVal, unsigned char> > Assoc;
@@ -64,6 +63,7 @@ void testAssociationMapFilterValues::checkOneToMany() {
 
   std::vector<edm::Ref<CVal>> keep{edm::Ref<CVal>(&values, 0), edm::Ref<CVal>(&values, 2)};
 
+/*
   Assoc filtered = associationMapFilterValues(map, keep);
   CPPUNIT_ASSERT( filtered.size() == 2 );
   CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 0)) != filtered.end() );
