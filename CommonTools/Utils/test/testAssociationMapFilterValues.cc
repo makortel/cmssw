@@ -12,8 +12,8 @@ class testAssociationMapFilterValues : public CppUnit::TestFixture {
 public:
   void setUp() {}
   void tearDown() {}
-  void checkOneToOne(); 
-  void checkOneToMany(); 
+  void checkOneToOne();
+  void checkOneToMany();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( testAssociationMapFilterValues );
