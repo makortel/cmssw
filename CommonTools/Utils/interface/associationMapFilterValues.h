@@ -8,11 +8,13 @@
 
 namespace associationMapFilterValuesHelpers {
   // Common implementation
-  template <typename T_AssociationMap, typename T_Key, typename T_Value,
+  template <typename T_AssociationMap, typename T_Key, 
+            typename T_ValueIndex, typename T_Value,
             typename T_ValueIndices>
-  void findInsert(T_AssociationMap& ret, const T_Key& key, const T_Value& value,
-                     const T_ValueIndices& value_indices) {
-    if(value_indices.find(value.key()) != value_indices.end()) {
+  void findInsert(T_AssociationMap& ret, const T_Key& key,
+                  const T_ValueIndex& valueIndex, const T_Value& value,
+                  const T_ValueIndices& value_indices) {
+    if(value_indices.find(valueIndex) != value_indices.end()) {
       ret.insert(key, value);
     }
   }
@@ -26,7 +28,7 @@ namespace associationMapFilterValuesHelpers {
   struct IfFound<edm::Ref<C, T, F>> {
     template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
     static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
-      findInsert(ret, keyValue.key, keyValue.val, value_indices);
+      findInsert(ret, keyValue.key, keyValue.val.key(), keyValue.val, value_indices);
     }
   };
 
@@ -34,7 +36,7 @@ namespace associationMapFilterValuesHelpers {
   struct IfFound<edm::RefToBase<T>> {
     template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
     static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
-      findInsert(ret, keyValue.key, keyValue.val, value_indices);
+      findInsert(ret, keyValue.key, keyValue.val.key(), keyValue.val, value_indices);
     }
   };
 
@@ -44,7 +46,18 @@ namespace associationMapFilterValuesHelpers {
     template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
     static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
       for(const auto& value: keyValue.val) {
-        findInsert(ret, keyValue.key, value, value_indices);
+        findInsert(ret, keyValue.key, value.key(), value, value_indices);
+      }
+    }
+  };
+
+  // Specialize for vector<pair<Ref, Q>> for OneToManyWithQuality
+  template <typename C, typename T, typename F, typename Q>
+  struct IfFound<std::vector<std::pair<edm::Ref<C, T, F>, Q> > > {
+    template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
+    static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
+      for(const auto& value: keyValue.val) {
+        findInsert(ret, keyValue.key, value.first.key(), value, value_indices);
       }
     }
   };
