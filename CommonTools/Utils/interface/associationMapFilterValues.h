@@ -62,6 +62,17 @@ namespace associationMapFilterValuesHelpers {
     }
   };
 
+  // Specialize for vector<pair<RefToBase, Q>> for OneToManyWithQuality
+  template <typename T, typename Q>
+  struct IfFound<std::vector<std::pair<edm::RefToBase<T>, Q> > > {
+    template <typename T_AssociationMap, typename T_KeyValue, typename T_ValueIndices>
+    static void insert(T_AssociationMap& ret, const T_KeyValue& keyValue, const T_ValueIndices& value_indices) {
+      for(const auto& value: keyValue.val) {
+        findInsert(ret, keyValue.key, value.first.key(), value, value_indices);
+      }
+    }
+  };
+
   // Default implementation for RefVector or vector<Ref>
   template <typename T_RefVector>
   struct FillIndices {

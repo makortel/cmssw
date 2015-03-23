@@ -162,6 +162,18 @@ void testAssociationMapFilterValues::checkOneToMany() {
     CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 2)) != filtered.end() );
     CPPUNIT_ASSERT( filtered.find(edm::Ref<CKey>(&keys, 3)) != filtered.end() );
   }
+
+  // View, mostly check that it compiles
+  {
+    typedef std::vector<int> CKey;
+    typedef edm::View<Base> CVal;
+    typedef edm::AssociationMap<edm::OneToMany<CKey, CVal, unsigned char> > Assoc;
+
+    Assoc map;
+    edm::View<Base> keep;
+    Assoc filtered = associationMapFilterValues(map, keep);
+    CPPUNIT_ASSERT( filtered.size() == 0 );
+  }
 }
 
 void testAssociationMapFilterValues::checkOneToManyQuality() {
@@ -275,5 +287,17 @@ void testAssociationMapFilterValues::checkOneToManyQuality() {
     CPPUNIT_ASSERT( found != filtered.end() );
     CPPUNIT_ASSERT( found->val.size() == 1 );
     CPPUNIT_ASSERT( found->val[0].second == 0.5 );
+  }
+
+  // View, mostly check that it compiles
+  {
+    typedef std::vector<int> CKey;
+    typedef edm::View<Base> CVal;
+    typedef edm::AssociationMap<edm::OneToManyWithQuality<CKey, CVal, double, unsigned char> > Assoc;
+
+    Assoc map;
+    edm::View<Base> keep;
+    Assoc filtered = associationMapFilterValues(map, keep);
+    CPPUNIT_ASSERT( filtered.size() == 0 );
   }
 }
