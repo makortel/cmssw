@@ -265,11 +265,13 @@ void testAssociationMapFilterValues::checkOneToManyQuality() {
     map.insert(edm::Ref<CKey>(&keys, 1), std::make_pair(edm::Ref<CVal>(&values, 1), 0.2));
     map.insert(edm::Ref<CKey>(&keys, 2), std::make_pair(edm::Ref<CVal>(&values, 1), 0.3));
     map.insert(edm::Ref<CKey>(&keys, 2), std::make_pair(edm::Ref<CVal>(&values, 0), 0.4));
+    map.insert(edm::Ref<CKey>(&keys, 3), std::make_pair(edm::Ref<CVal>(&values, 1), 0.6));
     map.insert(edm::Ref<CKey>(&keys, 3), std::make_pair(edm::Ref<CVal>(&values, 2), 0.5));
+    map.insert(edm::Ref<CKey>(&keys, 3), std::make_pair(edm::Ref<CVal>(&values, 0), 0.7));
 
     std::vector<edm::RefToBase<Base>> keep{
-      edm::RefToBase<Base>(edm::Ref<Data>(&data, 1)),
-      edm::RefToBase<Base>(edm::Ref<Data>(&data, 2))
+      edm::RefToBase<Base>(edm::Ref<Data>(&data, 2)),
+      edm::RefToBase<Base>(edm::Ref<Data>(&data, 1))
     };
 
     Assoc filtered = associationMapFilterValues(map, keep);
@@ -285,8 +287,11 @@ void testAssociationMapFilterValues::checkOneToManyQuality() {
     CPPUNIT_ASSERT( found->val[0].second == 0.3 );
     found = filtered.find(edm::Ref<CKey>(&keys, 3));
     CPPUNIT_ASSERT( found != filtered.end() );
-    CPPUNIT_ASSERT( found->val.size() == 1 );
-    CPPUNIT_ASSERT( found->val[0].second == 0.5 );
+    CPPUNIT_ASSERT( found->val.size() == 2 );
+    CPPUNIT_ASSERT( found->val[0].first->get()->value() == 2.0 );
+    CPPUNIT_ASSERT( found->val[0].second == 0.6 );
+    CPPUNIT_ASSERT( found->val[1].first->get()->value() == 3.0 );
+    CPPUNIT_ASSERT( found->val[1].second == 0.5 );
   }
 
   // View, mostly check that it compiles
