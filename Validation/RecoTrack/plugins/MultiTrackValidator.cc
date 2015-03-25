@@ -259,6 +259,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
       reco::SimToRecoCollection const * simRecCollP=nullptr;
       reco::RecoToSimCollection recSimCollL;
       reco::SimToRecoCollection simRecCollL;
+      reco::SimToRecoCollection const * simRecCollPOrig=nullptr;
 
       //associate tracks
       edm::LogVerbatim("TrackValidator") << "Analyzing "
@@ -281,6 +282,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	Handle<reco::SimToRecoCollection > simtorecoCollectionH;
 	event.getByToken(associatormapStRs[ww], simtorecoCollectionH);
 	simRecCollP = simtorecoCollectionH.product();
+        simRecCollPOrig = simRecCollP;
 
         // We need to filter only the associations of the current
         // track collection from SimToReco collection, otherwise the
@@ -384,6 +386,75 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	    << momentumTP.phi() << " , "
 	    << " NOT associated to any reco::Track" << "\n";
 	}
+        if((w == 0 || w == 1) &&
+           0.34784 < tp->eta() && tp->eta() < 0.34785 &&
+           0.47102 < tp->phi() && tp->phi() < 0.47103) {
+	  auto const & rt = simRecColl[tpr];
+          std::string str;
+          for(const auto& ass: rt) {
+            str += " "+std::to_string(ass.first->pt())+" "+std::to_string(ass.second);
+          }
+          edm::LogWarning("Debug") << "w " << w
+                                   << " TP pt " << tp->pt() << " eta " << tp->eta() << " phi " << tp->phi()
+                                   << " n_matched_tracks " << rt.size()
+                                   << str;
+          if(simRecCollPOrig) {
+            reco::SimToRecoCollection simRecColl2 = *simRecCollP;
+            const auto& rt2 = simRecColl2[tpr];
+            str = "";
+            for(const auto& ass: rt2) {
+              str += " "+std::to_string(ass.first->pt())+" "+std::to_string(ass.second);
+            }
+            edm::LogWarning("Debug") << "With original " << str;
+
+            simRecColl2.post_insert();
+            const auto& rt22 = simRecColl2[tpr];
+            str = "";
+            for(const auto& ass: rt22) {
+              str += " "+std::to_string(ass.first->pt())+" "+std::to_string(ass.second);
+            }
+            edm::LogWarning("Debug") << "With original, after post_insert() " << str;
+
+
+            edm::Handle<reco::TrackToTrackingParticleAssociator> theAssociator;
+            event.getByLabel("quickTrackAssociatorByHits", theAssociator);
+            auto simRecColl3 = theAssociator->associateSimToReco(trackCollection,
+                                                                 TPCollectionHfake);
+
+            const auto& rt3 = simRecColl3[tpr];
+            str = "";
+            for(const auto& ass: rt3) {
+              str += " "+std::to_string(ass.first->pt())+" "+std::to_string(ass.second);
+            }
+            edm::LogWarning("Debug") << "With associator " << str;
+
+            simRecColl3.post_insert();
+            const auto& rt32 = simRecColl2[tpr];
+            str = "";
+            for(const auto& ass: rt32) {
+              str += " "+std::to_string(ass.first->pt())+" "+std::to_string(ass.second);
+            }
+            edm::LogWarning("Debug") << "With associator, after post_insert() " << str;
+
+
+            for(const auto& keyValue: simRecColl) {
+              const auto& tp_tmp = keyValue.key;
+              const auto& trks = keyValue.val;
+              const auto& trks_assoc = simRecColl3[tp_tmp];
+              for(size_t i=0; i<trks.size(); ++i) {
+                const auto& trk = trks[i];
+                const auto& trk_assoc = trks_assoc[i];
+                if(trk != trk_assoc) {
+                  edm::LogWarning("Debug") << "w " << w
+                                           << " TP " << tp_tmp.key() << " pt " << tp_tmp->pt() << " eta " << tp_tmp->eta() << " phi " << tp_tmp->phi()
+                                           << " i " << i
+                                           << " trk key " << trk.first.key() << " pt " << trk.first->pt() << " " << trk.second
+                                           << " trk_assoc key " << trk_assoc.first.key() << " pt " << trk_assoc.first->pt() << " " << trk_assoc.second;
+                }
+              }
+            }
+          }
+        }
 
 
 

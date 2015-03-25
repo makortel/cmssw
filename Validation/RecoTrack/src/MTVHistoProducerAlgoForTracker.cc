@@ -562,6 +562,15 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
     if(isMatched) {
       fillPlotNoFlow(h_assochit[count],(int)nSimHits);
       nrecHit_vs_nsimHit_sim2rec[count]->Fill( track->numberOfValidHits(),nSimHits);
+      auto nreco = track->numberOfValidHits();
+      auto nsim = nSimHits;
+      if(18 <= nsim && nsim <= 20 &&
+         ((6 <= nreco && nreco <= 8) ||
+          (10 <= nreco && nreco <= 12))) {
+        edm::LogWarning("Debug") << "count " << count 
+                                 << " Track pt " << track->pt() << " eta " << track->eta() << " phi " << track->phi() << " nhits " << nreco
+                                 << " TP pt " << tp.pt() << " eta " << tp.eta() << " phi " << tp.phi() << " nhits " << nsim;
+      }
     }
     //effic vs pu
     fillPlotNoFlow(h_simulpu[count],(int)numVertices);
