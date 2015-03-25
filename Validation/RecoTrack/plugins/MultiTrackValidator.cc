@@ -291,6 +291,12 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	Handle<reco::RecoToSimCollection > recotosimCollectionH;
 	event.getByToken(associatormapRtSs[ww],recotosimCollectionH);
 	recSimCollP = recotosimCollectionH.product();
+        /*
+        // In general, we need this too
+        recSimCollL = associationMapFilterValues(*recSimCollP, *TPCollectionHeff);
+        recsimCollP = &recSimCollL;
+
+        */
       }
 
       reco::RecoToSimCollection const & recSimColl = *recSimCollP;
