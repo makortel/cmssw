@@ -3,6 +3,7 @@
 
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/Common/interface/RefVector.h"
+#include "DataFormats/Common/interface/View.h"
 
 #include <unordered_set>
 
