@@ -46,7 +46,8 @@ void testAssociationMapFilterValues::checkOneToOne() {
   CKey keys{1, 2, 3};
   CVal values{1.0, 2.0, 3.0};
 
-  Assoc map;
+  auto refprod = Assoc::ref_type(edm::RefProd<CKey>(&keys), edm::RefProd<CVal>(&values));
+  auto map = Assoc(refprod);
   map.insert(edm::Ref<CKey>(&keys, 0), edm::Ref<CVal>(&values, 0));
   map.insert(edm::Ref<CKey>(&keys, 1), edm::Ref<CVal>(&values, 1));
   map.insert(edm::Ref<CKey>(&keys, 2), edm::Ref<CVal>(&values, 2));
@@ -84,7 +85,8 @@ void testAssociationMapFilterValues::checkOneToMany() {
     CKey keys{1, 2, 3};
     CVal values{1.0, 2.0, 3.0, 4.0};
 
-    Assoc map;
+    auto refprod = Assoc::ref_type(edm::RefProd<CKey>(&keys), edm::RefProd<CVal>(&values));
+    auto map = Assoc(refprod);
     map.insert(edm::Ref<CKey>(&keys, 0), edm::Ref<CVal>(&values, 0));
     map.insert(edm::Ref<CKey>(&keys, 1), edm::Ref<CVal>(&values, 1));
     map.insert(edm::Ref<CKey>(&keys, 2), edm::Ref<CVal>(&values, 2));
@@ -110,7 +112,8 @@ void testAssociationMapFilterValues::checkOneToMany() {
     Data data{1.0, 2.0, 3.0, 4.0};
     CVal values{edm::Ref<Data>(&data, 0), edm::Ref<Data>(&data, 1), edm::Ref<Data>(&data, 2)};
 
-    Assoc map;
+    auto refprod = Assoc::ref_type(edm::RefProd<CKey>(&keys), edm::RefProd<CVal>(&values));
+    auto map = Assoc(refprod);
     map.insert(edm::Ref<CKey>(&keys, 0), edm::Ref<CVal>(&values, 0));
     map.insert(edm::Ref<CKey>(&keys, 1), edm::Ref<CVal>(&values, 1));
     map.insert(edm::Ref<CKey>(&keys, 2), edm::Ref<CVal>(&values, 1));
@@ -143,7 +146,8 @@ void testAssociationMapFilterValues::checkOneToMany() {
       edm::RefToBase<Base>(edm::Ref<Data>(&data, 2))
     };
 
-    Assoc map;
+    auto refprod = Assoc::ref_type(edm::RefProd<CKey>(&keys), edm::RefProd<CVal>(&values));
+    auto map = Assoc(refprod);
     map.insert(edm::Ref<CKey>(&keys, 0), edm::Ref<CVal>(&values, 0));
     map.insert(edm::Ref<CKey>(&keys, 1), edm::Ref<CVal>(&values, 1));
     map.insert(edm::Ref<CKey>(&keys, 2), edm::Ref<CVal>(&values, 1));
@@ -186,7 +190,8 @@ void testAssociationMapFilterValues::checkOneToManyQuality() {
     CKey keys{1, 2, 3};
     CVal values{1.0, 2.0, 3.0, 4.0};
 
-    Assoc map;
+    auto refprod = Assoc::ref_type(edm::RefProd<CKey>(&keys), edm::RefProd<CVal>(&values));
+    auto map = Assoc(refprod);
     map.insert(edm::Ref<CKey>(&keys, 0), std::make_pair(edm::Ref<CVal>(&values, 0), 0.1));
     map.insert(edm::Ref<CKey>(&keys, 1), std::make_pair(edm::Ref<CVal>(&values, 1), 0.2));
     map.insert(edm::Ref<CKey>(&keys, 2), std::make_pair(edm::Ref<CVal>(&values, 2), 0.3));
@@ -217,7 +222,8 @@ void testAssociationMapFilterValues::checkOneToManyQuality() {
     Data data{1.0, 2.0, 3.0, 4.0};
     CVal values{edm::Ref<Data>(&data, 0), edm::Ref<Data>(&data, 1), edm::Ref<Data>(&data, 2)};
 
-    Assoc map;
+    auto refprod = Assoc::ref_type(edm::RefProd<CKey>(&keys), edm::RefProd<CVal>(&values));
+    auto map = Assoc(refprod);
     map.insert(edm::Ref<CKey>(&keys, 0), std::make_pair(edm::Ref<CVal>(&values, 0), 0.1));
     map.insert(edm::Ref<CKey>(&keys, 1), std::make_pair(edm::Ref<CVal>(&values, 1), 0.2));
     map.insert(edm::Ref<CKey>(&keys, 2), std::make_pair(edm::Ref<CVal>(&values, 1), 0.3));
@@ -260,7 +266,8 @@ void testAssociationMapFilterValues::checkOneToManyQuality() {
       edm::RefToBase<Base>(edm::Ref<Data>(&data, 2))
     };
 
-    Assoc map;
+    auto refprod = Assoc::ref_type(edm::RefProd<CKey>(&keys), edm::RefProd<CVal>(&values));
+    auto map = Assoc(refprod);
     map.insert(edm::Ref<CKey>(&keys, 0), std::make_pair(edm::Ref<CVal>(&values, 0), 0.1));
     map.insert(edm::Ref<CKey>(&keys, 1), std::make_pair(edm::Ref<CVal>(&values, 1), 0.2));
     map.insert(edm::Ref<CKey>(&keys, 2), std::make_pair(edm::Ref<CVal>(&values, 1), 0.3));
