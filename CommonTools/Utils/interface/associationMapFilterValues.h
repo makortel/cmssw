@@ -102,7 +102,7 @@ namespace associationMapFilterValuesHelpers {
 
 template <typename T_AssociationMap, typename T_RefVector>
 T_AssociationMap associationMapFilterValues(const T_AssociationMap& map, const T_RefVector& valueRefs) {
-  T_AssociationMap ret;
+  T_AssociationMap ret(map.refProd());
 
   // First copy the keys of values to a set for faster lookup of their existence in the map
   std::unordered_set<typename T_AssociationMap::index_type> value_indices;
