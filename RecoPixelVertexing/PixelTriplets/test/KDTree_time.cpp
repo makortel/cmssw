@@ -104,8 +104,6 @@ namespace {
       search_time += delta(start, stop);
     }
 
-    //std::cout << "Total time in KDTree<DIM=" << DIM << ">::build() " << build_time << " s" << std::endl;
-    //std::cout << "Total time in KDTree<DIM=" << DIM << ">::search() " << search_time << " s" << std::endl;
     std::cout << DIM << " (" << testTraits<DIM>::repeat << " reps)   " << build_time << "                   " << search_time << std::endl;
   }
 }
