@@ -85,6 +85,8 @@ _globalTags = {
     "CMSSW_7_5_0_pre3_pmx": {"default": "MCRUN2_74_V7", "fullsim_50ns": "MCRUN2_74_V6"},
     "CMSSW_7_5_0_pre4": {"default": "MCRUN2_75_V1", "fullsim_50ns": "MCRUN2_75_V0"},
     "CMSSW_7_5_0_pre4_pmx": {"default": "MCRUN2_75_V1", "fullsim_50ns": "MCRUN2_75_V0"},
+    "CMSSW_7_5_0_pre5": {"default": "MCRUN2_75_V5", "fullsim_50ns": "MCRUN2_75_V4"},
+    "CMSSW_7_5_0_pre5_pmx": {"default": "MCRUN2_75_V5", "fullsim_50ns": "MCRUN2_75_V4"},
 }
 
 _releasePostfixes = ["_AlcaCSA14", "_PHYS14", "_TEST", "_pmx_v2", "_pmx_v3", "_pmx", "_Fall14DR", "_71XGENSIM_FIXGT", "_71XGENSIM_PU", "_71XGENSIM_PXbest", "_71XGENSIM_PXworst", "_71XGENSIM", "_73XGENSIM", "_BS", "_GenSim_7113", "_extended",
