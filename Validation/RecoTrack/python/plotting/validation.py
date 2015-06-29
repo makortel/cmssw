@@ -725,9 +725,9 @@ class SimpleValidation:
                 subdir = None
                 if self._algoDirMap is not None:
                     if hasattr(self._algoDirMap, "__call__"):
-                        subdir = self._algoDirMap(algo, quality)
+                        subdir = self._algoDirMap(a, q)
                     else:
-                        subdir = self._algoDirMap[quality][algo]
+                        subdir = self._algoDirMap[q][a]
                 self._doPlots(a, q, subdir)
 
         for tf in self._openFiles:
