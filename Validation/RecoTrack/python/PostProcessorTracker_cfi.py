@@ -43,9 +43,13 @@ postProcessorTrack = cms.EDAnalyzer("DQMGenericClient",
     "fakerate_ootpu_fwdpos 'fake rate from out of time pileup in endcap(+) vs N of pileup vertices' num_assoc(recoToSim)_ootpu_fwdpos num_reco_ootpu_fwdpos",
     "fakerate_ootpu_fwdneg 'fake rate from out of time pileup in endcap(-) vs N of pileup vertices' num_assoc(recoToSim)_ootpu_fwdneg num_reco_ootpu_fwdneg",
 
-    "effic_vs_dzpv 'Efficiency vs. dz (PV)' num_assoc(simToReco)_dzpv num_simul_dzpv",
-    "effic_vs_dzpv2 'Efficiency (tracking eff factorized out) vs. dz (PV)' num_assoc(simToReco)_dzpv num_simul2_dzpv",
-    "fakerate_vs_dzpv 'Fake rate vs. dz(PV)' num_assoc(recoToSim)_dzpv num_reco_dzpv fake"
+    "effic_vs_dzpv 'Efficiency vs. dz(PV)' num_assoc(simToReco)_dzpv num_simul_dzpv",
+    "effic_vs_dzpv2 'Efficiency (tracking eff factorized out) vs. dz(PV)' num_assoc(simToReco)_dzpv num_simul2_dzpv",
+    "fakerate_vs_dzpv 'Fake rate vs. dz(PV)' num_assoc(recoToSim)_dzpv num_reco_dzpv fake",
+
+    "effic_vs_dzpvsig 'Efficiency vs. dz(PV)/dzError' num_assoc(simToReco)_dzpvsig num_simul_dzpvsig",
+    "effic_vs_dzpvsig2 'Efficiency (tracking eff factorized out) vs. dz(PV)/dzError' num_assoc(simToReco)_dzpvsig num_simul2_dzpvsig",
+    "fakerate_vs_dzpvsig 'Fake rate vs. dz(PV)/dzError' num_assoc(recoToSim)_dzpvsig num_reco_dzpvsig fake"
     ),
     resolution = cms.vstring(
                              "cotThetares_vs_eta '#sigma(cot(#theta)) vs #eta' cotThetares_vs_eta",

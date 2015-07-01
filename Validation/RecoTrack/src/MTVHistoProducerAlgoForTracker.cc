@@ -674,6 +674,15 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_simul_dzpv.push_back( dbe_->book1D("num_simul_dzpv","N of simulated tracks from sim PV",nintDzpv,0,maxDzpv) );
   h_simul2_dzpv.push_back( dbe_->book1D("num_simul2_dzpv","N of simulated tracks (associated to any track) from sim PV",nintDzpv,0,maxDzpv) );
 
+  const int nintDzpvsig = 200;
+  const double maxDzpvsig = 10;
+
+  h_reco_dzpvsig.push_back( dbe_->book1D("num_reco_dzpvsig","N of reco track vs dz(PV)/dzError",nintDzpvsig,0,maxDzpvsig) );
+  h_assoc_dzpvsig.push_back( dbe_->book1D("num_assoc(simToReco)_dzpvsig","N of associated tracks (simToReco) vs dz(PV)/dzError",nintDzpvsig,0,maxDzpvsig) );
+  h_assoc2_dzpvsig.push_back( dbe_->book1D("num_assoc(recoToSim)_dzpvsig","N of associated (recoToSim) tracks vs dz(PV)/dzError",nintDzpvsig,0,maxDzpvsig) );
+  h_simul_dzpvsig.push_back( dbe_->book1D("num_simul_dzpvsig","N of simulated tracks from sim PV/dzError",nintDzpvsig,0,maxDzpvsig) );
+  h_simul2_dzpvsig.push_back( dbe_->book1D("num_simul2_dzpvsig","N of simulated tracks (associated to any track) from sim PV/dzError",nintDzpvsig,0,maxDzpvsig) );
+
   if(useLogPt){
     BinLogX(dzres_vs_pt.back()->getTH2F());
     BinLogX(dxyres_vs_pt.back()->getTH2F());
@@ -965,10 +974,13 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
 
     if(tp.eventId().bunchCrossing() == 0 && tp.eventId().event() == 0) {
       h_simul_dzpv[count]->Fill(0);
+      h_simul_dzpvsig[count]->Fill(0);
       if(isMatched) {
         h_simul2_dzpv[count]->Fill(0);
+        h_simul2_dzpvsig[count]->Fill(0);
         const double dzpv = std::abs(track->dz(pvPosition));
         h_assoc_dzpv[count]->Fill(dzpv);
+        h_assoc_dzpvsig[count]->Fill(dzpv/track->dzError());
       }
     }
 
@@ -1138,9 +1150,12 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
     }
   } // End for (unsigned int f=0; f<dzintervals[count].size()-1; f++){
   const double dzpv = std::abs(track.dz(pvPosition));
+  const double dzpvsig = dzpv/track.dzError();
   h_reco_dzpv[count]->Fill(dzpv);
+  h_reco_dzpvsig[count]->Fill(dzpvsig);
   if(isSigMatched) {
     h_assoc2_dzpv[count]->Fill(dzpv);
+    h_assoc2_dzpvsig[count]->Fill(dzpvsig);
   }
 
   int tmp = std::min((int)track.found(),int(maxHit-1));
@@ -1696,6 +1711,12 @@ void MTVHistoProducerAlgoForTracker::fillHistosFromVectors(int counter){
   cumulative(h_reco_dzpv[counter]->getTH1F());
   cumulative(h_assoc_dzpv[counter]->getTH1F());
   cumulative(h_assoc2_dzpv[counter]->getTH1F());
+
+  cumulative(h_simul_dzpvsig[counter]->getTH1F());
+  cumulative(h_simul2_dzpvsig[counter]->getTH1F());
+  cumulative(h_reco_dzpvsig[counter]->getTH1F());
+  cumulative(h_assoc_dzpvsig[counter]->getTH1F());
+  cumulative(h_assoc2_dzpvsig[counter]->getTH1F());
 }
 
 
