@@ -15,6 +15,14 @@
 
 using namespace std;
 
+namespace {
+  void cumulative(TH1 *histo) {
+    for (int i=1; i <= histo->GetNbinsX(); i++) {
+      histo->SetBinContent(i, histo->GetBinContent(i) + histo->GetBinContent(i-1));
+    }
+  }
+}
+
 MTVHistoProducerAlgoForTracker::MTVHistoProducerAlgoForTracker(const edm::ParameterSet& pset): MTVHistoProducerAlgo(pset){
   //parameters for _vs_eta plots
   minEta  = pset.getParameter<double>("minEta");  
@@ -657,6 +665,14 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_con_vertcount.push_back( dbe_->book1D("num_con_vertcount","N of PU tracks vs N of pileup vertices",nintVertcount,minVertcount,maxVertcount) );
   h_con_zpos.push_back( dbe_->book1D("num_con_zpos","N of PU tracks vs z of primary interaction vertex",nintZpos,minZpos,maxZpos) );
 
+  const int nintDzpv = 240;
+  const double maxDzpv = 0.6;
+
+  h_reco_dzpv.push_back( dbe_->book1D("num_reco_dzpv","N of reco track vs dz(PV)",nintDzpv,0,maxDzpv) );
+  h_assoc_dzpv.push_back( dbe_->book1D("num_assoc(simToReco)_dzpv","N of associated tracks (simToReco) vs dz(PV)",nintDzpv,0,maxDzpv) );
+  h_assoc2_dzpv.push_back( dbe_->book1D("num_assoc(recoToSim)_dzpv","N of associated (recoToSim) tracks vs dz(PV)",nintDzpv,0,maxDzpv) );
+  h_simul_dzpv.push_back( dbe_->book1D("num_simul_dzpv","N of simulated tracks from sim PV",nintDzpv,0,maxDzpv) );
+  h_simul2_dzpv.push_back( dbe_->book1D("num_simul2_dzpv","N of simulated tracks (associated to any track) from sim PV",nintDzpv,0,maxDzpv) );
 
   if(useLogPt){
     BinLogX(dzres_vs_pt.back()->getTH2F());
@@ -834,7 +850,8 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
 									 const TrackingParticle::Point& vertexTP,
 									 double dxySim, double dzSim, int nSimHits,
 									 const reco::Track* track,
-									 int numVertices, double vertz){
+									 int numVertices, double vertz,
+                                                                         const math::XYZPoint& pvPosition){
   bool isMatched = track;
 
   if((*TpSelectorForEfficiencyVsEta)(tp)){
@@ -945,7 +962,16 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
       }
     } // END for (unsigned int f=0; f<dzintervals[count].size()-1; f++){
 
-  
+
+    if(tp.eventId().bunchCrossing() == 0 && tp.eventId().event() == 0) {
+      h_simul_dzpv[count]->Fill(0);
+      if(isMatched) {
+        h_simul2_dzpv[count]->Fill(0);
+        const double dzpv = std::abs(track->dz(pvPosition));
+        h_assoc_dzpv[count]->Fill(dzpv);
+      }
+    }
+
     for (unsigned int f=0; f<zposintervals[count].size()-1; f++){
         if (vertexTP.z()>zposintervals[count][f]&&vertexTP.z()<=zposintervals[count][f+1]) {
 	        totSIM_zpos[count][f]++;
@@ -1027,6 +1053,7 @@ void MTVHistoProducerAlgoForTracker::fill_dedx_recoTrack_histos(int count, edm::
 void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
 								   const reco::Track& track,
 								   const math::XYZPoint& bsPosition,
+                                                                   const math::XYZPoint& pvPosition,
 								   bool isMatched,
 								   bool isSigMatched,
 								   bool isChargeMatched,
@@ -1110,6 +1137,11 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
       }	      
     }
   } // End for (unsigned int f=0; f<dzintervals[count].size()-1; f++){
+  const double dzpv = std::abs(track.dz(pvPosition));
+  h_reco_dzpv[count]->Fill(dzpv);
+  if(isSigMatched) {
+    h_assoc2_dzpv[count]->Fill(dzpv);
+  }
 
   int tmp = std::min((int)track.found(),int(maxHit-1));
   totREC_hit[count][tmp]++;
@@ -1657,7 +1689,13 @@ void MTVHistoProducerAlgoForTracker::fillHistosFromVectors(int counter){
   fillPlotFromVector(h_con_eta[counter],totCONeta[counter]);
   fillPlotFromVector(h_con_vertcount[counter],totCONvertcount[counter]);
   fillPlotFromVector(h_con_zpos[counter],totCONzpos[counter]);
-  
+
+
+  cumulative(h_simul_dzpv[counter]->getTH1F());
+  cumulative(h_simul2_dzpv[counter]->getTH1F());
+  cumulative(h_reco_dzpv[counter]->getTH1F());
+  cumulative(h_assoc_dzpv[counter]->getTH1F());
+  cumulative(h_assoc2_dzpv[counter]->getTH1F());
 }
 
 

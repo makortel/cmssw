@@ -47,6 +47,7 @@ class MultiTrackValidator : public edm::EDAnalyzer, protected MultiTrackValidato
   TrackingParticleSelector tpSelector;				      
   CosmicTrackingParticleSelector cosmictpSelector;
   edm::InputTag _simHitTpMapTag;
+  edm::InputTag vertexTag_;
 };
 
 

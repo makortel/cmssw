@@ -29,6 +29,9 @@
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/Common/interface/Ref.h"
 
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+
 #include "TMath.h"
 #include <TF1.h>
 
@@ -78,6 +81,7 @@ MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset):MultiTra
   runStandalone = pset.getParameter<bool>("runStandalone");
 
   _simHitTpMapTag = pset.getParameter<edm::InputTag>("simHitTpMapTag");
+  vertexTag_ = pset.getParameter<edm::InputTag>("vertex");
     
   if (!UseAssociators) {
     associators.clear();
@@ -155,11 +159,11 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
   
   edm::Handle<TrackingParticleCollection>  TPCollectionHeff ;
   event.getByLabel(label_tp_effic,TPCollectionHeff);
-  const TrackingParticleCollection tPCeff = *(TPCollectionHeff.product());
+  const TrackingParticleCollection& tPCeff = *(TPCollectionHeff.product());
   
   edm::Handle<TrackingParticleCollection>  TPCollectionHfake ;
   event.getByLabel(label_tp_fake,TPCollectionHfake);
-  const TrackingParticleCollection tPCfake = *(TPCollectionHfake.product());
+  //const TrackingParticleCollection& tPCfake = *(TPCollectionHfake.product());
   
   if(parametersDefiner=="CosmicParametersDefinerForTP") {
     edm::Handle<SimHitTPAssociationProducer::SimHitTPAssociationList> simHitsTPAssoc;
@@ -191,8 +195,33 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 
   edm::Handle<TrackingVertexCollection> tvH;
   event.getByLabel(label_tv,tvH);
-  TrackingVertexCollection tv = *tvH;      
+  const TrackingVertexCollection& tv = *tvH;      
   
+  edm::Handle<reco::VertexCollection> vertexH;
+  event.getByLabel(vertexTag_, vertexH);
+  if(vertexH->empty())
+    return;
+  const reco::Vertex& thePV = (*vertexH)[0];
+  if(thePV.isFake() || thePV.ndof() < 0.)
+    return;
+
+  bool isPVmatched = false;
+  for(size_t i=0; i<tv.size(); ++i) {
+    const TrackingVertex& simV = tv[i];
+    if(simV.eventId().bunchCrossing() != 0) continue; // remove OOTPU
+    if(simV.eventId().event() != 0) continue; // remove ITPU
+
+    if(std::abs(thePV.z() - simV.position().z()) < 0.1 &&
+       std::abs(thePV.z() - simV.position().z())/thePV.zError() < 3) {
+      isPVmatched = true;
+    }
+
+    break; // check only the hard scatter sim PV
+  }
+  if(!isPVmatched)
+    return;
+  
+
   int w=0; //counter counting the number of sets of histograms
   for (unsigned int ww=0;ww<associators.size();ww++){
     for (unsigned int www=0;www<label.size();www++){
@@ -339,7 +368,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
             }
         }
 
-          histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,*tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU);
+        histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,*tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU, thePV.position());
           sts++;
           if (matchedTrackPointer) asts++;
 
@@ -399,6 +428,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
         int tpbx = 0;
 	int nSimHits = 0;
 	double sharedFraction = 0.;
+        const TrackingParticle *tpMatch = nullptr;
 	std::vector<std::pair<TrackingParticleRef, double> > tp;
 	if(recSimColl.find(track) != recSimColl.end()){
 	  tp = recSimColl[track];
@@ -428,7 +458,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	}
 	
 
-	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(),isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
+	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), thePV.position(), isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
 
 	// dE/dx
 	//	reco::TrackRef track2  = reco::TrackRef( trackCollection, i );

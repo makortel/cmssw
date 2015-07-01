@@ -26,6 +26,8 @@
 <use   name="DQMServices/ClientConfig"/>
 <use   name="Validation/RecoTrack"/>
 <lib   name="MathMore"/>
+<flags REM_CXXFLAGS="-Werror=unused-variable"/>
+<flags REM_CXXFLAGS="-Werror=unused-but-set-variable"/>
 <library   file="*.cc" name="ValidationRecoTrackPlugins">
   <flags   EDM_PLUGIN="1"/>
 </library>

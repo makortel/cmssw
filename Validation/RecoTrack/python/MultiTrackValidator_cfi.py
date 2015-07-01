@@ -49,6 +49,7 @@ multiTrackValidator = cms.EDAnalyzer(
     ### reco input configuration ###
     label = cms.VInputTag(cms.InputTag("generalTracks")),
     beamSpot = cms.InputTag("offlineBeamSpot"),
+    vertex = cms.InputTag("offlinePrimaryVertices"),
 
     ### dE/dx configuration ###
     dEdx1Tag = cms.InputTag("dedxHarmonic2"),
