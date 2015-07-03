@@ -38,40 +38,55 @@ _effandfake3 = PlotGroup("effandfake3", [
     Plot(FakeDuplicate("fakeduprate_vs_3Dlayer", assoc="num_assoc(recoToSim)_3Dlayer", dup="num_duplicate_3Dlayer", reco="num_reco_3Dlayer", title="fake+duplicates vs 3D layer"),
          xtitle="track 3D layers", ytitle="fake+duplicates rate vs 3D layers", ymax=_maxFake, xmax=20),
 ])
+_common = {"ymin": 0, "ymax": 1.025}
+_effvspos = PlotGroup("effvspos", [
+    Plot("effic_vs_vertpos", xtitle="TP vert xy pos (cm)", ytitle="efficiency vs vert xy pos", **_common),
+    Plot("effic_vs_zpos", xtitle="TP vert z pos (cm)", ytitle="efficiency vs vert z pos", **_common),
+    Plot("effic_vs_dr", xlog=True, xtitle="min #DeltaR", ytitle="efficiency vs #DeltaR", **_common),
+    Plot("fakerate_vs_dr", xlog=True, title="", xtitle="min #DeltaR", ytitle="Fake rate vs #DeltaR", ymin=0, ymax=_maxFake)
+],
+                         legendDy=-0.025
+)
 
 _dupandfake1 = PlotGroup("dupandfake1", [
     Plot("fakeratePt", xtitle="track p_{T} (GeV)", ytitle="fakerate vs p_{T}", xlog=True, ymax=_maxFake),
     Plot("duplicatesRate_Pt", xtitle="track p_{T} (GeV)", ytitle="duplicates rate vs p_{T}", ymax=_maxFake, xlog=True),
+    Plot("pileuprate_Pt", xtitle="track p_{T} (GeV)", ytitle="pileup rate vs p_{T}", ymax=_maxFake, xlog=True),
     Plot("fakerate", xtitle="track #eta", ytitle="fakerate vs #eta", title="", ymax=_maxFake),
     Plot("duplicatesRate", xtitle="track #eta", ytitle="duplicates rate vs #eta", title="", ymax=_maxFake),
+    Plot("pileuprate", xtitle="track #eta", ytitle="pileup rate vs #eta", title="", ymax=_maxFake),
     Plot("fakerate_vs_phi", xtitle="track #phi", ytitle="fakerate vs #phi", ymax=_maxFake),
     Plot("duplicatesRate_phi", xtitle="track #phi", ytitle="duplicates rate vs #phi", ymax=_maxFake),
-])
+    Plot("pileuprate_phi", xtitle="track #phi", ytitle="pileup rate vs #phi", ymax=_maxFake),
+], ncols=3)
 _dupandfake2 = PlotGroup("dupandfake2", [
     Plot("fakerate_vs_dxy", xtitle="track dxy (cm)", ytitle="fakerate vs dxy", ymax=_maxFake),
     Plot("duplicatesRate_dxy", xtitle="track dxy (cm)", ytitle="duplicates rate vs dxy", ymax=_maxFake),
+    Plot("pileuprate_dxy", xtitle="track dxy (cm)", ytitle="pileup rate vs dxy", ymax=_maxFake),
     Plot("fakerate_vs_dz", xtitle="track dz (cm)", ytitle="fakerate vs dz", title="", ymax=_maxFake),
     Plot("duplicatesRate_dz", xtitle="track dz (cm)", ytitle="duplicates rate vs dz", title="", ymax=_maxFake),
+    Plot("pileuprate_dz", xtitle="track dz (cm)", ytitle="pileup rate vs dz", title="", ymax=_maxFake),
     Plot("fakerate_vs_hit", xtitle="track hits", ytitle="fakerate vs hits", ymax=_maxFake),
-    Plot("duplicatesRate_hit", xtitle="track hits", ytitle="duplicates rate vs hits", ymax=_maxFake)
-])
+    Plot("duplicatesRate_hit", xtitle="track hits", ytitle="duplicates rate vs hits", ymax=_maxFake),
+    Plot("pileuprate_hit", xtitle="track hits", ytitle="pileup rate vs hits", ymax=_maxFake)
+], ncols=3)
 _dupandfake3 = PlotGroup("dupandfake3", [
-    Plot("fakerate_vs_layer", xtitle="track layers", ytitle="fakerate vs layer", ymax=_maxFake),
-    Plot("duplicatesRate_layer", xtitle="track layers", ytitle="duplicates rate vs layers", ymax=_maxFake),
-    Plot("fakerate_vs_pixellayer", xtitle="track pixel layers", ytitle="fakerate vs pixel layers", title="", ymax=_maxFake),
-    Plot("duplicatesRate_pixellayer", xtitle="track pixel layers", ytitle="duplicates rate vs pixel layers", title="", ymax=_maxFake),
-    Plot("fakerate_vs_3Dlayer", xtitle="track 3D layers", ytitle="fakerate vs 3D layers", ymax=_maxFake),
-    Plot("duplicatesRate_3Dlayer", xtitle="track 3D layers", ytitle="duplicates rate vs 3D layers", ymax=_maxFake)
-])
-
-_common = {"ymin": 0, "ymax": 1.025}
-_effvspos = PlotGroup("effvspos", [
-    Plot("effic_vs_vertpos", xtitle="TP vert xy pos", ytitle="efficiency vs vert xy pos", **_common),
-    Plot("effic_vs_zpos", xtitle="TP vert z pos", ytitle="efficiency vs vert z pos", **_common),
-    Plot("effic_vs_dr", xlog=True, xtitle="#DeltaR", ytitle="efficiency vs #DeltaR", **_common),
-    Plot("fakerate_vs_dr", xlog=True, title="", xtitle="#DeltaR", ytitle="Fake rate vs #DeltaR", ymin=0, ymax=_maxFake)
+    Plot("fakerate_vs_layer", xtitle="track layers", ytitle="fakerate vs layer", ymax=_maxFake, xmax=25),
+    Plot("duplicatesRate_layer", xtitle="track layers", ytitle="duplicates rate vs layers", ymax=_maxFake, xmax=25),
+    Plot("pileuprate_layer", xtitle="track layers", ytitle="pileup rate vs layers", ymax=_maxFake, xmax=25),
+    Plot("fakerate_vs_pixellayer", xtitle="track pixel layers", ytitle="fakerate vs pixel layers", title="", ymax=_maxFake, xmax=6),
+    Plot("duplicatesRate_pixellayer", xtitle="track pixel layers", ytitle="duplicates rate vs pixel layers", title="", ymax=_maxFake, xmax=6),
+    Plot("pileuprate_pixellayer", xtitle="track pixel layers", ytitle="pileup rate vs pixel layers", title="", ymax=_maxFake, xmax=6),
+    Plot("fakerate_vs_3Dlayer", xtitle="track 3D layers", ytitle="fakerate vs 3D layers", ymax=_maxFake, xmax=20),
+    Plot("duplicatesRate_3Dlayer", xtitle="track 3D layers", ytitle="duplicates rate vs 3D layers", ymax=_maxFake, xmax=20),
+    Plot("pileuprate_3Dlayer", xtitle="track 3D layers", ytitle="pileup rate vs 3D layers", ymax=_maxFake, xmax=20)
+], ncols=3)
+_dupandfake4 = PlotGroup("dupandfake4", [
+    Plot("fakerate_vs_chi2", xtitle="track #chi^{2}", ytitle="fakerate vs #chi^{2}", ymax=_maxFake),
+    Plot("duplicatesRate_chi2", xtitle="track #chi^{2}", ytitle="duplicates rate vs #chi^{2}", ymax=_maxFake),
+    Plot("pileuprate_chi2", xtitle="track #chi^{2}", ytitle="pileup rate vs #chi^{2}", ymax=_maxFake)
 ],
-                      legendDy=-0.025
+                         legendDy=-0.025
 )
 
 # These don't exist in FastSim
@@ -94,27 +109,13 @@ _chargemisid = PlotGroup("chargemisid", [
     Plot("chargeMisIdRate_dz", xtitle="dz", ytitle="charge mis-id rate vs dz", ymax=0.1)
 ])
 _hitsAndPt = PlotGroup("hitsAndPt", [
-    Plot("missing_inner_layers", stat=True, normalizeToUnitArea=True, drawStyle="hist"),
-    Plot("missing_outer_layers", stat=True, normalizeToUnitArea=True, drawStyle="hist"),
-    Plot("hits_eta", stat=True, statx=0.38, xtitle="#eta", ytitle="<hits> vs #eta", ymin=8, ymax=24, statyadjust=[0,0,-0.15]),
-    Plot("hits", stat=True, xtitle="hits", xmin=0, xmax=40, drawStyle="hist"),
-    Plot("num_simul_pT", stat=True, normalizeToUnitArea=True, xtitle="p_{T}", xmin=0, xmax=10, drawStyle="hist"),
-    Plot("num_reco_pT", stat=True, normalizeToUnitArea=True, xtitle="p_{T}", xmin=0, xmax=10, drawStyle="hist")
+    Plot("missing_inner_layers", stat=True, normalizeToUnitArea=True, ylog=True, ymin=1e-6, ymax=1, drawStyle="hist"),
+    Plot("missing_outer_layers", stat=True, normalizeToUnitArea=True, ylog=True, ymin=1e-6, ymax=1, drawStyle="hist"),
+    Plot("hits_eta", stat=True, statx=0.38, xtitle="track #eta", ytitle="<hits> vs #eta", ymin=8, ymax=24, statyadjust=[0,0,-0.15]),
+    Plot("hits", stat=True, xtitle="track hits", xmin=0, xmax=40, drawStyle="hist"),
+    Plot("num_simul_pT", stat=True, normalizeToUnitArea=True, xtitle="TP p_{T}", xlog=True, drawStyle="hist"),
+    Plot("num_reco_pT", stat=True, normalizeToUnitArea=True, xtitle="track p_{T}", xlog=True, drawStyle="hist")
 ])
-_common = {"stat": True, "normalizeToUnitArea": True, "drawStyle": "hist"}
-_ntracks = PlotGroup("ntracks", [
-#    Plot("num_simul_eta", xtitle="#eta", **_common),
-#    Plot("num_reco_eta", xtitle="#eta", **_common),
-    Plot("num_simul_dr", xtitle="#DeltaR", **_common),
-    Plot("num_reco_dr", xtitle="#DeltaR", **_common),
-    Plot("num_simul_dxy", xtitle="dxy", **_common),
-    Plot("num_reco_dxy", xtitle="dxy", **_common),
-    Plot("num_simul_dz", xtitle="dz", **_common),
-    Plot("num_reco_dz", xtitle="dz", **_common),
-],
-#                     legendDy=-0.025
-                            legendDy=-0.02, legendDh=-0.01
-)
 _tuning = PlotGroup("tuning", [
     Plot("chi2", stat=True, normalizeToUnitArea=True, ylog=True, ymin=1e-6, ymax=[0.1, 0.2, 0.5, 1.0001], drawStyle="hist", xtitle="#chi^{2}", ratioUncertainty=False),
     Plot("chi2_prob", stat=True, normalizeToUnitArea=True, drawStyle="hist", xtitle="Prob(#chi^{2})", ratioUncertainty=False),
@@ -162,14 +163,14 @@ plotter = Plotter([
     _effandfake1,
     _effandfake2,
     _effandfake3,
+    _effvspos,
     _dupandfake1,
     _dupandfake2,
     _dupandfake3,
-    _effvspos,
+    _dupandfake4,
     _dedx,
-    _chargemisid,
+#    _chargemisid,
     _hitsAndPt,
-    _ntracks,
     _tuning,
     _pulls,
     _resolutionsEta,
