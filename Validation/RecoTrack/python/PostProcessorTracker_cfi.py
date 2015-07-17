@@ -47,9 +47,17 @@ postProcessorTrack = cms.EDAnalyzer("DQMGenericClient",
     "effic_vs_dzpv2 'Efficiency (tracking eff factorized out) vs. dz(PV)' num_assoc(simToReco)_dzpv num_simul2_dzpv",
     "fakerate_vs_dzpv 'Fake rate vs. dz(PV)' num_assoc(recoToSim)_dzpv num_reco_dzpv fake",
 
+    "effic_vs_dzpv_pt 'Fraction of true p_{T} carried by recoed TPs from PV vs. dz(PV)' num_assoc(simToReco)_dzpv_pt num_simul_dzpv_pt",
+    "effic_vs_dzpv2_pt 'Fraction of true p_{T} carried by recoed TPs from PV (tracking eff factorized out) vs. dz(PV)' num_assoc(simToReco)_dzpv_pt num_simul2_dzpv_pt",
+    "fakerate_vs_dzpv_pt 'Fraction of fake p_{T} carried by tracks from PV vs. dz(PV)' num_assoc(recoToSim)_dzpv_pt num_reco_dzpv_pt fake",
+
     "effic_vs_dzpvsig 'Efficiency vs. dz(PV)/dzError' num_assoc(simToReco)_dzpvsig num_simul_dzpvsig",
     "effic_vs_dzpvsig2 'Efficiency (tracking eff factorized out) vs. dz(PV)/dzError' num_assoc(simToReco)_dzpvsig num_simul2_dzpvsig",
-    "fakerate_vs_dzpvsig 'Fake rate vs. dz(PV)/dzError' num_assoc(recoToSim)_dzpvsig num_reco_dzpvsig fake"
+    "fakerate_vs_dzpvsig 'Fake rate vs. dz(PV)/dzError' num_assoc(recoToSim)_dzpvsig num_reco_dzpvsig fake",
+
+    "effic_vs_dzpvsig_pt 'Fraction of true p_{T} carried by recoed TPs from PV vs. dz(PV)/dzError' num_assoc(simToReco)_dzpvsig_pt num_simul_dzpvsig_pt",
+    "effic_vs_dzpvsig2_pt 'Fraction of true p_{T} carried by recoed TPs from PV (tracking eff factorized out) vs. dz(PV)/dzError' num_assoc(simToReco)_dzpvsig_pt num_simul2_dzpvsig_pt",
+    "fakerate_vs_dzpvsig_pt 'Fraction of fake p_{T} carried by tracks from PV vs. dz(PV)/dzError' num_assoc(recoToSim)_dzpvsig_pt num_reco_dzpvsig_pt fake"
     ),
     resolution = cms.vstring(
                              "cotThetares_vs_eta '#sigma(cot(#theta)) vs #eta' cotThetares_vs_eta",

@@ -188,6 +188,9 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   std::vector<MonitorElement*> h_reco_dzpv, h_assoc_dzpv, h_assoc2_dzpv, h_simul_dzpv, h_simul2_dzpv;
   std::vector<MonitorElement*> h_reco_dzpvsig, h_assoc_dzpvsig, h_assoc2_dzpvsig, h_simul_dzpvsig, h_simul2_dzpvsig;
 
+  std::vector<MonitorElement*> h_reco_dzpv_pt, h_assoc_dzpv_pt, h_assoc2_dzpv_pt, h_simul_dzpv_pt, h_simul2_dzpv_pt;
+  std::vector<MonitorElement*> h_reco_dzpvsig_pt, h_assoc_dzpvsig_pt, h_assoc2_dzpvsig_pt, h_simul_dzpvsig_pt, h_simul2_dzpvsig_pt;
+
 
   // dE/dx
   // in the future these might become an array
