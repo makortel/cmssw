@@ -675,24 +675,14 @@ def _copySubDir(oldfile, newfile, basenames, dirname):
     return newf
 
 def _copyDir(src, dst):
-    """Copy recursively objects from src TDirectory to dst TDirectory."""
+    """Copy non-TTree objects from src TDirectory to dst TDirectory."""
     keys = src.GetListOfKeys()
     for key in keys:
         classname = key.GetClassName()
         cl = ROOT.TClass.GetClass(classname)
         if not cl:
             continue
-        if cl.InheritsFrom("TDirectory"):
-            src2 = src.GetDirectory(key.GetName())
-            dst2 = dst.mkdir(key.GetName())
-            _copyDir(src2, dst2)
-        elif cl.InheritsFrom("TTree"):
-            t = key.ReadObj()
-            dst.cd()
-            newt = t.CloneTree(-1, "fast")
-            newt.Write()
-            newt.Delete()
-        else:
+        if not (cl.InheritsFrom("TTree") and cl.InheritsFrom("TDirectory")):
             dst.cd()
             obj = key.ReadObj()
             obj.Write()
