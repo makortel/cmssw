@@ -515,7 +515,13 @@ class Validation:
             refValFile = ROOT.TFile.Open(refValFilePath)
 
         # Copy the relevant histograms to a new validation root file
-        newValFile = _copySubDir(harvestedfile, valname, self._plotter.getPossibleDirectoryNames(), self._getDirectoryName(quality, algo))
+        try:
+            subdir = self._getDirectoryName(quality, algo)
+        except KeyError, e:
+            if plotting.missingOk:
+                return
+            raise e
+        newValFile = _copySubDir(harvestedfile, valname, self._plotter.getPossibleDirectoryNames(), subdir)
         fileList = [valname]
 
         # Do the plots
@@ -526,7 +532,7 @@ class Validation:
             "%s, %s %s" % (sample.name(), _stripRelease(self._refRelease), refSelection),
             "%s, %s %s" % (sample.name(), _stripRelease(self._newRelease), newSelection)
         ],
-                             subdir = self._getDirectoryName(quality, algo))
+                             subdir = subdir)
         fileList.extend(self._plotter.draw(algo, **self._plotterDrawArgs))
 
         newValFile.Close()
@@ -571,6 +577,13 @@ class Validation:
         fastValFile = ROOT.TFile.Open(fastValFilePath)
         fullValFile = ROOT.TFile.Open(fullValFilePath)
 
+        try:
+            subdir = self._getDirectoryName(quality, algo)
+        except KeyError, e:
+            if plotting.missingOk:
+                return
+            raise e
+
         # Do plots
         print "Comparing FullSim and FastSim {sample} {algo} {quality}".format(
             sample=fastSample.name(), algo=algo, quality=quality)
@@ -578,7 +591,7 @@ class Validation:
             "FullSim %s, %s %s" % (fullSample.name(), _stripRelease(self._newRelease), fullSelection),
             "FastSim %s, %s %s" % (fastSample.name(), _stripRelease(self._newRelease), fastSelection),
         ],
-                             subdir = self._getDirectoryName(quality, algo))
+                             subdir = subdir)
         fileList = self._plotter.draw(algo, **self._plotterDrawArgs)
 
         fullValFile.Close()
@@ -719,7 +732,12 @@ class SimpleValidation:
                     if hasattr(self._algoDirMap, "__call__"):
                         subdir = self._algoDirMap(a, q)
                     else:
-                        subdir = self._algoDirMap[q][a]
+                        try:
+                            subdir = self._algoDirMap[q][a]
+                        except KeyError, e:
+                            if plotting.missingOk:
+                                return
+                            raise e
                 self._doPlots(a, q, subdir)
 
         for tf in self._openFiles:
