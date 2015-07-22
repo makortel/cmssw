@@ -372,7 +372,7 @@ _summary = PlotGroup("summary", [
 ],
                      legendDy=-0.025
 )
-_summary = PlotGroup("summaryHp", [
+_summaryHp = PlotGroup("summaryHp", [
     Plot(AggregateBins("efficiency", "effic_vs_coll", _collLabelMapHp), title="Efficiency vs collection", ytitle="Efficiency", ymin=1e-3, ymax=1, ylog=True, **_common),
     Plot(AggregateBins("fakerate", "fakerate_vs_coll", _collLabelMapHp), title="Fakerate vs collection", ytitle="Fake rate", ymax=_maxFake, **_common),
     Plot(AggregateBins("duplicatesRate", "duplicatesRate_coll", _collLabelMapHp), title="Duplicates rate vs collection", ytitle="Duplicates rate", ymax=_maxFake, **_common),
@@ -384,7 +384,8 @@ _summary = PlotGroup("summaryHp", [
 summaryPlotter = Plotter(
     plotter.getPossibleDirectoryNames(),
 [
-    _summary
+    _summary,
+    _summaryHp
 ])
 
 
