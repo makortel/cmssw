@@ -165,7 +165,7 @@ class Sample:
     """Represents a RelVal sample."""
     def __init__(self, sample, append=None, midfix=None, putype=None,
                  fastsim=False, fastsimCorrespondingFullsimPileup=None,
-                 version="v1", scenario=None, overrideGlobalTag=None):
+                 version="v1", dqmVersion="0001", scenario=None, overrideGlobalTag=None):
         """Constructor.
 
         Arguments:
@@ -188,6 +188,7 @@ class Sample:
         self._fastsim = fastsim
         self._fastsimCorrespondingFullsimPileup = fastsimCorrespondingFullsimPileup
         self._version = version
+        self._dqmVersion = dqmVersion
         self._scenario = scenario
         self._overrideGlobalTag = overrideGlobalTag
 
@@ -296,10 +297,10 @@ class Sample:
             
         globalTag = _getGlobalTag(self, newRelease)
 
-        fname = 'DQM_V0001_R000000001__{sample}{midfix}__{newrelease}-{pileup}{globaltag}{scenario}{fastsim}-{version}__DQMIO.root'.format(
+        fname = 'DQM_V{dqmVersion}_R000000001__{sample}{midfix}__{newrelease}-{pileup}{globaltag}{scenario}{fastsim}-{version}__DQMIO.root'.format(
             sample=sample, midfix=midfix, newrelease=_stripRelease(newRelease),
             pileup=pileup, globaltag=globalTag, scenario=scenario, fastsim=fastsim,
-            version=self.version(newRelease)
+            version=self.version(newRelease), dqmVersion=self._dqmVersion
         )
 
         return fname
