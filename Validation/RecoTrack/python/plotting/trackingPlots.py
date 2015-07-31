@@ -1,8 +1,8 @@
 from plotting import FakeDuplicate, AggregateBins, Plot, PlotGroup, Plotter, AlgoOpt
 import validation
 
-_maxEff = [0.2, 0.5, 0.8, 1.025]
-_maxFake = [0.05, 0.1, 0.2, 0.5, 0.8, 1.025]
+_maxEff = [0.01, 0.05, 0.1, 0.2, 0.5, 0.8, 1.025]
+_maxFake = [0.01, 0.05, 0.1, 0.2, 0.5, 0.8, 1.025]
 
 _effandfake1 = PlotGroup("effandfake1", [
     Plot("efficPt", title="Efficiency vs p_{T}", xtitle="TP p_{T} (GeV)", ytitle="efficiency vs p_{T}", xlog=True),
