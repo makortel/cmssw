@@ -10,10 +10,12 @@
 #include "RecoPixelVertexing/PixelTriplets/interface/HitQuadrupletGenerator.h"
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/EDGetToken.h"
+
 
 class TrackingRegion;
 class HitQuadrupletGeneratorFromTripletAndLayers;
-namespace ctfseeding { class SeedingLayer;}
+class SeedingLayerSetsHits;
 
 namespace edm { class Event; }
 namespace edm { class EventSetup; }
@@ -24,7 +26,7 @@ public:
 
 public:
 
-  CombinedHitQuadrupletGenerator( const edm::ParameterSet& cfg);
+  CombinedHitQuadrupletGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
 
   virtual ~CombinedHitQuadrupletGenerator();
 
@@ -33,14 +35,10 @@ public:
       const edm::Event & ev,  const edm::EventSetup& es);
 
 private:
-  void init(const edm::ParameterSet & cfg, const edm::EventSetup& es);
+  edm::EDGetTokenT<SeedingLayerSetsHits> theSeedingLayerToken;
 
-  mutable bool initialised;
-
-  edm::ParameterSet         theConfig;
   LayerCacheType            theLayerCache;
 
-  typedef std::vector<std::unique_ptr<HitQuadrupletGeneratorFromTripletAndLayers> > GeneratorContainer;
-  GeneratorContainer        theGenerators;
+  std::unique_ptr<HitQuadrupletGeneratorFromTripletAndLayers> theGenerator;
 };
 #endif

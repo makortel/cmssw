@@ -9,22 +9,14 @@
 
 #include <vector>
 #include <tuple>
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayer.h"
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSets.h"
+#include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 
-class LayerQuadruplets {
-public:
-  typedef std::tuple<ctfseeding::SeedingLayer,
-                      ctfseeding::SeedingLayer,
-                      ctfseeding::SeedingLayer> SeedingLayerTriplet;
-  typedef std::tuple<SeedingLayerTriplet, std::vector<ctfseeding::SeedingLayer> > LayerTripletAndLayers;
+namespace LayerQuadruplets {
+  using Layer = SeedingLayerSetsHits::SeedingLayer;
+  using LayerSet = SeedingLayerSetsHits::SeedingLayerSet;
+  using LayerSetAndLayers = std::pair<LayerSet, std::vector<Layer> >;
 
-  LayerQuadruplets( const ctfseeding::SeedingLayerSets & sets) : theSets(sets) {}
-
-  std::vector<LayerTripletAndLayers> layers() const;
-
-private:
-  ctfseeding::SeedingLayerSets theSets;
+  std::vector<LayerSetAndLayers> layers(const SeedingLayerSetsHits& sets);
 };
 
 #endif

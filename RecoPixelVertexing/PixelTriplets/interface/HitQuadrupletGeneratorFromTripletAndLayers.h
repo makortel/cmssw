@@ -1,5 +1,5 @@
-#ifndef HitQuadrupletGeneratorFromTripletAndLayers_H
-#define HitQuadrupletGeneratorFromTripletAndLayers_H
+#ifndef RecoPixelVertexing_PixelTriplets_HitQuadrupletGeneratorFromTripletAndLayers_h
+#define RecoPixelVertexing_PixelTriplets_HitQuadrupletGeneratorFromTripletAndLayers_h
 
 /** A HitQuadrupletGenerator from HitTripletGenerator and vector of
     Layers. The HitTripletGenerator provides a set of hit triplets.
@@ -7,23 +7,31 @@
     provided Layers
  */
 
-#include "RecoPixelVertexing/PixelTriplets/interface/HitQuadrupletGenerator.h"
-#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGenerator.h"
+#include "RecoPixelVertexing/PixelTriplets/interface/OrderedHitSeeds.h"
 #include <vector>
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayer.h"
-
+#include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
 
+class HitTripletGeneratorFromPairAndLayers;
 
-class HitQuadrupletGeneratorFromTripletAndLayers : public HitQuadrupletGenerator {
+class HitQuadrupletGeneratorFromTripletAndLayers {
 
 public:
   typedef LayerHitMapCache  LayerCacheType;
 
-  virtual ~HitQuadrupletGeneratorFromTripletAndLayers() {}
-  virtual void init( std::unique_ptr<HitTripletGenerator> triplets, 
-    const std::vector<ctfseeding::SeedingLayer>& layers, LayerCacheType* layerCache) = 0; 
+  HitQuadrupletGeneratorFromTripletAndLayers();
+  virtual ~HitQuadrupletGeneratorFromTripletAndLayers();
+
+  void init( std::unique_ptr<HitTripletGeneratorFromPairAndLayers>&& tripletGenerator, LayerCacheType* layerCache);
+
+  virtual void hitQuadruplets( const TrackingRegion& region, OrderedHitSeeds& result,
+                               const edm::Event& ev, const edm::EventSetup& es,
+                               SeedingLayerSetsHits::SeedingLayerSet tripletLayers,
+                               const std::vector<SeedingLayerSetsHits::SeedingLayer>& fourthLayers) = 0;
+
+protected:
+  std::unique_ptr<HitTripletGeneratorFromPairAndLayers> theTripletGenerator;
+  LayerCacheType *theLayerCache;
 };
 #endif
-
 

@@ -1,29 +1,30 @@
 #include "LayerQuadruplets.h"
 
-using namespace ctfseeding;
-std::vector<LayerQuadruplets::LayerTripletAndLayers> LayerQuadruplets::layers() const
-{
-  std::vector<LayerTripletAndLayers> result;
+namespace LayerQuadruplets {
+std::vector<LayerSetAndLayers> layers(const SeedingLayerSetsHits& sets) {
+  std::vector<LayerSetAndLayers> result;
+  if(sets.numberOfLayersInSet() != 4)
+    return result;
 
-  for(const SeedingLayers& set: theSets) {
-    if (set.size() != 4) continue;
-    SeedingLayerTriplet layerTriplet = std::make_tuple(set[0], set[1], set[2]);
+  for(LayerSet set: sets) {
     bool added = false;
-    for(LayerTripletAndLayers& ir: result) {
-      const SeedingLayerTriplet & resTriplet = std::get<0>(ir);
-      if (std::get<0>(resTriplet) == std::get<0>(layerTriplet) &&
-          std::get<1>(resTriplet) == std::get<1>(layerTriplet) &&
-          std::get<2>(resTriplet) == std::get<2>(layerTriplet)) {
-        std::vector<SeedingLayer>& fourths = std::get<1>(ir);
+
+    for(auto ir = result.begin(); ir < result.end(); ++ir) {
+      const LayerSet & resTriplet = ir->first;
+      if(resTriplet[0].index() == set[0].index() &&
+         resTriplet[1].index() == set[1].index() &&
+         resTriplet[2].index() == set[2].index()) {
+        std::vector<Layer>& fourths = ir->second;
         fourths.push_back( set[3] );
         added = true;
         break;
       }
     }
     if (!added) {
-      LayerTripletAndLayers ltl = std::make_tuple(layerTriplet,  std::vector<SeedingLayer>(1, set[3]) );
+      LayerSetAndLayers ltl = std::make_pair(set, std::vector<Layer>(1, set[3]) );
       result.push_back(ltl);
     }
   }
   return result;
+}
 }

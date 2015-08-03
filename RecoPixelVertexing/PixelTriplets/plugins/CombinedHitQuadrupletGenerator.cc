@@ -1,58 +1,33 @@
 #include "CombinedHitQuadrupletGenerator.h"
 
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSets.h"
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
-#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGenerator.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitQuadrupletGeneratorFromTripletAndLayers.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitQuadrupletGeneratorFromTripletAndLayersFactory.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayers.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayersFactory.h"
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
 #include "LayerQuadruplets.h"
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "DataFormats/Common/interface/Handle.h"
 
 
 using namespace std;
 using namespace ctfseeding;
 
-CombinedHitQuadrupletGenerator::CombinedHitQuadrupletGenerator(const edm::ParameterSet& cfg)
-  : initialised(false), theConfig(cfg)
-{ }
-
-void CombinedHitQuadrupletGenerator::init(const edm::ParameterSet & cfg, const edm::EventSetup& es)
+CombinedHitQuadrupletGenerator::CombinedHitQuadrupletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC):
+  theSeedingLayerToken(iC.consumes<SeedingLayerSetsHits>(cfg.getParameter<edm::InputTag>("SeedingLayers")))
 {
-  std::string layerBuilderName = cfg.getParameter<std::string>("SeedingLayers");
-  edm::ESHandle<SeedingLayerSetsBuilder> layerBuilder;
-  es.get<TrackerDigiGeometryRecord>().get(layerBuilderName, layerBuilder);
-
-  SeedingLayerSets layerSets  =  layerBuilder->layers(es);
-
-  vector<LayerQuadruplets::LayerTripletAndLayers> quadlayers=LayerQuadruplets(layerSets).layers();
-
-  edm::ParameterSet generatorPSet = theConfig.getParameter<edm::ParameterSet>("GeneratorPSet");
+  edm::ParameterSet generatorPSet = cfg.getParameter<edm::ParameterSet>("GeneratorPSet");
   std::string       generatorName = generatorPSet.getParameter<std::string>("ComponentName");
-  edm::ParameterSet tripletGeneratorPSet = theConfig.getParameter<edm::ParameterSet>("TripletGeneratorPSet");
+  edm::ParameterSet tripletGeneratorPSet = cfg.getParameter<edm::ParameterSet>("TripletGeneratorPSet");
   std::string tripletGeneratorName = tripletGeneratorPSet.getParameter<std::string>("ComponentName");
 
-  for(auto& ltl: quadlayers) {
-    auto& triplet = std::get<0>(ltl);
-
-    std::unique_ptr<HitQuadrupletGeneratorFromTripletAndLayers> qGen(HitQuadrupletGeneratorFromTripletAndLayersFactory::get()->create(generatorName, generatorPSet));
-
-    std::unique_ptr<HitTripletGeneratorFromPairAndLayers> tGen(HitTripletGeneratorFromPairAndLayersFactory::get()->create(tripletGeneratorName, tripletGeneratorPSet));
-
+  std::unique_ptr<HitTripletGeneratorFromPairAndLayers> tripletGenerator(HitTripletGeneratorFromPairAndLayersFactory::get()->create(tripletGeneratorName, tripletGeneratorPSet, iC));
     // Some CPU wasted here because same pairs are generated multiple times
-    tGen->init( HitPairGeneratorFromLayerPair( std::get<0>(triplet), std::get<1>(triplet), &theLayerCache),
-                std::vector<SeedingLayer>{std::get<2>(triplet)}, &theLayerCache);
+  tripletGenerator->init(std::make_unique<HitPairGeneratorFromLayerPair>(0, 1, &theLayerCache), &theLayerCache);
 
-    qGen->init(std::move(tGen), std::get<1>(ltl), &theLayerCache);
-
-    theGenerators.push_back(std::move(qGen));
-  }
-
-  initialised = true;
+  theGenerator.reset(HitQuadrupletGeneratorFromTripletAndLayersFactory::get()->create(generatorName, generatorPSet, iC));
+  theGenerator->init(std::move(tripletGenerator), &theLayerCache);
 }
 
 CombinedHitQuadrupletGenerator::~CombinedHitQuadrupletGenerator() {}
@@ -61,12 +36,15 @@ void CombinedHitQuadrupletGenerator::hitQuadruplets(
    const TrackingRegion& region, OrderedHitSeeds & result,
    const edm::Event& ev, const edm::EventSetup& es)
 {
-  if (!initialised) init(theConfig,es);
+  edm::Handle<SeedingLayerSetsHits> hlayers;
+  ev.getByToken(theSeedingLayerToken, hlayers);
+  const SeedingLayerSetsHits& layers = *hlayers;
+  if(layers.numberOfLayersInSet() != 4)
+    throw cms::Exception("Configuration") << "CombinedHitQuadrupletsGenerator expects SeedingLayerSetsHits::numberOfLayersInSet() to be 4, got " << layers.numberOfLayersInSet();
 
-  GeneratorContainer::const_iterator i;
-  for (i=theGenerators.begin(); i!=theGenerators.end(); i++) {
-    (**i).hitQuadruplets( region, result, ev, es);
+  std::vector<LayerQuadruplets::LayerSetAndLayers> quadlayers = LayerQuadruplets::layers(layers);
+  for(const auto& tripletAndLayers: quadlayers) {
+    theGenerator->hitQuadruplets(region, result, ev, es, tripletAndLayers.first, tripletAndLayers.second);
   }
   theLayerCache.clear();
 }
-

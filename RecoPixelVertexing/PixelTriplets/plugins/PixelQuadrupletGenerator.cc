@@ -1,6 +1,6 @@
 #include "PixelQuadrupletGenerator.h"
 #include "ThirdHitRZPrediction.h"
-#include "ThirdHitPredictionFromCircle.h"
+#include "RecoPixelVertexing/PixelTriplets/interface/ThirdHitPredictionFromCircle.h"
 #include "RecoTracker/TkMSParametrization/interface/PixelRecoLineRZ.h"
 
 #include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h"
@@ -17,10 +17,7 @@
 
 typedef PixelRecoRange<float> Range;
 
-//#define MKDEBUGTREE
-
-PixelQuadrupletGenerator::PixelQuadrupletGenerator(const edm::ParameterSet& cfg):
-  theLayerCache(nullptr),
+PixelQuadrupletGenerator::PixelQuadrupletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC):
   extraHitRZtolerance(cfg.getParameter<double>("extraHitRZtolerance")), //extra window in ThirdHitRZPrediction range 
   extraHitRPhitolerance(cfg.getParameter<double>("extraHitRPhitolerance")), //extra window in ThirdHitPredictionFromCircle range (divide by R to get phi) 
   maxChi2(cfg.getParameter<double>("maxChi2")),
@@ -31,7 +28,7 @@ PixelQuadrupletGenerator::PixelQuadrupletGenerator(const edm::ParameterSet& cfg)
       cfg.getParameter<edm::ParameterSet>("SeedComparitorPSet");
     std::string comparitorName = comparitorPSet.getParameter<std::string>("ComponentName");
     if(comparitorName != "none") {
-      theComparitor.reset(SeedComparitorFactory::get()->create( comparitorName, comparitorPSet));
+      theComparitor.reset(SeedComparitorFactory::get()->create(comparitorName, comparitorPSet, iC));
     }
   }
 }
@@ -39,44 +36,43 @@ PixelQuadrupletGenerator::PixelQuadrupletGenerator(const edm::ParameterSet& cfg)
 PixelQuadrupletGenerator::~PixelQuadrupletGenerator() {}
 
 
-void PixelQuadrupletGenerator::init( std::unique_ptr<HitTripletGenerator> triplets,
-				     const std::vector<ctfseeding::SeedingLayer> & layers,
-				     LayerCacheType* layerCache)
+void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, OrderedHitSeeds& result,
+                                              const edm::Event& ev, const edm::EventSetup& es,
+                                              SeedingLayerSetsHits::SeedingLayerSet tripletLayers,
+                                              const std::vector<SeedingLayerSetsHits::SeedingLayer>& fourthLayers)
 {
-  theTripletGenerator = std::move(triplets);
-  theLayers = layers;
-  theLayerCache = layerCache;
-}
+  if (theComparitor) theComparitor->init(ev, es);
 
-void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, 
-                                              OrderedHitSeeds & result,
-                                              const edm::Event & ev,
-                                              const edm::EventSetup& es)
-{
-  if (theComparitor) theComparitor->init(es);
-
-  auto const & triplets = theTripletGenerator->run(region, ev, es);
+  OrderedHitTriplets triplets;
+  theTripletGenerator->hitTriplets(region, triplets, ev, es,
+                                   tripletLayers, // pair generator picks the correct two layers from these
+                                   std::vector<SeedingLayerSetsHits::SeedingLayer>{tripletLayers[2]});
   if(triplets.empty()) return;
 
-  const size_t size = theLayers.size();
+  const size_t size = fourthLayers.size();
 
   const RecHitsSortedInPhi *fourthHitMap[size];
   typedef RecHitsSortedInPhi::Hit Hit;
 
   using NodeInfo = KDTreeNodeInfo<unsigned int>;
   std::vector<NodeInfo > layerTree; // re-used throughout
+  std::vector<unsigned int> foundNodes; // re-used thoughout
+#ifdef __clang
+  std::vector<KDTreeLinkerAlgo<unsigned int>> hitTree(size);
+#else
   KDTreeLinkerAlgo<unsigned int> hitTree[size];
+#endif
   float rzError[size]; //save maximum errors
 
   ThirdHitRZPrediction<PixelRecoLineRZ> preds[size];
 
   // Build KDtrees
   for(size_t il=0; il!=size; ++il) {
-    fourthHitMap[il] = &(*theLayerCache)(&theLayers[il], region, ev, es);
+    fourthHitMap[il] = &(*theLayerCache)(fourthLayers[il], region, ev, es);
     auto const& hits = *fourthHitMap[il];
 
     ThirdHitRZPrediction<PixelRecoLineRZ> & pred = preds[il];
-    pred.initLayer(theLayers[il].detLayer());
+    pred.initLayer(fourthLayers[il].detLayer());
     pred.initTolerance(extraHitRZtolerance);
 
     layerTree.clear();
@@ -118,14 +114,10 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
     // - See AN-2009/107 and PixelTripletLargeTipGenerator, the issue can be also that the straight-line assumption in rz-plane does not hold anymore
     const double curvature = predictionRPhi.curvature(ThirdHitPredictionFromCircle::Vector2D(gp1.x(), gp1.y()));
 
-#ifdef MKDEBUG
-    std::cout << "Triplet " << gp0 << ", " << gp1 << ", " << gp2 << " curvature " << curvature << std::endl;
-#endif
-
     constexpr float nSigmaRZ = std::sqrt(12.f);
 
 
-    SeedingHitSet::ConstRecHitPointer selectedHit;
+    SeedingHitSet::ConstRecHitPointer selectedHit = nullptr;
     float selectedChi2 = std::numeric_limits<float>::max();
     unsigned nLayersWithManyHits = 0;
 
@@ -148,27 +140,16 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
     ges[2] = triplet.outer()->globalPositionError();
     barrels[2] = isBarrel(triplet.outer()->geographicalId().subdetId());
 
-#ifdef MKDEBUGTREE
-      std::cout << "Triplet " << result.size()
-                << gps[0] << gps[1] << gps[2]
-                << std::endl;
-      result.push_back(triplet);
-#endif
-
     for(size_t il=0; il!=size; ++il) {
       if(hitTree[il].empty()) continue; // Don't bother if no hits
 
       auto const& hits = *fourthHitMap[il];
-      const DetLayer *layer = theLayers[il].detLayer();
+      const DetLayer *layer = fourthLayers[il].detLayer();
       bool barrelLayer = layer->isBarrel();
 
       auto& predictionRZ = preds[il];
       predictionRZ.initPropagator(&line);
       Range rzRange = predictionRZ(); // z in barrel, r in endcap
-
-#ifdef MKDEBUG
-      std::cout << "  rz min " << rzRange.min() << " max " << rzRange.max() << std::endl;
-#endif
 
       // construct search box and search
       Range phiRange;
@@ -178,9 +159,6 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
         //double tol = extraHitRPhitolerance/radius;
         const double tol = 0.15;
         phiRange = Range(phi-tol, phi+tol);
-#ifdef MKDEBUG
-        std::cout << "  radius " << radius << " phi " << phi << " tol " << tol << std::endl;
-#endif
       }
       else {
         double phi1 = predictionRPhi.phi(curvature, rzRange.min());
@@ -188,37 +166,22 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
         const double tol = 0.15;
         phiRange = Range(std::min(phi1, phi2)-tol, std::max(phi1, phi2)+tol);
       }
-#ifdef MKDEBUG
-      std::cout << "  phi min " << phiRange.min() << " max " << phiRange.max() << std::endl;
-#endif
 
       KDTreeBox phiZ(phiRange.min(), phiRange.max(),
                      rzRange.min()-nSigmaRZ*rzError[il],
                      rzRange.max()+nSigmaRZ*rzError[il]);
 
-#ifdef MKDEBUG
-      std::cout << "  searching in a box phi " 
-                << phiRange.min() << "," << phiRange.max() 
-                << " (width " << (phiRange.max()-phiRange.min()) 
-                << ") rz " << rzRange.min() << "," << rzRange.max() 
-                << " (width " << (rzRange.max() - rzRange.min()) << ")"
-                << std::endl;
-#endif
-      layerTree.clear();
-      hitTree[il].search(phiZ, layerTree);
+      foundNodes.clear();
+      hitTree[il].search(phiZ, foundNodes);
 
-      if(layerTree.empty()) {
-#ifdef MKDEBUG
-        std::cout << "    empty" << std::endl;
-#endif
+      if(foundNodes.empty()) {
         continue;
       }
 
       std::vector<std::tuple<unsigned int, float> > passedQualityCuts; // hit index, chi2
       constexpr unsigned kHitIndex = 0;
       constexpr unsigned kChi2 = 1;
-      for(auto const& ih: layerTree) {
-        unsigned int hitIndex = ih.data;
+      for(auto hitIndex: foundNodes) {
         const auto& hit = hits.theHits[hitIndex].hit();
 
         // Reject comparitor. For now, because of technical
@@ -226,9 +189,6 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
         if(theComparitor) {
           SeedingHitSet tmpTriplet(triplet.inner(), triplet.outer(), hit);
           if(!theComparitor->compatible(tmpTriplet, region)) {
-#ifdef MKDEBUG
-            std::cout << "      rejecting 4th hit because of comparitor" << std::endl;
-#endif
             continue;
           }
         }
@@ -242,9 +202,6 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
 	rzLine.fit(cottheta, intercept, covss, covii, covsi);
 	float chi2 = rzLine.chi2(cottheta, intercept);
         if(edm::isNotFinite(chi2) || chi2 > maxChi2) {
-#ifdef MKDEBUG
-          std::cout << "    rejecting 4th hit because of chi2 " << chi2 << std::endl;
-#endif
           continue;
         }
 
@@ -252,34 +209,8 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
       }
 
       if(passedQualityCuts.empty()) {
-#ifdef MKDEBUG
-        std::cout << "    empty because of quality cuts" << std::endl;
-#endif
         continue;
       }
-
-#ifdef MKDEBUGTREE
-      std::cout << "  Layer " << theLayers[il].name()
-                << " barrel " << barrelLayer
-                << " rz " << rzRange.min() << " " << rzRange.max()
-                << " phi " << phiRange.min() << " " << phiRange.max()
-                << " nquads " << passedQualityCuts.size()
-                << std::endl;
-
-      for(auto indexChi2: passedQualityCuts) {
-        auto index = std::get<kHitIndex>(indexChi2);
-        auto chi2 = std::get<kChi2>(indexChi2);
-
-        std::cout << "    Quadruplet " << result.size()
-                  << hits.theHits[index].hit()->globalPosition()
-                  << " chi2 " << chi2
-                  << std::endl;
-        SeedingHitSet quadruplet(triplet.inner(), triplet.middle(), triplet.outer(), hits.theHits[index].hit());
-
-        result.push_back(quadruplet);
-        continue;
-      }
-#endif
 
       if(passedQualityCuts.size() == 1) {
         unsigned index = std::get<kHitIndex>(passedQualityCuts[0]);
@@ -296,37 +227,14 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
       }
     }
   
-#ifndef MKDEBUGTREE
     if(nLayersWithManyHits == 0) {
-      if(selectedHit.get()) {
+      if(selectedHit) {
         SeedingHitSet quadruplet(triplet.inner(), triplet.middle(), triplet.outer(), selectedHit);
-#ifdef MKDEBUG
-        std::cout << "    inserting quadruplet" << std::endl;
-#endif
         result.push_back(quadruplet);
       }
     }
     else if(keepTriplets) {
-#ifdef MKDEBUG
-      std::cout << "    inserting triplet" << std::endl;
-#endif
       result.push_back(triplet);
     }
-#endif // MKDEBUGTREE
-
-      /*
-      for(auto const& ih: layerTree) {
-        auto hitIndex = ih.data;
-#ifdef MKDEBUG
-        std::cout << "  found hit " << hitIndex << " at " 
-                  << hits.theHits[hitIndex].hit()->globalPosition() 
-                  << " phi " << hits.theHits[hitIndex].hit()->globalPosition().phi()
-                  << " r " << hits.theHits[hitIndex].hit()->globalPosition().perp()
-                  << std::endl;
-#endif
-        SeedingHitSet quadruplet(triplet.inner(), triplet.middle(), triplet.outer(), hits.theHits[hitIndex].hit());
-        result.push_back(quadruplet);
-      }
-      */
   }
 }

@@ -4,9 +4,9 @@
 #include "RecoPixelVertexing/PixelTriplets/interface/HitQuadrupletGeneratorFromTripletAndLayers.h"
 #include "FWCore/PluginManager/interface/PluginFactory.h"
 
-namespace edm {class ParameterSet;}
+namespace edm {class ParameterSet; class ConsumesCollector;}
 
-typedef edmplugin::PluginFactory<HitQuadrupletGeneratorFromTripletAndLayers *(const edm::ParameterSet &)>
+typedef edmplugin::PluginFactory<HitQuadrupletGeneratorFromTripletAndLayers *(const edm::ParameterSet &, edm::ConsumesCollector&)>
 	HitQuadrupletGeneratorFromTripletAndLayersFactory;
  
 #endif

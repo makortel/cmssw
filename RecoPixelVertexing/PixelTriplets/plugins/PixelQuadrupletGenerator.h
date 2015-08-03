@@ -1,5 +1,5 @@
 #include "RecoTracker/TkHitPairs/interface/HitPairGenerator.h"
-#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGenerator.h"
+#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayers.h"
 #include "CombinedHitQuadrupletGenerator.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayer.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -16,21 +16,16 @@ class PixelQuadrupletGenerator : public HitQuadrupletGeneratorFromTripletAndLaye
 typedef CombinedHitQuadrupletGenerator::LayerCacheType       LayerCacheType;
 
 public:
-  PixelQuadrupletGenerator( const edm::ParameterSet& cfg); 
+  PixelQuadrupletGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
 
   virtual ~PixelQuadrupletGenerator();
 
-  virtual void init( std::unique_ptr<HitTripletGenerator> triplets,
-      const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
-
-  virtual void hitQuadruplets( const TrackingRegion& region, OrderedHitSeeds & trs, 
-      const edm::Event & ev, const edm::EventSetup& es);
+  virtual void hitQuadruplets( const TrackingRegion& region, OrderedHitSeeds& result,
+                               const edm::Event & ev, const edm::EventSetup& es,
+                               SeedingLayerSetsHits::SeedingLayerSet tripletLayers,
+                               const std::vector<SeedingLayerSetsHits::SeedingLayer>& fourthLayers) override;
 
 private:
-  std::unique_ptr<HitTripletGenerator> theTripletGenerator;
-  std::vector<ctfseeding::SeedingLayer> theLayers;
-  LayerCacheType * theLayerCache;
-
   std::unique_ptr<SeedComparitor> theComparitor;
 
   const double extraHitRZtolerance;
