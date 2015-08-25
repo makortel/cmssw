@@ -81,7 +81,7 @@ void PackedCandidateTrackValidator::fillDescriptions(edm::ConfigurationDescripti
   edm::ParameterSetDescription desc;
 
   desc.addUntracked<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
-  desc.addUntracked<edm::InputTag>("trackToPackedCandiadteAssociation", edm::InputTag("packedPFCandidates"));
+  desc.addUntracked<edm::InputTag>("trackToPackedCandidateAssociation", edm::InputTag("packedPFCandidates"));
   desc.addUntracked<std::string>("rootFolder", "Tracking/PackedCandidate");
 
   descriptions.add("packedCandidateTrackValidator", desc);
