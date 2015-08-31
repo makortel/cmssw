@@ -99,8 +99,8 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_selectionFlow->setBinLabel(6, "PC has hits");
 
   constexpr int diffBins = 50;
-  constexpr float diff = 1e-4;
-  constexpr float diffP = 5e-3;
+  constexpr float diff = 2e-4;
+  constexpr float diffP = 2e-3;
 
   h_diffPx = iBooker.book1D("diffPx", "PackedCandidate::bestTrack() - reco::Track in px()", diffBins, -diffP, diffP);
   h_diffPy = iBooker.book1D("diffPy", "PackedCandidate::bestTrack() - reco::Track in py()", diffBins, -diffP, diffP);
@@ -116,21 +116,21 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffCharge = iBooker.book1D("diffCharge", "PackedCandidate::bestTrack() - reco::Track in charge()", 5, -2.5, 2.5);
   h_diffIsHighPurity = iBooker.book1D("diffIsHighPurity", "PackedCandidate::bestTrack() - reco::Track in quality(highPurity)", 3, -1.5, 1.5);
 
-  h_diffQoverp = iBooker.book1D("diffQoverp", "PackedCandidate::bestTrack() - reco::Track in qoverp()", diffBins, -1e-3, 1e-3);
+  h_diffQoverp = iBooker.book1D("diffQoverp", "PackedCandidate::bestTrack() - reco::Track in qoverp()", diffBins, -2e-3, 2e-3);
   h_diffPt     = iBooker.book1D("diffPt",     "PackedCandidate::bestTrack() - reco::Track in pt()",     diffBins, -diffP, diffP);
   h_diffEta    = iBooker.book1D("diffEta",    "PackedCandidate::bestTrack() - reco::Track in eta()",    diffBins, -diff, diff);
   h_diffTheta  = iBooker.book1D("diffTheta",  "PackedCandidate::bestTrack() - reco::Track in theta()",  diffBins, -diff, diff);
   h_diffPhi    = iBooker.book1D("diffPhi",    "PackedCandidate::bestTrack() - reco::Track in phi()",    diffBins, -diff, diff);
-  h_diffDxy    = iBooker.book1D("diffDxy",    "PackedCandidate::bestTrack() - reco::Track in dxy()",    diffBins, -2e-5, 2e-5);
-  h_diffDz     = iBooker.book1D("diffDz",     "PackedCandidate::bestTrack() - reco::Track in dz()",     diffBins, -4e-5, 4e-5);
+  h_diffDxy    = iBooker.book1D("diffDxy",    "PackedCandidate::bestTrack() - reco::Track in dxy()",    diffBins, -4e-5, 4e-5);
+  h_diffDz     = iBooker.book1D("diffDz",     "PackedCandidate::bestTrack() - reco::Track in dz()",     diffBins, -1e-4, 1e-4);
 
-  h_diffQoverpError = iBooker.book1D("diffQoverpError", "PackedCandidate::bestTrack() - reco::Track in qoverpError()", diffBins, -1e-3, 1e-3);
-  h_diffPtError     = iBooker.book1D("diffPtError",     "PackedCandidate::bestTrack() - reco::Track in ptError()",     diffBins, -diffP, diffP);
-  h_diffEtaError    = iBooker.book1D("diffEtaError",    "PackedCandidate::bestTrack() - reco::Track in etaError()",    diffBins, -diff, diff);
-  h_diffThetaError  = iBooker.book1D("diffThetaError",  "PackedCandidate::bestTrack() - reco::Track in thetaError()",  diffBins, -diff, diff);
-  h_diffPhiError    = iBooker.book1D("diffPhiError",    "PackedCandidate::bestTrack() - reco::Track in phiError()",    diffBins, -diff, diff);
-  h_diffDxyError    = iBooker.book1D("diffDxyError",    "PackedCandidate::bestTrack() - reco::Track in dxyError()",    diffBins, -2e-5, 2e-5);
-  h_diffDzError     = iBooker.book1D("diffDzError",     "PackedCandidate::bestTrack() - reco::Track in dzError()",     diffBins, -4e-5, 4e-5);
+  h_diffQoverpError = iBooker.book1D("diffQoverpError", "PackedCandidate::bestTrack() - reco::Track in qoverpError()", 2*diffBins, -2*1e-3, 6*1e-3);
+  h_diffPtError     = iBooker.book1D("diffPtError",     "PackedCandidate::bestTrack() - reco::Track in ptError()",     2*diffBins, -2*diffP, 6*diffP);
+  h_diffEtaError    = iBooker.book1D("diffEtaError",    "PackedCandidate::bestTrack() - reco::Track in etaError()",    2*diffBins, -2*diff, 6*diff);
+  h_diffThetaError  = iBooker.book1D("diffThetaError",  "PackedCandidate::bestTrack() - reco::Track in thetaError()",  2*diffBins, -2*diff, 6*diff);
+  h_diffPhiError    = iBooker.book1D("diffPhiError",    "PackedCandidate::bestTrack() - reco::Track in phiError()",    2*diffBins, -2*diff, 6*diff);
+  h_diffDxyError    = iBooker.book1D("diffDxyError",    "PackedCandidate::bestTrack() - reco::Track in dxyError()",    2*diffBins, -2*2e-5, 6*2e-5);
+  h_diffDzError     = iBooker.book1D("diffDzError",     "PackedCandidate::bestTrack() - reco::Track in dzError()",     2*diffBins, -2*4e-5, 6*4e-5);
 
   h_diffNumberOfPixelHits = iBooker.book1D("diffNumberOfPixelHits", "PackedCandidate::numberOfPixelHits() - reco::Track::hitPattern::numberOfValidPixelHits()", 5, -2.5, 2.5);
   h_diffNumberOfHits      = iBooker.book1D("diffNumberOfHits",      "PackedCandidate::numberHits() - reco::Track::hitPattern::numberOfValidHits()",             5, -2.5, 2.5);
