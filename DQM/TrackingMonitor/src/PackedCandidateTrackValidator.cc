@@ -261,7 +261,7 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffDz     = iBooker.book1D("diffDz",     "PackedCandidate::bestTrack() - reco::Track in dz()",     diffBins, -1e-4, 1e-4);
 
   h_diffQoverpError = iBooker.book1D("diffQoverpError", "PackedCandidate::bestTrack() - reco::Track in qoverpError()", 2*diffBins, -20*1e-3, 20*1e-3);
-  h_diffPtError     = iBooker.book1D("diffPtError",     "PackedCandidate::bestTrack() - reco::Track in ptError()",     2*diffBins, -20*diffP, 20*diffP);
+  h_diffPtError     = iBooker.book1D("diffPtError",     "PackedCandidate::bestTrack() - reco::Track in ptError()",     2*diffBins, -100*diffP, 100*diffP);
   h_diffEtaError    = iBooker.book1D("diffEtaError",    "PackedCandidate::bestTrack() - reco::Track in etaError()",    2*diffBins, -20*diff, 20*diff);
   h_diffThetaError  = iBooker.book1D("diffThetaError",  "PackedCandidate::bestTrack() - reco::Track in thetaError()",  2*diffBins, -20*diff, 20*diff);
   h_diffPhiError    = iBooker.book1D("diffPhiError",    "PackedCandidate::bestTrack() - reco::Track in phiError()",    2*diffBins, -20*diff, 20*diff);
