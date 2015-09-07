@@ -181,6 +181,17 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffDxyError;
   MonitorElement *h_diffDzError;
 
+  MonitorElement *h_diffCovQoverpLambda;
+  MonitorElement *h_diffCovQoverpPhi;
+  MonitorElement *h_diffCovQoverpDxy;
+  MonitorElement *h_diffCovQoverpDz;
+  MonitorElement *h_diffCovLambdaPhi;
+  MonitorElement *h_diffCovLambdaDxy;
+  MonitorElement *h_diffCovLambdaDz;
+  MonitorElement *h_diffCovPhiDxy;
+  MonitorElement *h_diffCovPhiDz;
+  MonitorElement *h_diffCovDxyDz;
+
   MonitorElement *h_diffNumberOfPixelHits;
   MonitorElement *h_diffNumberOfHits;
   MonitorElement *h_diffLostInnerHits;
@@ -256,6 +267,17 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffPhiError    = iBooker.book1D("diffPhiError",    "PackedCandidate::bestTrack() - reco::Track in phiError()",    2*diffBins, -20*diff, 20*diff);
   h_diffDxyError    = iBooker.book1D("diffDxyError",    "PackedCandidate::bestTrack() - reco::Track in dxyError()",    2*diffBins, -20*2e-5, 20*2e-5);
   h_diffDzError     = iBooker.book1D("diffDzError",     "PackedCandidate::bestTrack() - reco::Track in dzError()",     2*diffBins, -20*4e-5, 20*4e-5);
+
+  h_diffCovQoverpLambda = iBooker.book1D("diffCovQoverpLambda", "PackedCandidate::bestTrack() - reco::Track in cov(qoverp, lambda)", 2*diffBins, -20*diff, 20*diff);
+  h_diffCovQoverpPhi    = iBooker.book1D("diffCovQoverpPhi",    "PackedCandidate::bestTrack() - reco::Track in cov(qoverp, phi)",    2*diffBins, -20*diff, 20*diff);
+  h_diffCovQoverpDxy    = iBooker.book1D("diffCovQoverpDxy",    "PackedCandidate::bestTrack() - reco::Track in cov(qoverp, dxy)",    2*diffBins, -20*diff, 20*diff);
+  h_diffCovQoverpDz     = iBooker.book1D("diffCovQoverpDz",     "PackedCandidate::bestTrack() - reco::Track in cov(qoverp, dz)",     2*diffBins, -100*diff, 100*diff);
+  h_diffCovLambdaPhi    = iBooker.book1D("diffCovLambdaPhi",    "PackedCandidate::bestTrack() - reco::Track in cov(lambda, phi)",    2*diffBins, -20*diff, 20*diff);
+  h_diffCovLambdaDxy    = iBooker.book1D("diffCovLambdaDxy",    "PackedCandidate::bestTrack() - reco::Track in cov(lambda, dxy)",    2*diffBins, -20*diff, 20*diff);
+  h_diffCovLambdaDz     = iBooker.book1D("diffCovLambdaDz",     "PackedCandidate::bestTrack() - reco::Track in cov(lambda, dz)",     2*diffBins, -20*diff, 20*diff);
+  h_diffCovPhiDxy       = iBooker.book1D("diffCovPhiDxy",       "PackedCandidate::bestTrack() - reco::Track in cov(phi, dxy)",       2*diffBins, -20*diff, 20*diff);
+  h_diffCovPhiDz        = iBooker.book1D("diffCovPhiDz",        "PackedCandidate::bestTrack() - reco::Track in cov(phi, dz)",        2*diffBins, -100*diff, 100*diff);
+  h_diffCovDxyDz        = iBooker.book1D("diffCovDxyDz",        "PackedCandidate::bestTrack() - reco::Track in cov(dxy, dz)",        2*diffBins, -20*diff, 20*diff);
 
   h_diffNumberOfPixelHits = iBooker.book1D("diffNumberOfPixelHits", "PackedCandidate::numberOfPixelHits() - reco::Track::hitPattern::numberOfValidPixelHits()", 5, -2.5, 2.5);
   h_diffNumberOfHits      = iBooker.book1D("diffNumberOfHits",      "PackedCandidate::numberHits() - reco::Track::hitPattern::numberOfValidHits()",             5, -2.5, 2.5);
@@ -362,6 +384,20 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffPhiError   , trackPc.phiError()    - track.phiError()   );
     fillNoFlow(h_diffDxyError   , trackPc.dxyError()    - track.dxyError()   );
     fillNoFlow(h_diffDzError    , trackPc.dzError()     - track.dzError()    );
+
+    auto fillCov = [&](MonitorElement *me, const int i, const int j) {
+      fillNoFlow(me, trackPc.covariance(i, j) - track.covariance(i, j));
+    };
+    fillCov(h_diffCovQoverpLambda, reco::TrackBase::i_qoverp, reco::TrackBase::i_lambda);
+    fillCov(h_diffCovQoverpPhi,    reco::TrackBase::i_qoverp, reco::TrackBase::i_phi);
+    fillCov(h_diffCovQoverpDxy,    reco::TrackBase::i_qoverp, reco::TrackBase::i_dxy);
+    fillCov(h_diffCovQoverpDz,     reco::TrackBase::i_qoverp, reco::TrackBase::i_dsz);
+    fillCov(h_diffCovLambdaPhi,    reco::TrackBase::i_lambda, reco::TrackBase::i_phi);
+    fillCov(h_diffCovLambdaDxy,    reco::TrackBase::i_lambda, reco::TrackBase::i_dxy);
+    fillCov(h_diffCovLambdaDz,     reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
+    fillCov(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
+    fillCov(h_diffCovPhiDz,        reco::TrackBase::i_phi,    reco::TrackBase::i_dsz);
+    fillCov(h_diffCovDxyDz,        reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz);
 
     // For the non-HitPattern ones, take into account the PackedCandidate packing precision
     const auto trackNumberOfHits = track.hitPattern().numberOfValidHits();
