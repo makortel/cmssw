@@ -203,6 +203,7 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
 
   MonitorElement *h_numberPixelHitsOverMax;
   MonitorElement *h_numberStripHitsOverMax;
+  MonitorElement *h_numberHitsOverMax;
 };
 
 PackedCandidateTrackValidator::PackedCandidateTrackValidator(const edm::ParameterSet& iConfig):
@@ -290,6 +291,7 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
 
   h_numberPixelHitsOverMax = iBooker.book1D("numberPixelHitsOverMax", "Number of pixel hits over the maximum of PackedCandidate", 10, 0, 10);
   h_numberStripHitsOverMax = iBooker.book1D("numberStripHitsOverMax", "Number of strip hits over the maximum of PackedCandidate", 10, 0, 10);
+  h_numberHitsOverMax = iBooker.book1D("numberHitsOverMax", "Number of hits over the maximum of PackedCandidate", 20, 0, 20);
 }
 
 namespace {
@@ -407,10 +409,14 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     const auto pcNumberOfPixelHits = pcRef->numberOfPixelHits();
     const auto pcNumberOfStripHits = pcNumberOfHits - pcNumberOfPixelHits;
 
-    const bool pixelOverflow = trackNumberOfPixelHits > pat::PackedCandidate::trackPixelHitsMask;
-    const bool stripOverflow = trackNumberOfStripHits > pat::PackedCandidate::trackStripHitsMask;
-    h_numberPixelHitsOverMax->Fill(pixelOverflow ? trackNumberOfPixelHits - pat::PackedCandidate::trackPixelHitsMask : 0);
-    h_numberStripHitsOverMax->Fill(stripOverflow ? trackNumberOfStripHits - pat::PackedCandidate::trackStripHitsMask : 0);
+    const int pixelOverflow = trackNumberOfPixelHits > pat::PackedCandidate::trackPixelHitsMask ? trackNumberOfPixelHits - pat::PackedCandidate::trackPixelHitsMask : 0;
+    const int stripOverflow = trackNumberOfStripHits > pat::PackedCandidate::trackStripHitsMask ? trackNumberOfStripHits - pat::PackedCandidate::trackStripHitsMask : 0;
+    const int hitsOverflow = trackNumberOfHits > (pat::PackedCandidate::trackPixelHitsMask+pat::PackedCandidate::trackStripHitsMask) ? trackNumberOfHits - (pat::PackedCandidate::trackPixelHitsMask+pat::PackedCandidate::trackStripHitsMask) : 0;
+    // PackedCandidate counts overflow pixel hits as strip
+    const int pixelInducedStripOverflow = (trackNumberOfStripHits+pixelOverflow) > pat::PackedCandidate::trackStripHitsMask ? (trackNumberOfStripHits+pixelOverflow-stripOverflow) - pat::PackedCandidate::trackStripHitsMask : 0;
+    h_numberPixelHitsOverMax->Fill(pixelOverflow);
+    h_numberStripHitsOverMax->Fill(stripOverflow);
+    h_numberHitsOverMax->Fill(hitsOverflow);
 
     int diffNumberOfPixelHits = 0;
     int diffNumberOfHits = 0;
@@ -420,8 +426,15 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     else {
       diffNumberOfPixelHits = pcNumberOfPixelHits - trackNumberOfPixelHits;
     }
-    if(stripOverflow || pixelOverflow) {
-      const int diffNumberOfStripHits = pcNumberOfStripHits - pat::PackedCandidate::trackStripHitsMask;
+    if(stripOverflow || pixelInducedStripOverflow || pixelOverflow) {
+      int diffNumberOfStripHits = 0;
+      if(stripOverflow || pixelInducedStripOverflow) {
+        diffNumberOfStripHits = pcNumberOfStripHits - pat::PackedCandidate::trackStripHitsMask;
+      }
+      else if(pixelOverflow) {
+        diffNumberOfStripHits = (pcNumberOfStripHits - pixelOverflow) - trackNumberOfStripHits;
+      }
+
       diffNumberOfHits = diffNumberOfPixelHits + diffNumberOfStripHits;
     }
     else {
