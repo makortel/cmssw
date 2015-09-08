@@ -194,8 +194,8 @@ namespace pat {
 
     // Note: mask is also the maximum value
     enum trackHitShiftsAndMasks {
-      trackPixelHitsMask = 0x7,
-      trackStripHitsMask = 0x31, trackStripHitsShift = 3
+      trackPixelHitsMask = 7,
+      trackStripHitsMask = 31, trackStripHitsShift = 3
     };
     virtual void setTrackProperties( const reco::Track & tk, const reco::Track::CovarianceMatrix & covariance) {
       dxydxy_ = covariance(3,3);
