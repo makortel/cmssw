@@ -16,6 +16,8 @@
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
+#include "boost/math/special_functions/next.hpp"
+
 #include <iomanip>
 
 namespace {
@@ -134,6 +136,25 @@ namespace {
   double diffRelative(double a, double b) {
     return (a-b)/b;
   }
+
+  /*
+  double ulpDiffRelative(double a, double b) {
+    const double diff_ulps = boost::math::float_distance(a, b);
+    if(diff_ulps == 0.)
+      return 0.;
+
+    double diff = 0.;
+    if(diff_ulps > 0.) {
+      diff = (boost::math::float_next(b)-b) * diff_ulps;
+    }
+    else {
+      diff = (b-boost::math::float_prior(b)) * diff_ulps;
+    }
+    if(b == 0.)
+      return diff;
+    return diff/b;
+  }
+  */
 }
 
 class PackedCandidateTrackValidator: public DQMEDAnalyzer{
@@ -376,6 +397,13 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     int diffHP = static_cast<int>(trackPc.quality(reco::TrackBase::highPurity)) - static_cast<int>(track.quality(reco::TrackBase::highPurity));
     fillNoFlow(h_diffIsHighPurity,  diffHP);
 
+    /*
+    edm::LogPrint("Foo") << "Track pt " << track.pt() << " PC " << trackPc.pt() << " diff " << (trackPc.pt()-track.pt())
+                         << " ulps " << boost::math::float_distance(trackPc.pt(), track.pt())
+                         << " relative " << (trackPc.pt()-track.pt())/track.pt()
+                         << " mydiff " << ulpDiffRelative(trackPc.pt(), track.pt());
+    */
+
     const auto diffPt = diffRelative(trackPc.pt()    , track.pt()    );
 
     fillNoFlow(h_diffQoverp, diffRelative(trackPc.qoverp(), track.qoverp()));
@@ -443,6 +471,20 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
       }
 
       diffNumberOfHits = diffNumberOfPixelHits + diffNumberOfStripHits;
+      /*
+      edm::LogWarning("Foo") << "pcNumberOfHits " << pcNumberOfHits
+                             << " pcNumberOfPixelHits " << pcNumberOfPixelHits
+                             << " pcNumberOfStripHits " << pcNumberOfStripHits
+                             << " trackNumberOfHits " << trackNumberOfHits
+                             << " trackNumberOfPixelHits " << trackNumberOfPixelHits
+                             << " trackNumberOfStripHits " << trackNumberOfStripHits
+                             << " pixelOverflow " << pixelOverflow
+                             << " stripOverflow " << stripOverflow
+                             << " pixelInducedStripOverflow " << pixelInducedStripOverflow
+                             << " diffNumberOfPixelHits " << diffNumberOfPixelHits
+                             << " diffNumberOfStripHits " << diffNumberOfStripHits
+                             << " diffNumberOfHits " << diffNumberOfHits;
+      */
     }
     else {
       diffNumberOfHits = pcNumberOfHits - trackNumberOfHits;
