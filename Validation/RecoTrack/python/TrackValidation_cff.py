@@ -50,6 +50,7 @@ import RecoJets.JetAssociationProducers.ak4JTA_cff as ak4JTA_cff
 ak4JetTracksAssociatorAtVertexPFAll = ak4JTA_cff.ak4JetTracksAssociatorAtVertexPF.clone(
     jets = "ak4PFJets"
 )
+from RecoJets.JetProducers.fixedGridRhoProducerFastjet_cfi import fixedGridRhoFastjetAll
 from JetMETCorrections.Configuration.JetCorrectors_cff import *
 import CommonTools.RecoAlgos.jetTracksAssociationToTrackRefs_cfi as jetTracksAssociationToTrackRefs_cfi
 cutsRecoTracksAK4PFJets = jetTracksAssociationToTrackRefs_cfi.jetTracksAssociationToTrackRefs.clone(
@@ -332,6 +333,7 @@ tracksValidation = cms.Sequence(
 )
 
 tracksValidationStandalone = cms.Sequence(
+    fixedGridRhoFastjetAll+
     ak4PFL1FastL2L3CorrectorChain+
     tracksPreValidationStandalone+
     trackValidator +
