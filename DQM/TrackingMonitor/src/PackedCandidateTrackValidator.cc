@@ -12,6 +12,8 @@
 #include "DataFormats/Common/interface/Association.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
@@ -170,6 +172,8 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
  private:
 
   edm::EDGetTokenT<edm::View<reco::Track>> tracksToken_;
+  edm::EDGetTokenT<reco::VertexCollection> verticesToken_;
+  edm::EDGetTokenT<reco::VertexCollection> slimmedVerticesToken_;
   edm::EDGetTokenT<edm::Association<pat::PackedCandidateCollection>> trackToPackedCandidateToken_;
 
   std::string rootFolder_;
@@ -183,6 +187,11 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffVx;
   MonitorElement *h_diffVy;
   MonitorElement *h_diffVz;
+  /*
+  MonitorElement *h_diffVxVsVertex;
+  MonitorElement *h_diffVyVsVertex;
+  MonitorElement *h_diffVzVsVertex;
+  */
 
   MonitorElement *h_diffNormalizedChi2;
   MonitorElement *h_diffNdof;
@@ -195,8 +204,12 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffEta;
   MonitorElement *h_diffTheta;
   MonitorElement *h_diffPhi;
-  MonitorElement *h_diffDxy;
-  MonitorElement *h_diffDz;
+  MonitorElement *h_diffDxyAssocPV;
+  MonitorElement *h_diffDzAssocPV;
+  MonitorElement *h_diffDzPV;
+
+  MonitorElement *h_diffTrackDxy;
+  MonitorElement *h_diffTrackDz;
 
   MonitorElement *h_diffQoverpError;
   MonitorElement *h_diffPtError;
@@ -233,6 +246,8 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
 
 PackedCandidateTrackValidator::PackedCandidateTrackValidator(const edm::ParameterSet& iConfig):
   tracksToken_(consumes<edm::View<reco::Track>>(iConfig.getUntrackedParameter<edm::InputTag>("tracks"))),
+  verticesToken_(consumes<reco::VertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("vertices"))),
+  slimmedVerticesToken_(consumes<reco::VertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("slimmedVertices"))),
   trackToPackedCandidateToken_(consumes<edm::Association<pat::PackedCandidateCollection>>(iConfig.getUntrackedParameter<edm::InputTag>("trackToPackedCandidateAssociation"))),
   rootFolder_(iConfig.getUntrackedParameter<std::string>("rootFolder"))
 {}
@@ -243,6 +258,8 @@ void PackedCandidateTrackValidator::fillDescriptions(edm::ConfigurationDescripti
   edm::ParameterSetDescription desc;
 
   desc.addUntracked<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
+  desc.addUntracked<edm::InputTag>("vertices", edm::InputTag("offlinePrimaryVertices"));
+  desc.addUntracked<edm::InputTag>("slimmedVertices", edm::InputTag("offlineSlimmedPrimaryVertices"));
   desc.addUntracked<edm::InputTag>("trackToPackedCandidateAssociation", edm::InputTag("packedPFCandidates"));
   desc.addUntracked<std::string>("rootFolder", "Tracking/PackedCandidate");
 
@@ -273,6 +290,12 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffVy = iBooker.book1D("diffVy", "PackedCandidate::bestTrack() - reco::Track in vy()", diffBins, -0.1, 0.05);
   h_diffVz = iBooker.book1D("diffVz", "PackedCandidate::bestTrack() - reco::Track in vz()", diffBins, -0.2, 0.1);
 
+  /*
+  h_diffVxVsVertex = iBooker.book1D("diffVxVsVertex", "PackedCandidate::bestTrack()::vx() - reco::Vertex::x()", diffBins, -0.1, 0.05);
+  h_diffVyVsVertex = iBooker.book1D("diffVyVsVertex", "PackedCandidate::bestTrack()::vy() - reco::Vertex::y()", diffBins, -0.1, 0.05);
+  h_diffVzVsVertex = iBooker.book1D("diffVzVsVertex", "PackedCandidate::bestTrack()::vz() - reco::Vertex::z()", diffBins, -0.2, 0.1);
+  */
+
   h_diffNormalizedChi2 = iBooker.book1D("diffNormalizedChi2", "PackedCandidate::bestTrack() - reco::Track in normalizedChi2()", 30, -1.5, 1.5);
   h_diffNdof = iBooker.book1D("diffNdof", "PackedCandidate::bestTrack() - reco::Track in ndof()", 33, -30.5, 2.5);
 
@@ -284,8 +307,12 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffEta    = iBooker.book1D("diffEta",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in eta()",    diffBins, -0.1, 0.02);
   h_diffTheta  = iBooker.book1D("diffTheta",  "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in theta()",  diffBins, -0.2, diffRel);
   h_diffPhi    = iBooker.book1D("diffPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phi()",    diffBins, -0.1, 0.02);
-  h_diffDxy    = iBooker.book1D("diffDxy",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxy()",    diffBins, -0.2, diffRel);
-  h_diffDz     = iBooker.book1D("diffDz",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dz()",     diffBins, -0.2, diffRel);
+
+  h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.2, diffRel); // expect equality within precision
+  h_diffDzAssocPV  = iBooker.book1D("diffDzAssocPV",  "(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track", diffBins, -0.2, diffRel); // expect equality within precision
+  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.2, diffRel); // expect equality wihtin precision
+  h_diffTrackDxy   = iBooker.book1D("diffTrackDxy",   "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxy()",          diffBins, -0.2, diffRel); // not equal
+  h_diffTrackDz    = iBooker.book1D("diffTrackDz",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dz()",           diffBins, -0.2, diffRel); // not equal
 
   h_diffQoverpError = iBooker.book1D("diffQoverpError", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in qoverpError()", diffBins, -0.1, 0.1);
   h_diffPtError     = iBooker.book1D("diffPtError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in ptError()",     diffBins, -1.1, 0.5);
@@ -331,6 +358,19 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
   iEvent.getByToken(tracksToken_, htracks);
   const auto& tracks = *htracks;
 
+  edm::Handle<reco::VertexCollection> hvertices;
+  iEvent.getByToken(verticesToken_, hvertices);
+  const auto& vertices = *hvertices;
+
+  edm::Handle<reco::VertexCollection> hslimmedvertices;
+  iEvent.getByToken(slimmedVerticesToken_, hslimmedvertices);
+  const auto& slimmedVertices = *hslimmedvertices;
+
+  if(vertices.empty())
+    return;
+  const reco::Vertex& pv = vertices[0];
+  const reco::Vertex& slimmedPV = slimmedVertices[0];
+
   edm::Handle<edm::Association<pat::PackedCandidateCollection>> hassoc;
   iEvent.getByToken(trackToPackedCandidateToken_, hassoc);
   const auto& trackToPackedCandidate = *hassoc;
@@ -371,6 +411,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     }
     h_selectionFlow->Fill(5.5);
 
+    auto slimmedVertexRef = pcRef->vertexRef();
+    const reco::Vertex& pcVertex = vertices[slimmedVertexRef.key()];
 
     fillNoFlow(h_diffPx, diffRelative(trackPc.px(), track.px()));
     fillNoFlow(h_diffPy, diffRelative(trackPc.py(), track.py()));
@@ -379,6 +421,12 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffVx, trackPc.vx() - track.vx());
     fillNoFlow(h_diffVy, trackPc.vy() - track.vy());
     fillNoFlow(h_diffVz, trackPc.vz() - track.vz());
+
+    /*
+    fillNoFlow(h_diffVxVsVertex, trackPc.vx() - pcVertex.x());
+    fillNoFlow(h_diffVyVsVertex, trackPc.vy() - pcVertex.y());
+    fillNoFlow(h_diffVzVsVertex, trackPc.vz() - pcVertex.z());
+    */
 
     // PackedCandidate recalculates the ndof in unpacking as
     // (nhits+npixelhits-5), but some strip hits may have dimension 2.
@@ -404,15 +452,21 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                          << " mydiff " << ulpDiffRelative(trackPc.pt(), track.pt());
     */
 
-    const auto diffPt = diffRelative(trackPc.pt()    , track.pt()    );
+    const auto diffPt = diffRelative(trackPc.pt(), track.pt());
+    const auto diffDzPV = diffRelative(pcRef->dz(pv.position()), track.dz(pv.position()));
+    const auto diffDzAssocPV = diffRelative(pcRef->dzAssociatedPV(), track.dz(pcVertex.position()));
 
     fillNoFlow(h_diffQoverp, diffRelative(trackPc.qoverp(), track.qoverp()));
     fillNoFlow(h_diffPt    , diffPt);
     fillNoFlow(h_diffEta   , diffRelative(trackPc.eta()   , track.eta()   ));
     fillNoFlow(h_diffTheta , diffRelative(trackPc.theta() , track.theta() ));
     fillNoFlow(h_diffPhi   , diffRelative(trackPc.phi()   , track.phi()   ));
-    fillNoFlow(h_diffDxy   , diffRelative(trackPc.dxy()   , track.dxy()   ));
-    fillNoFlow(h_diffDz    , diffRelative(trackPc.dz()    , track.dz()    ));
+
+    fillNoFlow(h_diffDxyAssocPV, diffRelative(pcRef->dxy()    , track.dxy(pcVertex.position())));
+    fillNoFlow(h_diffDzAssocPV , diffDzAssocPV);
+    fillNoFlow(h_diffDzPV      , diffDzPV);
+    fillNoFlow(h_diffTrackDxy  , diffRelative(trackPc.dxy()   , track.dxy()   ));
+    fillNoFlow(h_diffTrackDz   , diffRelative(trackPc.dz()    , track.dz()    ));
 
     fillNoFlow(h_diffQoverpError, diffRelative(trackPc.qoverpError(), track.qoverpError()));
     fillNoFlow(h_diffPtError    , diffRelative(trackPc.ptError()    , track.ptError()    ));
@@ -527,9 +581,17 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     if(diffNormalizedChi2 < -1 || diffNormalizedChi2 > 0 || diffCharge != 0 || diffHP != 0 ||
        diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0 ||
        diffHitPatternHasValidHitInFirstPixelBarrel != 0 ||
-       std::abs(diffPt) > 0.2) {
+       //std::abs(diffPt) > 0.2 ||
+       std::abs(diffDzPV) > 0.05 || std::abs(diffDzAssocPV) > 0.05
+       ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
+                                                       << "\n"
+                                                       << "  ptError " << track.ptError() << " etaError " << track.etaError() << " phi " << track.phiError()
+                                                       << "\n"
+                                                       << "  refpoint " << track.referencePoint() << " momentum " << track.momentum()
+                                                       << "\n"
+                                                       << "  dxy " << track.dxy() << " dz " << track.dz() << " dxy(assocPV) " << track.dxy(pcVertex.position()) << " dz(assocPV) " << track.dz(pcVertex.position()) << " dz(PV) " << track.dz(pv.position())
                                                        << "\n"
                                                        << "  " << TrackAlgoPrinter(track)
                                                        << " lost inner hits " << trackLostInnerHits
@@ -537,6 +599,12 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " hitpattern " << HitPatternPrinter(track)
                                                        << " \n"
                                                        << " PC " << pcRef.id() << ":" << pcRef.key() << " track pt " << trackPc.pt() << " eta " << trackPc.eta() << " phi " << trackPc.phi() << " chi2 " << trackPc.chi2() << " ndof " << trackPc.ndof() << " pdgId " << pcRef->pdgId() << " mass " << pcRef->mass()
+                                                       << "\n"
+                                                       << "  ptError " << trackPc.ptError() << " etaError " << trackPc.etaError() << " phi " << trackPc.phiError()
+                                                       << "\n"
+                                                       << "  pc.vertex " << pcRef->vertex() << " momentum " << pcRef->momentum() << " track " << trackPc.momentum()
+                                                       << "\n"
+                                                       << "  dxy " << trackPc.dxy() << " dz " << trackPc.dz() << " pc.dxy " << pcRef->dxy() << " pc.dzAssociatedPV " << pcRef->dzAssociatedPV() << " pc.dz " << pcRef->dz() << " pc.dz(PV) " << pcRef->dz(pv.position())
                                                        << "\n"
                                                        << " (diff PackedCandidate track)"
                                                        << " highPurity " << diffHP << " " << trackPc.quality(reco::TrackBase::highPurity) << " " << track.quality(reco::TrackBase::highPurity)
@@ -551,7 +619,16 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " hitPattern.numberOfValidHits " << diffHitPatternNumberOfValidHits << " " << trackPc.hitPattern().numberOfValidHits() << " " << track.hitPattern().numberOfValidHits()
                                                        << " hitPattern.hasValidHitInFirstPixelBarrel " << diffHitPatternHasValidHitInFirstPixelBarrel << " " << trackPc.hitPattern().hasValidHitInFirstPixelBarrel() << " " << track.hitPattern().hasValidHitInFirstPixelBarrel()
                                                        << "\n "
-                                                       << " lostInnerHits  " << diffLostInnerHits << " " << pcRef->lostInnerHits() << " #";
+                                                       << " lostInnerHits  " << diffLostInnerHits << " " << pcRef->lostInnerHits() << " #"
+                                                       << "\n"
+                                                       << " (diff)"
+                                                       << "\n "
+                                                       << " dz(PV) " << diffDzPV << " dz(assocPV) " << diffDzAssocPV;
+
+      edm::LogWarning("PackedCandidateTrackValidator") << "Reco Primary vertex " << pv.position() << " associated PV " << pcVertex.position()
+                                                       << "\n"
+                                                       << "Packed Primary vertex " << slimmedPV.position() << " associated PV " << slimmedVertexRef->position();
+        
     }
   }
 }
