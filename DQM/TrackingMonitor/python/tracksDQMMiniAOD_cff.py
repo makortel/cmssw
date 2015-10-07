@@ -8,6 +8,6 @@ packedCandidateTrackValidatorLostTracks = packedCandidateTrackValidator.clone(
 )
 
 tracksDQMMiniAOD = cms.Sequence(
-    packedCandidateTrackValidator +
-    packedCandidateTrackValidatorLostTracks
+    packedCandidateTrackValidator# +
+#    packedCandidateTrackValidatorLostTracks
 )
