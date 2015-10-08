@@ -135,6 +135,143 @@ namespace {
     return os;
   }
 
+  class DzCalculationPrinter {
+  public:
+    using Point = pat::PackedCandidate::Point;
+    using Vector = pat::PackedCandidate::Vector;
+
+    DzCalculationPrinter(const Point& ref_, const Point& point_, const Vector& momentum_, double phi_):
+      ref(ref_), point(point_), momentum(momentum_), phi(phi_) {}
+
+    void print(std::ostream& os) const {
+      printPhi(os);
+      os << " ";
+      printDot(os);
+    }
+
+    void printPhi(std::ostream& os) const {
+      os << "phi:";
+      const auto diffx = ref.X()-point.X();
+      const auto diffy = ref.Y()-point.Y();
+      const auto diffz = ref.Z()-point.Z();
+      os << " diff x " << diffx << " y " << diffy << " z " << diffz;
+
+      const auto cosphi = std::cos(phi);
+      const auto sinphi = std::sin(phi);
+      os << " phi " << phi << " cosphi " << cosphi << " sinphi " << sinphi;
+
+      const auto xterm = diffx*cosphi;
+      const auto yterm = diffy*sinphi;
+      os << " xterm " << xterm << " yterm " << yterm;
+
+      const auto pzpt = momentum.z()/std::sqrt(momentum.perp2());
+      os << " pzpt " << pzpt;
+
+      const auto secondterm = (xterm+yterm)*pzpt;
+      os << " secondterm " << secondterm;
+
+      const auto result = diffz - secondterm;
+      os << " result " << result;
+    }
+
+    void printDot(std::ostream& os) const {
+      os << "dot:";
+      const auto diffx = ref.X()-point.X();
+      const auto diffy = ref.Y()-point.Y();
+      const auto diffz = ref.Z()-point.Z();
+      //os << " diff x " << diffx << " y " << diffy << " z " << diffz;
+
+      const auto scalex = momentum.x()/std::sqrt(momentum.perp2());
+      const auto scaley = momentum.y()/std::sqrt(momentum.perp2());
+      os << " scalex " << scalex << " scaley " << scaley;
+
+      const auto xterm = diffx*scalex;
+      const auto yterm = diffy*scaley;
+      os << " xterm " << xterm << " yterm " << yterm;
+
+      const auto pzpt = momentum.z()/std::sqrt(momentum.perp2());
+      os << " pzpt " << pzpt;
+
+      const auto secondterm = (xterm+yterm)*pzpt;
+      os << " secondterm " << secondterm;
+
+      const auto result = diffz - secondterm;
+      os << " result " << result;
+    }
+
+  private:
+    const Point ref;
+    const Point point;
+    const Vector momentum;
+    const double phi;
+  };
+  std::ostream& operator<<(std::ostream& os, const DzCalculationPrinter& dcp) {
+    dcp.print(os);
+    return os;
+  }
+
+  class DxyCalculationPrinter {
+  public:
+    using Point = pat::PackedCandidate::Point;
+    using Vector = pat::PackedCandidate::Vector;
+
+    DxyCalculationPrinter(const Point& ref_, const Point& point_, const Vector& momentum_, double phi_):
+      ref(ref_), point(point_), momentum(momentum_), phi(phi_) {}
+
+    void print(std::ostream& os) const {
+      printPhi(os);
+      os << " ";
+      printDot(os);
+    }
+
+    void printPhi(std::ostream& os) const {
+      os << "phi:";
+      const auto diffx = ref.X()-point.X();
+      const auto diffy = ref.Y()-point.Y();
+      os << " diff x " << diffx << " y " << diffy;
+
+      const auto sinphi = std::sin(phi);
+      const auto cosphi = std::cos(phi);
+      os << " phi " << phi << " sinphi " << cosphi << " cosphi " << sinphi;
+
+      const auto xterm = diffx*sinphi;
+      const auto yterm = diffy*cosphi;
+      os << " xterm " << xterm << " yterm " << yterm;
+
+      const auto result = -xterm + yterm;
+      os << " result " << result;
+    }
+
+    void printDot(std::ostream& os) const {
+      os << "dot:";
+      const auto diffx = ref.X()-point.X();
+      const auto diffy = ref.Y()-point.Y();
+      os << " diff x " << diffx << " y " << diffy;
+
+      const auto scalex = momentum.y()/std::sqrt(momentum.perp2());
+      const auto scaley = momentum.x()/std::sqrt(momentum.perp2());
+      os << " scalex " << scalex << " scaley " << scaley;
+
+      const auto xterm = diffx*scalex;
+      const auto yterm = diffy*scaley;
+      os << " xterm " << xterm << " yterm " << yterm;
+
+      const auto result = -xterm + yterm;
+      os << " result " << result;
+    }
+
+  private:
+    const Point ref;
+    const Point point;
+    const Vector momentum;
+    const double phi;
+  };
+  std::ostream& operator<<(std::ostream& os, const DxyCalculationPrinter& dcp) {
+    dcp.print(os);
+    return os;
+  }
+
+
   double diffRelative(double a, double b) {
     return (a-b)/b;
   }
@@ -205,6 +342,7 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffTheta;
   MonitorElement *h_diffPhi;
   MonitorElement *h_diffDxyAssocPV;
+  MonitorElement *h_diffDxyPV;
   MonitorElement *h_diffDzAssocPV;
   MonitorElement *h_diffDzPV;
 
@@ -309,6 +447,7 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffPhi    = iBooker.book1D("diffPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phi()",    diffBins, -0.1, 0.02);
 
   h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.2, diffRel); // expect equality within precision
+  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.2, diffRel); // expect equality within precision
   h_diffDzAssocPV  = iBooker.book1D("diffDzAssocPV",  "(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track", diffBins, -0.2, diffRel); // expect equality within precision
   h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.2, diffRel); // expect equality wihtin precision
   h_diffTrackDxy   = iBooker.book1D("diffTrackDxy",   "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxy()",          diffBins, -0.2, diffRel); // not equal
@@ -455,6 +594,9 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     const auto diffPt = diffRelative(trackPc.pt(), track.pt());
     const auto diffDzPV = diffRelative(pcRef->dz(pv.position()), track.dz(pv.position()));
     const auto diffDzAssocPV = diffRelative(pcRef->dzAssociatedPV(), track.dz(pcVertex.position()));
+    const auto diffDxyPV = diffRelative(pcRef->dxy(pv.position())    , track.dxy(pv.position()));
+    const auto diffDxyAssocPV = diffRelative(pcRef->dxy()    , track.dxy(pcVertex.position()));
+
 
     fillNoFlow(h_diffQoverp, diffRelative(trackPc.qoverp(), track.qoverp()));
     fillNoFlow(h_diffPt    , diffPt);
@@ -462,7 +604,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffTheta , diffRelative(trackPc.theta() , track.theta() ));
     fillNoFlow(h_diffPhi   , diffRelative(trackPc.phi()   , track.phi()   ));
 
-    fillNoFlow(h_diffDxyAssocPV, diffRelative(pcRef->dxy()    , track.dxy(pcVertex.position())));
+    fillNoFlow(h_diffDxyAssocPV, diffDxyAssocPV);
+    fillNoFlow(h_diffDxyPV     , diffDxyPV);
     fillNoFlow(h_diffDzAssocPV , diffDzAssocPV);
     fillNoFlow(h_diffDzPV      , diffDzPV);
     fillNoFlow(h_diffTrackDxy  , diffRelative(trackPc.dxy()   , track.dxy()   ));
@@ -582,7 +725,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0 ||
        diffHitPatternHasValidHitInFirstPixelBarrel != 0 ||
        //std::abs(diffPt) > 0.2 ||
-       std::abs(diffDzPV) > 0.05 || std::abs(diffDzAssocPV) > 0.05
+       std::abs(diffDzPV) > 0.05 || std::abs(diffDzAssocPV) > 0.05 ||
+       std::abs(diffDxyPV) > 0.05 || std::abs(diffDxyAssocPV) > 0.05
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
@@ -591,7 +735,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << "\n"
                                                        << "  refpoint " << track.referencePoint() << " momentum " << track.momentum()
                                                        << "\n"
-                                                       << "  dxy " << track.dxy() << " dz " << track.dz() << " dxy(assocPV) " << track.dxy(pcVertex.position()) << " dz(assocPV) " << track.dz(pcVertex.position()) << " dz(PV) " << track.dz(pv.position())
+                                                       << "  dxy " << track.dxy() << " dz " << track.dz()
                                                        << "\n"
                                                        << "  " << TrackAlgoPrinter(track)
                                                        << " lost inner hits " << trackLostInnerHits
@@ -604,7 +748,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << "\n"
                                                        << "  pc.vertex " << pcRef->vertex() << " momentum " << pcRef->momentum() << " track " << trackPc.momentum()
                                                        << "\n"
-                                                       << "  dxy " << trackPc.dxy() << " dz " << trackPc.dz() << " pc.dxy " << pcRef->dxy() << " pc.dzAssociatedPV " << pcRef->dzAssociatedPV() << " pc.dz " << pcRef->dz() << " pc.dz(PV) " << pcRef->dz(pv.position())
+                                                       << "  dxy " << trackPc.dxy() << " dz " << trackPc.dz() << " pc.dz " << pcRef->dz()
                                                        << "\n"
                                                        << " (diff PackedCandidate track)"
                                                        << " highPurity " << diffHP << " " << trackPc.quality(reco::TrackBase::highPurity) << " " << track.quality(reco::TrackBase::highPurity)
@@ -621,9 +765,28 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << "\n "
                                                        << " lostInnerHits  " << diffLostInnerHits << " " << pcRef->lostInnerHits() << " #"
                                                        << "\n"
-                                                       << " (diff)"
+                                                       << " dz(PV) " << diffDzPV << " " << pcRef->dz(pv.position()) << " " << track.dz(pv.position())
+                                                       << " dz(assocPV) " << diffDzAssocPV << " " << pcRef->dzAssociatedPV() << " " << track.dz(pcVertex.position())
+                                                       << " dxy(PV) " << diffDxyPV << " " << pcRef->dxy(pv.position()) << " " << track.dxy(pv.position())
+                                                       << " dxy(assocPV) " << diffDxyAssocPV << " " << pcRef->dxy() << " " << track.dxy(pcVertex.position())
+                                                       << "\n"
+                                                       << " dz(PV) "
                                                        << "\n "
-                                                       << " dz(PV) " << diffDzPV << " dz(assocPV) " << diffDzAssocPV;
+                                                       << " track " << DzCalculationPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                       << "\n "
+                                                       << " PC    " << DzCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                       << "\n "
+                                                       << " PCvtx " << DzCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                       << "\n "
+                                                       << " dxy(PV) "
+                                                       << "\n "
+                                                       << " track " << DxyCalculationPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                       << "\n "
+                                                       << " PC    " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                       << "\n "
+                                                       << " PCvtx " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx());
+
+      
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Reco Primary vertex " << pv.position() << " associated PV " << pcVertex.position()
                                                        << "\n"
