@@ -119,11 +119,13 @@ pat::PackedCandidate::~PackedCandidate() { }
 
 float pat::PackedCandidate::dxy(const Point &p) const {
 	maybeUnpackBoth();
-	return -(vertex_.X()-p.X()) * std::sin(float(p4_.Phi())) + (vertex_.Y()-p.Y()) * std::cos(float(p4_.Phi()));
+	const float phi = float(p4_.Phi())+dphi_;
+	return -(vertex_.X()-p.X()) * std::sin(phi) + (vertex_.Y()-p.Y()) * std::cos(phi);
 }
 float pat::PackedCandidate::dz(const Point &p) const {
     maybeUnpackBoth();
-    return (vertex_.Z()-p.Z())  - ((vertex_.X()-p.X()) * std::cos(float(p4_.Phi())) + (vertex_.Y()-p.Y()) * std::sin(float(p4_.Phi()))) * p4_.Pz()/p4_.Pt();
+    const float phi = float(p4_.Phi())+dphi_;
+    return (vertex_.Z()-p.Z())  - ((vertex_.X()-p.X()) * std::cos(phi) + (vertex_.Y()-p.Y()) * std::sin(phi)) * p4_.Pz()/p4_.Pt();
 }
 
 void pat::PackedCandidate::unpackTrk() const {
