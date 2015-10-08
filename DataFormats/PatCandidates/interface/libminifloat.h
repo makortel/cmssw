@@ -45,6 +45,24 @@ class MiniFloatConverter {
             conv.i32&=mask;
             return conv.flt;
         }
+
+        inline static float max() {
+            union { float flt; uint32_t i32; } conv;
+            // 0x1f exponent is for inf, so 0x1e is the maximum
+            //conv.i32 = mantissatable[offsettable[0x1e]+0x3ff]+exponenttable[0x1e];
+            conv.i32 = 0x477fe000; // constant equivalent to above
+            return conv.flt;
+        }
+
+        // Maximum float32 value that is converted to max()
+        inline static float max32ConvertedToMax16() {
+            union { float flt; uint32_t i32; } conv;
+            // 2^16 in float32 is the first to result inf in float16, so
+            // 2^16-1 is the last float32 to result max() in float16
+            conv.i32 = (0x8f<<23) - 1;
+            return conv.flt;
+        }
+
     private:
         CMS_THREAD_SAFE static uint32_t mantissatable[2048];
         CMS_THREAD_SAFE static uint32_t exponenttable[64];
