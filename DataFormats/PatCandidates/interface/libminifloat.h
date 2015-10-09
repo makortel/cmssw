@@ -53,7 +53,7 @@ class MiniFloatConverter {
         }
 
         // Maximum float32 value that is converted to max()
-        inline static float max32ConvertedToMax16() {
+        inline static float max32ConvertibleToMax16() {
             union { float flt; uint32_t i32; } conv;
             // 2^16 in float32 is the first to result inf in float16, so
             // 2^16-1 is the last float32 to result max() in float16
