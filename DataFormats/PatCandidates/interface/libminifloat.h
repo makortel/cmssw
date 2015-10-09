@@ -48,9 +48,7 @@ class MiniFloatConverter {
 
         inline static float max() {
             union { float flt; uint32_t i32; } conv;
-            // 0x1f exponent is for inf, so 0x1e is the maximum
-            //conv.i32 = mantissatable[offsettable[0x1e]+0x3ff]+exponenttable[0x1e];
-            conv.i32 = 0x477fe000; // constant equivalent to above
+            conv.i32 = 0x477fe000; // = mantissatable[offsettable[0x1e]+0x3ff]+exponenttable[0x1e]
             return conv.flt;
         }
 

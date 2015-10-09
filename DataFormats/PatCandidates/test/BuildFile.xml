@@ -4,3 +4,4 @@
 <bin   name="testKinResolutions" file="testKinParametrizations.cc,testKinResolutions.cc,testRunner.cpp">
   <flags   NO_TESTRUN="1"/>
 </bin>
+<bin   name="testMiniFloat" file="testMiniFloat.cpp"/>
