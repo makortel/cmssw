@@ -173,6 +173,9 @@ public:
     return &(*iter);
   }
   
+  double weightedNumberOfTrackHits(const reco::Track& track) const;
+  double weightedNumberOfTrackHits(const TrajectorySeed& seed) const;
+
   /** @brief creates either a ClusterTPAssociationList OR a TrackerHitAssociator and stores it in the provided unique_ptr. The other will be null.
    *
    * A decision is made whether to create a ClusterTPAssociationList or a TrackerHitAssociator depending on how this

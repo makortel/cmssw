@@ -82,7 +82,6 @@ namespace
 	{
 		return collection[index];
 	}
-
 } // end of the unnamed namespace
 
 QuickTrackAssociatorByHitsImpl::QuickTrackAssociatorByHitsImpl(edm::EDProductGetter const& productGetter,
@@ -163,7 +162,7 @@ reco::RecoToSimCollection QuickTrackAssociatorByHitsImpl::associateRecoToSimImpl
 		{
 			const edm::Ref<TrackingParticleCollection>& trackingParticleRef=iTrackingParticleQualityPair->first;
 			double numberOfSharedHits=iTrackingParticleQualityPair->second;
-			size_t numberOfValidTrackHits=pTrack->found();
+			double numberOfValidTrackHits=weightedNumberOfTrackHits(*pTrack);
 
 			if( numberOfSharedHits == 0.0 ) continue; // No point in continuing if there was no association
 
@@ -175,10 +174,9 @@ reco::RecoToSimCollection QuickTrackAssociatorByHitsImpl::associateRecoToSimImpl
 
 			double quality;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
-			else if( numberOfValidTrackHits != 0 ) quality=
-					(numberOfSharedHits / static_cast<double>( numberOfValidTrackHits ));
+			else if( numberOfValidTrackHits != 0.0 ) quality = numberOfSharedHits / numberOfValidTrackHits;
 			else quality=0;
-			if( quality > cutRecoToSim_ && !(threeHitTracksAreSpecial_ && numberOfValidTrackHits == 3 && numberOfSharedHits < 3.0) )
+			if( quality > cutRecoToSim_ && !(threeHitTracksAreSpecial_ && pTrack->numberOfValidHits() == 3 && numberOfSharedHits < 3.0) )
 			{
 				// Getting the RefToBase is dependent on the type of trackCollection, so delegate that to an overload.
 				returnValue.insert( ::getRefToTrackAt(trackCollection,i), std::make_pair( trackingParticleRef, quality ) );
@@ -209,7 +207,7 @@ reco::SimToRecoCollection QuickTrackAssociatorByHitsImpl::associateSimToRecoImpl
 		{
 			const edm::Ref<TrackingParticleCollection>& trackingParticleRef=iTrackingParticleQualityPair->first;
 			double numberOfSharedHits=iTrackingParticleQualityPair->second;
-			size_t numberOfValidTrackHits=pTrack->found();
+			double numberOfValidTrackHits=weightedNumberOfTrackHits(*pTrack);
 			size_t numberOfSimulatedHits=0; // Set a few lines below, but only if required.
 
 			if( numberOfSharedHits==0.0 ) continue; // No point in continuing if there was no association
@@ -229,7 +227,7 @@ reco::SimToRecoCollection QuickTrackAssociatorByHitsImpl::associateSimToRecoImpl
 				numberOfSharedHits -= getDoubleCount( hitOrClusterAssociator, pTrack->recHitsBegin(), pTrack->recHitsEnd(), trackingParticleRef );
 			}
 
-			double purity = numberOfSharedHits/static_cast<double>(numberOfValidTrackHits);
+			double purity = numberOfSharedHits/numberOfValidTrackHits;
 			double quality;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
 			else if( simToRecoDenominator_==denomsim && numberOfSimulatedHits != 0 ) quality = numberOfSharedHits/static_cast<double>(numberOfSimulatedHits);
@@ -556,7 +554,7 @@ reco::RecoToSimCollectionSeed QuickTrackAssociatorByHitsImpl::associateRecoToSim
 		{
 			const edm::Ref<TrackingParticleCollection>& trackingParticleRef=iTrackingParticleQualityPair->first;
 			double numberOfSharedHits=iTrackingParticleQualityPair->second;
-			size_t numberOfValidTrackHits=pSeed->recHits().second - pSeed->recHits().first;
+                        double numberOfValidTrackHits=weightedNumberOfTrackHits(*pSeed);
 
 			if( numberOfSharedHits == 0.0 ) continue; // No point in continuing if there was no association
 
@@ -569,11 +567,10 @@ reco::RecoToSimCollectionSeed QuickTrackAssociatorByHitsImpl::associateRecoToSim
 
 			double quality;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
-			else if( numberOfValidTrackHits != 0 ) quality=
-					( numberOfSharedHits / static_cast<double>( numberOfValidTrackHits ));
+			else if( numberOfValidTrackHits != 0.0 ) quality = numberOfSharedHits / numberOfValidTrackHits;
 			else quality=0;
 
-			if( quality > cutRecoToSim_ && !(threeHitTracksAreSpecial_ && numberOfValidTrackHits == 3 && numberOfSharedHits < 3.0) )
+			if( quality > cutRecoToSim_ && !(threeHitTracksAreSpecial_ && pSeed->nHits() == 3 && numberOfSharedHits < 3.0) )
 			{
 				returnValue.insert( edm::RefToBase < TrajectorySeed > (pSeedCollectionHandle_, i), std::make_pair( trackingParticleRef, quality ) );
 			}
@@ -610,7 +607,7 @@ reco::SimToRecoCollectionSeed QuickTrackAssociatorByHitsImpl::associateSimToReco
 		{
 			const edm::Ref<TrackingParticleCollection>& trackingParticleRef=iTrackingParticleQualityPair->first;
 			double numberOfSharedHits=iTrackingParticleQualityPair->second;
-			size_t numberOfValidTrackHits=pSeed->recHits().second - pSeed->recHits().first;
+			double numberOfValidTrackHits=weightedNumberOfTrackHits(*pSeed);
 			size_t numberOfSimulatedHits=0; // Set a few lines below, but only if required.
 
 			if( numberOfSharedHits == 0.0 ) continue; // No point in continuing if there was no association
@@ -631,12 +628,12 @@ reco::SimToRecoCollectionSeed QuickTrackAssociatorByHitsImpl::associateSimToReco
 				numberOfSimulatedHits=trackingParticleRef->numberOfTrackerHits();
 			}
 
-			double purity = numberOfSharedHits / static_cast<double>( numberOfValidTrackHits );
+			double purity = numberOfSharedHits / numberOfValidTrackHits;
 			double quality;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
 			else if( simToRecoDenominator_ == denomsim && numberOfSimulatedHits != 0 ) quality= numberOfSharedHits
 					/ static_cast<double>( numberOfSimulatedHits );
-			else if( simToRecoDenominator_ == denomreco && numberOfValidTrackHits != 0 ) quality=purity;
+			else if( simToRecoDenominator_ == denomreco && numberOfValidTrackHits != 0.0 ) quality=purity;
 			else quality=0;
 
 			if( quality > qualitySimToReco_ && !(threeHitTracksAreSpecial_ && numberOfSimulatedHits == 3 && numberOfSharedHits < 3.0)
@@ -650,4 +647,21 @@ reco::SimToRecoCollectionSeed QuickTrackAssociatorByHitsImpl::associateSimToReco
 	LogTrace("TrackAssociator") << "% of Assoc TPs=" << ((double)returnValue.size())/((double)trackingParticleCollectionHandle->size());
 	returnValue.post_insert();
 	return returnValue;
+}
+
+double QuickTrackAssociatorByHitsImpl::weightedNumberOfTrackHits(const reco::Track& track) const {
+  const reco::HitPattern& p = track.hitPattern();
+  const auto pixelHits = p.numberOfValidPixelHits();
+  const auto otherHits = p.numberOfValidHits() - pixelHits;
+  return pixelHits*pixelHitWeight_ + otherHits;
+}
+
+double QuickTrackAssociatorByHitsImpl::weightedNumberOfTrackHits(const TrajectorySeed& seed) const {
+  double sum = 0.0;
+  for(auto iHit=seed.recHits().first; iHit!=seed.recHits().second; ++iHit) {
+    const auto subdetId = getHitFromIter(iHit)->geographicalId().subdetId();
+    const double weight = (subdetId == PixelSubdetector::PixelBarrel || subdetId == PixelSubdetector::PixelEndcap) ?  pixelHitWeight_ : 1.0;
+    sum += weight;
+  }
+  return sum;
 }
