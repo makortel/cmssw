@@ -509,7 +509,7 @@ namespace {
 
   bool isDzErrorPackedFinite(const reco::Track& track) {
     // dz*x needs to be in double, as it is such in PackedCandidate::packVtx;
-    return float(track.covariance(reco::TrackBase::i_dsz, reco::TrackBase::i_dsz)*10000.) <= MiniFloatConverter::max32ConvertedToMax16();
+    return float(track.covariance(reco::TrackBase::i_dsz, reco::TrackBase::i_dsz)*10000.) <= MiniFloatConverter::max32ConvertibleToMax16();
   }
 }
 
