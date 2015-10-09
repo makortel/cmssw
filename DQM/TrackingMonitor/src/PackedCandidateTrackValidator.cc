@@ -5,6 +5,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/VecArray.h"
+#include "FWCore/Utilities/interface/isFinite.h"
 
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
@@ -12,6 +13,7 @@
 #include "DataFormats/Common/interface/Association.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/PatCandidates/interface/libminifloat.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 
@@ -356,6 +358,11 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffPhiError;
   MonitorElement *h_diffDxyError;
   MonitorElement *h_diffDzError;
+  MonitorElement *h_diffDzErrorInf;
+
+  MonitorElement *h_diffTrackDxyError;
+  MonitorElement *h_diffTrackDzError;
+
 
   MonitorElement *h_diffCovQoverpLambda;
   MonitorElement *h_diffCovQoverpPhi;
@@ -446,10 +453,10 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffTheta  = iBooker.book1D("diffTheta",  "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in theta()",  diffBins, -0.2, diffRel);
   h_diffPhi    = iBooker.book1D("diffPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phi()",    diffBins, -0.1, 0.02);
 
-  h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.2, diffRel); // expect equality within precision
-  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.2, diffRel); // expect equality within precision
-  h_diffDzAssocPV  = iBooker.book1D("diffDzAssocPV",  "(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track", diffBins, -0.2, diffRel); // expect equality within precision
-  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.2, diffRel); // expect equality wihtin precision
+  h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.002, 0.002); // expect equality within precision
+  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.002, 0.002); // expect equality within precision
+  h_diffDzAssocPV  = iBooker.book1D("diffDzAssocPV",  "(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track", diffBins, -0.002, 0.002); // expect equality within precision
+  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.002, 0.002); // expect equality wihtin precision
   h_diffTrackDxy   = iBooker.book1D("diffTrackDxy",   "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxy()",          diffBins, -0.2, diffRel); // not equal
   h_diffTrackDz    = iBooker.book1D("diffTrackDz",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dz()",           diffBins, -0.2, diffRel); // not equal
 
@@ -458,8 +465,13 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffEtaError    = iBooker.book1D("diffEtaError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in etaError()",    diffBins, -0.1, 0.1);
   h_diffThetaError  = iBooker.book1D("diffThetaError",  "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in thetaError()",  diffBins, -0.1, 0.1);
   h_diffPhiError    = iBooker.book1D("diffPhiError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phiError()",    diffBins, -0.1, 0.1);
-  h_diffDxyError    = iBooker.book1D("diffDxyError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxyError()",    diffBins, -0.001, 0.001);
-  h_diffDzError     = iBooker.book1D("diffDzError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dzError()",     diffBins, -0.02, 0.002);
+  h_diffDxyError    = iBooker.book1D("diffDxyError",    "(PackedCandidate::dxyError() - reco::Track::dxyError())/reco::Track",       diffBins, -0.001, 0.001);
+  h_diffDzError     = iBooker.book1D("diffDzError",     "(PackedCandidate::dzError() - reco::Track::dszError())/reco::Track",        diffBins, -0.001, 0.001);
+  //h_diffDzError     = iBooker.book1D("diffDzError",     "(PackedCandidate::dzError() - reco::Track::dzError())/reco::Track",     diffBins, -0.02, 0.002);
+  h_diffDzErrorInf  = iBooker.book1D("diffDzErrorInf",  "isinf(PackedCandidate::dzError()) - wouldbeinf(reco::Track::dzError())",     3, -1.5, 1.5);
+
+  h_diffTrackDxyError    = iBooker.book1D("diffTrackDxyError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxyError()",    diffBins, -0.001, 0.001);
+  h_diffTrackDzError     = iBooker.book1D("diffTrackDzError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dzError()",     diffBins, -0.02, 0.002);
 
   h_diffCovQoverpLambda = iBooker.book1D("diffCovQoverpLambda", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, lambda)", 10, -1.1, -0.9);
   h_diffCovQoverpPhi    = iBooker.book1D("diffCovQoverpPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, phi)",    10, -1.1, -0.9);
@@ -489,6 +501,15 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
 namespace {
   template<typename T> void fillNoFlow(MonitorElement* h, T val){
     h->Fill(std::min(std::max(val,((T) h->getTH1()->GetXaxis()->GetXmin())),((T) h->getTH1()->GetXaxis()->GetXmax())));
+  }
+
+  float packUnpack(float value) {
+    return MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(value));
+  }
+
+  bool isDzErrorPackedFinite(const reco::Track& track) {
+    // dz*x needs to be in double, as it is such in PackedCandidate::packVtx;
+    return float(track.covariance(reco::TrackBase::i_dsz, reco::TrackBase::i_dsz)*10000.) <= MiniFloatConverter::max32ConvertedToMax16();
   }
 }
 
@@ -592,18 +613,16 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     */
 
     const auto diffPt = diffRelative(trackPc.pt(), track.pt());
-    const auto diffDzPV = diffRelative(pcRef->dz(pv.position()), track.dz(pv.position()));
-    const auto diffDzAssocPV = diffRelative(pcRef->dzAssociatedPV(), track.dz(pcVertex.position()));
-    const auto diffDxyPV = diffRelative(pcRef->dxy(pv.position())    , track.dxy(pv.position()));
-    const auto diffDxyAssocPV = diffRelative(pcRef->dxy()    , track.dxy(pcVertex.position()));
-
-
     fillNoFlow(h_diffQoverp, diffRelative(trackPc.qoverp(), track.qoverp()));
     fillNoFlow(h_diffPt    , diffPt);
     fillNoFlow(h_diffEta   , diffRelative(trackPc.eta()   , track.eta()   ));
     fillNoFlow(h_diffTheta , diffRelative(trackPc.theta() , track.theta() ));
     fillNoFlow(h_diffPhi   , diffRelative(trackPc.phi()   , track.phi()   ));
 
+    const auto diffDzPV = diffRelative(pcRef->dz(pv.position()), track.dz(pv.position()));
+    const auto diffDzAssocPV = diffRelative(pcRef->dzAssociatedPV(), track.dz(pcVertex.position()));
+    const auto diffDxyPV = diffRelative(pcRef->dxy(pv.position())    , track.dxy(pv.position()));
+    const auto diffDxyAssocPV = diffRelative(pcRef->dxy()    , track.dxy(pcVertex.position()));
     fillNoFlow(h_diffDxyAssocPV, diffDxyAssocPV);
     fillNoFlow(h_diffDxyPV     , diffDxyPV);
     fillNoFlow(h_diffDzAssocPV , diffDzAssocPV);
@@ -611,13 +630,21 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffTrackDxy  , diffRelative(trackPc.dxy()   , track.dxy()   ));
     fillNoFlow(h_diffTrackDz   , diffRelative(trackPc.dz()    , track.dz()    ));
 
+    //const bool dzErrorFinite = isDzErrorPackedFinite(track.dzError()); // FIXME
+    //const double diffDzError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dzError()) : 0; // FIXME 
+    const bool dzErrorFinite = isDzErrorPackedFinite(track);
+    const double diffDzError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dszError()) : 0;
+    const auto diffDxyError = diffRelative(pcRef->dxyError()  , track.dxyError());
     fillNoFlow(h_diffQoverpError, diffRelative(trackPc.qoverpError(), track.qoverpError()));
     fillNoFlow(h_diffPtError    , diffRelative(trackPc.ptError()    , track.ptError()    ));
     fillNoFlow(h_diffEtaError   , diffRelative(trackPc.etaError()   , track.etaError()   ));
     fillNoFlow(h_diffThetaError , diffRelative(trackPc.thetaError() , track.thetaError() ));
     fillNoFlow(h_diffPhiError   , diffRelative(trackPc.phiError()   , track.phiError()   ));
-    fillNoFlow(h_diffDxyError   , diffRelative(trackPc.dxyError()   , track.dxyError()   ));
-    fillNoFlow(h_diffDzError    , diffRelative(trackPc.dzError()    , track.dzError()    ));
+    fillNoFlow(h_diffDxyError   , diffDxyError);
+    if(dzErrorFinite) fillNoFlow(h_diffDzError, diffDzError);
+    h_diffDzErrorInf->Fill(static_cast<int>(edm::isNotFinite(pcRef->dzError())) - static_cast<int>(!dzErrorFinite));
+    fillNoFlow(h_diffTrackDxyError, diffRelative(trackPc.dxyError()  , track.dxyError()));
+    if(dzErrorFinite) fillNoFlow(h_diffTrackDzError , diffRelative(trackPc.dzError(), track.dzError()));
 
     auto fillCov = [&](MonitorElement *me, const int i, const int j) {
       fillNoFlow(me, diffRelative(trackPc.covariance(i, j), track.covariance(i, j)));
@@ -725,8 +752,9 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0 ||
        diffHitPatternHasValidHitInFirstPixelBarrel != 0 ||
        //std::abs(diffPt) > 0.2 ||
-       std::abs(diffDzPV) > 0.05 || std::abs(diffDzAssocPV) > 0.05 ||
-       std::abs(diffDxyPV) > 0.05 || std::abs(diffDxyAssocPV) > 0.05
+       std::abs(diffDzPV) > 0.01 || std::abs(diffDzAssocPV) > 0.01 ||
+       std::abs(diffDxyPV) > 0.01 || std::abs(diffDxyAssocPV) > 0.01 ||
+       std::abs(diffDzError) > 0.01 || std::abs(diffDxyError) > 0.01
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
@@ -749,6 +777,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << "  pc.vertex " << pcRef->vertex() << " momentum " << pcRef->momentum() << " track " << trackPc.momentum()
                                                        << "\n"
                                                        << "  dxy " << trackPc.dxy() << " dz " << trackPc.dz() << " pc.dz " << pcRef->dz()
+                                                       << " dxyError " << trackPc.dxyError() << " dzError " << trackPc.dzError()
                                                        << "\n"
                                                        << " (diff PackedCandidate track)"
                                                        << " highPurity " << diffHP << " " << trackPc.quality(reco::TrackBase::highPurity) << " " << track.quality(reco::TrackBase::highPurity)
@@ -770,6 +799,15 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " dxy(PV) " << diffDxyPV << " " << pcRef->dxy(pv.position()) << " " << track.dxy(pv.position())
                                                        << " dxy(assocPV) " << diffDxyAssocPV << " " << pcRef->dxy() << " " << track.dxy(pcVertex.position())
                                                        << "\n"
+        /*
+                                                       << " dzError " << diffDzError << " " << trackPc.dzError() << " " << track.dzError() << " (" << packUnpack(track.dzError()) << ")"
+                                                       << " dxyError " << diffDxyError << " " << trackPc.dxyError() << " " << track.dxyError();
+        */
+                                                       << " dzError " << diffDzError << " " << pcRef->dzError() << " " << track.dzError() << " (" << track.dszError() << ")"
+                                                       << " dxyError " << diffDxyError << " " << pcRef->dxyError() << " " << track.dxyError();
+
+      /*
+                                                       << "\n"
                                                        << " dz(PV) "
                                                        << "\n "
                                                        << " track " << DzCalculationPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
@@ -785,6 +823,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " PC    " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
                                                        << "\n "
                                                        << " PCvtx " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx());
+      */
 
       
 
