@@ -390,12 +390,14 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffTrackDzError;
 
 
+  /*
   MonitorElement *h_diffCovQoverpLambda;
   MonitorElement *h_diffCovQoverpPhi;
   MonitorElement *h_diffCovQoverpDxy;
   MonitorElement *h_diffCovQoverpDz;
   MonitorElement *h_diffCovLambdaPhi;
   MonitorElement *h_diffCovLambdaDxy;
+  */
   MonitorElement *h_diffCovLambdaDz;
   MonitorElement *h_diffCovPhiDxy;
   MonitorElement *h_diffCovPhiDz;
@@ -502,15 +504,17 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffTrackDxyError    = iBooker.book1D("diffTrackDxyError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxyError()",    diffBins, -0.001, 0.001); // expect equality within precision (but drop)
   h_diffTrackDzError     = iBooker.book1D("diffTrackDzError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dzError()",     diffBins, -0.02, 0.02); // not equal, drop
 
-  h_diffCovQoverpLambda = iBooker.book1D("diffCovQoverpLambda", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, lambda)", 10, -1.1, -0.9);
-  h_diffCovQoverpPhi    = iBooker.book1D("diffCovQoverpPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, phi)",    10, -1.1, -0.9);
-  h_diffCovQoverpDxy    = iBooker.book1D("diffCovQoverpDxy",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, dxy)",    10, -1.1, -0.9);
-  h_diffCovQoverpDz     = iBooker.book1D("diffCovQoverpDz",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, dz)",     10, -1.1, -0.9);
-  h_diffCovLambdaPhi    = iBooker.book1D("diffCovLambdaPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, phi)",    10, -1.1, -0.9);
-  h_diffCovLambdaDxy    = iBooker.book1D("diffCovLambdaDxy",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, dxy)",    10, -1.1, -0.9);
-  h_diffCovLambdaDz     = iBooker.book1D("diffCovLambdaDz",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, dz)",     200, -10, 0.2);
+  /*
+  h_diffCovQoverpLambda = iBooker.book1D("diffCovQoverpLambda", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, lambda)", 10, -1.1, -0.9); // expect to be 0, drop?
+  h_diffCovQoverpPhi    = iBooker.book1D("diffCovQoverpPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, phi)",    10, -1.1, -0.9); // expect to be 0, drop?
+  h_diffCovQoverpDxy    = iBooker.book1D("diffCovQoverpDxy",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, dxy)",    10, -1.1, -0.9); // expect to be 0, drop?
+  h_diffCovQoverpDz     = iBooker.book1D("diffCovQoverpDz",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, dz)",     10, -1.1, -0.9); // expect to be 0, drop?
+  h_diffCovLambdaPhi    = iBooker.book1D("diffCovLambdaPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, phi)",    10, -1.1, -0.9); // expect to be 0, drop?
+  h_diffCovLambdaDxy    = iBooker.book1D("diffCovLambdaDxy",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, dxy)",    10, -1.1, -0.9); // expect to be 0, drop?
+  */
+  h_diffCovLambdaDz     = iBooker.book1D("diffCovLambdaDz",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, dz)",     210, -4, 0.2); // expect equality within precision, worst precision is exp(1/128*(17-4) =~ 11 %
   h_diffCovPhiDxy       = iBooker.book1D("diffCovPhiDxy",       "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(phi, dxy)",       diffBins, -0.5, 0.05);
-  h_diffCovPhiDz        = iBooker.book1D("diffCovPhiDz",        "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(phi, dz)",        10, -1.1, -0.9);
+  h_diffCovPhiDz        = iBooker.book1D("diffCovPhiDz",        "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(phi, dz)",        10, -1.1, -0.9); // expect to be 0, drop?
   h_diffCovDxyDz        = iBooker.book1D("diffCovDxyDz",        "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(dxy, dz)",        diffBins, -0.1, 0.1); // expect equality within precision
 
   h_diffNumberOfPixelHits = iBooker.book1D("diffNumberOfPixelHits", "PackedCandidate::numberOfPixelHits() - reco::Track::hitPattern::numberOfValidPixelHits()", 5, -2.5, 2.5);
@@ -683,13 +687,15 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
       fillNoFlow(me, diffRel);
       return diffRel;
     };
+    /*
     fillCov(h_diffCovQoverpLambda, reco::TrackBase::i_qoverp, reco::TrackBase::i_lambda);
     fillCov(h_diffCovQoverpPhi,    reco::TrackBase::i_qoverp, reco::TrackBase::i_phi);
     fillCov(h_diffCovQoverpDxy,    reco::TrackBase::i_qoverp, reco::TrackBase::i_dxy);
     fillCov(h_diffCovQoverpDz,     reco::TrackBase::i_qoverp, reco::TrackBase::i_dsz);
     fillCov(h_diffCovLambdaPhi,    reco::TrackBase::i_lambda, reco::TrackBase::i_phi);
     fillCov(h_diffCovLambdaDxy,    reco::TrackBase::i_lambda, reco::TrackBase::i_dxy);
-    fillCov(h_diffCovLambdaDz,     reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
+    */
+    const auto diffCovLambdaDz = fillCov(h_diffCovLambdaDz,     reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
     fillCov(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
     fillCov(h_diffCovPhiDz,        reco::TrackBase::i_phi,    reco::TrackBase::i_dsz);
     const auto diffCovDxyDz = fillCov(h_diffCovDxyDz,        reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz);
@@ -789,10 +795,11 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        std::abs(diffDzPV) > 0.01 || std::abs(diffDzAssocPV) > 0.01 ||
        std::abs(diffDxyPV) > 0.01 || std::abs(diffDxyAssocPV) > 0.01 ||
        std::abs(diffDszError) > 0.01 || std::abs(diffDxyError) > 0.01 ||
-       std::abs(diffCovDxyDz) > 0.05 ||
        diffQoverpError < 0.0 || diffQoverpError > 0.13 ||
        diffThetaError < 0.0 || diffThetaError > 0.13 ||
-       diffPhiError < 0.0 || diffPhiError > 0.13
+       diffPhiError < 0.0 || diffPhiError > 0.13 ||
+       std::abs(diffCovDxyDz) > 0.05 ||
+       //std::abs(diffCovLambdaDz) > 0.1
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
@@ -849,7 +856,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " dszError " << diffDszError << " " << pcRef->dzError() << " " << track.dszError() << " (dz " << track.dzError() << ")"
                                                        << " dxyError " << diffDxyError << " " << pcRef->dxyError() << " " << track.dxyError()
                                                        << "\n "
-                                                       << " cov(dxy, dz) " << diffCovDxyDz << " " << CovPrinter(trackPc, track, reco::TrackBase::i_dxy, reco::TrackBase::i_dsz, 10000.0);
+                                                       << " cov(dxy, dz) " << diffCovDxyDz << " " << CovPrinter(trackPc, track, reco::TrackBase::i_dxy, reco::TrackBase::i_dsz, 10000.0)
+                                                       << " cov(lambda, dz) " << diffCovLambdaDz << " " << CovPrinter(trackPc, track, reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
 
       /*
                                                        << "\n"
