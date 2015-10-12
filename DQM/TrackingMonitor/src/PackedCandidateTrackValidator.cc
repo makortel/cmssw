@@ -358,6 +358,7 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffPhiError;
   MonitorElement *h_diffDxyError;
   MonitorElement *h_diffDzError;
+  MonitorElement *h_diffDszError;
   MonitorElement *h_diffDzErrorInf;
 
   MonitorElement *h_diffTrackDxyError;
@@ -427,13 +428,15 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   //constexpr float diffP = 1e-1;
   constexpr float diffRel = 5e-2;
 
+  /*
   h_diffPx = iBooker.book1D("diffPx", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in px()", diffBins, -1.1, 0.2); // not equal, drop?
   h_diffPy = iBooker.book1D("diffPy", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in py()", diffBins, -1.1, 0.2); // not equal, drop?
   h_diffPz = iBooker.book1D("diffPz", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in pz()", diffBins, -1.1, 0.2); // not equal, drop?
+  */
 
-  h_diffVx = iBooker.book1D("diffVx", "PackedCandidate::bestTrack() - reco::Track in vx()", diffBins, -0.1, 0.05); // not equal, drop?
-  h_diffVy = iBooker.book1D("diffVy", "PackedCandidate::bestTrack() - reco::Track in vy()", diffBins, -0.1, 0.05); // not equal, drop?
-  h_diffVz = iBooker.book1D("diffVz", "PackedCandidate::bestTrack() - reco::Track in vz()", diffBins, -0.2, 0.1); // not equal, drop?
+  h_diffVx = iBooker.book1D("diffVx", "PackedCandidate::bestTrack() - reco::Track in vx()", diffBins, -0.2, 0.2); // not equal, keep?
+  h_diffVy = iBooker.book1D("diffVy", "PackedCandidate::bestTrack() - reco::Track in vy()", diffBins, -0.2, 0.2); // not equal, keep?
+  h_diffVz = iBooker.book1D("diffVz", "PackedCandidate::bestTrack() - reco::Track in vz()", diffBins, -0.4, 0.4); // not equal, keep?
 
   /*
   h_diffVxVsVertex = iBooker.book1D("diffVxVsVertex", "PackedCandidate::bestTrack()::vx() - reco::Vertex::x()", diffBins, -0.1, 0.05);
@@ -447,10 +450,10 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffCharge = iBooker.book1D("diffCharge", "PackedCandidate::bestTrack() - reco::Track in charge()", 5, -2.5, 2.5); // expect equality
   h_diffIsHighPurity = iBooker.book1D("diffIsHighPurity", "PackedCandidate::bestTrack() - reco::Track in quality(highPurity)", 3, -1.5, 1.5); // expect equality
 
-  h_diffQoverp = iBooker.book1D("diffQoverp", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in qoverp()", diffBins, -1.1, diffRel); // not equal, drop?
-  h_diffPt     = iBooker.book1D("diffPt",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in pt()",     diffBins, -1.1, 0.5); // not equal, keep
-  h_diffEta    = iBooker.book1D("diffEta",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in eta()",    diffBins, -0.1, 0.02); // not equal, keep
-  h_diffTheta  = iBooker.book1D("diffTheta",  "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in theta()",  diffBins, -0.2, diffRel); // not equal, drop
+  h_diffQoverp = iBooker.book1D("diffQoverp", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in qoverp()", diffBins, -1.1, 1.1); // not equal, drop?
+  h_diffPt     = iBooker.book1D("diffPt",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in pt()",     diffBins, -1.1, 1.1); // not equal, keep
+  h_diffEta    = iBooker.book1D("diffEta",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in eta()",    diffBins, -0.2, 0.2); // not equal, keep
+  h_diffTheta  = iBooker.book1D("diffTheta",  "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in theta()",  diffBins, -0.2, 0.2); // not equal, drop
   h_diffPhi    = iBooker.book1D("diffPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phi()",    diffBins, -0.1, 0.02); // expect equality within precision
 
   h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.002, 0.002); // expect equality within precision
@@ -461,17 +464,18 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffTrackDz    = iBooker.book1D("diffTrackDz",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dz()",           diffBins, -0.2, diffRel); // not equal
 
   h_diffQoverpError = iBooker.book1D("diffQoverpError", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in qoverpError()", diffBins, -0.1, 0.1);
-  h_diffPtError     = iBooker.book1D("diffPtError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in ptError()",     diffBins, -1.1, 0.5);
+  h_diffPtError     = iBooker.book1D("diffPtError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in ptError()",     diffBins, -1.1, 0.5); 
   h_diffEtaError    = iBooker.book1D("diffEtaError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in etaError()",    diffBins, -0.1, 0.1);
   h_diffThetaError  = iBooker.book1D("diffThetaError",  "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in thetaError()",  diffBins, -0.1, 0.1);
   h_diffPhiError    = iBooker.book1D("diffPhiError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phiError()",    diffBins, -0.1, 0.1);
-  h_diffDxyError    = iBooker.book1D("diffDxyError",    "(PackedCandidate::dxyError() - reco::Track::dxyError())/reco::Track",       diffBins, -0.001, 0.001);
-  h_diffDzError     = iBooker.book1D("diffDzError",     "(PackedCandidate::dzError() - reco::Track::dszError())/reco::Track",        diffBins, -0.001, 0.001);
+  h_diffDxyError    = iBooker.book1D("diffDxyError",    "(PackedCandidate::dxyError() - reco::Track::dxyError())/reco::Track",       diffBins, -0.001, 0.001); // expect equality within precision
+  h_diffDzError     = iBooker.book1D("diffDzError",     "(PackedCandidate::dzError() - reco::Track::dzError())/reco::Track",         diffBins, -0.001, 0.001); // expect equality within precision (not currently the case)
+  h_diffDszError    = iBooker.book1D("diffDszError",    "(PackedCandidate::dzError() - reco::Track::dszError())/reco::Track",        diffBins, -0.001, 0.001); // ideally, not equal, but for now they are
   //h_diffDzError     = iBooker.book1D("diffDzError",     "(PackedCandidate::dzError() - reco::Track::dzError())/reco::Track",     diffBins, -0.02, 0.002);
   h_diffDzErrorInf  = iBooker.book1D("diffDzErrorInf",  "isinf(PackedCandidate::dzError()) - wouldbeinf(reco::Track::dzError())",     3, -1.5, 1.5);
 
-  h_diffTrackDxyError    = iBooker.book1D("diffTrackDxyError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxyError()",    diffBins, -0.001, 0.001);
-  h_diffTrackDzError     = iBooker.book1D("diffTrackDzError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dzError()",     diffBins, -0.02, 0.002);
+  h_diffTrackDxyError    = iBooker.book1D("diffTrackDxyError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxyError()",    diffBins, -0.001, 0.001); // expect equality within precision (but drop)
+  h_diffTrackDzError     = iBooker.book1D("diffTrackDzError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dzError()",     diffBins, -0.02, 0.02); // not equal, drop
 
   h_diffCovQoverpLambda = iBooker.book1D("diffCovQoverpLambda", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, lambda)", 10, -1.1, -0.9);
   h_diffCovQoverpPhi    = iBooker.book1D("diffCovQoverpPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(qoverp, phi)",    10, -1.1, -0.9);
@@ -574,9 +578,11 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     auto slimmedVertexRef = pcRef->vertexRef();
     const reco::Vertex& pcVertex = vertices[slimmedVertexRef.key()];
 
+    /*
     fillNoFlow(h_diffPx, diffRelative(trackPc.px(), track.px()));
     fillNoFlow(h_diffPy, diffRelative(trackPc.py(), track.py()));
     fillNoFlow(h_diffPz, diffRelative(trackPc.pz(), track.pz()));
+    */
 
     fillNoFlow(h_diffVx, trackPc.vx() - track.vx());
     fillNoFlow(h_diffVy, trackPc.vy() - track.vy());
@@ -633,7 +639,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     //const bool dzErrorFinite = isDzErrorPackedFinite(track.dzError()); // FIXME
     //const double diffDzError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dzError()) : 0; // FIXME 
     const bool dzErrorFinite = isDzErrorPackedFinite(track);
-    const double diffDzError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dszError()) : 0;
+    const double diffDzError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dzError()) : 0;
+    const double diffDszError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dszError()) : 0;
     const auto diffDxyError = diffRelative(pcRef->dxyError()  , track.dxyError());
     fillNoFlow(h_diffQoverpError, diffRelative(trackPc.qoverpError(), track.qoverpError()));
     fillNoFlow(h_diffPtError    , diffRelative(trackPc.ptError()    , track.ptError()    ));
@@ -642,6 +649,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffPhiError   , diffRelative(trackPc.phiError()   , track.phiError()   ));
     fillNoFlow(h_diffDxyError   , diffDxyError);
     if(dzErrorFinite) fillNoFlow(h_diffDzError, diffDzError);
+    if(dzErrorFinite) fillNoFlow(h_diffDszError, diffDszError);
     h_diffDzErrorInf->Fill(static_cast<int>(edm::isNotFinite(pcRef->dzError())) - static_cast<int>(!dzErrorFinite));
     fillNoFlow(h_diffTrackDxyError, diffRelative(trackPc.dxyError()  , track.dxyError()));
     if(dzErrorFinite) fillNoFlow(h_diffTrackDzError , diffRelative(trackPc.dzError(), track.dzError()));
@@ -754,7 +762,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        //std::abs(diffPt) > 0.2 ||
        std::abs(diffDzPV) > 0.01 || std::abs(diffDzAssocPV) > 0.01 ||
        std::abs(diffDxyPV) > 0.01 || std::abs(diffDxyAssocPV) > 0.01 ||
-       std::abs(diffDzError) > 0.01 || std::abs(diffDxyError) > 0.01
+       std::abs(diffDszError) > 0.01 || std::abs(diffDxyError) > 0.01
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
@@ -803,7 +811,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " dzError " << diffDzError << " " << trackPc.dzError() << " " << track.dzError() << " (" << packUnpack(track.dzError()) << ")"
                                                        << " dxyError " << diffDxyError << " " << trackPc.dxyError() << " " << track.dxyError();
         */
-                                                       << " dzError " << diffDzError << " " << pcRef->dzError() << " " << track.dzError() << " (" << track.dszError() << ")"
+                                                       << " dszError " << diffDszError << " " << pcRef->dzError() << " " << track.dszError() << " (dz " << track.dzError() << ")"
                                                        << " dxyError " << diffDxyError << " " << pcRef->dxyError() << " " << track.dxyError();
 
       /*
