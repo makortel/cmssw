@@ -513,11 +513,11 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffCovLambdaDxy    = iBooker.book1D("diffCovLambdaDxy",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, dxy)",    10, -1.1, -0.9); // expect to be 0, drop?
   */
   h_diffCovLambdaDz     = iBooker.book1D("diffCovLambdaDz",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(lambda, dz)",     210, -4, 0.2); // expect equality within precision, worst precision is exp(1/128*(17-4) =~ 11 %
-  h_diffCovPhiDxy       = iBooker.book1D("diffCovPhiDxy",       "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(phi, dxy)",       diffBins, -0.5, 0.05);
-  h_diffCovPhiDz        = iBooker.book1D("diffCovPhiDz",        "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(phi, dz)",        10, -1.1, -0.9); // expect to be 0, drop?
+  h_diffCovPhiDxy       = iBooker.book1D("diffCovPhiDxy",       "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(phi, dxy)",       diffBins, -1, 0.05); // expect equality within precision, wors precision is exp(1/128)*(17-4) =~ 11 %
+  //h_diffCovPhiDz        = iBooker.book1D("diffCovPhiDz",        "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(phi, dz)",        10, -1.1, -0.9); // expect to be 0, drop?
   h_diffCovDxyDz        = iBooker.book1D("diffCovDxyDz",        "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in cov(dxy, dz)",        diffBins, -0.1, 0.1); // expect equality within precision
 
-  h_diffNumberOfPixelHits = iBooker.book1D("diffNumberOfPixelHits", "PackedCandidate::numberOfPixelHits() - reco::Track::hitPattern::numberOfValidPixelHits()", 5, -2.5, 2.5);
+  h_diffNumberOfPixelHits = iBooker.book1D("diffNumberOfPixelHits", "PackedCandidate::numberOfPixelHits() - reco::Track::hitPattern::numberOfValidPixelHits()", 5, -2.5, 2.5); 
   h_diffNumberOfHits      = iBooker.book1D("diffNumberOfHits",      "PackedCandidate::numberHits() - reco::Track::hitPattern::numberOfValidHits()",             5, -2.5, 2.5);
   h_diffLostInnerHits     = iBooker.book1D("diffLostInnerHits",     "PackedCandidate::lostInnerHits() - reco::Track::hitPattern::numberOfLostHits(MISSING_INNER_HITS)",      5, -2.5, 2.5);
 
@@ -696,8 +696,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillCov(h_diffCovLambdaDxy,    reco::TrackBase::i_lambda, reco::TrackBase::i_dxy);
     */
     const auto diffCovLambdaDz = fillCov(h_diffCovLambdaDz,     reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
-    fillCov(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
-    fillCov(h_diffCovPhiDz,        reco::TrackBase::i_phi,    reco::TrackBase::i_dsz);
+    const auto diffCovPhiDxy = fillCov(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
+    //fillCov(h_diffCovPhiDz,        reco::TrackBase::i_phi,    reco::TrackBase::i_dsz);
     const auto diffCovDxyDz = fillCov(h_diffCovDxyDz,        reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz);
 
     // For the non-HitPattern ones, take into account the PackedCandidate packing precision
@@ -788,18 +788,18 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     }
 
     // Print warning if there are differences outside the expected range
-    if(diffNormalizedChi2 < -1 || diffNormalizedChi2 > 0 || diffCharge != 0 || diffHP != 0 ||
-       diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0 ||
-       diffHitPatternHasValidHitInFirstPixelBarrel != 0 ||
-       //std::abs(diffPt) > 0.2 ||
-       std::abs(diffDzPV) > 0.01 || std::abs(diffDzAssocPV) > 0.01 ||
-       std::abs(diffDxyPV) > 0.01 || std::abs(diffDxyAssocPV) > 0.01 ||
-       std::abs(diffDszError) > 0.01 || std::abs(diffDxyError) > 0.01 ||
-       diffQoverpError < 0.0 || diffQoverpError > 0.13 ||
-       diffThetaError < 0.0 || diffThetaError > 0.13 ||
-       diffPhiError < 0.0 || diffPhiError > 0.13 ||
-       std::abs(diffCovDxyDz) > 0.05 ||
-       //std::abs(diffCovLambdaDz) > 0.1
+    if(diffNormalizedChi2 < -1 || diffNormalizedChi2 > 0 || diffCharge != 0 || diffHP != 0
+       || diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0
+       || diffHitPatternHasValidHitInFirstPixelBarrel != 0
+       //|| std::abs(diffPt) > 0.2
+       || std::abs(diffDzPV) > 0.01 || std::abs(diffDzAssocPV) > 0.01
+       || std::abs(diffDxyPV) > 0.01 || std::abs(diffDxyAssocPV) > 0.01
+       || std::abs(diffDszError) > 0.01 || std::abs(diffDxyError) > 0.01
+       || diffQoverpError < 0.0 || diffQoverpError > 0.13
+       || diffThetaError < 0.0 || diffThetaError > 0.13
+       || diffPhiError < 0.0 || diffPhiError > 0.13
+       || std::abs(diffCovDxyDz) > 0.05
+       //|| std::abs(diffCovLambdaDz) > 0.1
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
@@ -857,7 +857,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " dxyError " << diffDxyError << " " << pcRef->dxyError() << " " << track.dxyError()
                                                        << "\n "
                                                        << " cov(dxy, dz) " << diffCovDxyDz << " " << CovPrinter(trackPc, track, reco::TrackBase::i_dxy, reco::TrackBase::i_dsz, 10000.0)
-                                                       << " cov(lambda, dz) " << diffCovLambdaDz << " " << CovPrinter(trackPc, track, reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
+                                                       << " cov(lambda, dz) " << diffCovLambdaDz << " " << CovPrinter(trackPc, track, reco::TrackBase::i_lambda, reco::TrackBase::i_dsz)
+                                                       << " cov(phi, dxy) " << diffCovPhiDxy << " " << CovPrinter(trackPc, track, reco::TrackBase::i_phi, reco::TrackBase::i_dxy);
 
       /*
                                                        << "\n"
