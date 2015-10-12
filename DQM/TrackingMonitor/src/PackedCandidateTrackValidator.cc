@@ -348,9 +348,10 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
     sf_PCIsCharged = 2,
     sf_PCHasTrack = 3,
     sf_PCIsNotElectron = 4,
-    sf_PCHasHits = 5
+    sf_PCHasHits = 5,
+    sf_PCNdofNot0 = 6,
+    sf_NoMissingInnerHits = 7
   };
-
   MonitorElement *h_selectionFlow;
 
   MonitorElement *h_diffPx;
@@ -451,13 +452,15 @@ void PackedCandidateTrackValidator::fillDescriptions(edm::ConfigurationDescripti
 void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, edm::Run const&, edm::EventSetup const&) {
   iBooker.setCurrentFolder(rootFolder_);
 
-  h_selectionFlow = iBooker.book1D("selectionFlow", "Track selection flow", 6, -0.5, 5.5);
+  h_selectionFlow = iBooker.book1D("selectionFlow", "Track selection flow", 6, -0.5, 7.5);
   h_selectionFlow->setBinLabel(1, "All tracks");
   h_selectionFlow->setBinLabel(2, "Associated to PackedCandidate");
   h_selectionFlow->setBinLabel(3, "PC is charged"),
   h_selectionFlow->setBinLabel(4, "PC has track");
   h_selectionFlow->setBinLabel(5, "PC is not electron");
   h_selectionFlow->setBinLabel(6, "PC has hits");
+  h_selectionFlow->setBinLabel(7, "PC ndof != 0");
+  h_selectionFlow->setBinLabel(8, "Track: no missing inner hits");
 
   constexpr int diffBins = 50;
   //constexpr float diff = 1e-3;
@@ -635,6 +638,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     // PackedCandidates that have ndof != 0.
     double diffNormalizedChi2 = 0;
     if(trackPc.ndof() != 0) {
+      h_selectionFlow->Fill(sf_PCNdofNot0);
       diffNormalizedChi2 = trackPc.normalizedChi2() - track.normalizedChi2();
       fillNoFlow(h_diffNormalizedChi2, diffNormalizedChi2);
     }
@@ -792,6 +796,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     // hasValidHitInFirstPixelBarrel is set only if numberOfLostHits(MISSING_INNER_HITS) == 0
     int diffHitPatternHasValidHitInFirstPixelBarrel = 0;
     if(track.hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS) == 0) {
+      h_selectionFlow->Fill(sf_NoMissingInnerHits);
       diffHitPatternHasValidHitInFirstPixelBarrel = static_cast<int>(trackPc.hitPattern().hasValidHitInFirstPixelBarrel()) - static_cast<int>(track.hitPattern().hasValidHitInFirstPixelBarrel());
       fillNoFlow(h_diffHitPatternHasValidHitInFirstPixelBarrel, diffHitPatternHasValidHitInFirstPixelBarrel);
     }
