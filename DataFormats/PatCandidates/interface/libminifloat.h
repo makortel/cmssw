@@ -52,12 +52,18 @@ class MiniFloatConverter {
             return conv.flt;
         }
 
-        // Maximum float32 value that is converted to max()
+        // Maximum float32 value that is convertible to max()
         inline static float max32ConvertibleToMax16() {
             union { float flt; uint32_t i32; } conv;
             // 2^16 in float32 is the first to result inf in float16, so
             // 2^16-1 is the last float32 to result max() in float16
             conv.i32 = (0x8f<<23) - 1;
+            return conv.flt;
+        }
+
+        inline static float denorm_min() {
+            union { float flt; uint32_t i32; } conv;
+            conv.i32 = 0x33800000; // mantissatable[offsettable[0]+1]+exponenttable[0];
             return conv.flt;
         }
 
