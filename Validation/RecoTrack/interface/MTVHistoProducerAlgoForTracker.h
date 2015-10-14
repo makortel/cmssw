@@ -185,11 +185,11 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   std::vector<MonitorElement*> h_effic_PU_eta, h_effic_PU_vertcount, h_effic_PU_zpos;
   std::vector<MonitorElement*> h_con_eta, h_con_vertcount, h_con_zpos;
 
-  std::vector<MonitorElement*> h_reco_dzpv, h_assoc_dzpv, h_assoc2_dzpv, h_simul_dzpv, h_simul2_dzpv;
-  std::vector<MonitorElement*> h_reco_dzpvsig, h_assoc_dzpvsig, h_assoc2_dzpvsig, h_simul_dzpvsig, h_simul2_dzpvsig;
+  std::vector<MonitorElement*> h_reco_dzpvcut, h_assoc_dzpvcut, h_assoc2_dzpvcut, h_simul_dzpvcut, h_simul2_dzpvcut;
+  std::vector<MonitorElement*> h_reco_dzpvsigcut, h_assoc_dzpvsigcut, h_assoc2_dzpvsigcut, h_simul_dzpvsigcut, h_simul2_dzpvsigcut;
 
-  std::vector<MonitorElement*> h_reco_dzpv_pt, h_assoc_dzpv_pt, h_assoc2_dzpv_pt, h_simul_dzpv_pt, h_simul2_dzpv_pt;
-  std::vector<MonitorElement*> h_reco_dzpvsig_pt, h_assoc_dzpvsig_pt, h_assoc2_dzpvsig_pt, h_simul_dzpvsig_pt, h_simul2_dzpvsig_pt;
+  std::vector<MonitorElement*> h_reco_dzpvcut_pt, h_assoc_dzpvcut_pt, h_assoc2_dzpvcut_pt, h_simul_dzpvcut_pt, h_simul2_dzpvcut_pt;
+  std::vector<MonitorElement*> h_reco_dzpvsigcut_pt, h_assoc_dzpvsigcut_pt, h_assoc2_dzpvsigcut_pt, h_simul_dzpvsigcut_pt, h_simul2_dzpvsigcut_pt;
 
 
   // dE/dx
