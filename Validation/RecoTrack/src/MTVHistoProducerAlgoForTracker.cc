@@ -1248,10 +1248,12 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
 
   const auto dzpv = pvPosition ? track.dz(*pvPosition) : 0.0;
   const auto dzpvsig = pvPosition ? dzpv / track.dzError() : 0.0;
-  h_reco_dzpvcut[count]->Fill(dzpv);
-  h_reco_dzpvsigcut[count]->Fill(dzpvsig);
-  h_reco_dzpvcut_pt[count]->Fill(dzpv, track.pt());
-  h_reco_dzpvsigcut_pt[count]->Fill(dzpvsig, track.pt());
+  if(pvPosition) {
+    h_reco_dzpvcut[count]->Fill(std::abs(dzpv));
+    h_reco_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
+    h_reco_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
+    h_reco_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), track.pt());
+  }
   if (isMatched) {
     const auto eta = getEta(track.momentum().eta());
     const auto phi = track.momentum().phi();
@@ -1262,10 +1264,10 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
     const auto nhits = track.found();
 
     if(isSigMatched && pvPosition) {
-      h_assoc2_dzpvcut[count]->Fill(dzpv);
-      h_assoc2_dzpvsigcut[count]->Fill(dzpvsig);
-      h_assoc2_dzpvcut_pt[count]->Fill(dzpv, track.pt());
-      h_assoc2_dzpvsigcut_pt[count]->Fill(dzpvsig, track.pt());
+      h_assoc2_dzpvcut[count]->Fill(std::abs(dzpv));
+      h_assoc2_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
+      h_assoc2_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
+      h_assoc2_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), track.pt());
     }
     if(!isSigMatched) {
       fillPlotNoFlow(h_pileupeta[count], eta);
@@ -1787,24 +1789,28 @@ void MTVHistoProducerAlgoForTracker::fillHistosFromVectors(int counter){
   cumulative(h_reco_dzpvcut[counter]->getTH1F());
   cumulative(h_assoc_dzpvcut[counter]->getTH1F());
   cumulative(h_assoc2_dzpvcut[counter]->getTH1F());
+  cumulative(h_pileup_dzpvcut[counter]->getTH1F());
 
   cumulative(h_simul_dzpvsigcut[counter]->getTH1F());
   cumulative(h_simul2_dzpvsigcut[counter]->getTH1F());
   cumulative(h_reco_dzpvsigcut[counter]->getTH1F());
   cumulative(h_assoc_dzpvsigcut[counter]->getTH1F());
   cumulative(h_assoc2_dzpvsigcut[counter]->getTH1F());
+  cumulative(h_pileup_dzpvsigcut[counter]->getTH1F());
 
   cumulative(h_simul_dzpvcut_pt[counter]->getTH1F());
   cumulative(h_simul2_dzpvcut_pt[counter]->getTH1F());
   cumulative(h_reco_dzpvcut_pt[counter]->getTH1F());
   cumulative(h_assoc_dzpvcut_pt[counter]->getTH1F());
   cumulative(h_assoc2_dzpvcut_pt[counter]->getTH1F());
+  cumulative(h_pileup_dzpvcut_pt[counter]->getTH1F());
 
   cumulative(h_simul_dzpvsigcut_pt[counter]->getTH1F());
   cumulative(h_simul2_dzpvsigcut_pt[counter]->getTH1F());
   cumulative(h_reco_dzpvsigcut_pt[counter]->getTH1F());
   cumulative(h_assoc_dzpvsigcut_pt[counter]->getTH1F());
   cumulative(h_assoc2_dzpvsigcut_pt[counter]->getTH1F());
+  cumulative(h_pileup_dzpvsigcut_pt[counter]->getTH1F());
 }
 
 
