@@ -57,7 +57,7 @@ class MTVHistoProducerAlgo{
   virtual void fill_generic_recoTrack_histos(int count,
 				     	     const reco::Track& track,
 				     	     const math::XYZPoint& bsPosition,
-                                             const math::XYZPoint& pvPosition,
+                                             const math::XYZPoint *pvPosition,
 				     	     bool isMatched,
 				     	     bool isSigMatched,
 				     	     bool isChargeMatched,

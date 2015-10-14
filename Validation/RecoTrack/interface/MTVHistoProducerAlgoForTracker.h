@@ -56,7 +56,7 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   void fill_generic_recoTrack_histos(int count,
 				     const reco::Track& track,
 				     const math::XYZPoint& bsPosition,
-                                     const math::XYZPoint& pvPosition,
+                                     const math::XYZPoint *pvPosition,
 				     bool isMatched,
 				     bool isSigMatched,
 				     bool isChargeMatched,
@@ -153,12 +153,12 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   
   //1D
   std::vector<MonitorElement*> h_tracks, h_fakes, h_hits, h_charge;
-  std::vector<MonitorElement*> h_effic,  h_fakerate, h_recoeta, h_assoceta, h_assoc2eta, h_simuleta, h_loopereta, h_misideta, h_looprate, h_misidrate;
-  std::vector<MonitorElement*> h_efficPt, h_fakeratePt, h_recopT, h_assocpT, h_assoc2pT, h_simulpT, h_looperpT, h_misidpT, h_loopratepT, h_misidratepT;
-  std::vector<MonitorElement*> h_effic_vs_hit, h_fake_vs_hit, h_recohit, h_assochit, h_assoc2hit, h_simulhit, h_looperhit, h_misidhit, h_loopratehit, h_misidratehit;
-  std::vector<MonitorElement*> h_effic_vs_phi, h_fake_vs_phi, h_recophi, h_assocphi, h_assoc2phi, h_simulphi, h_looperphi, h_misidphi, h_loopratephi, h_misidratephi;
-  std::vector<MonitorElement*> h_effic_vs_dxy, h_fake_vs_dxy, h_recodxy, h_assocdxy, h_assoc2dxy, h_simuldxy, h_looperdxy, h_misiddxy, h_loopratedxy, h_misidratedxy;
-  std::vector<MonitorElement*> h_effic_vs_dz, h_fake_vs_dz, h_recodz, h_assocdz, h_assoc2dz, h_simuldz, h_looperdz, h_misiddz, h_loopratedz, h_misidratedz;
+  std::vector<MonitorElement*> h_effic,  h_fakerate, h_recoeta, h_assoceta, h_assoc2eta, h_simuleta, h_loopereta, h_misideta, h_looprate, h_misidrate, h_pileupeta;
+  std::vector<MonitorElement*> h_efficPt, h_fakeratePt, h_recopT, h_assocpT, h_assoc2pT, h_simulpT, h_looperpT, h_misidpT, h_loopratepT, h_misidratepT, h_pileuppT;
+  std::vector<MonitorElement*> h_effic_vs_hit, h_fake_vs_hit, h_recohit, h_assochit, h_assoc2hit, h_simulhit, h_looperhit, h_misidhit, h_loopratehit, h_misidratehit, h_pileuphit;
+  std::vector<MonitorElement*> h_effic_vs_phi, h_fake_vs_phi, h_recophi, h_assocphi, h_assoc2phi, h_simulphi, h_looperphi, h_misidphi, h_loopratephi, h_misidratephi, h_pileupphi;
+  std::vector<MonitorElement*> h_effic_vs_dxy, h_fake_vs_dxy, h_recodxy, h_assocdxy, h_assoc2dxy, h_simuldxy, h_looperdxy, h_misiddxy, h_loopratedxy, h_misidratedxy, h_pileupdxy;
+  std::vector<MonitorElement*> h_effic_vs_dz, h_fake_vs_dz, h_recodz, h_assocdz, h_assoc2dz, h_simuldz, h_looperdz, h_misiddz, h_loopratedz, h_misidratedz, h_pileupdz;
 
   std::vector<MonitorElement*> h_effic_vs_vertpos, h_effic_vs_zpos, h_assocvertpos, h_simulvertpos, h_assoczpos, h_simulzpos;
   std::vector<MonitorElement*> h_pt, h_eta, h_pullTheta,h_pullPhi,h_pullDxy,h_pullDz,h_pullQoverp;
@@ -185,11 +185,11 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   std::vector<MonitorElement*> h_effic_PU_eta, h_effic_PU_vertcount, h_effic_PU_zpos;
   std::vector<MonitorElement*> h_con_eta, h_con_vertcount, h_con_zpos;
 
-  std::vector<MonitorElement*> h_reco_dzpvcut, h_assoc_dzpvcut, h_assoc2_dzpvcut, h_simul_dzpvcut, h_simul2_dzpvcut;
-  std::vector<MonitorElement*> h_reco_dzpvsigcut, h_assoc_dzpvsigcut, h_assoc2_dzpvsigcut, h_simul_dzpvsigcut, h_simul2_dzpvsigcut;
+  std::vector<MonitorElement*> h_reco_dzpvcut, h_assoc_dzpvcut, h_assoc2_dzpvcut, h_simul_dzpvcut, h_simul2_dzpvcut, h_pileup_dzpvcut;
+  std::vector<MonitorElement*> h_reco_dzpvsigcut, h_assoc_dzpvsigcut, h_assoc2_dzpvsigcut, h_simul_dzpvsigcut, h_simul2_dzpvsigcut, h_pileup_dzpvsigcut;
 
-  std::vector<MonitorElement*> h_reco_dzpvcut_pt, h_assoc_dzpvcut_pt, h_assoc2_dzpvcut_pt, h_simul_dzpvcut_pt, h_simul2_dzpvcut_pt;
-  std::vector<MonitorElement*> h_reco_dzpvsigcut_pt, h_assoc_dzpvsigcut_pt, h_assoc2_dzpvsigcut_pt, h_simul_dzpvsigcut_pt, h_simul2_dzpvsigcut_pt;
+  std::vector<MonitorElement*> h_reco_dzpvcut_pt, h_assoc_dzpvcut_pt, h_assoc2_dzpvcut_pt, h_simul_dzpvcut_pt, h_simul2_dzpvcut_pt, h_pileup_dzpvcut_pt;
+  std::vector<MonitorElement*> h_reco_dzpvsigcut_pt, h_assoc_dzpvsigcut_pt, h_assoc2_dzpvsigcut_pt, h_simul_dzpvsigcut_pt, h_simul2_dzpvsigcut_pt, h_pileup_dzpvsigcut_pt;
 
 
   // dE/dx

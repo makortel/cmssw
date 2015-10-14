@@ -21,6 +21,10 @@ namespace {
       histo->SetBinContent(i, histo->GetBinContent(i) + histo->GetBinContent(i-1));
     }
   }
+
+  template<typename T> void fillPlotNoFlow(MonitorElement *h, T val) {
+    h->Fill(std::min(std::max(val,((T) h->getTH1()->GetXaxis()->GetXmin())),((T) h->getTH1()->GetXaxis()->GetXmax())));
+  }
 }
 
 MTVHistoProducerAlgoForTracker::MTVHistoProducerAlgoForTracker(const edm::ParameterSet& pset): MTVHistoProducerAlgo(pset){
@@ -431,12 +435,15 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_simuleta.push_back( dbe_->book1D("num_simul_eta","N of simulated tracks vs eta",nintEta,minEta,maxEta) );
   h_loopereta.push_back( dbe_->book1D("num_duplicate_eta","N of associated (recoToSim) duplicate tracks vs eta",nintEta,minEta,maxEta) );
   h_misideta.push_back( dbe_->book1D("num_chargemisid_eta","N of associated (recoToSim) charge misIDed tracks vs eta",nintEta,minEta,maxEta) );
+  h_pileupeta.push_back( dbe_->book1D("num_pileup_eta","N of associated (recoToSim) pileup tracks vs eta",nintEta,minEta,maxEta) );
+  //
   h_recopT.push_back( dbe_->book1D("num_reco_pT","N of reco track vs pT",nintPt,minPt,maxPt) );
   h_assocpT.push_back( dbe_->book1D("num_assoc(simToReco)_pT","N of associated tracks (simToReco) vs pT",nintPt,minPt,maxPt) );
   h_assoc2pT.push_back( dbe_->book1D("num_assoc(recoToSim)_pT","N of associated (recoToSim) tracks vs pT",nintPt,minPt,maxPt) );
   h_simulpT.push_back( dbe_->book1D("num_simul_pT","N of simulated tracks vs pT",nintPt,minPt,maxPt) );
   h_looperpT.push_back( dbe_->book1D("num_duplicate_pT","N of associated (recoToSim) duplicate tracks vs pT",nintPt,minPt,maxPt) );
   h_misidpT.push_back( dbe_->book1D("num_chargemisid_pT","N of associated (recoToSim) charge misIDed tracks vs pT",nintPt,minPt,maxPt) );
+  h_pileuppT.push_back( dbe_->book1D("num_pileup_pT","N of associated (recoToSim) pileup tracks vs pT",nintPt,minPt,maxPt) );
   //
   h_recohit.push_back( dbe_->book1D("num_reco_hit","N of reco track vs hit",nintHit,minHit,maxHit) );
   h_assochit.push_back( dbe_->book1D("num_assoc(simToReco)_hit","N of associated tracks (simToReco) vs hit",nintHit,minHit,maxHit) );
@@ -444,6 +451,7 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_simulhit.push_back( dbe_->book1D("num_simul_hit","N of simulated tracks vs hit",nintHit,minHit,maxHit) );
   h_looperhit.push_back( dbe_->book1D("num_duplicate_hit","N of associated (recoToSim) duplicate tracks vs hit",nintHit,minHit,maxHit) );
   h_misidhit.push_back( dbe_->book1D("num_chargemisid_hit","N of associated (recoToSim) charge misIDed tracks vs hit",nintHit,minHit,maxHit) );
+  h_pileuphit.push_back( dbe_->book1D("num_pileup_hit","N of associated (recoToSim) pileup tracks vs hit",nintHit,minHit,maxHit) );
   //
   h_recophi.push_back( dbe_->book1D("num_reco_phi","N of reco track vs phi",nintPhi,minPhi,maxPhi) );
   h_assocphi.push_back( dbe_->book1D("num_assoc(simToReco)_phi","N of associated tracks (simToReco) vs phi",nintPhi,minPhi,maxPhi) );
@@ -451,20 +459,23 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_simulphi.push_back( dbe_->book1D("num_simul_phi","N of simulated tracks vs phi",nintPhi,minPhi,maxPhi) );
   h_looperphi.push_back( dbe_->book1D("num_duplicate_phi","N of associated (recoToSim) duplicate tracks vs phi",nintPhi,minPhi,maxPhi) );
   h_misidphi.push_back( dbe_->book1D("num_chargemisid_phi","N of associated (recoToSim) charge misIDed tracks vs phi",nintPhi,minPhi,maxPhi) );
-  
+  h_pileupphi.push_back( dbe_->book1D("num_pileup_phi","N of associated (recoToSim) pileup tracks vs phi",nintPhi,minPhi,maxPhi) );
+
   h_recodxy.push_back( dbe_->book1D("num_reco_dxy","N of reco track vs dxy",nintDxy,minDxy,maxDxy) );
   h_assocdxy.push_back( dbe_->book1D("num_assoc(simToReco)_dxy","N of associated tracks (simToReco) vs dxy",nintDxy,minDxy,maxDxy) );
   h_assoc2dxy.push_back( dbe_->book1D("num_assoc(recoToSim)_dxy","N of associated (recoToSim) tracks vs dxy",nintDxy,minDxy,maxDxy) );
   h_simuldxy.push_back( dbe_->book1D("num_simul_dxy","N of simulated tracks vs dxy",nintDxy,minDxy,maxDxy) );
   h_looperdxy.push_back( dbe_->book1D("num_duplicate_dxy","N of associated (recoToSim) looper tracks vs dxy",nintDxy,minDxy,maxDxy) );
   h_misiddxy.push_back( dbe_->book1D("num_chargemisid_dxy","N of associated (recoToSim) charge misIDed tracks vs dxy",nintDxy,minDxy,maxDxy) );
-  
+  h_pileupdxy.push_back( dbe_->book1D("num_pileup_dxy","N of associated (recoToSim) pileup tracks vs dxy",nintDxy,minDxy,maxDxy) );
+
   h_recodz.push_back( dbe_->book1D("num_reco_dz","N of reco track vs dz",nintDz,minDz,maxDz) );
   h_assocdz.push_back( dbe_->book1D("num_assoc(simToReco)_dz","N of associated tracks (simToReco) vs dz",nintDz,minDz,maxDz) );
   h_assoc2dz.push_back( dbe_->book1D("num_assoc(recoToSim)_dz","N of associated (recoToSim) tracks vs dz",nintDz,minDz,maxDz) );
   h_simuldz.push_back( dbe_->book1D("num_simul_dz","N of simulated tracks vs dz",nintDz,minDz,maxDz) );
   h_looperdz.push_back( dbe_->book1D("num_duplicate_dz","N of associated (recoToSim) looper tracks vs dz",nintDz,minDz,maxDz) );
   h_misiddz.push_back( dbe_->book1D("num_chargemisid_versus_dz","N of associated (recoToSim) charge misIDed tracks vs dz",nintDz,minDz,maxDz) );
+  h_pileupdz.push_back( dbe_->book1D("num_pileup_dz","N of associated (recoToSim) pileup tracks vs dz",nintDz,minDz,maxDz) );
   
   h_assocvertpos.push_back( dbe_->book1D("num_assoc(simToReco)_vertpos",
 					 "N of associated tracks (simToReco) vs transverse vert position",	 
@@ -673,17 +684,20 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_assoc2_dzpvcut.push_back( dbe_->book1D("num_assoc(recoToSim)_dzpvcut","N of associated (recoToSim) tracks vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
   h_simul_dzpvcut.push_back( dbe_->book1D("num_simul_dzpvcut","N of simulated tracks from sim PV",nintDzpvCum,0,maxDzpvCum) );
   h_simul2_dzpvcut.push_back( dbe_->book1D("num_simul2_dzpvcut","N of simulated tracks (associated to any track) from sim PV",nintDzpvCum,0,maxDzpvCum) );
+  h_pileup_dzpvcut.push_back( dbe_->book1D("num_pileup_dzpvcut", "N of associated (recoToSim) pileup tracks vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
 
   h_reco_dzpvcut_pt.push_back( dbe_->book1D("num_reco_dzpvcut_pt","#sump_{T} of reco track vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
   h_assoc_dzpvcut_pt.push_back( dbe_->book1D("num_assoc(simToReco)_dzpvcut_pt","#sump_{T} of associated tracks (simToReco) vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
   h_assoc2_dzpvcut_pt.push_back( dbe_->book1D("num_assoc(recoToSim)_dzpvcut_pt","#sump_{T} of associated (recoToSim) tracks vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
   h_simul_dzpvcut_pt.push_back( dbe_->book1D("num_simul_dzpvcut_pt","#sump_{T} of simulated tracks from sim PV",nintDzpvCum,0,maxDzpvCum) );
   h_simul2_dzpvcut_pt.push_back( dbe_->book1D("num_simul2_dzpvcut_pt","#sump_{T} of simulated tracks (associated to any track) from sim PV",nintDzpvCum,0,maxDzpvCum) );
+  h_pileup_dzpvcut_pt.push_back( dbe_->book1D("num_pileup_dzpvcut_pt", "#sump_{T} of associated (recoToSim) pileup tracks vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
   h_reco_dzpvcut_pt.back()->getTH1()->Sumw2();
   h_assoc_dzpvcut_pt.back()->getTH1()->Sumw2();
   h_assoc2_dzpvcut_pt.back()->getTH1()->Sumw2();
   h_simul_dzpvcut_pt.back()->getTH1()->Sumw2();
   h_simul2_dzpvcut_pt.back()->getTH1()->Sumw2();
+  h_pileup_dzpvcut_pt.back()->getTH1()->Sumw2();
 
   const int nintDzpvsigCum = 200;
   const double maxDzpvsigCum = 10;
@@ -693,17 +707,20 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_assoc2_dzpvsigcut.push_back( dbe_->book1D("num_assoc(recoToSim)_dzpvsigcut","N of associated (recoToSim) tracks vs dz(PV)/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
   h_simul_dzpvsigcut.push_back( dbe_->book1D("num_simul_dzpvsigcut","N of simulated tracks from sim PV/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
   h_simul2_dzpvsigcut.push_back( dbe_->book1D("num_simul2_dzpvsigcut","N of simulated tracks (associated to any track) from sim PV/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
+  h_pileup_dzpvsigcut.push_back( dbe_->book1D("num_pileup_dzpvsigcut","N of associated (recoToSim) pileup tracks vs dz(PV)/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
 
   h_reco_dzpvsigcut_pt.push_back( dbe_->book1D("num_reco_dzpvsigcut_pt","#sump_{T} of reco track vs dz(PV)/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
   h_assoc_dzpvsigcut_pt.push_back( dbe_->book1D("num_assoc(simToReco)_dzpvsigcut_pt","#sump_{T} of associated tracks (simToReco) vs dz(PV)/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
   h_assoc2_dzpvsigcut_pt.push_back( dbe_->book1D("num_assoc(recoToSim)_dzpvsigcut_pt","#sump_{T} of associated (recoToSim) tracks vs dz(PV)/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
   h_simul_dzpvsigcut_pt.push_back( dbe_->book1D("num_simul_dzpvsigcut_pt","#sump_{T} of simulated tracks from sim PV/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
   h_simul2_dzpvsigcut_pt.push_back( dbe_->book1D("num_simul2_dzpvsigcut_pt","#sump_{T} of simulated tracks (associated to any track) from sim PV/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
+  h_pileup_dzpvsigcut_pt.push_back( dbe_->book1D("num_pileup_dzpvsigcut_pt","#sump_{T} of associated (recoToSim) pileup tracks vs dz(PV)/dzError",nintDzpvsigCum,0,maxDzpvsigCum) );
   h_reco_dzpvsigcut_pt.back()->getTH1()->Sumw2();
   h_assoc_dzpvsigcut_pt.back()->getTH1()->Sumw2();
   h_assoc2_dzpvsigcut_pt.back()->getTH1()->Sumw2();
   h_simul_dzpvsigcut_pt.back()->getTH1()->Sumw2();
   h_simul2_dzpvsigcut_pt.back()->getTH1()->Sumw2();
+  h_pileup_dzpvsigcut_pt.back()->getTH1()->Sumw2();
 
   if(useLogPt){
     BinLogX(dzres_vs_pt.back()->getTH2F());
@@ -717,6 +734,7 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
     BinLogX(h_assocpT.back()->getTH1F());
     BinLogX(h_assoc2pT.back()->getTH1F());
     BinLogX(h_simulpT.back()->getTH1F());
+    BinLogX(h_pileuppT.back()->getTH1F());
   }  
 }
 
@@ -1093,7 +1111,7 @@ void MTVHistoProducerAlgoForTracker::fill_dedx_recoTrack_histos(int count, edm::
 void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
 								   const reco::Track& track,
 								   const math::XYZPoint& bsPosition,
-                                                                   const math::XYZPoint& pvPosition,
+                                                                   const math::XYZPoint *pvPosition,
 								   bool isMatched,
 								   bool isSigMatched,
 								   bool isChargeMatched,
@@ -1177,18 +1195,6 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
       }	      
     }
   } // End for (unsigned int f=0; f<dzintervals[count].size()-1; f++){
-  const double dzpv = std::abs(track.dz(pvPosition));
-  const double dzpvsig = dzpv/track.dzError();
-  h_reco_dzpvcut[count]->Fill(dzpv);
-  h_reco_dzpvsigcut[count]->Fill(dzpvsig);
-  h_reco_dzpvcut_pt[count]->Fill(dzpv, track.pt());
-  h_reco_dzpvsigcut_pt[count]->Fill(dzpvsig, track.pt());
-  if(isSigMatched) {
-    h_assoc2_dzpvcut[count]->Fill(dzpv);
-    h_assoc2_dzpvsigcut[count]->Fill(dzpvsig);
-    h_assoc2_dzpvcut_pt[count]->Fill(dzpv, track.pt());
-    h_assoc2_dzpvsigcut_pt[count]->Fill(dzpvsig, track.pt());
-  }
 
   int tmp = std::min((int)track.found(),int(maxHit-1));
   totREC_hit[count][tmp]++;
@@ -1237,6 +1243,44 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
       }
     }
 
+  }
+
+
+  const auto dzpv = pvPosition ? track.dz(*pvPosition) : 0.0;
+  const auto dzpvsig = pvPosition ? dzpv / track.dzError() : 0.0;
+  h_reco_dzpvcut[count]->Fill(dzpv);
+  h_reco_dzpvsigcut[count]->Fill(dzpvsig);
+  h_reco_dzpvcut_pt[count]->Fill(dzpv, track.pt());
+  h_reco_dzpvsigcut_pt[count]->Fill(dzpvsig, track.pt());
+  if (isMatched) {
+    const auto eta = getEta(track.momentum().eta());
+    const auto phi = track.momentum().phi();
+    const auto pt = getPt(sqrt(track.momentum().perp2()));
+    const auto dxy = track.dxy(bsPosition);
+    const auto dz = track.dz(bsPosition);
+    const auto dzpvsig = pvPosition ? dzpv / track.dzError() : 0.0;
+    const auto nhits = track.found();
+
+    if(isSigMatched && pvPosition) {
+      h_assoc2_dzpvcut[count]->Fill(dzpv);
+      h_assoc2_dzpvsigcut[count]->Fill(dzpvsig);
+      h_assoc2_dzpvcut_pt[count]->Fill(dzpv, track.pt());
+      h_assoc2_dzpvsigcut_pt[count]->Fill(dzpvsig, track.pt());
+    }
+    if(!isSigMatched) {
+      fillPlotNoFlow(h_pileupeta[count], eta);
+      fillPlotNoFlow(h_pileupphi[count], phi);
+      fillPlotNoFlow(h_pileuppT[count], pt);
+      fillPlotNoFlow(h_pileupdxy[count], dxy);
+      fillPlotNoFlow(h_pileupdz[count], dz);
+      fillPlotNoFlow(h_pileuphit[count], nhits);
+      if(pvPosition) {
+        h_pileup_dzpvcut[count]->Fill(std::abs(dzpv));
+        h_pileup_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
+        h_pileup_dzpvcut_pt[count]->Fill(std::abs(dzpv), pt);
+        h_pileup_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), pt);
+      }
+    }
   }
 
 }
