@@ -1263,7 +1263,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
     const auto dzpvsig = pvPosition ? dzpv / track.dzError() : 0.0;
     const auto nhits = track.found();
 
-    if(isSigMatched && pvPosition) {
+    if(pvPosition) {
       h_assoc2_dzpvcut[count]->Fill(std::abs(dzpv));
       h_assoc2_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
       h_assoc2_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
