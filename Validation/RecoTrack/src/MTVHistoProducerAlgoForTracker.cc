@@ -900,7 +900,7 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
 									 double dxySim, double dzSim, int nSimHits,
 									 const reco::Track* track,
 									 int numVertices, double vertz,
-                                                                         const math::XYZPoint& pvPosition){
+                                                                         const math::XYZPoint *pvPosition){
   bool isMatched = track;
 
   if((*TpSelectorForEfficiencyVsEta)(tp)){
@@ -1012,7 +1012,7 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
     } // END for (unsigned int f=0; f<dzintervals[count].size()-1; f++){
 
 
-    if(tp.eventId().bunchCrossing() == 0 && tp.eventId().event() == 0) {
+    if(pvPosition) {
       h_simul_dzpvcut[count]->Fill(0);
       h_simul_dzpvsigcut[count]->Fill(0);
       h_simul_dzpvcut_pt[count]->Fill(0, tp.pt());
@@ -1022,7 +1022,7 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
         h_simul2_dzpvsigcut[count]->Fill(0);
         h_simul2_dzpvcut_pt[count]->Fill(0, tp.pt());
         h_simul2_dzpvsigcut_pt[count]->Fill(0, tp.pt());
-        const double dzpv = std::abs(track->dz(pvPosition));
+        const double dzpv = std::abs(track->dz(*pvPosition));
         h_assoc_dzpvcut[count]->Fill(dzpv);
         h_assoc_dzpvsigcut[count]->Fill(dzpv/track->dzError());
         h_assoc_dzpvcut_pt[count]->Fill(dzpv, tp.pt());

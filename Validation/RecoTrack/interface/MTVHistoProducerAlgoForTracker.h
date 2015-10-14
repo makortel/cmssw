@@ -43,7 +43,7 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
 					   double dxy, double dz, int nSimHits,
 					   const reco::Track* track,
 					   int numVertices, double vertz,
-                                           const math::XYZPoint& pvPosition);
+                                           const math::XYZPoint *pvPosition);
 
   void fill_recoAssociated_simTrack_histos(int count,
 					   const reco::GenParticle& tp,

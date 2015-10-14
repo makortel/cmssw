@@ -199,27 +199,33 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
   
   edm::Handle<reco::VertexCollection> vertexH;
   event.getByLabel(vertexTag_, vertexH);
-  if(vertexH->empty())
-    return;
-  const reco::Vertex& thePV = (*vertexH)[0];
-  if(thePV.isFake() || thePV.ndof() < 0.)
-    return;
 
-  bool isPVmatched = false;
-  for(size_t i=0; i<tv.size(); ++i) {
-    const TrackingVertex& simV = tv[i];
-    if(simV.eventId().bunchCrossing() != 0) continue; // remove OOTPU
-    if(simV.eventId().event() != 0) continue; // remove ITPU
+  const reco::Vertex::Point *thePVposition = nullptr;
+  //const TrackingVertex::LorentzVector *theSimPVPosition = nullptr;
 
-    if(std::abs(thePV.z() - simV.position().z()) < 0.1 &&
-       std::abs(thePV.z() - simV.position().z())/thePV.zError() < 3) {
-      isPVmatched = true;
+  //bool isPVmatched = false;
+
+  if(!vertexH->empty()) {
+    const reco::Vertex& thePV = (*vertexH)[0];
+    if(!(thePV.isFake() || thePV.ndof() < 0.)) { // skip junk
+      for(size_t i=0; i<tv.size(); ++i) {
+        const TrackingVertex& simV = tv[i];
+        if(simV.eventId().bunchCrossing() != 0) continue; // remove OOTPU
+        if(simV.eventId().event() != 0) continue; // remove ITPU
+
+        if(std::abs(thePV.z() - simV.position().z()) < 0.1 &&
+           std::abs(thePV.z() - simV.position().z())/thePV.zError() < 3) {
+          //theSimPVPosition = &(simV.position());
+          thePVposition = &(thePV.position());
+        }
+        break; // check only the hard scatter sim PV
+      }
     }
-
-    break; // check only the hard scatter sim PV
   }
+  /*
   if(!isPVmatched)
     return;
+  */
   
 
   int w=0; //counter counting the number of sets of histograms
@@ -368,7 +374,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
             }
         }
 
-        histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,*tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU, thePV.position());
+        histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,*tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU, thePVposition);
           sts++;
           if (matchedTrackPointer) asts++;
 
@@ -428,7 +434,6 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
         int tpbx = 0;
 	int nSimHits = 0;
 	double sharedFraction = 0.;
-        const TrackingParticle *tpMatch = nullptr;
 	std::vector<std::pair<TrackingParticleRef, double> > tp;
 	if(recSimColl.find(track) != recSimColl.end()){
 	  tp = recSimColl[track];
@@ -458,7 +463,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	}
 	
 
-	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), &(thePV.position()), isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
+	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), thePVposition, isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
 
 	// dE/dx
 	//	reco::TrackRef track2  = reco::TrackRef( trackCollection, i );
