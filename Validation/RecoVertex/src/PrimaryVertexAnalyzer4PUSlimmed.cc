@@ -259,7 +259,7 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
     // studies on a selection of generated vertices, not on all of them.
     mes_[label]["GenAllAssoc2Reco_NumVertices"] =
         i->book1D("GenAllAssoc2Reco_NumVertices",
-                 "GeneratedAllAssoc2Reco_NumVertices", 100, 0., 200.);
+                 "GeneratedAllAssoc2Reco_NumVertices", 125, 0., 250.);
     mes_[label]["GenAllAssoc2Reco_X"] = i->book1D(
         "GenAllAssoc2Reco_X", "GeneratedAllAssoc2Reco_X", 120, -0.6, 0.6);
     mes_[label]["GenAllAssoc2Reco_Y"] = i->book1D(
@@ -282,7 +282,7 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
     // for Efficiency plots
     mes_[label]["GenAllAssoc2RecoMatched_NumVertices"] =
         i->book1D("GenAllAssoc2RecoMatched_NumVertices",
-                 "GeneratedAllAssoc2RecoMatched_NumVertices", 100, 0., 200.);
+                 "GeneratedAllAssoc2RecoMatched_NumVertices", 125, 0., 250.);
     mes_[label]["GenAllAssoc2RecoMatched_X"] =
         i->book1D("GenAllAssoc2RecoMatched_X", "GeneratedAllAssoc2RecoMatched_X",
                  120, -0.6, 0.6);
