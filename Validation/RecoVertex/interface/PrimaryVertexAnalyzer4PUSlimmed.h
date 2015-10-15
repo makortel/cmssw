@@ -66,8 +66,9 @@ class PrimaryVertexAnalyzer4PUSlimmed : public edm::EDAnalyzer {
 
   // auxiliary class holding simulated vertices
   struct simPrimaryVertex {
-    simPrimaryVertex(double x1, double y1, double z1)
-        :x(x1), y(y1), z(z1),
+    simPrimaryVertex(const LorentzVector p4_)
+        :x(p4_.x()), y(p4_.y()), z(p4_.z()),
+         p4(p4_),
          ptsq(0), closest_vertex_distance_z(-1.),
          nGenTrk(0),
          num_matched_reco_tracks(0),
@@ -77,7 +78,6 @@ class PrimaryVertexAnalyzer4PUSlimmed : public edm::EDAnalyzer {
       ptot.setPy(0);
       ptot.setPz(0);
       ptot.setE(0);
-      p4 = LorentzVector(0, 0, 0, 0);
       r = sqrt(x*x + y*y);
     };
     double x, y, z, r;

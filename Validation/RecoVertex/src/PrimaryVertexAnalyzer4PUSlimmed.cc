@@ -124,6 +124,8 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
       i->book1D("GenPV_Z", "GeneratedPV_Z", 120, -60., 60.);
   mes_["root_folder"]["GenPV_R"] =
       i->book1D("GenPV_R", "GeneratedPV_R", 120, 0, 0.6);
+  mes_["root_folder"]["GenPV_T"] =
+      i->book1D("GenPV_T", "GeneratedPV_T", 1000, -1e-17, 1e-17);
   mes_["root_folder"]["GenPV_Pt2"] =
       i->book1D("GenPV_Pt2", "GeneratedPV_Sum-pt2", 15, &log_pt2_bins[0]);
   mes_["root_folder"]["GenPV_NumTracks"] =
@@ -143,6 +145,8 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
       i->book1D("GenAllV_Z", "GeneratedAllV_Z", 120, -60, 60);
   mes_["root_folder"]["GenAllV_R"] =
       i->book1D("GenAllV_R", "GeneratedAllV_R", 120, 0, 0.6);
+  mes_["root_folder"]["GenAllV_T"] =
+      i->book1D("GenAllV_T", "GeneratedAllV_T", 1000, -1e-17, 1e-17);
   mes_["root_folder"]["GenAllV_Pt2"] =
       i->book1D("GenAllV_Pt2", "GeneratedAllV_Sum-pt2", 15, &log_pt2_bins[0]);
   mes_["root_folder"]["GenAllV_NumTracks"] =
@@ -575,6 +579,7 @@ void PrimaryVertexAnalyzer4PUSlimmed::fillGenericGenVertexHistograms(
     mes_["root_folder"]["GenPV_Y"]->Fill(v.y);
     mes_["root_folder"]["GenPV_Z"]->Fill(v.z);
     mes_["root_folder"]["GenPV_R"]->Fill(v.r);
+    mes_["root_folder"]["GenPV_T"]->Fill(v.p4.t());
     mes_["root_folder"]["GenPV_Pt2"]->Fill(v.ptsq);
     mes_["root_folder"]["GenPV_NumTracks"]->Fill(v.nGenTrk);
     if (v.closest_vertex_distance_z > 0.)
@@ -585,6 +590,7 @@ void PrimaryVertexAnalyzer4PUSlimmed::fillGenericGenVertexHistograms(
   mes_["root_folder"]["GenAllV_Y"]->Fill(v.y);
   mes_["root_folder"]["GenAllV_Z"]->Fill(v.z);
   mes_["root_folder"]["GenAllV_R"]->Fill(v.r);
+  mes_["root_folder"]["GenAllV_T"]->Fill(v.p4.t());
   mes_["root_folder"]["GenAllV_Pt2"]->Fill(v.ptsq);
   mes_["root_folder"]["GenAllV_NumTracks"]->Fill(v.nGenTrk);
   if (v.closest_vertex_distance_z > 0.)
@@ -916,8 +922,7 @@ PrimaryVertexAnalyzer4PUSlimmed::getSimPVs(
 
     // could be a new vertex, check  all primaries found so far to avoid
     // multiple entries
-    simPrimaryVertex sv(v->position().x(), v->position().y(),
-                        v->position().z());
+    simPrimaryVertex sv(v->position());
     sv.eventId = v->eventId();
     sv.sim_vertex = &(*v);
 
