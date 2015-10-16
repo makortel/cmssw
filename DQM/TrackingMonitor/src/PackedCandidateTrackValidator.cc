@@ -306,12 +306,26 @@ namespace {
   public:
     LogIntHelper(double lmin, double lmax): lmin_(lmin), lmax_(lmax) {}
 
+    enum {
+      stat_OK = 0,
+      stat_under_OK = 1,
+      stat_under_notOK = 2,
+      stat_over_OK = 3,
+      stat_over_notOK = 4
+    };
+
     void book(DQMStore::IBooker& iBooker,
               const std::string& name, const std::string& title,
               int nbins,double min,double max,
               int flow_nbins,double flow_min,double flow_max) {
       hInrange = iBooker.book1D(name, title, nbins, min, max);
-      hUnderOverflow = iBooker.book1D(name+"WithFlow", title+"with over- and underflow", flow_nbins, flow_min, flow_max);
+      hUnderOverflow = iBooker.book1D(name+"UnderOverlFlow", title+" with over- and underflow", flow_nbins, flow_min, flow_max);
+      hStatus = iBooker.book1D(name+"Status", title+" status", 5, -0.5, 4.5);
+      hStatus->setBinLabel(1, "OK");
+      hStatus->setBinLabel(2, "Underflow, PC is min");
+      hStatus->setBinLabel(3, "Underflow, PC is not min");
+      hStatus->setBinLabel(4, "Overflow, PC is max");
+      hStatus->setBinLabel(5, "Overflow, PC is not max");
     }
 
     double largestValue() const {
@@ -361,19 +375,33 @@ namespace {
 
     Result fill(double pcvalue, double trackvalue) {
       const auto diff = diffRelative(pcvalue, trackvalue);
-      hUnderOverflow->Fill(diff);
 
       const auto tmp = std::abs(trackvalue);
       RangeStatus status;
       if(tmp > largestValue()) {
         status = RangeStatus::overflow;
+        hUnderOverflow->Fill(diff);
+        if(pcvalue == largestValue()) {
+          hStatus->Fill(stat_over_OK);
+        }
+        else {
+          hStatus->Fill(stat_over_notOK);
+        }
       }
       else if(tmp < smallestNonZeroValue()) {
         status = RangeStatus::underflow;
+        hUnderOverflow->Fill(diff);
+        if(pcvalue == smallestNonZeroValue()) {
+          hStatus->Fill(stat_under_OK);
+        }
+        else {
+          hStatus->Fill(stat_under_notOK);
+        }
       }
       else {
         status = RangeStatus::inrange;
         hInrange->Fill(diff);
+        hStatus->Fill(stat_OK);
       }
 
       return Result(status, diff, pcvalue, trackvalue);
@@ -385,6 +413,7 @@ namespace {
 
     MonitorElement *hInrange;
     MonitorElement *hUnderOverflow;
+    MonitorElement *hStatus;
   };
   std::ostream& operator<<(std::ostream& os, const LogIntHelper::Result& res) {
     res.print(os);
