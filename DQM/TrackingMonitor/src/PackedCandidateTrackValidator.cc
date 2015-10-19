@@ -21,6 +21,8 @@
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
+#include "boost/math/special_functions/sign.hpp"
+
 #include <iomanip>
 
 namespace {
@@ -308,10 +310,11 @@ namespace {
 
     enum class RangeStatus {
       inrange = 0,
-      underflow_OK = 1,
-      underflow_notOK = 2,
-      overflow_OK = 3,
-      overflow_notOK = 4
+      inrange_signflip = 1,
+      underflow_OK = 2,
+      underflow_notOK = 3,
+      overflow_OK = 4,
+      overflow_notOK = 5
     };
 
     void book(DQMStore::IBooker& iBooker,
@@ -319,13 +322,14 @@ namespace {
               int nbins,double min,double max,
               int flow_nbins,double flow_min,double flow_max) {
       hInrange = iBooker.book1D(name, title, nbins, min, max);
-      hUnderOverflow = iBooker.book1D(name+"UnderOverFlow", title+" with over- and underflow", flow_nbins, flow_min, flow_max);
+      hUnderOverflowSign = iBooker.book1D(name+"UnderOverFlowSign", title+" with over- and underflow, and sign flip", flow_nbins, flow_min, flow_max);
       hStatus = iBooker.book1D(name+"Status", title+" status", 5, -0.5, 4.5);
       hStatus->setBinLabel(1, "In range");
-      hStatus->setBinLabel(2, "Underflow, PC is min");
-      hStatus->setBinLabel(3, "Underflow, PC is not min");
-      hStatus->setBinLabel(4, "Overflow, PC is max");
-      hStatus->setBinLabel(5, "Overflow, PC is not max");
+      hStatus->setBinLabel(2, "In range, sign flip");
+      hStatus->setBinLabel(3, "Underflow, PC is min");
+      hStatus->setBinLabel(4, "Underflow, PC is not min");
+      hStatus->setBinLabel(5, "Overflow, PC is max");
+      hStatus->setBinLabel(6, "Overflow, PC is not max");
     }
 
     double largestValue() const {
@@ -350,7 +354,7 @@ namespace {
       bool outsideExpectedRange(double min, double max) const {
         if(status_ == RangeStatus::inrange)
           return diff_ < min || diff_ > max;
-        return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK;
+        return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip;
       }
 
       void print(std::ostream& os) const {
@@ -389,7 +393,7 @@ namespace {
       const float unpackedSmallestValue = modifyUnpack ? modifyUnpack(smallestNonZeroValue()) : smallestNonZeroValue();
       RangeStatus status;
       if(tmp > largestValue()) {
-        hUnderOverflow->Fill(diff);
+        hUnderOverflowSign->Fill(diff);
         if(std::abs(pcvalue) == unpackedLargestValue) {
           status = RangeStatus::overflow_OK;
         }
@@ -398,7 +402,7 @@ namespace {
         }
       }
       else if(tmp < smallestNonZeroValue()) {
-        hUnderOverflow->Fill(diff);
+        hUnderOverflowSign->Fill(diff);
         if(std::abs(pcvalue) == unpackedSmallestValue) {
           status = RangeStatus::underflow_OK;
         }
@@ -407,8 +411,14 @@ namespace {
         }
       }
       else {
-        status = RangeStatus::inrange;
-        hInrange->Fill(diff);
+        if(boost::math::sign(pcvalue) == boost::math::sign(trackvalue)) {
+          status = RangeStatus::inrange;
+          hInrange->Fill(diff);
+        }
+        else {
+          hUnderOverflowSign->Fill(diff);
+          status = RangeStatus::inrange_signflip;
+        }
       }
       hStatus->Fill(static_cast<int>(status));
 
@@ -420,7 +430,7 @@ namespace {
     const double lmax_;
 
     MonitorElement *hInrange;
-    MonitorElement *hUnderOverflow;
+    MonitorElement *hUnderOverflowSign;
     MonitorElement *hStatus;
   };
   std::ostream& operator<<(std::ostream& os, const LogIntHelper::Result& res) {
