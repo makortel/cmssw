@@ -26,7 +26,10 @@ namespace {
     h->Fill(std::min(std::max(val,((T) h->getTH1()->GetXaxis()->GetXmin())),((T) h->getTH1()->GetXaxis()->GetXmax())));
   }
 
-  constexpr double DzPVCut = 0.1; // cm
+  bool acceptForDzPVSignificance(double dzpv) {
+    return dzpv < 0.6; // cm
+  }
+
 }
 
 MTVHistoProducerAlgoForTracker::MTVHistoProducerAlgoForTracker(const edm::ParameterSet& pset): MTVHistoProducerAlgo(pset){
@@ -1027,7 +1030,7 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
         const double dzpv = std::abs(track->dz(*pvPosition));
         h_assoc_dzpvcut[count]->Fill(dzpv);
         h_assoc_dzpvcut_pt[count]->Fill(dzpv, tp.pt());
-        if(dzpv < DzPVCut) {
+        if(acceptForDzPVSignificance(dzpv)) {
           h_assoc_dzpvsigcut[count]->Fill(dzpv/track->dzError());
           h_assoc_dzpvsigcut_pt[count]->Fill(dzpv/track->dzError(), tp.pt());
         }
@@ -1255,7 +1258,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
   if(pvPosition) {
     h_reco_dzpvcut[count]->Fill(std::abs(dzpv));
     h_reco_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
-    if(std::abs(dzpv) < DzPVCut) {
+    if(acceptForDzPVSignificance(std::abs(dzpv))) {
       h_reco_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
       h_reco_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), track.pt());
     }
@@ -1272,7 +1275,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
     if(pvPosition) {
       h_assoc2_dzpvcut[count]->Fill(std::abs(dzpv));
       h_assoc2_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
-      if(std::abs(dzpv) < DzPVCut) {
+      if(acceptForDzPVSignificance(std::abs(dzpv))) {
         h_assoc2_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
         h_assoc2_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), track.pt());
       }
@@ -1287,7 +1290,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
       if(pvPosition) {
         h_pileup_dzpvcut[count]->Fill(std::abs(dzpv));
         h_pileup_dzpvcut_pt[count]->Fill(std::abs(dzpv), pt);
-        if(std::abs(dzpv) < DzPVCut) {
+        if(acceptForDzPVSignificance(std::abs(dzpv))) {
           h_pileup_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
           h_pileup_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), pt);
         }
