@@ -338,8 +338,10 @@ namespace {
 
     class Result {
     public:
-      Result(RangeStatus status, double diff, double pcvalue, double trackvalue, const LogIntHelper& hlpr):
-        diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), status_(status), hlpr_(hlpr)
+      Result(RangeStatus status, double diff,
+             double pcvalue, double trackvalue,
+             double largestValue, double smallestValue):
+        diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), status_(status), largestValue_(largestValue), smallestValue_(smallestValue)
       {}
 
       RangeStatus status() const { return status_; }
@@ -359,9 +361,9 @@ namespace {
           os << " (overflow) ";
         os << pcvalue_;
         if(status_ == RangeStatus::underflow_notOK)
-          os << " (not min " << hlpr_.smallestNonZeroValue() << ")";
+          os << " (not min " << smallestValue_ << ")";
         else if(status_ == RangeStatus::overflow_notOK)
-          os << " (not max " << hlpr_.largestValue() << ")";
+          os << " (not max " << largestValue_ << ")";
         os << " " << trackvalue_;
       }
 
@@ -370,17 +372,25 @@ namespace {
       const double pcvalue_;
       const double trackvalue_;
       const RangeStatus status_;
-      const LogIntHelper& hlpr_;
+      const double largestValue_;
+      const double smallestValue_;
     };
 
-    Result fill(double pcvalue, double trackvalue) {
+    Result fill(double pcvalue, double trackvalue,
+                std::function<double(double)> modifyPack=std::function<double(double)>(),
+                std::function<double(double)> modifyUnpack=std::function<double(double)>()) {
       const auto diff = diffRelative(pcvalue, trackvalue);
 
-      const auto tmp = std::abs(trackvalue);
+      const auto tmp = modifyPack ? std::abs(modifyPack(trackvalue)) : std::abs(trackvalue);
+      // narrow to float to compare apples to apples with values from
+      // PackedCandidate (even though the final comparison is done in
+      // double)
+      const float unpackedLargestValue = modifyUnpack ? modifyUnpack(largestValue()) : largestValue();
+      const float unpackedSmallestValue = modifyUnpack ? modifyUnpack(smallestNonZeroValue()) : smallestNonZeroValue();
       RangeStatus status;
       if(tmp > largestValue()) {
         hUnderOverflow->Fill(diff);
-        if(std::abs(pcvalue) == largestValue()) {
+        if(std::abs(pcvalue) == unpackedLargestValue) {
           status = RangeStatus::overflow_OK;
         }
         else {
@@ -389,7 +399,7 @@ namespace {
       }
       else if(tmp < smallestNonZeroValue()) {
         hUnderOverflow->Fill(diff);
-        if(std::abs(pcvalue) == smallestNonZeroValue()) {
+        if(std::abs(pcvalue) == unpackedSmallestValue) {
           status = RangeStatus::underflow_OK;
         }
         else {
@@ -402,7 +412,7 @@ namespace {
       }
       hStatus->Fill(static_cast<int>(status));
 
-      return Result(status, diff, pcvalue, trackvalue, *this);
+      return Result(status, diff, pcvalue, trackvalue, unpackedLargestValue, unpackedSmallestValue);
     }
 
   private:
@@ -808,13 +818,17 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     auto fillCov2 = [&](LogIntHelper& hlp, const int i, const int j) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j));
     };
+    auto fillCov3 = [&](LogIntHelper& hlp, const int i, const int j, std::function<double(double)> modifyPack, std::function<double(double)> modifyUnpack) {
+      return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j), modifyPack, modifyUnpack);
+    };
 
     //const bool dzErrorFinite = isDzErrorPackedFinite(track.dzError()); // FIXME
     //const double diffDzError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dzError()) : 0; // FIXME 
     //const double diffQoverpError = diffRelative(trackPc.qoverpError(), track.qoverpError());
-    const auto diffCovQoverp = fillCov2(h_diffCovQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp);
+    const auto pcPt = pcRef->pt();
+    const auto diffCovQoverp = fillCov3(h_diffCovQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp, [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
     const auto diffCovLambda = fillCov2(h_diffCovLambda, reco::TrackBase::i_lambda, reco::TrackBase::i_lambda);
-    const auto diffCovPhi    = fillCov2(h_diffCovPhi,    reco::TrackBase::i_phi,    reco::TrackBase::i_phi);
+    const auto diffCovPhi    = fillCov3(h_diffCovPhi,    reco::TrackBase::i_phi,    reco::TrackBase::i_phi,    [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
 
     const bool dzErrorFinite = isDzErrorPackedFinite(track);
     const double diffDzError = dzErrorFinite ? diffRelative(pcRef->dzError(), track.dzError()) : 0;
@@ -997,15 +1011,19 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
         */
         //                                                << " qoverpError " << diffQoverpError << " " << trackPc.qoverpError() << " " << track.qoverpError()
                                                        << " cov(qoverp, qoverp) " << diffCovQoverp
+                                                       << "\n "
                                                        << " cov(phi, phi) " << diffCovPhi
                                                        << "\n "
                                                        << " cov(lambda, lambda) " << diffCovLambda  //<< " (" << track.covariance(reco::TrackBase::i_lambda, reco::TrackBase::i_lambda) << ")"
                                                        << "\n "
                                                        << " dszError " << diffDszError << " " << pcRef->dzError() << " " << track.dszError() << " (dz " << track.dzError() << ")"
+                                                       << "\n "
                                                        << " dxyError " << diffDxyError << " " << pcRef->dxyError() << " " << track.dxyError()
                                                        << "\n "
                                                        << " cov(dxy, dz) " << diffCovDxyDz << " " << CovPrinter(trackPc, track, reco::TrackBase::i_dxy, reco::TrackBase::i_dsz, 10000.0)
+                                                       << "\n "
                                                        << " cov(lambda, dz) " << diffCovLambdaDz
+                                                       << "\n "
                                                        << " cov(phi, dxy) " << diffCovPhiDxy;
 
       /*
