@@ -151,7 +151,7 @@ void MultiTrackValidator::beginRun(Run const&, EventSetup const& setup) {
 void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup& setup){
   using namespace reco;
   
-  edm::LogInfo("TrackValidator") << "\n====================================================" << "\n"
+  LogDebug("TrackValidator") << "\n====================================================" << "\n"
 				 << "Analyzing new event" << "\n"
 				 << "====================================================\n" << "\n";
   edm::ESHandle<ParametersDefinerForTP> parametersDefinerTP; 
@@ -173,9 +173,9 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
     cosmictpSelector.initEvent(simHitsTPAssoc);
   }
 
-  //if (tPCeff.size()==0) {edm::LogInfo("TrackValidator") 
+  //if (tPCeff.size()==0) {LogDebug("TrackValidator") 
   //<< "TP Collection for efficiency studies has size = 0! Skipping Event." ; return;}
-  //if (tPCfake.size()==0) {edm::LogInfo("TrackValidator") 
+  //if (tPCfake.size()==0) {LogDebug("TrackValidator") 
   //<< "TP Collection for fake rate studies has size = 0! Skipping Event." ; return;}
   
   edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
@@ -237,14 +237,14 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
       edm::Handle<View<Track> >  trackCollection;
       if(!event.getByLabel(label[www], trackCollection)&&ignoremissingtkcollection_)continue;
       //if (trackCollection->size()==0) 
-      //edm::LogInfo("TrackValidator") << "TrackCollection size = 0!" ; 
+      //LogDebug("TrackValidator") << "TrackCollection size = 0!" ; 
       //continue;
       //}
       reco::RecoToSimCollection recSimColl;
       reco::SimToRecoCollection simRecColl;
       //associate tracks
       if(UseAssociators){
-	edm::LogVerbatim("TrackValidator") << "Analyzing " 
+	LogTrace("TrackValidator") << "Analyzing " 
 					   << label[www].process()<<":"
 					   << label[www].label()<<":"
 					   << label[www].instance()<<" with "
@@ -260,7 +260,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 						      &event,&setup);
       }
       else{
-	edm::LogVerbatim("TrackValidator") << "Analyzing " 
+	LogTrace("TrackValidator") << "Analyzing " 
 					   << label[www].process()<<":"
 					   << label[www].label()<<":"
 					   << label[www].instance()<<" with "
@@ -285,7 +285,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 
       //compute number of tracks per eta interval
       //
-      edm::LogVerbatim("TrackValidator") << "\n# of TrackingParticles: " << tPCeff.size() << "\n";
+      LogTrace("TrackValidator") << "\n# of TrackingParticles: " << tPCeff.size() << "\n";
       int ats(0);  	  //This counter counts the number of simTracks that are "associated" to recoTracks
       int st(0);    	  //This counter counts the number of simulated tracks passing the MTV selection (i.e. tpSelector(tp) )
       unsigned sts(0);   //This counter counts the number of simTracks surviving the bunchcrossing cut 
@@ -347,12 +347,12 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	    ats++; //This counter counts the number of simTracks that have a recoTrack associated
 	    // isRecoMatched = true; // UNUSED
 	    matchedTrackPointer = rt.begin()->first.get();
-	    edm::LogVerbatim("TrackValidator") << "TrackingParticle #" << st 
+	    LogTrace("TrackValidator") << "TrackingParticle #" << st 
 					       << " with pt=" << sqrt(momentumTP.perp2()) 
 					       << " associated with quality:" << rt.begin()->second <<"\n";
 	  }
 	}else{
-	  edm::LogVerbatim("TrackValidator") 
+	  LogTrace("TrackValidator") 
 	    << "TrackingParticle #" << st
 	    << " with pt,eta,phi: " 
 	    << sqrt(momentumTP.perp2()) << " , "
@@ -389,7 +389,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
       // ##############################################
       // fill recoTracks histograms (LOOP OVER TRACKS)
       // ##############################################
-      edm::LogVerbatim("TrackValidator") << "\n# of reco::Tracks with "
+      LogTrace("TrackValidator") << "\n# of reco::Tracks with "
 					 << label[www].process()<<":"
 					 << label[www].label()<<":"
 					 << label[www].instance()
@@ -454,11 +454,11 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 		break;
 	      }
             }
-	    edm::LogVerbatim("TrackValidator") << "reco::Track #" << rT << " with pt=" << track->pt() 
+	    LogTrace("TrackValidator") << "reco::Track #" << rT << " with pt=" << track->pt() 
 					       << " associated with quality:" << tp.begin()->second <<"\n";
 	  }
 	} else {
-	  edm::LogVerbatim("TrackValidator") << "reco::Track #" << rT << " with pt=" << track->pt()
+	  LogTrace("TrackValidator") << "reco::Track #" << rT << " with pt=" << track->pt()
 					     << " NOT associated to any TrackingParticle" << "\n";		  
 	}
 	
@@ -519,7 +519,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 
       histoProducerAlgo_->fill_trackBased_histos(w,at,rT,st);
 
-      edm::LogVerbatim("TrackValidator") << "Total Simulated: " << st << "\n"
+      LogTrace("TrackValidator") << "Total Simulated: " << st << "\n"
 					 << "Total Associated (simToReco): " << ats << "\n"
 					 << "Total Reconstructed: " << rT << "\n"
 					 << "Total Associated (recoToSim): " << at << "\n"
