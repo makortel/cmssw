@@ -308,14 +308,135 @@ namespace {
   public:
     LogIntHelper(double lmin, double lmax): lmin_(lmin), lmax_(lmax) {}
 
-    enum class RangeStatus {
-      inrange = 0,
-      inrange_signflip = 1,
-      underflow_OK = 2,
-      underflow_notOK = 3,
-      overflow_OK = 4,
-      overflow_notOK = 5
+    class UnderOverflow {
+    public:
+      UnderOverflow(double largestValue, double smallestValue, std::function<double(double)> modifyUnpack):
+        unpackedLargestValue_(modifyUnpack ? modifyUnpack(largestValue) : largestValue),
+        unpackedSmallestValue_(modifyUnpack ? modifyUnpack(smallestValue) : smallestValue)
+      {}
+
+      bool compatibleWithUnderflow(double value) const {
+        return value == unpackedSmallestValue_;
+      }
+      void printNonOkUnderflow(std::ostream& os) const {
+        os << " (not min " << unpackedSmallestValue_ << ")";
+      }
+
+      bool compatibleWithOverflow(double value) const {
+        return value == unpackedLargestValue_;
+      }
+      void printNonOkOverflow(std::ostream& os) const {
+        os << " (not max " << unpackedLargestValue_ << ")";
+      }
+
+    private:
+      // narrow to float to compare apples to apples with values from
+      // PackedCandidate (even though the final comparison is done in
+      // double)
+      const float unpackedLargestValue_;
+      const float unpackedSmallestValue_;
     };
+
+    UnderOverflow underOverflowHelper(std::function<double(double)> modifyUnpack) const {
+      return UnderOverflow(largestValue(), smallestValue(), modifyUnpack);
+    }
+
+    double largestValue() const {
+      return logintpack::unpack8log(127, lmin_, lmax_);
+    }
+
+    double smallestValue() const {
+      return logintpack::unpack8log(0, lmin_, lmax_);
+    }
+
+  private:
+    const double lmin_;
+    const double lmax_;
+  };
+  class Float16Helper {
+  public:
+    class UnderOverflow {
+    public:
+      static void printNonOkUnderflow(std::ostream& os) {
+        os << " (not 0)";
+      }
+      static void printNonOkOverflow(std::ostream& os) {
+        os << " (not inf)";
+      }
+    };
+
+    static UnderOverflow underOverflowHelper(std::function<double(double)>) {
+      return UnderOverflow();
+    }
+
+    static double largestValue() {
+      return MiniFloatConverter::max32ConvertibleToMax16();
+    }
+    static bool compatibleWithOverflow(double value) {
+      return edm::isNotFinite(value);
+    }
+
+    static double smallestValue() {
+      return MiniFloatConverter::denorm_min();
+    }
+    static bool compatibleWithUnderflow(double value) {
+      return value == 0.0;
+    }
+  };
+
+  enum class RangeStatus {
+    inrange = 0,
+    inrange_signflip = 1,
+    underflow_OK = 2,
+    underflow_notOK = 3,
+    overflow_OK = 4,
+    overflow_notOK = 5
+  };
+  template <typename T>
+  class PackedValueCheckResult {
+  public:
+    PackedValueCheckResult(RangeStatus status, double diff,
+           double pcvalue, double trackvalue,
+           const typename T::UnderOverflow& underOverflow):
+      diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), status_(status), underOverflow_(underOverflow)
+    {}
+
+    RangeStatus status() const { return status_; }
+    double diff() const { return diff_; }
+
+    bool outsideExpectedRange(double min, double max) const {
+      if(status_ == RangeStatus::inrange)
+        return diff_ < min || diff_ > max;
+      return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip;
+    }
+
+    void print(std::ostream& os) const {
+      os << diff_ << " ";
+      if(status_ == RangeStatus::underflow_OK || status_ == RangeStatus::underflow_notOK)
+        os << " (underflow) ";
+      else if(status_ == RangeStatus::overflow_OK || status_ == RangeStatus::overflow_notOK)
+        os << " (overflow) ";
+      os << pcvalue_;
+      if(status_ == RangeStatus::underflow_notOK)
+        underOverflow_.printNonOkUnderflow(os);
+      else if(status_ == RangeStatus::overflow_notOK)
+        underOverflow_.printNonOkOverflow(os);
+      os << " " << trackvalue_;
+    }
+
+  private:
+    const double diff_;
+    const double pcvalue_;
+    const double trackvalue_;
+    const RangeStatus status_;
+    const typename T::UnderOverflow underOverflow_;
+  };
+
+  template <typename T>
+  class PackedValueCheck {
+  public:
+    template <typename ...Args>
+    PackedValueCheck(Args&&... args): helper_(std::forward<Args>(args)...) {}
 
     void book(DQMStore::IBooker& iBooker,
               const std::string& name, const std::string& title,
@@ -332,78 +453,26 @@ namespace {
       hStatus->setBinLabel(6, "Overflow, PC is not max");
     }
 
-    double largestValue() const {
-      return logintpack::unpack8log(127, lmin_, lmax_);
-    }
-
-    double smallestNonZeroValue() const {
-      return logintpack::unpack8log(0, lmin_, lmax_);
-    }
-
-    class Result {
-    public:
-      Result(RangeStatus status, double diff,
-             double pcvalue, double trackvalue,
-             double largestValue, double smallestValue):
-        diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), status_(status), largestValue_(largestValue), smallestValue_(smallestValue)
-      {}
-
-      RangeStatus status() const { return status_; }
-      double diff() const { return diff_; }
-
-      bool outsideExpectedRange(double min, double max) const {
-        if(status_ == RangeStatus::inrange)
-          return diff_ < min || diff_ > max;
-        return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip;
-      }
-
-      void print(std::ostream& os) const {
-        os << diff_ << " ";
-        if(status_ == RangeStatus::underflow_OK || status_ == RangeStatus::underflow_notOK)
-          os << " (underflow) ";
-        else if(status_ == RangeStatus::overflow_OK || status_ == RangeStatus::overflow_notOK)
-          os << " (overflow) ";
-        os << pcvalue_;
-        if(status_ == RangeStatus::underflow_notOK)
-          os << " (not min " << smallestValue_ << ")";
-        else if(status_ == RangeStatus::overflow_notOK)
-          os << " (not max " << largestValue_ << ")";
-        os << " " << trackvalue_;
-      }
-
-    private:
-      const double diff_;
-      const double pcvalue_;
-      const double trackvalue_;
-      const RangeStatus status_;
-      const double largestValue_;
-      const double smallestValue_;
-    };
-
-    Result fill(double pcvalue, double trackvalue,
+    PackedValueCheckResult<T> fill(double pcvalue, double trackvalue,
                 std::function<double(double)> modifyPack=std::function<double(double)>(),
                 std::function<double(double)> modifyUnpack=std::function<double(double)>()) {
       const auto diff = diffRelative(pcvalue, trackvalue);
 
       const auto tmp = modifyPack ? std::abs(modifyPack(trackvalue)) : std::abs(trackvalue);
-      // narrow to float to compare apples to apples with values from
-      // PackedCandidate (even though the final comparison is done in
-      // double)
-      const float unpackedLargestValue = modifyUnpack ? modifyUnpack(largestValue()) : largestValue();
-      const float unpackedSmallestValue = modifyUnpack ? modifyUnpack(smallestNonZeroValue()) : smallestNonZeroValue();
+      const auto underOverflow = helper_.underOverflowHelper(modifyUnpack);
       RangeStatus status;
-      if(tmp > largestValue()) {
+      if(tmp > helper_.largestValue()) {
         hUnderOverflowSign->Fill(diff);
-        if(std::abs(pcvalue) == unpackedLargestValue) {
+        if(underOverflow.compatibleWithOverflow(std::abs(pcvalue))) {
           status = RangeStatus::overflow_OK;
         }
         else {
           status = RangeStatus::overflow_notOK;
         }
       }
-      else if(tmp < smallestNonZeroValue()) {
+      else if(tmp < helper_.smallestValue()) {
         hUnderOverflowSign->Fill(diff);
-        if(std::abs(pcvalue) == unpackedSmallestValue) {
+        if(underOverflow.compatibleWithUnderflow(std::abs(pcvalue))) {
           status = RangeStatus::underflow_OK;
         }
         else {
@@ -422,18 +491,18 @@ namespace {
       }
       hStatus->Fill(static_cast<int>(status));
 
-      return Result(status, diff, pcvalue, trackvalue, unpackedLargestValue, unpackedSmallestValue);
+      return PackedValueCheckResult<T>(status, diff, pcvalue, trackvalue, underOverflow);
     }
 
   private:
-    const double lmin_;
-    const double lmax_;
+    const T helper_;
 
     MonitorElement *hInrange;
     MonitorElement *hUnderOverflowSign;
     MonitorElement *hStatus;
   };
-  std::ostream& operator<<(std::ostream& os, const LogIntHelper::Result& res) {
+  template <typename T>
+  std::ostream& operator<<(std::ostream& os, const PackedValueCheckResult<T>& res) {
     res.print(os);
     return os;
   }
@@ -506,9 +575,9 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   //LogIntHelper h_diffQoverpError;
   //LogIntHelper h_diffThetaError;
   //LogIntHelper h_diffPhiError;
-  LogIntHelper h_diffCovQoverp;
-  LogIntHelper h_diffCovLambda;
-  LogIntHelper h_diffCovPhi;
+  PackedValueCheck<LogIntHelper> h_diffCovQoverp;
+  PackedValueCheck<LogIntHelper> h_diffCovLambda;
+  PackedValueCheck<LogIntHelper> h_diffCovPhi;
 
   MonitorElement *h_diffPtError;
   MonitorElement *h_diffEtaError;
@@ -531,8 +600,8 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffCovLambdaPhi;
   MonitorElement *h_diffCovLambdaDxy;
   */
-  LogIntHelper h_diffCovLambdaDz;
-  LogIntHelper h_diffCovPhiDxy;
+  PackedValueCheck<LogIntHelper> h_diffCovLambdaDz;
+  PackedValueCheck<LogIntHelper> h_diffCovPhiDxy;
   //MonitorElement *h_diffCovLambdaDz;
   //MonitorElement *h_diffCovPhiDxy;
   MonitorElement *h_diffCovPhiDz;
@@ -825,10 +894,10 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
       fillNoFlow(me, diffRel);
       return diffRel;
     };
-    auto fillCov2 = [&](LogIntHelper& hlp, const int i, const int j) {
+    auto fillCov2 = [&](PackedValueCheck<LogIntHelper>& hlp, const int i, const int j) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j));
     };
-    auto fillCov3 = [&](LogIntHelper& hlp, const int i, const int j, std::function<double(double)> modifyPack, std::function<double(double)> modifyUnpack) {
+    auto fillCov3 = [&](PackedValueCheck<LogIntHelper>& hlp, const int i, const int j, std::function<double(double)> modifyPack, std::function<double(double)> modifyUnpack) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j), modifyPack, modifyUnpack);
     };
 
