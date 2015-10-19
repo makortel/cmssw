@@ -337,6 +337,9 @@ namespace {
       const float unpackedSmallestValue_;
     };
 
+    static std::string maxName() { return "max"; }
+    static std::string minName() { return "min"; }
+
     UnderOverflow underOverflowHelper(std::function<double(double)> modifyUnpack) const {
       return UnderOverflow(largestValue(), smallestValue(), modifyUnpack);
     }
@@ -364,6 +367,9 @@ namespace {
         os << " (not inf)";
       }
     };
+
+    static std::string maxName() { return "inf"; }
+    static std::string minName() { return "0"; }
 
     static UnderOverflow underOverflowHelper(std::function<double(double)>) {
       return UnderOverflow();
@@ -447,10 +453,10 @@ namespace {
       hStatus = iBooker.book1D(name+"Status", title+" status", 5, -0.5, 4.5);
       hStatus->setBinLabel(1, "In range");
       hStatus->setBinLabel(2, "In range, sign flip");
-      hStatus->setBinLabel(3, "Underflow, PC is min");
-      hStatus->setBinLabel(4, "Underflow, PC is not min");
-      hStatus->setBinLabel(5, "Overflow, PC is max");
-      hStatus->setBinLabel(6, "Overflow, PC is not max");
+      hStatus->setBinLabel(3, "Underflow, PC is "+T::minName());
+      hStatus->setBinLabel(4, "Underflow, PC is not "+T::minName());
+      hStatus->setBinLabel(5, "Overflow, PC is "+T::maxName());
+      hStatus->setBinLabel(6, "Overflow, PC is not "+T::maxName());
     }
 
     PackedValueCheckResult<T> fill(double pcvalue, double trackvalue,
