@@ -900,10 +900,10 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
       fillNoFlow(me, diffRel);
       return diffRel;
     };
-    auto fillCov2 = [&](PackedValueCheck<LogIntHelper>& hlp, const int i, const int j) {
+    auto fillCov2 = [&](auto& hlp, const int i, const int j) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j));
     };
-    auto fillCov3 = [&](PackedValueCheck<LogIntHelper>& hlp, const int i, const int j, std::function<double(double)> modifyPack, std::function<double(double)> modifyUnpack) {
+    auto fillCov3 = [&](auto& hlp, const int i, const int j, std::function<double(double)> modifyPack, std::function<double(double)> modifyUnpack) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j), modifyPack, modifyUnpack);
     };
 
