@@ -416,6 +416,10 @@ namespace {
       return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip;
     }
 
+    bool outsideExpectedRangeAbs(double val) const {
+      return outsideExpectedRange(-val, val);
+    }
+
     void print(std::ostream& os) const {
       os << diff_ << " ";
       if(status_ == RangeStatus::underflow_OK || status_ == RangeStatus::underflow_notOK)
@@ -545,18 +549,9 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   };
   MonitorElement *h_selectionFlow;
 
-  MonitorElement *h_diffPx;
-  MonitorElement *h_diffPy;
-  MonitorElement *h_diffPz;
-
   MonitorElement *h_diffVx;
   MonitorElement *h_diffVy;
   MonitorElement *h_diffVz;
-  /*
-  MonitorElement *h_diffVxVsVertex;
-  MonitorElement *h_diffVyVsVertex;
-  MonitorElement *h_diffVzVsVertex;
-  */
 
   MonitorElement *h_diffNormalizedChi2;
   MonitorElement *h_diffNdof;
@@ -564,10 +559,8 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffCharge;
   MonitorElement *h_diffIsHighPurity;
 
-  MonitorElement *h_diffQoverp;
   MonitorElement *h_diffPt;
   MonitorElement *h_diffEta;
-  MonitorElement *h_diffTheta;
   MonitorElement *h_diffPhi;
   MonitorElement *h_diffDxyAssocPV;
   MonitorElement *h_diffDxyPV;
@@ -649,25 +642,10 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_selectionFlow->setBinLabel(8, "Track: no missing inner hits");
 
   constexpr int diffBins = 50;
-  //constexpr float diff = 1e-3;
-  //constexpr float diffP = 1e-1;
-  constexpr float diffRel = 5e-2;
 
-  /*
-  h_diffPx = iBooker.book1D("diffPx", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in px()", diffBins, -1.1, 0.2); // not equal, drop?
-  h_diffPy = iBooker.book1D("diffPy", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in py()", diffBins, -1.1, 0.2); // not equal, drop?
-  h_diffPz = iBooker.book1D("diffPz", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in pz()", diffBins, -1.1, 0.2); // not equal, drop?
-  */
-
-  h_diffVx = iBooker.book1D("diffVx", "PackedCandidate::bestTrack() - reco::Track in vx()", diffBins, -0.2, 0.2); // not equal, keep?
-  h_diffVy = iBooker.book1D("diffVy", "PackedCandidate::bestTrack() - reco::Track in vy()", diffBins, -0.2, 0.2); // not equal, keep?
-  h_diffVz = iBooker.book1D("diffVz", "PackedCandidate::bestTrack() - reco::Track in vz()", diffBins, -0.4, 0.4); // not equal, keep?
-
-  /*
-  h_diffVxVsVertex = iBooker.book1D("diffVxVsVertex", "PackedCandidate::bestTrack()::vx() - reco::Vertex::x()", diffBins, -0.1, 0.05);
-  h_diffVyVsVertex = iBooker.book1D("diffVyVsVertex", "PackedCandidate::bestTrack()::vy() - reco::Vertex::y()", diffBins, -0.1, 0.05);
-  h_diffVzVsVertex = iBooker.book1D("diffVzVsVertex", "PackedCandidate::bestTrack()::vz() - reco::Vertex::z()", diffBins, -0.2, 0.1);
-  */
+  h_diffVx = iBooker.book1D("diffVx", "PackedCandidate::bestTrack() - reco::Track in vx()", diffBins, -0.2, 0.2); // not equal
+  h_diffVy = iBooker.book1D("diffVy", "PackedCandidate::bestTrack() - reco::Track in vy()", diffBins, -0.2, 0.2); // not equal
+  h_diffVz = iBooker.book1D("diffVz", "PackedCandidate::bestTrack() - reco::Track in vz()", diffBins, -0.4, 0.4); // not equal
 
   h_diffNormalizedChi2 = iBooker.book1D("diffNormalizedChi2", "PackedCandidate::bestTrack() - reco::Track in normalizedChi2()", 30, -1.5, 1.5); // expected difference in -1...0
   h_diffNdof = iBooker.book1D("diffNdof", "PackedCandidate::bestTrack() - reco::Track in ndof()", 33, -30.5, 2.5); // to monitor the difference
@@ -675,10 +653,8 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffCharge = iBooker.book1D("diffCharge", "PackedCandidate::bestTrack() - reco::Track in charge()", 5, -2.5, 2.5); // expect equality
   h_diffIsHighPurity = iBooker.book1D("diffIsHighPurity", "PackedCandidate::bestTrack() - reco::Track in quality(highPurity)", 3, -1.5, 1.5); // expect equality
 
-  h_diffQoverp = iBooker.book1D("diffQoverp", "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in qoverp()", diffBins, -1.1, 1.1); // not equal, drop?
   h_diffPt     = iBooker.book1D("diffPt",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in pt()",     diffBins, -1.1, 1.1); // not equal, keep
   h_diffEta    = iBooker.book1D("diffEta",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in eta()",    diffBins, -0.2, 0.2); // not equal, keep
-  h_diffTheta  = iBooker.book1D("diffTheta",  "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in theta()",  diffBins, -0.2, 0.2); // not equal, drop
   h_diffPhi    = iBooker.book1D("diffPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phi()",    diffBins, -0.1, 0.02); // expect equality within precision
 
   h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.002, 0.002); // expect equality within precision
@@ -750,14 +726,16 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
   iEvent.getByToken(verticesToken_, hvertices);
   const auto& vertices = *hvertices;
 
+  /*
   edm::Handle<reco::VertexCollection> hslimmedvertices;
   iEvent.getByToken(slimmedVerticesToken_, hslimmedvertices);
   const auto& slimmedVertices = *hslimmedvertices;
+  */
 
   if(vertices.empty())
     return;
   const reco::Vertex& pv = vertices[0];
-  const reco::Vertex& slimmedPV = slimmedVertices[0];
+  //const reco::Vertex& slimmedPV = slimmedVertices[0];
 
   edm::Handle<edm::Association<pat::PackedCandidateCollection>> hassoc;
   iEvent.getByToken(trackToPackedCandidateToken_, hassoc);
@@ -844,10 +822,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     */
 
     const auto diffPt = diffRelative(trackPc.pt(), track.pt());
-    fillNoFlow(h_diffQoverp, diffRelative(trackPc.qoverp(), track.qoverp()));
     fillNoFlow(h_diffPt    , diffPt);
     fillNoFlow(h_diffEta   , diffRelative(trackPc.eta()   , track.eta()   ));
-    fillNoFlow(h_diffTheta , diffRelative(trackPc.theta() , track.theta() ));
     fillNoFlow(h_diffPhi   , diffRelative(trackPc.phi()   , track.phi()   ));
 
     const auto diffDzPV = diffRelative(pcRef->dz(pv.position()), track.dz(pv.position()));
@@ -861,25 +837,25 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffTrackDxy  , diffRelative(trackPc.dxy()   , track.dxy()   ));
     fillNoFlow(h_diffTrackDz   , diffRelative(trackPc.dz()    , track.dz()    ));
 
-    auto fillCov2 = [&](auto& hlp, const int i, const int j) {
+    auto fillCov1 = [&](auto& hlp, const int i, const int j) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j));
     };
-    auto fillCov3 = [&](auto& hlp, const int i, const int j, std::function<double(double)> modifyPack) {
+    auto fillCov2 = [&](auto& hlp, const int i, const int j, std::function<double(double)> modifyPack) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j), modifyPack);
     };
-    auto fillCov4 = [&](auto& hlp, const int i, const int j, std::function<double(double)> modifyPack, std::function<double(double)> modifyUnpack) {
+    auto fillCov3 = [&](auto& hlp, const int i, const int j, std::function<double(double)> modifyPack, std::function<double(double)> modifyUnpack) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j), modifyPack, modifyUnpack);
     };
 
     const auto pcPt = pcRef->pt();
-    const auto diffCovQoverpQoverp = fillCov4(h_diffCovQoverpQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp, [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
-    const auto diffCovLambdaLambda = fillCov2(h_diffCovLambdaLambda, reco::TrackBase::i_lambda, reco::TrackBase::i_lambda);
-    const auto diffCovLambdaDsz    = fillCov2(h_diffCovLambdaDsz,    reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
-    const auto diffCovPhiPhi       = fillCov4(h_diffCovPhiPhi,       reco::TrackBase::i_phi,    reco::TrackBase::i_phi,    [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
-    const auto diffCovPhiDxy       = fillCov2(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
-    const auto diffCovDxyDxy       = fillCov3(h_diffCovDxyDxy,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dxy,    [](double value){return value*10000.;});
-    const auto diffCovDxyDsz       = fillCov3(h_diffCovDxyDsz,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
-    const auto diffCovDszDsz       = fillCov3(h_diffCovDszDsz,       reco::TrackBase::i_dsz,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
+    const auto diffCovQoverpQoverp = fillCov3(h_diffCovQoverpQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp, [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
+    const auto diffCovLambdaLambda = fillCov1(h_diffCovLambdaLambda, reco::TrackBase::i_lambda, reco::TrackBase::i_lambda);
+    const auto diffCovLambdaDsz    = fillCov1(h_diffCovLambdaDsz,    reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
+    const auto diffCovPhiPhi       = fillCov3(h_diffCovPhiPhi,       reco::TrackBase::i_phi,    reco::TrackBase::i_phi,    [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
+    const auto diffCovPhiDxy       = fillCov1(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
+    const auto diffCovDxyDxy       = fillCov2(h_diffCovDxyDxy,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dxy,    [](double value){return value*10000.;});
+    const auto diffCovDxyDsz       = fillCov2(h_diffCovDxyDsz,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
+    const auto diffCovDszDsz       = fillCov2(h_diffCovDszDsz,       reco::TrackBase::i_dsz,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
 
     if(diffCovDszDsz.status() == RangeStatus::inrange) {
       fillNoFlow(h_diffDszError, diffRelative(pcRef->dzError(), track.dszError()));
@@ -986,16 +962,16 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        || diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0
        || diffHitPatternHasValidHitInFirstPixelBarrel != 0
        //|| std::abs(diffPt) > 0.2
-       || std::abs(diffDzPV) > 0.01 || std::abs(diffDzAssocPV) > 0.01
-       || std::abs(diffDxyPV) > 0.01 || std::abs(diffDxyAssocPV) > 0.01
+       || std::abs(diffDzPV) > 0.002 || std::abs(diffDzAssocPV) > 0.002
+       || std::abs(diffDxyPV) > 0.002 || std::abs(diffDxyAssocPV) > 0.002
        || diffCovQoverpQoverp.outsideExpectedRange(0.0, 0.13)
        || diffCovLambdaLambda.outsideExpectedRange(0.0, 0.13)
-       || diffCovLambdaDsz.outsideExpectedRange(-0.13, 0.13)
-       || diffCovPhiPhi.outsideExpectedRange(0.0, 0.13)
-       || diffCovPhiDxy.outsideExpectedRange(-0.13, 0.13)
-       || diffCovDxyDxy.outsideExpectedRange(-0.01, 0.01)
-       || diffCovDxyDsz.outsideExpectedRange(-0.05, 0.05)
-       || diffCovDszDsz.outsideExpectedRange(-0.01, 0.01)
+       || diffCovLambdaDsz.outsideExpectedRangeAbs(0.13)
+       || diffCovPhiPhi.outsideExpectedRangeAbs(0.13)
+       || diffCovPhiDxy.outsideExpectedRangeAbs(0.13)
+       || diffCovDxyDxy.outsideExpectedRangeAbs(0.001)
+       || diffCovDxyDsz.outsideExpectedRangeAbs(0.001)
+       || diffCovDszDsz.outsideExpectedRangeAbs(0.001)
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
@@ -1078,11 +1054,11 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
       */
 
       
-
+      /*
       edm::LogWarning("PackedCandidateTrackValidator") << "Reco Primary vertex " << pv.position() << " associated PV " << pcVertex.position()
                                                        << "\n"
                                                        << "Packed Primary vertex " << slimmedPV.position() << " associated PV " << slimmedVertexRef->position();
-        
+      */
     }
   }
 }
