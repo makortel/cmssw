@@ -41,6 +41,34 @@ bool testMax32ConvertibleToMax16() {
   return true;
 }
 
+bool testMin() {
+  // 1 exponent, and 0 mantissa gives the smallest non-denormalized number of float16
+  const uint16_t minifloat_min = 1 << 10;
+  if(MiniFloatConverter::float16to32(minifloat_min) != MiniFloatConverter::min()) {
+    std::cout << "MiniFloatConverter::min() does not correspond to mantissatable[offsettable[1]+0]+exponenttable[1] (" << MiniFloatConverter::float16to32(minifloat_min) << "), but " << MiniFloatConverter::min() << std::endl;
+    return false;
+  }
+
+  // subtracting 1 ulp from min should give denormalized number, i.e. 0 exponent
+  const uint16_t minifloat_denorm = MiniFloatConverter::float32to16(MiniFloatConverter::min()) - 1;
+  if((minifloat_denorm >> 10) != 0) {
+    std::cout << "MiniFloatConverter::min() - 1ulp does not yield denormalized number but " << MiniFloatConverter::float16to32(minifloat_denorm) << std::endl;
+    return false;
+  }
+
+  // subtracking 1 ulp from float32 version of min should also give denormalized
+  union { float flt; uint32_t i32; } conv;
+  conv.flt = MiniFloatConverter::min();
+  conv.i32 -= 1;
+  const uint16_t min32MinusConvertedTo16 = MiniFloatConverter::float32to16crop(conv.flt);
+  if((min32MinusConvertedTo16 >> 10) != 0) {
+    std::cout << "MiniFloatConverter::min() - 1ulp ->float16crop does not yield denormalized number but 0x" << std::hex << min32MinusConvertedTo16 << std::endl;  
+    return false;
+  }
+
+  return true;
+}
+
 bool testDenormMin() {
   // zero exponent, and 0x1 in mantissa gives the smallest number of
   // float16
@@ -50,10 +78,10 @@ bool testDenormMin() {
     return false;
   }
 
-  // subtracting 1 ulp to denorm_min should give 0
-  const uint16_t minifloat0 = minifloat_denorm_min - 1;
+  // subtracting 1 ulp from denorm_min should give 0
+  const uint16_t minifloat0 = MiniFloatConverter::float32to16(MiniFloatConverter::denorm_min()) - 1;
   if(MiniFloatConverter::float16to32(minifloat0) != 0.f) {
-    std::cout << "MiniFloatConverter::denorm_min() - 1ulp does not yield 0 but " << MiniFloatConverter::float16to32(minifloat0) << std::endl;
+    std::cout << "MiniFloatConverter::denorm_min() - 1ulp does not yield 0 but " << MiniFloatConverter::float16to32(minifloat0) <<  std::endl;
     return false;
   }
 
@@ -63,7 +91,9 @@ bool testDenormMin() {
   conv.i32 -= 1;
   const float min32MinusConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(conv.flt));
   if(min32MinusConvertedTo16 != 0.f) {
-    std::cout << "MiniFloatConverter::denorm_min() - 1ulp ->float16->float32 does not yield 0 but " << min32MinusConvertedTo16 << std::endl;  }
+    std::cout << "MiniFloatConverter::denorm_min() - 1ulp ->float16->float32 does not yield 0 but " << min32MinusConvertedTo16 << std::endl;  
+    return false;
+  }
 
   return true;
 }
@@ -74,6 +104,7 @@ int main(void) {
   success = success && testMax();
   success = success && testMax32ConvertibleToMax16();
 
+  success = success && testMin();
   success = success && testDenormMin();
 
   return success ? 0 : 1;

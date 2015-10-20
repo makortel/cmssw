@@ -61,9 +61,15 @@ class MiniFloatConverter {
             return conv.flt;
         }
 
+        inline static float min() {
+            union { float flt; uint32_t i32; } conv;
+            conv.i32 = 0x38800000; // = mantissatable[offsettable[1]+0]+exponenttable[1]
+            return conv.flt;
+        }
+
         inline static float denorm_min() {
             union { float flt; uint32_t i32; } conv;
-            conv.i32 = 0x33800000; // mantissatable[offsettable[0]+1]+exponenttable[0];
+            conv.i32 = 0x33800000; // mantissatable[offsettable[0]+1]+exponenttable[0]
             return conv.flt;
         }
 
