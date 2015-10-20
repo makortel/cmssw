@@ -382,7 +382,7 @@ namespace {
     }
 
     static double largestValue() {
-      return MiniFloatConverter::max32ConvertibleToMax16();
+      return MiniFloatConverter::max32RoundedToMax16();
     }
 
     static double smallestValue() {
