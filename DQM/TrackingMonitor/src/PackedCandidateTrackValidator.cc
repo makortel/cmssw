@@ -404,23 +404,31 @@ namespace {
     PackedValueCheckResult(RangeStatus status, double diff,
            double pcvalue, double trackvalue,
            const typename T::UnderOverflow& underOverflow):
-      diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), status_(status), underOverflow_(underOverflow)
+      diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), status_(status), underOverflow_(underOverflow),
+      rangeMin_(0), rangeMax_(0), rangeAbs_(false)
     {}
 
     RangeStatus status() const { return status_; }
     double diff() const { return diff_; }
 
-    bool outsideExpectedRange(double min, double max) const {
+    bool outsideExpectedRange(double min, double max) {
+      rangeMin_ = min; rangeMax_ = max;
       if(status_ == RangeStatus::inrange)
         return diff_ < min || diff_ > max;
       return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip;
     }
 
-    bool outsideExpectedRangeAbs(double val) const {
+    bool outsideExpectedRangeAbs(double val) {
+      rangeAbs_ = true;
       return outsideExpectedRange(-val, val);
     }
 
     void print(std::ostream& os) const {
+      if(rangeAbs_)
+        os << "(" << rangeMax_ << ") ";
+      else
+        os << "(" << rangeMin_ << "," << rangeMax_ << ") ";
+
       os << diff_ << " ";
       if(status_ == RangeStatus::underflow_OK || status_ == RangeStatus::underflow_notOK)
         os << " (underflow) ";
@@ -440,6 +448,9 @@ namespace {
     const double trackvalue_;
     const RangeStatus status_;
     const typename T::UnderOverflow underOverflow_;
+
+    double rangeMin_, rangeMax_;
+    bool rangeAbs_;
   };
 
   template <typename T>
@@ -848,14 +859,14 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     };
 
     const auto pcPt = pcRef->pt();
-    const auto diffCovQoverpQoverp = fillCov3(h_diffCovQoverpQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp, [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
-    const auto diffCovLambdaLambda = fillCov1(h_diffCovLambdaLambda, reco::TrackBase::i_lambda, reco::TrackBase::i_lambda);
-    const auto diffCovLambdaDsz    = fillCov1(h_diffCovLambdaDsz,    reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
-    const auto diffCovPhiPhi       = fillCov3(h_diffCovPhiPhi,       reco::TrackBase::i_phi,    reco::TrackBase::i_phi,    [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
-    const auto diffCovPhiDxy       = fillCov1(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
-    const auto diffCovDxyDxy       = fillCov2(h_diffCovDxyDxy,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dxy,    [](double value){return value*10000.;});
-    const auto diffCovDxyDsz       = fillCov2(h_diffCovDxyDsz,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
-    const auto diffCovDszDsz       = fillCov2(h_diffCovDszDsz,       reco::TrackBase::i_dsz,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
+    auto diffCovQoverpQoverp = fillCov3(h_diffCovQoverpQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp, [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
+    auto diffCovLambdaLambda = fillCov1(h_diffCovLambdaLambda, reco::TrackBase::i_lambda, reco::TrackBase::i_lambda);
+    auto diffCovLambdaDsz    = fillCov1(h_diffCovLambdaDsz,    reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
+    auto diffCovPhiPhi       = fillCov3(h_diffCovPhiPhi,       reco::TrackBase::i_phi,    reco::TrackBase::i_phi,    [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
+    auto diffCovPhiDxy       = fillCov1(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
+    auto diffCovDxyDxy       = fillCov2(h_diffCovDxyDxy,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dxy,    [](double value){return value*10000.;});
+    auto diffCovDxyDsz       = fillCov2(h_diffCovDxyDsz,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
+    auto diffCovDszDsz       = fillCov2(h_diffCovDszDsz,       reco::TrackBase::i_dsz,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
 
     if(diffCovDszDsz.status() == RangeStatus::inrange) {
       fillNoFlow(h_diffDszError, diffRelative(pcRef->dzError(), track.dszError()));
@@ -1011,14 +1022,13 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << "\n "
                                                        << " lostInnerHits  " << diffLostInnerHits << " " << pcRef->lostInnerHits() << " #"
                                                        << "\n "
-                                                       << " dz(PV) " << diffDzPV << " " << pcRef->dz(pv.position()) << " " << track.dz(pv.position())
-                                                       << " dz(assocPV) " << diffDzAssocPV << " " << pcRef->dzAssociatedPV() << " " << track.dz(pcVertex.position())
-                                                       << " dxy(PV) " << diffDxyPV << " " << pcRef->dxy(pv.position()) << " " << track.dxy(pv.position())
-                                                       << " dxy(assocPV) " << diffDxyAssocPV << " " << pcRef->dxy() << " " << track.dxy(pcVertex.position())
+                                                       << " dz(PV) (0.002) " << diffDzPV << " " << pcRef->dz(pv.position()) << " " << track.dz(pv.position())
+                                                       << " dz(assocPV) (0.002) " << diffDzAssocPV << " " << pcRef->dzAssociatedPV() << " " << track.dz(pcVertex.position())
                                                        << "\n "
-        /*
-        */
-                                                       << " cov(qoverp, qoverp) " << diffCovQoverpQoverp
+                                                       << " dxy(PV) (0.002) " << diffDxyPV << " " << pcRef->dxy(pv.position()) << " " << track.dxy(pv.position())
+                                                       << " dxy(assocPV) (0.002) " << diffDxyAssocPV << " " << pcRef->dxy() << " " << track.dxy(pcVertex.position())
+                                                       << "\n "
+                                                       << " cov(qoverp, qoverp)  " << diffCovQoverpQoverp
                                                        << "\n "
                                                        << " cov(lambda, lambda) " << diffCovLambdaLambda
                                                        << "\n "
