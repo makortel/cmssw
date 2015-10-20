@@ -36,7 +36,9 @@ bool testMax32ConvertibleToMax16() {
   conv.i32 += 1;
   const float max32PlusConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(conv.flt));
   if(edm::isFinite(max32PlusConvertedTo16)) {
-    std::cout << "MiniFloatConverter::max32ConvertibleToMax16() + 1ulp ->float16->float32 does not yield inf but " << max32PlusConvertedTo16 << std::endl;  }
+    std::cout << "MiniFloatConverter::max32ConvertibleToMax16() + 1ulp ->float16->float32 does not yield inf but " << max32PlusConvertedTo16 << std::endl;
+    return false;
+  }
 
   return true;
 }
@@ -63,6 +65,29 @@ bool testMin() {
   const uint16_t min32MinusConvertedTo16 = MiniFloatConverter::float32to16crop(conv.flt);
   if((min32MinusConvertedTo16 >> 10) != 0) {
     std::cout << "MiniFloatConverter::min() - 1ulp ->float16crop does not yield denormalized number but 0x" << std::hex << min32MinusConvertedTo16 << std::endl;  
+    return false;
+  }
+
+  return true;
+}
+
+bool testMin32RoundedToMin16() {
+  // min32RoundedToMin16() -> float16 -> float32 should be the same as min()
+  const float min32RoundedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::min32RoundedToMin16()));
+  if(min32RoundedTo16 != MiniFloatConverter::min()) {
+    std::cout << "MiniFloatConverter::min32RoundedToMin16() converted to float16->float32 does not give MiniFloatConverter::min() (" << MiniFloatConverter::min() << "), but "
+              << min32RoundedTo16 << " 0x" << std::hex << MiniFloatConverter::float32to16(MiniFloatConverter::min32RoundedToMin16()) << std::endl;
+    return false;
+  }
+
+  // min32RoundedToMax16() - 1ulp should give denormalized
+  union { float flt; uint32_t i32; } conv;
+  conv.flt = MiniFloatConverter::min32RoundedToMin16();
+  conv.i32 -= 1;
+  const uint16_t min32MinusRoundedTo16 = MiniFloatConverter::float32to16(conv.flt);
+  if((min32MinusRoundedTo16 >> 10) != 0) {
+    std::cout << "MiniFloatConverter::min32RoundedToMin16() - 1ulp ->float16 does not yield denormalized number but "
+              << min32MinusRoundedTo16 << " 0x" << std::hex << min32MinusRoundedTo16 << std::endl;
     return false;
   }
 
@@ -105,6 +130,7 @@ int main(void) {
   success = success && testMax32ConvertibleToMax16();
 
   success = success && testMin();
+  success = success && testMin32RoundedToMin16();
   success = success && testDenormMin();
 
   return success ? 0 : 1;

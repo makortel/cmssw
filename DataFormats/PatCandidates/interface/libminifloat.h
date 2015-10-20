@@ -67,6 +67,15 @@ class MiniFloatConverter {
             return conv.flt;
         }
 
+        // Minimum flaot32 value that gets rounded to minU()
+        inline static float min32RoundedToMin16() {
+            union { float flt; uint32_t i32; } conv;
+            // 2^-14-1 in float32 is the first to result denormalized in float16, so
+            // 2^-14 is the first float32 to result min() in float16
+            conv.i32 = (0x71<<23);
+            return conv.flt;
+        }
+
         inline static float denorm_min() {
             union { float flt; uint32_t i32; } conv;
             conv.i32 = 0x33800000; // mantissatable[offsettable[0]+1]+exponenttable[0]
