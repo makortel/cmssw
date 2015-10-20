@@ -22,21 +22,21 @@ bool testMax() {
   return true;
 }
 
-bool testMax32ConvertibleToMax16() {
-  // max32ConvertibleToMax16() -> float16 -> float32 should be the same as max()
-  const float max32ConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::max32ConvertibleToMax16()));
+bool testMax32RoundedToMax16() {
+  // max32RoundedToMax16() -> float16 -> float32 should be the same as max()
+  const float max32ConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::max32RoundedToMax16()));
   if(max32ConvertedTo16 != MiniFloatConverter::max()) {
-    std::cout << "MiniFloatConverter::max32ConvertibleToMax16() converted to float16->float32 does not give MiniFloatConverter::max() (" << MiniFloatConverter::max() << "), but " << max32ConvertedTo16 << std::endl;
+    std::cout << "MiniFloatConverter::max32RoundedToMax16() converted to float16->float32 does not give MiniFloatConverter::max() (" << MiniFloatConverter::max() << "), but " << max32ConvertedTo16 << std::endl;
     return false;
   }
 
-  // max32ConvertibleToMax16() + 1ulp should give inf
+  // max32RoundedToMax16() + 1ulp should give inf
   union { float flt; uint32_t i32; } conv;
-  conv.flt = MiniFloatConverter::max32ConvertibleToMax16();
+  conv.flt = MiniFloatConverter::max32RoundedToMax16();
   conv.i32 += 1;
   const float max32PlusConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(conv.flt));
   if(edm::isFinite(max32PlusConvertedTo16)) {
-    std::cout << "MiniFloatConverter::max32ConvertibleToMax16() + 1ulp ->float16->float32 does not yield inf but " << max32PlusConvertedTo16 << std::endl;
+    std::cout << "MiniFloatConverter::max32RoundedToMax16() + 1ulp ->float16->float32 does not yield inf but " << max32PlusConvertedTo16 << std::endl;
     return false;
   }
 
@@ -127,7 +127,7 @@ int main(void) {
   bool success = true;
 
   success = success && testMax();
-  success = success && testMax32ConvertibleToMax16();
+  success = success && testMax32RoundedToMax16();
 
   success = success && testMin();
   success = success && testMin32RoundedToMin16();

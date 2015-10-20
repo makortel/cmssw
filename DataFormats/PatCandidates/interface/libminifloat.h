@@ -52,8 +52,8 @@ class MiniFloatConverter {
             return conv.flt;
         }
 
-        // Maximum float32 value that is convertible to max()
-        inline static float max32ConvertibleToMax16() {
+        // Maximum float32 value that gets rounded to max()
+        inline static float max32RoundedToMax16() {
             union { float flt; uint32_t i32; } conv;
             // 2^16 in float32 is the first to result inf in float16, so
             // 2^16-1 is the last float32 to result max() in float16
