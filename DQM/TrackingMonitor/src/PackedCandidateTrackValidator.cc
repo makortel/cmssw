@@ -529,8 +529,8 @@ namespace {
       }
       else {
         if(boost::math::sign(pcvalue) == boost::math::sign(trackvalue)) {
-          if(T::wouldBeDenorm(pcvalue)) {
-            if(MiniFloatConverter::is_denorm(MiniFloatConverter::float32to16(pcvalue))) {
+          if(T::wouldBeDenorm(tmp)) {
+            if(MiniFloatConverter::is_denorm(MiniFloatConverter::float32to16(pcvalue))) { // this doesn't make really sense...
               status = RangeStatus::denorm_OK;
             }
             else {
