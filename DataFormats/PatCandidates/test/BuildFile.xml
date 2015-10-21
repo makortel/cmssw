@@ -5,3 +5,4 @@
   <flags   NO_TESTRUN="1"/>
 </bin>
 <bin   name="testMiniFloat" file="testMiniFloat.cpp"/>
+<bin   name="testlogintpack" file="testlogintpack.cpp"/>
