@@ -852,16 +852,16 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffEta, trackPc.eta() - track.eta());
     fillNoFlow(h_diffPhi, trackPc.phi() - track.phi());
 
-    const auto diffDzPV = diffRelative(pcRef->dz(pv.position()), track.dz(pv.position()));
-    const auto diffDzAssocPV = diffRelative(pcRef->dzAssociatedPV(), track.dz(pcVertex.position()));
-    const auto diffDxyPV = diffRelative(pcRef->dxy(pv.position())    , track.dxy(pv.position()));
-    const auto diffDxyAssocPV = diffRelative(pcRef->dxy()    , track.dxy(pcVertex.position()));
+    const auto diffDzPV       = diffRelative(pcRef->dz(pv.position()) , track.dz(pv.position()));
+    const auto diffDzAssocPV  = diffRelative(pcRef->dzAssociatedPV()  , track.dz(pcVertex.position()));
+    const auto diffDxyPV      = diffRelative(pcRef->dxy(pv.position()), track.dxy(pv.position()));
+    const auto diffDxyAssocPV = diffRelative(pcRef->dxy()             , track.dxy(pcVertex.position()));
     fillNoFlow(h_diffDxyAssocPV, diffDxyAssocPV);
     fillNoFlow(h_diffDxyPV     , diffDxyPV);
     fillNoFlow(h_diffDzAssocPV , diffDzAssocPV);
     fillNoFlow(h_diffDzPV      , diffDzPV);
-    fillNoFlow(h_diffTrackDxy  , diffRelative(trackPc.dxy()   , track.dxy()   ));
-    fillNoFlow(h_diffTrackDz   , diffRelative(trackPc.dz()    , track.dz()    ));
+    fillNoFlow(h_diffTrackDxy  , diffRelative(trackPc.dxy(), track.dxy()   ));
+    fillNoFlow(h_diffTrackDz   , diffRelative(trackPc.dz() , track.dz()    ));
 
     auto fillCov1 = [&](auto& hlp, const int i, const int j) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j));
@@ -930,20 +930,6 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
       }
 
       diffNumberOfHits = diffNumberOfPixelHits + diffNumberOfStripHits;
-      /*
-      edm::LogWarning("Foo") << "pcNumberOfHits " << pcNumberOfHits
-                             << " pcNumberOfPixelHits " << pcNumberOfPixelHits
-                             << " pcNumberOfStripHits " << pcNumberOfStripHits
-                             << " trackNumberOfHits " << trackNumberOfHits
-                             << " trackNumberOfPixelHits " << trackNumberOfPixelHits
-                             << " trackNumberOfStripHits " << trackNumberOfStripHits
-                             << " pixelOverflow " << pixelOverflow
-                             << " stripOverflow " << stripOverflow
-                             << " pixelInducedStripOverflow " << pixelInducedStripOverflow
-                             << " diffNumberOfPixelHits " << diffNumberOfPixelHits
-                             << " diffNumberOfStripHits " << diffNumberOfStripHits
-                             << " diffNumberOfHits " << diffNumberOfHits;
-      */
     }
     else {
       diffNumberOfHits = pcNumberOfHits - trackNumberOfHits;
@@ -987,7 +973,6 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     if(diffNormalizedChi2 < -1 || diffNormalizedChi2 > 0 || diffCharge != 0 || diffHP != 0
        || diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0
        || diffHitPatternHasValidHitInFirstPixelBarrel != 0
-       //|| std::abs(diffPt) > 0.2
        || std::abs(diffDzPV) > 0.002 || std::abs(diffDzAssocPV) > 0.002
        || std::abs(diffDxyPV) > 0.002 || std::abs(diffDxyAssocPV) > 0.002
        || diffCovQoverpQoverp.outsideExpectedRange() || diffCovLambdaLambda.outsideExpectedRange()
@@ -1072,13 +1057,6 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " PC    " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
                                                        << "\n "
                                                        << " PCvtx " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx());
-      */
-
-      
-      /*
-      edm::LogWarning("PackedCandidateTrackValidator") << "Reco Primary vertex " << pv.position() << " associated PV " << pcVertex.position()
-                                                       << "\n"
-                                                       << "Packed Primary vertex " << slimmedPV.position() << " associated PV " << slimmedVertexRef->position();
       */
     }
   }
