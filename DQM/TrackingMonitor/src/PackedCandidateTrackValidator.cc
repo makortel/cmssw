@@ -390,7 +390,8 @@ namespace {
     }
 
     static bool wouldBeDenorm(double value) {
-      return value >= smallestValue() && value < MiniFloatConverter::min();
+      const float valuef = static_cast<float>(value);
+      return valuef >= MiniFloatConverter::denorm_min() && valuef < MiniFloatConverter::min();
     }
 
     static double smallestValue() {
