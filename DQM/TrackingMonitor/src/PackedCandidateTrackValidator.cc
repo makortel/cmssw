@@ -402,15 +402,14 @@ namespace {
   enum class RangeStatus {
     inrange = 0,
     inrange_signflip = 1,
-    denorm_OK = 2,
-    denorm_notOK = 3,
-    underflow_OK = 4,
-    underflow_notOK = 5,
-    overflow_OK = 6,
-    overflow_notOK = 7
+    denormal = 2,
+    underflow_OK = 3,
+    underflow_notOK = 4,
+    overflow_OK = 5,
+    overflow_notOK = 6
   };
   bool isInRange(RangeStatus status) {
-    return status == RangeStatus::inrange || status == RangeStatus::denorm_OK || status == RangeStatus::denorm_notOK;
+    return status == RangeStatus::inrange || status == RangeStatus::denormal;
   }
 
   template <typename T>
@@ -430,7 +429,8 @@ namespace {
     bool outsideExpectedRange() const {
       if(status_ == RangeStatus::inrange)
         return diff_ < rangeMin_ || diff_ > rangeMax_;
-      return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip || status_ == RangeStatus::denorm_notOK;
+      // denormal is considered as "in range" regardless of the expected range
+      return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip;
     }
 
     void print(std::ostream& os) const {
@@ -449,10 +449,8 @@ namespace {
         if(status_ == RangeStatus::overflow_notOK)
           underOverflow_.printNonOkOverflow(os);
       }
-      else if(status_ == RangeStatus::denorm_OK)
-        os << " (denorm)";
-      else if(status_ == RangeStatus::denorm_notOK)
-        os << " (should be denorm, but is not)";
+      else if(status_ == RangeStatus::denormal)
+        os << " (denormal)";
       os << " " << trackvalue_;
     }
 
@@ -493,12 +491,11 @@ namespace {
       hStatus = iBooker.book1D(name+"Status", title+" status", 8, -0.5, 7.5);
       hStatus->setBinLabel(1, "In range");
       hStatus->setBinLabel(2, "In range, sign flip");
-      hStatus->setBinLabel(3, "Denorm, PC is denorm");
-      hStatus->setBinLabel(4, "Denorm, PC is not denorm");
-      hStatus->setBinLabel(5, "Underflow, PC is "+T::minName());
-      hStatus->setBinLabel(6, "Underflow, PC is not "+T::minName());
-      hStatus->setBinLabel(7, "Overflow, PC is "+T::maxName());
-      hStatus->setBinLabel(8, "Overflow, PC is not "+T::maxName());
+      hStatus->setBinLabel(3, "Denormal");
+      hStatus->setBinLabel(4, "Underflow, PC is "+T::minName());
+      hStatus->setBinLabel(5, "Underflow, PC is not "+T::minName());
+      hStatus->setBinLabel(6, "Overflow, PC is "+T::maxName());
+      hStatus->setBinLabel(7, "Overflow, PC is not "+T::maxName());
     }
 
     PackedValueCheckResult<T> fill(double pcvalue, double trackvalue,
@@ -530,12 +527,7 @@ namespace {
       else {
         if(boost::math::sign(pcvalue) == boost::math::sign(trackvalue)) {
           if(T::wouldBeDenorm(tmp)) {
-            if(MiniFloatConverter::is_denorm(MiniFloatConverter::float32to16(pcvalue))) { // this doesn't make really sense...
-              status = RangeStatus::denorm_OK;
-            }
-            else {
-              status = RangeStatus::denorm_notOK;
-            }
+            status = RangeStatus::denormal;
           }
           else {
             status = RangeStatus::inrange;
