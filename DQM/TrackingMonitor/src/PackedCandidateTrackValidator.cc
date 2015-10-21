@@ -417,43 +417,42 @@ namespace {
   class PackedValueCheckResult {
   public:
     PackedValueCheckResult(RangeStatus status, double diff,
-           double pcvalue, double trackvalue,
+                           double pcvalue, double trackvalue,
+                           double rangeMin, double rangeMax,
            const typename T::UnderOverflow& underOverflow):
-      diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), status_(status), underOverflow_(underOverflow),
-      rangeMin_(0), rangeMax_(0), rangeAbs_(false)
+      diff_(diff), pcvalue_(pcvalue), trackvalue_(trackvalue), rangeMin_(rangeMin), rangeMax_(rangeMax),
+      status_(status), underOverflow_(underOverflow)
     {}
 
     RangeStatus status() const { return status_; }
     double diff() const { return diff_; }
 
-    bool outsideExpectedRange(double min, double max) {
-      rangeMin_ = min; rangeMax_ = max;
+    bool outsideExpectedRange() const {
       if(status_ == RangeStatus::inrange)
-        return diff_ < min || diff_ > max;
+        return diff_ < rangeMin_ || diff_ > rangeMax_;
       return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip || status_ == RangeStatus::denorm_notOK;
     }
 
-    bool outsideExpectedRangeAbs(double val) {
-      rangeAbs_ = true;
-      return outsideExpectedRange(-val, val);
-    }
-
     void print(std::ostream& os) const {
-      if(rangeAbs_)
-        os << "(" << rangeMax_ << ") ";
-      else
-        os << "(" << rangeMin_ << "," << rangeMax_ << ") ";
+      if(outsideExpectedRange())
+        os << "!! ";
+      os << "(" << rangeMin_ << "," << rangeMax_ << ") ";
 
-      os << diff_ << " ";
-      if(status_ == RangeStatus::underflow_OK || status_ == RangeStatus::underflow_notOK)
+      os << diff_ << " " << pcvalue_;
+      if(status_ == RangeStatus::underflow_OK || status_ == RangeStatus::underflow_notOK) {
         os << " (underflow) ";
-      else if(status_ == RangeStatus::overflow_OK || status_ == RangeStatus::overflow_notOK)
+        if(status_ == RangeStatus::underflow_notOK)
+          underOverflow_.printNonOkUnderflow(os);
+      }
+      else if(status_ == RangeStatus::overflow_OK || status_ == RangeStatus::overflow_notOK) {
         os << " (overflow) ";
-      os << pcvalue_;
-      if(status_ == RangeStatus::underflow_notOK)
-        underOverflow_.printNonOkUnderflow(os);
-      else if(status_ == RangeStatus::overflow_notOK)
-        underOverflow_.printNonOkOverflow(os);
+        if(status_ == RangeStatus::overflow_notOK)
+          underOverflow_.printNonOkOverflow(os);
+      }
+      else if(status_ == RangeStatus::denorm_OK)
+        os << " (denorm)";
+      else if(status_ == RangeStatus::denorm_notOK)
+        os << " (should be denorm, but is not)";
       os << " " << trackvalue_;
     }
 
@@ -461,18 +460,29 @@ namespace {
     const double diff_;
     const double pcvalue_;
     const double trackvalue_;
+    const double rangeMin_;
+    const double rangeMax_;
     const RangeStatus status_;
     const typename T::UnderOverflow underOverflow_;
+  };
 
-    double rangeMin_, rangeMax_;
-    bool rangeAbs_;
+  struct Range {
+    Range(double mi, double ma): min(mi), max(ma) {}
+    const double min, max;
+  };
+  struct RangeAbs {
+    RangeAbs(double val): min(-val), max(val) {}
+    const double min, max;
   };
 
   template <typename T>
   class PackedValueCheck {
   public:
-    template <typename ...Args>
-    PackedValueCheck(Args&&... args): helper_(std::forward<Args>(args)...) {}
+    template <typename R, typename ...Args>
+    PackedValueCheck(const R& range, Args&&... args):
+      helper_(std::forward<Args>(args)...),
+      rangeMin_(range.min), rangeMax_(range.max)
+    {}
 
     void book(DQMStore::IBooker& iBooker,
               const std::string& name, const std::string& title,
@@ -539,11 +549,13 @@ namespace {
       }
       hStatus->Fill(static_cast<int>(status));
 
-      return PackedValueCheckResult<T>(status, diff, pcvalue, trackvalue, underOverflow);
+      return PackedValueCheckResult<T>(status, diff, pcvalue, trackvalue, rangeMin_, rangeMax_, underOverflow);
     }
 
   private:
     const T helper_;
+    const double rangeMin_;
+    const double rangeMax_;
 
     MonitorElement *hInrange;
     MonitorElement *hUnderOverflowSign;
@@ -645,11 +657,14 @@ PackedCandidateTrackValidator::PackedCandidateTrackValidator(const edm::Paramete
   slimmedVerticesToken_(consumes<reco::VertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("slimmedVertices"))),
   trackToPackedCandidateToken_(consumes<edm::Association<pat::PackedCandidateCollection>>(iConfig.getUntrackedParameter<edm::InputTag>("trackToPackedCandidateAssociation"))),
   rootFolder_(iConfig.getUntrackedParameter<std::string>("rootFolder")),
-  h_diffCovQoverpQoverp(-15, 0),
-  h_diffCovLambdaLambda(-20, -5),
-  h_diffCovLambdaDsz(-17, -4),
-  h_diffCovPhiPhi(-15, 0),
-  h_diffCovPhiDxy(-17, -4)
+  h_diffCovQoverpQoverp(Range(0.0, 0.13), -15, 0),
+  h_diffCovLambdaLambda(Range(0.0, 0.13), -20, -5),
+  h_diffCovLambdaDsz(RangeAbs(0.13), -17, -4),
+  h_diffCovPhiPhi(RangeAbs(0.13), -15, 0),
+  h_diffCovPhiDxy(RangeAbs(0.13), -17, -4),
+  h_diffCovDxyDxy(RangeAbs(0.001)),
+  h_diffCovDxyDsz(RangeAbs(0.001)),
+  h_diffCovDszDsz(RangeAbs(0.001))
 {}
 
 PackedCandidateTrackValidator::~PackedCandidateTrackValidator() {}
@@ -886,14 +901,14 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     };
 
     const auto pcPt = pcRef->pt();
-    auto diffCovQoverpQoverp = fillCov3(h_diffCovQoverpQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp, [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
-    auto diffCovLambdaLambda = fillCov1(h_diffCovLambdaLambda, reco::TrackBase::i_lambda, reco::TrackBase::i_lambda);
-    auto diffCovLambdaDsz    = fillCov1(h_diffCovLambdaDsz,    reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
-    auto diffCovPhiPhi       = fillCov3(h_diffCovPhiPhi,       reco::TrackBase::i_phi,    reco::TrackBase::i_phi,    [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
-    auto diffCovPhiDxy       = fillCov1(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
-    auto diffCovDxyDxy       = fillCov2(h_diffCovDxyDxy,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dxy,    [](double value){return value*10000.;});
-    auto diffCovDxyDsz       = fillCov2(h_diffCovDxyDsz,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
-    auto diffCovDszDsz       = fillCov2(h_diffCovDszDsz,       reco::TrackBase::i_dsz,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
+    const auto diffCovQoverpQoverp = fillCov3(h_diffCovQoverpQoverp, reco::TrackBase::i_qoverp, reco::TrackBase::i_qoverp, [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
+    const auto diffCovLambdaLambda = fillCov1(h_diffCovLambdaLambda, reco::TrackBase::i_lambda, reco::TrackBase::i_lambda);
+    const auto diffCovLambdaDsz    = fillCov1(h_diffCovLambdaDsz,    reco::TrackBase::i_lambda, reco::TrackBase::i_dsz);
+    const auto diffCovPhiPhi       = fillCov3(h_diffCovPhiPhi,       reco::TrackBase::i_phi,    reco::TrackBase::i_phi,    [=](double val){return val*pcPt*pcPt;}, [=](double val){return val/pcPt/pcPt;});
+    const auto diffCovPhiDxy       = fillCov1(h_diffCovPhiDxy,       reco::TrackBase::i_phi,    reco::TrackBase::i_dxy);
+    const auto diffCovDxyDxy       = fillCov2(h_diffCovDxyDxy,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dxy,    [](double value){return value*10000.;});
+    const auto diffCovDxyDsz       = fillCov2(h_diffCovDxyDsz,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
+    const auto diffCovDszDsz       = fillCov2(h_diffCovDszDsz,       reco::TrackBase::i_dsz,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
 
     if(isInRange(diffCovDszDsz.status())) {
       fillNoFlow(h_diffDszError, diffRelative(pcRef->dzError(), track.dszError()));
@@ -1002,14 +1017,10 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        //|| std::abs(diffPt) > 0.2
        || std::abs(diffDzPV) > 0.002 || std::abs(diffDzAssocPV) > 0.002
        || std::abs(diffDxyPV) > 0.002 || std::abs(diffDxyAssocPV) > 0.002
-       || diffCovQoverpQoverp.outsideExpectedRange(0.0, 0.13)
-       || diffCovLambdaLambda.outsideExpectedRange(0.0, 0.13)
-       || diffCovLambdaDsz.outsideExpectedRangeAbs(0.13)
-       || diffCovPhiPhi.outsideExpectedRangeAbs(0.13)
-       || diffCovPhiDxy.outsideExpectedRangeAbs(0.13)
-       || diffCovDxyDxy.outsideExpectedRangeAbs(0.001)
-       || diffCovDxyDsz.outsideExpectedRangeAbs(0.001)
-       || diffCovDszDsz.outsideExpectedRangeAbs(0.001)
+       || diffCovQoverpQoverp.outsideExpectedRange() || diffCovLambdaLambda.outsideExpectedRange()
+       || diffCovLambdaDsz.outsideExpectedRange() || diffCovPhiPhi.outsideExpectedRange()
+       || diffCovPhiDxy.outsideExpectedRange() || diffCovDxyDxy.outsideExpectedRange()
+       || diffCovDxyDsz.outsideExpectedRange() || diffCovDszDsz.outsideExpectedRange()
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
