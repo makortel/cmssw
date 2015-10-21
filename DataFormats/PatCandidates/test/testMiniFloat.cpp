@@ -1,137 +1,102 @@
+#include "Utilities/Testing/interface/CppUnit_testdriver.icpp" // to be removed after rebase to 80X
+#include <cppunit/extensions/HelperMacros.h>
 #include <iostream>
 
 #include "DataFormats/PatCandidates/interface/libminifloat.h"
 #include "FWCore/Utilities/interface/isFinite.h"
 
-bool testMax() {
+class testMiniFloat : public CppUnit::TestFixture {
+  CPPUNIT_TEST_SUITE(testMiniFloat);
+
+  CPPUNIT_TEST(testMax);
+  CPPUNIT_TEST(testMax32RoundedToMax16);
+  CPPUNIT_TEST(testMin);
+  CPPUNIT_TEST(testMin32RoundedToMin16);
+  CPPUNIT_TEST(testDenormMin);
+
+  CPPUNIT_TEST_SUITE_END();
+public:
+  void setUp() {}
+  void tearDown() {}
+
+  void testMax() ;
+  void testMax32RoundedToMax16();
+  void testMin();
+  void testMin32RoundedToMin16();
+  void testDenormMin();
+
+private:
+};
+
+CPPUNIT_TEST_SUITE_REGISTRATION(testMiniFloat);
+
+void testMiniFloat::testMax() {
   // 0x1f exponent is for inf, so 0x1e is the maximum
   // in maximum mantissa all bits are 1
   const uint16_t minifloatmax = (0x1e << 10) | 0x3ff;
-  if(MiniFloatConverter::float16to32(minifloatmax) != MiniFloatConverter::max()) {
-    std::cout << "MiniFloatConverter::max() does not correspond to mantissatable[offsettable[0x1e]+0x3ff]+exponenttable[0x1e] (" << MiniFloatConverter::float16to32(minifloatmax) << "), but " << MiniFloatConverter::max() << std::endl;
-    return false;
-  }
+  CPPUNIT_ASSERT(MiniFloatConverter::max() == MiniFloatConverter::float16to32(minifloatmax));
 
-  // adding 1 ulp to max should give inf
+  // adding 1ulp(16) to max should give inf
   const uint16_t minifloatinf = minifloatmax + 1;
-  if(edm::isFinite(MiniFloatConverter::float16to32(minifloatinf))) {
-    std::cout << "MiniFloatConverter::max() + 1ulp does not yield inf but " << MiniFloatConverter::float16to32(minifloatinf) << std::endl;
-    return false;
-  }
-
-  return true;
+  CPPUNIT_ASSERT(edm::isNotFinite(MiniFloatConverter::float16to32(minifloatinf)));
 }
 
-bool testMax32RoundedToMax16() {
-  // max32RoundedToMax16() -> float16 -> float32 should be the same as max()
-  const float max32ConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::max32RoundedToMax16()));
-  if(max32ConvertedTo16 != MiniFloatConverter::max()) {
-    std::cout << "MiniFloatConverter::max32RoundedToMax16() converted to float16->float32 does not give MiniFloatConverter::max() (" << MiniFloatConverter::max() << "), but " << max32ConvertedTo16 << std::endl;
-    return false;
-  }
+void testMiniFloat::testMax32RoundedToMax16() {
+  // max32RoundedToMax16() -> float16 -> float32 should give max()
+  CPPUNIT_ASSERT(MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::max32RoundedToMax16())) == MiniFloatConverter::max());
 
-  // max32RoundedToMax16() + 1ulp should give inf
+  // max32RoundedToMax16() + 1ulp(32) should give inf(16)
   union { float flt; uint32_t i32; } conv;
   conv.flt = MiniFloatConverter::max32RoundedToMax16();
   conv.i32 += 1;
-  const float max32PlusConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(conv.flt));
-  if(edm::isFinite(max32PlusConvertedTo16)) {
-    std::cout << "MiniFloatConverter::max32RoundedToMax16() + 1ulp ->float16->float32 does not yield inf but " << max32PlusConvertedTo16 << std::endl;
-    return false;
-  }
-
-  return true;
+  const float max32PlusUlp32RoundedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(conv.flt));
+  CPPUNIT_ASSERT(edm::isNotFinite(max32PlusUlp32RoundedTo16));
 }
 
-bool testMin() {
+void testMiniFloat::testMin() {
   // 1 exponent, and 0 mantissa gives the smallest non-denormalized number of float16
-  const uint16_t minifloat_min = 1 << 10;
-  if(MiniFloatConverter::float16to32(minifloat_min) != MiniFloatConverter::min()) {
-    std::cout << "MiniFloatConverter::min() does not correspond to mantissatable[offsettable[1]+0]+exponenttable[1] (" << MiniFloatConverter::float16to32(minifloat_min) << "), but " << MiniFloatConverter::min() << std::endl;
-    return false;
-  }
+  CPPUNIT_ASSERT(MiniFloatConverter::min() == MiniFloatConverter::float16to32(1 << 10));
 
-  // subtracting 1 ulp from min should give denormalized number, i.e. 0 exponent
+  // subtracting 1ulp(16) from min should give denormalized float16
   const uint16_t minifloat_denorm = MiniFloatConverter::float32to16(MiniFloatConverter::min()) - 1;
-  if((minifloat_denorm >> 10) != 0) {
-    std::cout << "MiniFloatConverter::min() - 1ulp does not yield denormalized number but " << MiniFloatConverter::float16to32(minifloat_denorm) << std::endl;
-    return false;
-  }
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(minifloat_denorm));
 
-  // subtracking 1 ulp from float32 version of min should also give denormalized
+  // subtracking 1ulp(32) from min should also give denormalized float16 (both crop and round)
   union { float flt; uint32_t i32; } conv;
   conv.flt = MiniFloatConverter::min();
   conv.i32 -= 1;
-  const uint16_t min32MinusConvertedTo16 = MiniFloatConverter::float32to16crop(conv.flt);
-  if((min32MinusConvertedTo16 >> 10) != 0) {
-    std::cout << "MiniFloatConverter::min() - 1ulp ->float16crop does not yield denormalized number but 0x" << std::hex << min32MinusConvertedTo16 << std::endl;  
-    return false;
-  }
-
-  return true;
+  const uint16_t min32MinusUlp32CroppedTo16 = MiniFloatConverter::float32to16crop(conv.flt);
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(min32MinusUlp32CroppedTo16));
+  const uint16_t min32MinusUlp32RoundedTo16 = MiniFloatConverter::float32to16round(conv.flt);
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(min32MinusUlp32RoundedTo16));
 }
 
-bool testMin32RoundedToMin16() {
+void testMiniFloat::testMin32RoundedToMin16() {
   // min32RoundedToMin16() -> float16 -> float32 should be the same as min()
-  const float min32RoundedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::min32RoundedToMin16()));
-  if(min32RoundedTo16 != MiniFloatConverter::min()) {
-    std::cout << "MiniFloatConverter::min32RoundedToMin16() converted to float16->float32 does not give MiniFloatConverter::min() (" << MiniFloatConverter::min() << "), but "
-              << min32RoundedTo16 << " 0x" << std::hex << MiniFloatConverter::float32to16(MiniFloatConverter::min32RoundedToMin16()) << std::endl;
-    return false;
-  }
+  CPPUNIT_ASSERT(MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::min32RoundedToMin16())) == MiniFloatConverter::min());
 
-  // min32RoundedToMax16() - 1ulp should give denormalized
+  // min32RoundedToMax16() - 1ulp(32) should give denormalized float16
   union { float flt; uint32_t i32; } conv;
   conv.flt = MiniFloatConverter::min32RoundedToMin16();
   conv.i32 -= 1;
-  const uint16_t min32MinusRoundedTo16 = MiniFloatConverter::float32to16(conv.flt);
-  if((min32MinusRoundedTo16 >> 10) != 0) {
-    std::cout << "MiniFloatConverter::min32RoundedToMin16() - 1ulp ->float16 does not yield denormalized number but "
-              << min32MinusRoundedTo16 << " 0x" << std::hex << min32MinusRoundedTo16 << std::endl;
-    return false;
-  }
-
-  return true;
+  const uint16_t min32MinusUlp32RoundedTo16 = MiniFloatConverter::float32to16(conv.flt);
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(min32MinusUlp32RoundedTo16));
 }
 
-bool testDenormMin() {
+void testMiniFloat::testDenormMin() {
   // zero exponent, and 0x1 in mantissa gives the smallest number of
   // float16
-  const uint16_t minifloat_denorm_min = 1;
-  if(MiniFloatConverter::float16to32(minifloat_denorm_min) != MiniFloatConverter::denorm_min()) {
-    std::cout << "MiniFloatConverter::denorm_min() does not correspond to mantissatable[offsettable[0]+1]+exponenttable[0x1e] (" << MiniFloatConverter::float16to32(minifloat_denorm_min) << "), but " << MiniFloatConverter::denorm_min() << std::endl;
-    return false;
-  }
+  CPPUNIT_ASSERT(MiniFloatConverter::denorm_min() == MiniFloatConverter::float16to32(1));
 
-  // subtracting 1 ulp from denorm_min should give 0
-  const uint16_t minifloat0 = MiniFloatConverter::float32to16(MiniFloatConverter::denorm_min()) - 1;
-  if(MiniFloatConverter::float16to32(minifloat0) != 0.f) {
-    std::cout << "MiniFloatConverter::denorm_min() - 1ulp does not yield 0 but " << MiniFloatConverter::float16to32(minifloat0) <<  std::endl;
-    return false;
-  }
+  // subtracting 1ulp(16) from denorm_min should give 0 float32
+  CPPUNIT_ASSERT(MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(MiniFloatConverter::denorm_min()) - 1) == 0.f);
 
-  // subtracking 1 ulp from float32 version of denorm_min should also give 0
+  // subtracking 1ulp(32) from denorm_min should also give 0 float32
   union { float flt; uint32_t i32; } conv;
   conv.flt = MiniFloatConverter::denorm_min();
   conv.i32 -= 1;
-  const float min32MinusConvertedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(conv.flt));
-  if(min32MinusConvertedTo16 != 0.f) {
-    std::cout << "MiniFloatConverter::denorm_min() - 1ulp ->float16->float32 does not yield 0 but " << min32MinusConvertedTo16 << std::endl;  
-    return false;
-  }
-
-  return true;
-}
-
-int main(void) {
-  bool success = true;
-
-  success = success && testMax();
-  success = success && testMax32RoundedToMax16();
-
-  success = success && testMin();
-  success = success && testMin32RoundedToMin16();
-  success = success && testDenormMin();
-
-  return success ? 0 : 1;
+  const float min32MinusUlp32RoundedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16round(conv.flt));
+  CPPUNIT_ASSERT(min32MinusUlp32RoundedTo16 == 0.f);
+  const float min32MinusUlp32CroppedTo16 = MiniFloatConverter::float16to32(MiniFloatConverter::float32to16crop(conv.flt));
+  CPPUNIT_ASSERT(min32MinusUlp32CroppedTo16 == 0.f);
 }
