@@ -699,8 +699,8 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffIsHighPurity = iBooker.book1D("diffIsHighPurity", "PackedCandidate::bestTrack() - reco::Track in quality(highPurity)", 3, -1.5, 1.5); // expect equality
 
   h_diffPt     = iBooker.book1D("diffPt",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in pt()",     diffBins, -1.1, 1.1); // not equal, keep
-  h_diffEta    = iBooker.book1D("diffEta",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in eta()",    diffBins, -0.2, 0.2); // not equal, keep
-  h_diffPhi    = iBooker.book1D("diffPhi",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in phi()",    diffBins, -0.1, 0.02); // expect equality within precision
+  h_diffEta    = iBooker.book1D("diffEta",    "PackedCandidate::bestTrack() - reco::Track in eta()",    diffBins, -0.0005, 0.0005); // not equal, keep
+  h_diffPhi    = iBooker.book1D("diffPhi",    "PackedCandidate::bestTrack() - reco::Track in phi()",    diffBins, -0.0005, 0.0005); // expect equality within precision
 
   h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.002, 0.002); // expect equality within precision
   h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.002, 0.002); // expect equality within precision
@@ -825,21 +825,9 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     auto slimmedVertexRef = pcRef->vertexRef();
     const reco::Vertex& pcVertex = vertices[slimmedVertexRef.key()];
 
-    /*
-    fillNoFlow(h_diffPx, diffRelative(trackPc.px(), track.px()));
-    fillNoFlow(h_diffPy, diffRelative(trackPc.py(), track.py()));
-    fillNoFlow(h_diffPz, diffRelative(trackPc.pz(), track.pz()));
-    */
-
     fillNoFlow(h_diffVx, trackPc.vx() - track.vx());
     fillNoFlow(h_diffVy, trackPc.vy() - track.vy());
     fillNoFlow(h_diffVz, trackPc.vz() - track.vz());
-
-    /*
-    fillNoFlow(h_diffVxVsVertex, trackPc.vx() - pcVertex.x());
-    fillNoFlow(h_diffVyVsVertex, trackPc.vy() - pcVertex.y());
-    fillNoFlow(h_diffVzVsVertex, trackPc.vz() - pcVertex.z());
-    */
 
     // PackedCandidate recalculates the ndof in unpacking as
     // (nhits+npixelhits-5), but some strip hits may have dimension 2.
@@ -859,17 +847,10 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     int diffHP = static_cast<int>(trackPc.quality(reco::TrackBase::highPurity)) - static_cast<int>(track.quality(reco::TrackBase::highPurity));
     fillNoFlow(h_diffIsHighPurity,  diffHP);
 
-    /*
-    edm::LogPrint("Foo") << "Track pt " << track.pt() << " PC " << trackPc.pt() << " diff " << (trackPc.pt()-track.pt())
-                         << " ulps " << boost::math::float_distance(trackPc.pt(), track.pt())
-                         << " relative " << (trackPc.pt()-track.pt())/track.pt()
-                         << " mydiff " << ulpDiffRelative(trackPc.pt(), track.pt());
-    */
-
     const auto diffPt = diffRelative(trackPc.pt(), track.pt());
-    fillNoFlow(h_diffPt    , diffPt);
-    fillNoFlow(h_diffEta   , diffRelative(trackPc.eta()   , track.eta()   ));
-    fillNoFlow(h_diffPhi   , diffRelative(trackPc.phi()   , track.phi()   ));
+    fillNoFlow(h_diffPt , diffPt);
+    fillNoFlow(h_diffEta, trackPc.eta() - track.eta());
+    fillNoFlow(h_diffPhi, trackPc.phi() - track.phi());
 
     const auto diffDzPV = diffRelative(pcRef->dz(pv.position()), track.dz(pv.position()));
     const auto diffDzAssocPV = diffRelative(pcRef->dzAssociatedPV(), track.dz(pcVertex.position()));
