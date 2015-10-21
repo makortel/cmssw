@@ -82,6 +82,10 @@ class MiniFloatConverter {
             return conv.flt;
         }
 
+        inline static bool is_denorm(uint16_t h) {
+            return ((h >> 10) & 0x20) == 0;
+        }
+
     private:
         CMS_THREAD_SAFE static uint32_t mantissatable[2048];
         CMS_THREAD_SAFE static uint32_t exponenttable[64];
