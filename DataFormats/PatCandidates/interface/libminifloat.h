@@ -83,7 +83,7 @@ class MiniFloatConverter {
         }
 
         inline static bool is_denorm(uint16_t h) {
-            return ((h >> 10) & 0x20) == 0;
+            return ((h >> 10) & 0x1f) == 0 && (h & 0x3ff) != 0;
         }
 
     private:

@@ -8,6 +8,7 @@
 class testMiniFloat : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(testMiniFloat);
 
+  CPPUNIT_TEST(testIsDenorm);
   CPPUNIT_TEST(testMax);
   CPPUNIT_TEST(testMax32RoundedToMax16);
   CPPUNIT_TEST(testMin);
@@ -19,6 +20,7 @@ public:
   void setUp() {}
   void tearDown() {}
 
+  void testIsDenorm();
   void testMax() ;
   void testMax32RoundedToMax16();
   void testMin();
@@ -29,6 +31,19 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(testMiniFloat);
+
+void testMiniFloat::testIsDenorm() {
+  // all float16s with zero exponent and non-zero mantissa are denormals, test here the boundaries
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(1));
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(1 | (1<<15)));
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(0x3ff));
+  CPPUNIT_ASSERT(MiniFloatConverter::is_denorm(0x3ff));
+
+  // Test also boundary cases for float16 not being denormal
+  CPPUNIT_ASSERT(!MiniFloatConverter::is_denorm(0));
+  CPPUNIT_ASSERT(!MiniFloatConverter::is_denorm(0x400));
+  CPPUNIT_ASSERT(!MiniFloatConverter::is_denorm(0x400 | (1<<15)));
+}
 
 void testMiniFloat::testMax() {
   // 0x1f exponent is for inf, so 0x1e is the maximum
