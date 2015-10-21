@@ -348,6 +348,10 @@ namespace {
       return logintpack::unpack8log(127, lmin_, lmax_);
     }
 
+    static bool wouldBeDenorm(double value) {
+      return false;
+    }
+
     double smallestValue() const {
       return logintpack::unpack8log(0, lmin_, lmax_);
     }
@@ -385,6 +389,10 @@ namespace {
       return MiniFloatConverter::max32RoundedToMax16();
     }
 
+    static bool wouldBeDenorm(double value) {
+      return value >= smallestValue() && value < MiniFloatConverter::min();
+    }
+
     static double smallestValue() {
       return MiniFloatConverter::denorm_min();
     }
@@ -393,11 +401,17 @@ namespace {
   enum class RangeStatus {
     inrange = 0,
     inrange_signflip = 1,
-    underflow_OK = 2,
-    underflow_notOK = 3,
-    overflow_OK = 4,
-    overflow_notOK = 5
+    denorm_OK = 2,
+    denorm_notOK = 3,
+    underflow_OK = 4,
+    underflow_notOK = 5,
+    overflow_OK = 6,
+    overflow_notOK = 7
   };
+  bool isInRange(RangeStatus status) {
+    return status == RangeStatus::inrange || status == RangeStatus::denorm_OK || status == RangeStatus::denorm_notOK;
+  }
+
   template <typename T>
   class PackedValueCheckResult {
   public:
@@ -415,7 +429,7 @@ namespace {
       rangeMin_ = min; rangeMax_ = max;
       if(status_ == RangeStatus::inrange)
         return diff_ < min || diff_ > max;
-      return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip;
+      return status_ == RangeStatus::underflow_notOK || status_ == RangeStatus::overflow_notOK || status_ == RangeStatus::inrange_signflip || status_ == RangeStatus::denorm_notOK;
     }
 
     bool outsideExpectedRangeAbs(double val) {
@@ -465,13 +479,15 @@ namespace {
               int flow_nbins,double flow_min,double flow_max) {
       hInrange = iBooker.book1D(name, title, nbins, min, max);
       hUnderOverflowSign = iBooker.book1D(name+"UnderOverFlowSign", title+" with over- and underflow, and sign flip", flow_nbins, flow_min, flow_max);
-      hStatus = iBooker.book1D(name+"Status", title+" status", 6, -0.5, 5.5);
+      hStatus = iBooker.book1D(name+"Status", title+" status", 8, -0.5, 7.5);
       hStatus->setBinLabel(1, "In range");
       hStatus->setBinLabel(2, "In range, sign flip");
-      hStatus->setBinLabel(3, "Underflow, PC is "+T::minName());
-      hStatus->setBinLabel(4, "Underflow, PC is not "+T::minName());
-      hStatus->setBinLabel(5, "Overflow, PC is "+T::maxName());
-      hStatus->setBinLabel(6, "Overflow, PC is not "+T::maxName());
+      hStatus->setBinLabel(3, "Denorm, PC is denorm");
+      hStatus->setBinLabel(4, "Denorm, PC is not denorm");
+      hStatus->setBinLabel(5, "Underflow, PC is "+T::minName());
+      hStatus->setBinLabel(6, "Underflow, PC is not "+T::minName());
+      hStatus->setBinLabel(7, "Overflow, PC is "+T::maxName());
+      hStatus->setBinLabel(8, "Overflow, PC is not "+T::maxName());
     }
 
     PackedValueCheckResult<T> fill(double pcvalue, double trackvalue,
@@ -502,7 +518,17 @@ namespace {
       }
       else {
         if(boost::math::sign(pcvalue) == boost::math::sign(trackvalue)) {
-          status = RangeStatus::inrange;
+          if(T::wouldBeDenorm(pcvalue)) {
+            if(MiniFloatConverter::is_denorm(MiniFloatConverter::float32to16(pcvalue))) {
+              status = RangeStatus::denorm_OK;
+            }
+            else {
+              status = RangeStatus::denorm_notOK;
+            }
+          }
+          else {
+            status = RangeStatus::inrange;
+          }
           hInrange->Fill(diff);
         }
         else {
@@ -868,11 +894,11 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     auto diffCovDxyDsz       = fillCov2(h_diffCovDxyDsz,       reco::TrackBase::i_dxy,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
     auto diffCovDszDsz       = fillCov2(h_diffCovDszDsz,       reco::TrackBase::i_dsz,    reco::TrackBase::i_dsz,    [](double value){return value*10000.;});
 
-    if(diffCovDszDsz.status() == RangeStatus::inrange) {
+    if(isInRange(diffCovDszDsz.status())) {
       fillNoFlow(h_diffDszError, diffRelative(pcRef->dzError(), track.dszError()));
       fillNoFlow(h_diffDzError,  diffRelative(pcRef->dzError(), track.dzError()));
     }
-    if(diffCovDxyDxy.status() == RangeStatus::inrange) {
+    if(isInRange(diffCovDxyDxy.status())) {
       fillNoFlow(h_diffDxyError, diffRelative(pcRef->dxyError(), track.dxyError()));
     }
     fillNoFlow(h_diffPtError    , diffRelative(trackPc.ptError()    , track.ptError()    ));
