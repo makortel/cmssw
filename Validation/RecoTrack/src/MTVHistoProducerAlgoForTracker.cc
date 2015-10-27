@@ -491,6 +491,10 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_assoczpos.push_back( dbe_->book1D("num_assoc(simToReco)_zpos","N of associated tracks (simToReco) vs z vert position",
 				      nintZpos,minZpos,maxZpos) );
   h_simulzpos.push_back( dbe_->book1D("num_simul_zpos","N of simulated tracks vs z vert position",nintZpos,minZpos,maxZpos) );
+  h_reco_zpos.push_back( dbe_->book1D("num_reco_zpos","N of reco tracks vs z vert position",nintZpos,minZpos,maxZpos) );
+  h_assoc2_zpos.push_back( dbe_->book1D("num_assoc(recoToSim)_zpos","N of associated tracks (recoToSim) vs z vert position",nintZpos,minZpos,maxZpos) );
+  h_looper_zpos.push_back( dbe_->book1D("num_duplicate_zpos","N of associated tracks (recoToSim) looper vs z vert position",nintZpos,minZpos,maxZpos) );
+  h_pileup_zpos.push_back( dbe_->book1D("num_pileup_zpos","N of associated tracks (recoToSim) pileup vs z vert position",nintZpos,minZpos,maxZpos) );
   
 
   h_reco_vertcount_entire.push_back( dbe_->book1D("num_reco_vertcount_entire","N of reco tracks vs N of pileup vertices",nintVertcount,minVertcount,maxVertcount) );
@@ -1253,8 +1257,10 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
   }
 
 
+  const auto zpos = track.referencePoint().z();
   const auto dzpv = pvPosition ? track.dz(*pvPosition) : 0.0;
   const auto dzpvsig = pvPosition ? dzpv / track.dzError() : 0.0;
+  fillPlotNoFlow(h_reco_zpos[count], zpos);
   if(pvPosition) {
     h_reco_dzpvcut[count]->Fill(std::abs(dzpv));
     h_reco_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
@@ -1272,6 +1278,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
     const auto dzpvsig = pvPosition ? dzpv / track.dzError() : 0.0;
     const auto nhits = track.found();
 
+    fillPlotNoFlow(h_assoc2_zpos[count], zpos);
     if(pvPosition) {
       h_assoc2_dzpvcut[count]->Fill(std::abs(dzpv));
       h_assoc2_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
@@ -1280,6 +1287,9 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
         h_assoc2_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), track.pt());
       }
     }
+    if (numAssocRecoTracks>1) {
+      fillPlotNoFlow(h_looper_zpos[count], zpos);
+    }
     if(!isSigMatched) {
       fillPlotNoFlow(h_pileupeta[count], eta);
       fillPlotNoFlow(h_pileupphi[count], phi);
@@ -1287,6 +1297,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
       fillPlotNoFlow(h_pileupdxy[count], dxy);
       fillPlotNoFlow(h_pileupdz[count], dz);
       fillPlotNoFlow(h_pileuphit[count], nhits);
+      fillPlotNoFlow(h_pileup_zpos[count], zpos);
       if(pvPosition) {
         h_pileup_dzpvcut[count]->Fill(std::abs(dzpv));
         h_pileup_dzpvcut_pt[count]->Fill(std::abs(dzpv), pt);
