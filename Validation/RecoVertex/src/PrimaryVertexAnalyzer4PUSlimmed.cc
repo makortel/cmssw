@@ -165,6 +165,26 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
     std::string current_folder = root_folder_ + "/" + label;
     i->setCurrentFolder(current_folder);
 
+    auto book1d = [&](const char *name, int bins, double min, double max) {
+      mes_[label][name] = i->book1D(name, name, bins, min, max);
+    };
+    auto book1dlogx = [&](const char *name, int bins, float *xbinedges) {
+      mes_[label][name] = i->book1D(name, name, bins, xbinedges);
+    };
+    auto book2d = [&](const char *name,
+                      int xbins, double xmin, double xmax,
+                      int ybins, double ymin, double ymax) {
+      mes_[label][name] = i->book2D(name, name, xbins,xmin,xmax, ybins,ymin,ymax);
+    };
+    auto book2dlogx = [&](const char *name,
+                          int xbins, float *xbinedges,
+                          int ybins, double ymin, double ymax) {
+      auto me = i->book2D(name, name, xbins,xbinedges[0],xbinedges[xbins], ybins,ymin,ymax);
+      me->getTH2F()->GetXaxis()->Set(xbins, xbinedges);
+      mes_[label][name] = me;
+    };
+
+
     mes_[label]["RecoVtx_vs_GenVtx"] = i->bookProfile(
         "RecoVtx_vs_GenVtx", "RecoVtx_vs_GenVtx", 125, 0., 250., 250, 0., 250.);
     mes_[label]["MatchedRecoVtx_vs_GenVtx"] =
@@ -281,6 +301,9 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
     mes_[label]["GenAllAssoc2Reco_ClosestDistanceZ"] =
         i->book1D("GenAllAssoc2Reco_ClosestDistanceZ",
                  "GeneratedAllAssoc2Reco_ClosestDistanceZ", 30, &log_bins[0]);
+    book1d("GenPVAssoc2RecoPV_X", 120, -0.6, 0.6);
+    book1d("GenPVAssoc2RecoPV_Y", 120, -0.6, 0.6);
+    book1d("GenPVAssoc2RecoPV_Z", 120, -60,  60);
 
     // All Generated Vertices Matched to a Reconstructed vertex. Used
     // for Efficiency plots
@@ -308,6 +331,9 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
     mes_[label]["GenAllAssoc2RecoMatched_ClosestDistanceZ"] = i->book1D(
         "GenAllAssoc2RecoMatched_ClosestDistanceZ",
         "GeneratedAllAssoc2RecoMatched_ClosestDistanceZ", 30, &log_bins[0]);
+    book1d("GenPVAssoc2RecoPVMatched_X", 120, -0.6, 0.6);
+    book1d("GenPVAssoc2RecoPVMatched_Y", 120, -0.6, 0.6);
+    book1d("GenPVAssoc2RecoPVMatched_Z", 120, -60,  60);
 
     // All Generated Vertices Multi-Matched to a Reconstructed vertex. Used
     // for Duplicate rate plots
@@ -478,25 +504,6 @@ void PrimaryVertexAnalyzer4PUSlimmed::bookHistograms(
 
 
     // Resolution and pull histograms
-    auto book1d = [&](const char *name, int bins, double min, double max) {
-      mes_[label][name] = i->book1D(name, name, bins, min, max);
-    };
-    auto book1dlogx = [&](const char *name, int bins, float *xbinedges) {
-      mes_[label][name] = i->book1D(name, name, bins, xbinedges);
-    };
-    auto book2d = [&](const char *name,
-                      int xbins, double xmin, double xmax,
-                      int ybins, double ymin, double ymax) {
-      mes_[label][name] = i->book2D(name, name, xbins,xmin,xmax, ybins,ymin,ymax);
-    };
-    auto book2dlogx = [&](const char *name,
-                          int xbins, float *xbinedges,
-                          int ybins, double ymin, double ymax) {
-      auto me = i->book2D(name, name, xbins,xbinedges[0],xbinedges[xbins], ybins,ymin,ymax);
-      me->getTH2F()->GetXaxis()->Set(xbins, xbinedges);
-      mes_[label][name] = me;
-    };
-
     const double resolx = 0.1;
     const double resoly = 0.1;
     const double resolz = 0.1;
@@ -631,6 +638,20 @@ void PrimaryVertexAnalyzer4PUSlimmed::fillRecoAssociatedGenVertexHistograms(
     if (v.closest_vertex_distance_z > 0.)
       mes_[label]["GenAllAssoc2RecoMultiMatched_ClosestDistanceZ"]
           ->Fill(v.closest_vertex_distance_z);
+  }
+}
+
+void PrimaryVertexAnalyzer4PUSlimmed::fillRecoAssociatedGenPVHistograms(
+    const std::string& label,
+    const PrimaryVertexAnalyzer4PUSlimmed::simPrimaryVertex& v,
+    bool genPVMatchedToRecoPV) {
+  mes_[label]["GenPVAssoc2RecoPV_X"]->Fill(v.x);
+  mes_[label]["GenPVAssoc2RecoPV_Y"]->Fill(v.y);
+  mes_[label]["GenPVAssoc2RecoPV_Z"]->Fill(v.z);
+  if (genPVMatchedToRecoPV) {
+    mes_[label]["GenPVAssoc2RecoPVMatched_X"]->Fill(v.x);
+    mes_[label]["GenPVAssoc2RecoPVMatched_Y"]->Fill(v.y);
+    mes_[label]["GenPVAssoc2RecoPVMatched_Z"]->Fill(v.z);
   }
 }
 
@@ -906,7 +927,17 @@ PrimaryVertexAnalyzer4PUSlimmed::getSimPVs(
         std::cout << *gv << std::endl;
       }
       std::cout << "----------" << std::endl;
+
     }  // end of verbose_ session
+
+    /*
+    edm::LogPrint("Foo") << "BunchX.EventId: " << v->eventId().bunchCrossing() << "."
+                         << (v->eventId()).event() << " Position: " << v->position()
+                         << " G4/HepMC Vertices: " << v->g4Vertices().size() << "/"
+                         << v->genVertices().size()
+                         << "   t = " << v->position().t()
+                         << " > 0:" << (v->position().t() > 0) << std::endl;
+    */
 
     // I'd rather change this and select only vertices that come from
     // BX=0.  We should keep only the first vertex from all the events
@@ -919,6 +950,7 @@ PrimaryVertexAnalyzer4PUSlimmed::getSimPVs(
     }
     // TODO(rovere) is this really necessary?
     if (fabs(v->position().z()) > 1000) continue;  // skip funny junk vertices
+
 
     // could be a new vertex, check  all primaries found so far to avoid
     // multiple entries
@@ -1402,8 +1434,9 @@ void PrimaryVertexAnalyzer4PUSlimmed::analyze(const edm::Event& iEvent,
                         &(*iv)) != v.rec_vertices.end()) {
             mes_[label]["TruePVLocationIndex"]
                 ->Fill(pv_position_in_reco_collection);
+            const bool genPVMatchedToRecoPV = (pv_position_in_reco_collection == 0);
             mes_[label]["TruePVLocationIndexCumulative"]
-                ->Fill(pv_position_in_reco_collection > 0 ? 1 : 0);
+                ->Fill(genPVMatchedToRecoPV ? 0 : 1);
 
             if (signal_is_highest_pt) {
               mes_[label]["TruePVLocationIndexSignalIsHighest"]
@@ -1413,6 +1446,7 @@ void PrimaryVertexAnalyzer4PUSlimmed::analyze(const edm::Event& iEvent,
                 ->Fill(pv_position_in_reco_collection);
             }
 
+            fillRecoAssociatedGenPVHistograms(label, v, genPVMatchedToRecoPV);
             genpv_position_in_reco_collection = pv_position_in_reco_collection;
             break;
           }
