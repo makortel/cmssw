@@ -14,71 +14,73 @@ TrackAssociatorByHitsRecoDenom= SimTracker.TrackAssociation.quickTrackAssociator
     ComponentName = cms.string('TrackAssociatorByHitsRecoDenom'),  
     )
 
+from CommonTools.RecoAlgos.recoTrackViewRefSelector_cfi import recoTrackViewRefSelector
+
 # Validation iterative steps
-cutsRecoTracksZero = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksZero = recoTrackViewRefSelector.clone()
 cutsRecoTracksZero.algorithm=cms.vstring("iter0")
 
-cutsRecoTracksFirst = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFirst = recoTrackViewRefSelector.clone()
 cutsRecoTracksFirst.algorithm=cms.vstring("iter1")
 
-cutsRecoTracksSecond = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSecond = recoTrackViewRefSelector.clone()
 cutsRecoTracksSecond.algorithm=cms.vstring("iter2")
 
-cutsRecoTracksThird = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksThird = recoTrackViewRefSelector.clone()
 cutsRecoTracksThird.algorithm=cms.vstring("iter3")
 
-cutsRecoTracksFourth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFourth = recoTrackViewRefSelector.clone()
 cutsRecoTracksFourth.algorithm=cms.vstring("iter4")
 
-cutsRecoTracksFifth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFifth = recoTrackViewRefSelector.clone()
 cutsRecoTracksFifth.algorithm=cms.vstring("iter5")
 
-cutsRecoTracksSixth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSixth = recoTrackViewRefSelector.clone()
 cutsRecoTracksSixth.algorithm=cms.vstring("iter6")
 
-cutsRecoTracksNinth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksNinth = recoTrackViewRefSelector.clone()
 cutsRecoTracksNinth.algorithm=cms.vstring("iter9")
 
-cutsRecoTracksTenth = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksTenth = recoTrackViewRefSelector.clone()
 cutsRecoTracksTenth.algorithm=cms.vstring("iter10")
 
 # high purity
-cutsRecoTracksHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksZeroHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksZeroHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksZeroHp.algorithm=cms.vstring("iter0")
 cutsRecoTracksZeroHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksFirstHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFirstHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksFirstHp.algorithm=cms.vstring("iter1")
 cutsRecoTracksFirstHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksSecondHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSecondHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksSecondHp.algorithm=cms.vstring("iter2")
 cutsRecoTracksSecondHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksThirdHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksThirdHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksThirdHp.algorithm=cms.vstring("iter3")
 cutsRecoTracksThirdHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksFourthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFourthHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksFourthHp.algorithm=cms.vstring("iter4")
 cutsRecoTracksFourthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksFifthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksFifthHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksFifthHp.algorithm=cms.vstring("iter5")
 cutsRecoTracksFifthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksSixthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksSixthHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksSixthHp.algorithm=cms.vstring("iter6")
 cutsRecoTracksSixthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksNinthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksNinthHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksNinthHp.algorithm=cms.vstring("iter9")
 cutsRecoTracksNinthHp.quality=cms.vstring("highPurity")
 
-cutsRecoTracksTenthHp = PhysicsTools.RecoAlgos.recoTrackSelector_cfi.recoTrackSelector.clone()
+cutsRecoTracksTenthHp = recoTrackViewRefSelector.clone()
 cutsRecoTracksTenthHp.algorithm=cms.vstring("iter10")
 cutsRecoTracksTenthHp.quality=cms.vstring("highPurity")
 

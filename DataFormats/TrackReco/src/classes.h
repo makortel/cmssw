@@ -25,6 +25,7 @@
 #include "DataFormats/Common/interface/OneToManyWithQuality.h"
 #include "DataFormats/Common/interface/OneToManyWithQualityGeneric.h"
 #include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Common/interface/RefToBaseVector.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/TrackCandidate/interface/TrackCandidate.h"
 
@@ -85,6 +86,9 @@ namespace {
     edm::reftobase::RefHolder<reco::TrackRef>           rf_tkr;
     edm::reftobase::Holder<reco::Track, reco::TrackRef> h_tk_tkr;
     std::vector< edm::RefToBase<reco::Track> >		rtb_tk_vect;
+
+    edm::RefToBaseVector<reco::Track> tbrv;
+    edm::Wrapper<edm::RefToBaseVector<reco::Track> > wtbrv;
 
     edm::RefToBaseProd<reco::Track> aaaaaa;
     std::vector<std::pair<edm::RefToBase<reco::Track>,double> > aaaaaaaaaa;

@@ -113,6 +113,9 @@
      <class name="std::pair<edm::RefToBase<reco::Track>,double>" />
      <class name="std::vector<std::pair<edm::RefToBase<reco::Track>,double> >" />
 
+     <class name="edm::RefToBaseVector<reco::Track>"/>
+     <class name="edm::Wrapper<edm::RefToBaseVector<reco::Track> >"/>
+
      <!-- RefToBaseProd<reco::Track> -->
      <class name="edm::RefToBaseProd<reco::Track>" />
 
