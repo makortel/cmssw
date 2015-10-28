@@ -231,6 +231,56 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
   */
   
 
+
+  // Precalculate TP selection (for efficiency), and momentum and vertex wrt PCA
+  //
+  // TODO: ParametersDefinerForTP ESProduct needs to be changed to
+  // EDProduct because of consumes.
+  //
+  // In principle, we could just precalculate the momentum and vertex
+  // wrt PCA for all TPs for once and put that to the event. To avoid
+  // repetitive calculations those should be calculated only once for
+  // each TP. That would imply that we should access TPs via Refs
+  // (i.e. View) in here, since, in general, the eff and fake TP
+  // collections can be different (and at least HI seems to use that
+  // feature). This would further imply that the
+  // RecoToSimCollection/SimToRecoCollection should be changed to use
+  // View<TP> instead of vector<TP>, and migrate everything.
+  //
+  // Or we could take only one input TP collection, and do another
+  // TP-selection to obtain the "fake" collection like we already do
+  // for "efficiency" TPs.
+  std::vector<size_t> selected_tPCeff;
+  std::vector<std::tuple<TrackingParticle::Vector, TrackingParticle::Point>> momVert_tPCeff;
+  selected_tPCeff.reserve(tPCeff.size());
+  momVert_tPCeff.reserve(tPCeff.size());
+  if(parametersDefinerIsCosmic_) {
+    for(size_t j=0; j<tPCeff.size(); ++j) {
+      TrackingParticleRef tpr(TPCollectionHeff, j);
+      if(cosmictpSelector(tpr,&bs,event,setup)) {
+        selected_tPCeff.push_back(j);
+        TrackingParticle::Vector momentum = parametersDefinerTP->momentum(event,setup,tpr);
+        TrackingParticle::Point vertex = parametersDefinerTP->vertex(event,setup,tpr);
+        momVert_tPCeff.emplace_back(momentum, vertex);
+      }
+    }
+  }
+  else {
+    size_t j=0;
+    for(auto const& tp: tPCeff) {
+      if(tpSelector(tp)) {
+        selected_tPCeff.push_back(j);
+	TrackingParticleRef tpr(TPCollectionHeff, j);
+        TrackingParticle::Vector momentum = parametersDefinerTP->momentum(event,setup,tpr);
+        TrackingParticle::Point vertex = parametersDefinerTP->vertex(event,setup,tpr);
+        momVert_tPCeff.emplace_back(momentum, vertex);
+      }
+      ++j;
+    }
+  }
+
+
+
   int w=0; //counter counting the number of sets of histograms
   for (unsigned int ww=0;ww<associators.size();ww++){
     for (unsigned int www=0;www<label.size();www++){
@@ -293,9 +343,15 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
       int st(0);    	  //This counter counts the number of simulated tracks passing the MTV selection (i.e. tpSelector(tp) )
       unsigned sts(0);   //This counter counts the number of simTracks surviving the bunchcrossing cut 
       unsigned asts(0);  //This counter counts the number of simTracks that are "associated" to recoTracks surviving the bunchcrossing cut
-      for (TrackingParticleCollection::size_type i=0; i<tPCeff.size(); i++){ //loop over TPs collection for tracking efficiency
-	TrackingParticleRef tpr(TPCollectionHeff, i);
-	TrackingParticle* tp=const_cast<TrackingParticle*>(tpr.get());
+
+      //loop over already-selected TPs for tracking efficiency
+      for(size_t i=0; i<selected_tPCeff.size(); ++i) {
+        size_t iTP = selected_tPCeff[i];
+	TrackingParticleRef tpr(TPCollectionHeff, iTP);
+	const TrackingParticle& tp = tPCeff[iTP];
+
+        auto const& momVert = momVert_tPCeff[i];
+
 	TrackingParticle::Vector momentumTP; 
 	TrackingParticle::Point vertexTP;
 	double dxySim(0);
@@ -305,12 +361,13 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	//If the TrackingParticle is collison like, get the momentum and vertex at production state
 	if(!parametersDefinerIsCosmic_)
 	  {
-	    if(! tpSelector(*tp)) continue;
-	    momentumTP = tp->momentum();
-	    vertexTP = tp->vertex();
+	    momentumTP = tp.momentum();
+	    vertexTP = tp.vertex();
 	    //Calcualte the impact parameters w.r.t. PCA
-	    TrackingParticle::Vector momentum = parametersDefinerTP->momentum(event,setup,tpr);
-	    TrackingParticle::Point vertex = parametersDefinerTP->vertex(event,setup,tpr);
+	    //const TrackingParticle::Vector& momentum = std::get<TrackingParticle::Vector>(momVert);
+	    //const TrackingParticle::Point& vertex = std::get<TrackingParticle::Point>(momVert);
+	    const TrackingParticle::Vector& momentum = std::get<0>(momVert);
+	    const TrackingParticle::Point& vertex = std::get<1>(momVert);
 	    dxySim = (-vertex.x()*sin(momentum.phi())+vertex.y()*cos(momentum.phi()));
 	    dzSim = vertex.z() - (vertex.x()*momentum.x()+vertex.y()*momentum.y())/sqrt(momentum.perp2()) 
 	      * momentum.z()/sqrt(momentum.perp2());
@@ -318,9 +375,10 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	//If the TrackingParticle is comics, get the momentum and vertex at PCA
         else
 	  {
-	    if(! cosmictpSelector(tpr,&bs,event,setup)) continue;	
-	    momentumTP = parametersDefinerTP->momentum(event,setup,tpr);
-	    vertexTP = parametersDefinerTP->vertex(event,setup,tpr);
+	    //momentumTP = std::get<TrackingParticle::Vector>(momVert);
+	    //vertexTP = std::get<TrackingParticle::Point>(momVert);
+	    momentumTP = std::get<0>(momVert);
+	    vertexTP = std::get<1>(momVert);
 	    dxySim = (-vertexTP.x()*sin(momentumTP.phi())+vertexTP.y()*cos(momentumTP.phi()));
 	    dzSim = vertexTP.z() - (vertexTP.x()*momentumTP.x()+vertexTP.y()*momentumTP.y())/sqrt(momentumTP.perp2()) 
 	      * momentumTP.z()/sqrt(momentumTP.perp2());
@@ -335,7 +393,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	// - dxySim
 	// - dzSim
 
-	histoProducerAlgo_->fill_generic_simTrack_histos(w,momentumTP,vertexTP, tp->eventId().bunchCrossing());
+	histoProducerAlgo_->fill_generic_simTrack_histos(w,momentumTP,vertexTP, tp.eventId().bunchCrossing());
 
 
 	// ##############################################
@@ -367,17 +425,17 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 
 	
 
-        int nSimHits = tp->numberOfTrackerHits();
+        int nSimHits = tp.numberOfTrackerHits();
 
         double vtx_z_PU = vertexTP.z();
         for (size_t j = 0; j < tv.size(); j++) {
-            if (tp->eventId().event() == tv[j].eventId().event()) {
+            if (tp.eventId().event() == tv[j].eventId().event()) {
                 vtx_z_PU = tv[j].position().z();
                 break;
             }
         }
 
-        histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,*tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU, thePVposition);
+        histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU, thePVposition);
           sts++;
           if (matchedTrackPointer) asts++;
 
