@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 postProcessorTrack = cms.EDAnalyzer("DQMGenericClient",
-    subDirs = cms.untracked.vstring("Tracking/Track/*", "Tracking/TrackFromPVAllTP/*"),
+    subDirs = cms.untracked.vstring("Tracking/Track/*", "Tracking/TrackFromPVAllTP/*", "Tracking/TrackFromPVAllTP2/*"),
     efficiency = cms.vstring(
     "effic 'Efficiency vs #eta' num_assoc(simToReco)_eta num_simul_eta",
     "efficPt 'Efficiency vs p_{T}' num_assoc(simToReco)_pT num_simul_pT",
