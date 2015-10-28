@@ -42,7 +42,10 @@ using namespace edm;
 
 typedef edm::Ref<edm::HepMCProduct, HepMC::GenParticle > GenParticleRef;
 
-MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset):MultiTrackValidatorBase(pset){
+MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset):
+  MultiTrackValidatorBase(pset),
+  parametersDefinerIsCosmic_(parametersDefiner == "CosmicParametersDefinerForTP")
+{
   //theExtractor = IsoDepositExtractorFactory::get()->create( extractorName, extractorPSet);
 
   ParameterSet psetForHistoProducerAlgo = pset.getParameter<ParameterSet>("histoProducerAlgoBlock");
@@ -165,7 +168,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
   event.getByLabel(label_tp_fake,TPCollectionHfake);
   //const TrackingParticleCollection& tPCfake = *(TPCollectionHfake.product());
   
-  if(parametersDefiner=="CosmicParametersDefinerForTP") {
+  if(parametersDefinerIsCosmic_) {
     edm::Handle<SimHitTPAssociationProducer::SimHitTPAssociationList> simHitsTPAssoc;
     //warning: make sure the TP collection used in the map is the same used in the MTV!
     event.getByLabel(_simHitTpMapTag,simHitsTPAssoc);
@@ -300,7 +303,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	
 	//---------- THIS PART HAS TO BE CLEANED UP. THE PARAMETER DEFINER WAS NOT MEANT TO BE USED IN THIS WAY ----------
 	//If the TrackingParticle is collison like, get the momentum and vertex at production state
-	if(parametersDefiner=="LhcParametersDefinerForTP")
+	if(!parametersDefinerIsCosmic_)
 	  {
 	    if(! tpSelector(*tp)) continue;
 	    momentumTP = tp->momentum();
@@ -313,7 +316,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	      * momentum.z()/sqrt(momentum.perp2());
 	  }
 	//If the TrackingParticle is comics, get the momentum and vertex at PCA
-	if(parametersDefiner=="CosmicParametersDefinerForTP")
+        else
 	  {
 	    if(! cosmictpSelector(tpr,&bs,event,setup)) continue;	
 	    momentumTP = parametersDefinerTP->momentum(event,setup,tpr);

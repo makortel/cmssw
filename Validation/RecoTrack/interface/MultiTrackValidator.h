@@ -35,6 +35,7 @@ class MultiTrackValidator : public edm::EDAnalyzer, protected MultiTrackValidato
   //these are used by MTVGenPs
   edm::InputTag associatormap;
   bool UseAssociators;
+  const bool parametersDefinerIsCosmic_;
   MTVHistoProducerAlgo* histoProducerAlgo_;
 
  private:
