@@ -681,7 +681,7 @@ void PackedCandidateTrackValidator::fillDescriptions(edm::ConfigurationDescripti
 void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, edm::Run const&, edm::EventSetup const&) {
   iBooker.setCurrentFolder(rootFolder_);
 
-  h_selectionFlow = iBooker.book1D("selectionFlow", "Track selection flow", 6, -0.5, 7.5);
+  h_selectionFlow = iBooker.book1D("selectionFlow", "Track selection flow", 8, -0.5, 7.5);
   h_selectionFlow->setBinLabel(1, "All tracks");
   h_selectionFlow->setBinLabel(2, "Associated to PackedCandidate");
   h_selectionFlow->setBinLabel(3, "PC is charged"),
