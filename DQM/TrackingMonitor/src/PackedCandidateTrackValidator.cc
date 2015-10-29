@@ -142,22 +142,27 @@ namespace {
     return os;
   }
 
-  class DzCalculationPrinter {
+  class DxyzCalculationPrinterBase {
   public:
     using Point = pat::PackedCandidate::Point;
     using Vector = pat::PackedCandidate::Vector;
 
-    DzCalculationPrinter(const Point& ref_, const Point& point_, const Vector& momentum_, double phi_):
+    DxyzCalculationPrinterBase(const Point& ref_, const Point& point_, const Vector& momentum_, double phi_):
       ref(ref_), point(point_), momentum(momentum_), phi(phi_) {}
 
-    void print(std::ostream& os) const {
-      printPhi(os);
-      os << " ";
-      printDot(os);
-    }
+  protected:
+    const Point ref;
+    const Point point;
+    const Vector momentum;
+    const double phi;
+  };
 
-    void printPhi(std::ostream& os) const {
-      os << "phi:";
+  class DzCalculationPhiPrinter: public DxyzCalculationPrinterBase {
+  public:
+    template <typename ...Args>
+    DzCalculationPhiPrinter(Args&&... args): DxyzCalculationPrinterBase(std::forward<Args>(args)...) {}
+
+    void print(std::ostream& os) const {
       const auto diffx = ref.X()-point.X();
       const auto diffy = ref.Y()-point.Y();
       const auto diffz = ref.Z()-point.Z();
@@ -180,9 +185,17 @@ namespace {
       const auto result = diffz - secondterm;
       os << " result " << result;
     }
+  };
+  std::ostream& operator<<(std::ostream& os, const DzCalculationPhiPrinter& dcp) {
+    dcp.print(os);
+    return os;
+  }
+  class DzCalculationDotPrinter: public DxyzCalculationPrinterBase {
+  public:
+    template <typename ...Args>
+    DzCalculationDotPrinter(Args&&... args): DxyzCalculationPrinterBase(std::forward<Args>(args)...) {}
 
-    void printDot(std::ostream& os) const {
-      os << "dot:";
+    void print(std::ostream& os) const {
       const auto diffx = ref.X()-point.X();
       const auto diffy = ref.Y()-point.Y();
       const auto diffz = ref.Z()-point.Z();
@@ -205,34 +218,18 @@ namespace {
       const auto result = diffz - secondterm;
       os << " result " << result;
     }
-
-  private:
-    const Point ref;
-    const Point point;
-    const Vector momentum;
-    const double phi;
   };
-  std::ostream& operator<<(std::ostream& os, const DzCalculationPrinter& dcp) {
+  std::ostream& operator<<(std::ostream& os, const DzCalculationDotPrinter& dcp) {
     dcp.print(os);
     return os;
   }
 
-  class DxyCalculationPrinter {
+  class DxyCalculationPhiPrinter: public DxyzCalculationPrinterBase {
   public:
-    using Point = pat::PackedCandidate::Point;
-    using Vector = pat::PackedCandidate::Vector;
-
-    DxyCalculationPrinter(const Point& ref_, const Point& point_, const Vector& momentum_, double phi_):
-      ref(ref_), point(point_), momentum(momentum_), phi(phi_) {}
+    template <typename ...Args>
+    DxyCalculationPhiPrinter(Args&&... args): DxyzCalculationPrinterBase(std::forward<Args>(args)...) {}
 
     void print(std::ostream& os) const {
-      printPhi(os);
-      os << " ";
-      printDot(os);
-    }
-
-    void printPhi(std::ostream& os) const {
-      os << "phi:";
       const auto diffx = ref.X()-point.X();
       const auto diffy = ref.Y()-point.Y();
       os << " diff x " << diffx << " y " << diffy;
@@ -248,9 +245,17 @@ namespace {
       const auto result = -xterm + yterm;
       os << " result " << result;
     }
+  };
+  std::ostream& operator<<(std::ostream& os, const DxyCalculationPhiPrinter& dcp) {
+    dcp.print(os);
+    return os;
+  }
+  class DxyCalculationDotPrinter: public DxyzCalculationPrinterBase {
+  public:
+    template <typename ...Args>
+    DxyCalculationDotPrinter(Args&&... args): DxyzCalculationPrinterBase(std::forward<Args>(args)...) {}
 
-    void printDot(std::ostream& os) const {
-      os << "dot:";
+    void print(std::ostream& os) const {
       const auto diffx = ref.X()-point.X();
       const auto diffy = ref.Y()-point.Y();
       os << " diff x " << diffx << " y " << diffy;
@@ -266,14 +271,8 @@ namespace {
       const auto result = -xterm + yterm;
       os << " result " << result;
     }
-
-  private:
-    const Point ref;
-    const Point point;
-    const Vector momentum;
-    const double phi;
   };
-  std::ostream& operator<<(std::ostream& os, const DxyCalculationPrinter& dcp) {
+  std::ostream& operator<<(std::ostream& os, const DxyCalculationDotPrinter& dcp) {
     dcp.print(os);
     return os;
   }
@@ -1039,24 +1038,79 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " cov(dxy, dsz) " << diffCovDxyDsz
                                                        << "\n "
                                                        << " cov(dsz, dsz) " << diffCovDszDsz;
+      if(std::abs(diffDzPV) > 0.002 || std::abs(diffDzAssocPV) > 0.002
+         || std::abs(diffDxyPV) > 0.002 || std::abs(diffDxyAssocPV) > 0.002) {
+        edm::LogWarning("PackedCandidateTrackValidator") << "PV " << pv.position() << " assocPV " << pcVertex.position()
+                                                         << "\n"
+                                                         << "dz(PV) phi"
+                                                         << "\n"
+                                                         << " track " << DzCalculationPhiPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dz(PV) dot"
+                                                         << "\n"
+                                                         << " track " << DzCalculationDotPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dz(assocPV) phi"
+                                                         << "\n"
+                                                         << " track " << DzCalculationPhiPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dz(assocPV) dot"
+                                                         << "\n"
+                                                         << " track " << DzCalculationDotPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dxy(PV) phi"
+                                                         << "\n"
+                                                         << " track " << DxyCalculationPhiPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DxyCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DxyCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dxy(PV) dot"
+                                                         << "\n"
+                                                         << " track " << DxyCalculationDotPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DxyCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DxyCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dxy(assocPV) phi"
+                                                         << "\n"
+                                                         << " track " << DxyCalculationPhiPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DxyCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DxyCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dxy(assocPV) dot"
+                                                         << "\n"
+                                                         << " track " << DxyCalculationDotPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DxyCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DxyCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx());
+      }
+
 
       /*
                                                        << "\n"
-                                                       << " dz(PV) "
                                                        << "\n "
-                                                       << " track " << DzCalculationPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
-                                                       << "\n "
-                                                       << " PC    " << DzCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
-                                                       << "\n "
-                                                       << " PCvtx " << DzCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
-                                                       << "\n "
-                                                       << " dxy(PV) "
-                                                       << "\n "
-                                                       << " track " << DxyCalculationPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
-                                                       << "\n "
-                                                       << " PC    " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
-                                                       << "\n "
-                                                       << " PCvtx " << DxyCalculationPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx());
       */
     }
   }
@@ -1064,3 +1118,4 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(PackedCandidateTrackValidator);
+
