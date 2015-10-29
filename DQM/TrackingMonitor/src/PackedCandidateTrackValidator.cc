@@ -30,6 +30,10 @@ namespace {
     return MiniFloatConverter::float16to32(MiniFloatConverter::float32to16(value));
   }
 
+  template<typename T> void fillNoFlow(MonitorElement* h, T val){
+    h->Fill(std::min(std::max(val,((T) h->getTH1()->GetXaxis()->GetXmin())),((T) h->getTH1()->GetXaxis()->GetXmax())));
+  }
+
   class HitPatternPrinter {
   public:
     explicit HitPatternPrinter(const reco::Track& trk): track(trk) {}
@@ -506,7 +510,7 @@ namespace {
       const auto underOverflow = helper_.underOverflowHelper(modifyUnpack);
       RangeStatus status;
       if(tmp > helper_.largestValue()) {
-        hUnderOverflowSign->Fill(diff);
+        fillNoFlow(hUnderOverflowSign, diff);
         if(underOverflow.compatibleWithOverflow(std::abs(pcvalue))) {
           status = RangeStatus::overflow_OK;
         }
@@ -515,7 +519,7 @@ namespace {
         }
       }
       else if(tmp < helper_.smallestValue()) {
-        hUnderOverflowSign->Fill(diff);
+        fillNoFlow(hUnderOverflowSign, diff);
         if(underOverflow.compatibleWithUnderflow(std::abs(pcvalue))) {
           status = RangeStatus::underflow_OK;
         }
@@ -531,10 +535,10 @@ namespace {
           else {
             status = RangeStatus::inrange;
           }
-          hInrange->Fill(diff);
+          fillNoFlow(hInrange, diff);
         }
         else {
-          hUnderOverflowSign->Fill(diff);
+          fillNoFlow(hUnderOverflowSign, diff);
           status = RangeStatus::inrange_signflip;
         }
       }
@@ -759,12 +763,6 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_numberPixelHitsOverMax = iBooker.book1D("numberPixelHitsOverMax", "Number of pixel hits over the maximum of PackedCandidate", 10, 0, 10);
   h_numberStripHitsOverMax = iBooker.book1D("numberStripHitsOverMax", "Number of strip hits over the maximum of PackedCandidate", 10, 0, 10);
   h_numberHitsOverMax = iBooker.book1D("numberHitsOverMax", "Number of hits over the maximum of PackedCandidate", 20, 0, 20);
-}
-
-namespace {
-  template<typename T> void fillNoFlow(MonitorElement* h, T val){
-    h->Fill(std::min(std::max(val,((T) h->getTH1()->GetXaxis()->GetXmin())),((T) h->getTH1()->GetXaxis()->GetXmax())));
-  }
 }
 
 void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
