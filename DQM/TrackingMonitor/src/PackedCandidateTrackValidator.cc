@@ -713,8 +713,8 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffDzAssocPV.book(iBooker, "diffDzAssocPV","(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track",
                        40, -0.001, 0.001, // expect equality within precision
                        50, -0.5, 0.5);
-  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.002, 0.002); // expect equality within precision (worse than assocPV)
-  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.002, 0.002); // expect equality wihtin precision (worse than assocPV)
+  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.05, 0.05); // expect equality within precision (worse than assocPV)
+  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.05, 0.05); // expect equality wihtin precision (worse than assocPV)
   h_diffTrackDxy   = iBooker.book1D("diffTrackDxy",   "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxy()",          diffBins, -0.2, 0.2); // not equal
   h_diffTrackDz    = iBooker.book1D("diffTrackDz",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dz()",           diffBins, -0.2, 0.2); // not equal
 
@@ -976,7 +976,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        || diffHitPatternHasValidHitInFirstPixelBarrel != 0
        || diffDxyAssocPV.outsideExpectedRange()
        || diffDzAssocPV.outsideExpectedRange()
-       || std::abs(diffDxyPV) > 0.002 || std::abs(diffDzPV) > 0.002
+       || std::abs(diffDxyPV) > 0.05 || std::abs(diffDzPV) > 0.05
        || diffCovQoverpQoverp.outsideExpectedRange() || diffCovLambdaLambda.outsideExpectedRange()
        || diffCovLambdaDsz.outsideExpectedRange() || diffCovPhiPhi.outsideExpectedRange()
        || diffCovPhiDxy.outsideExpectedRange() || diffCovDxyDxy.outsideExpectedRange()
@@ -1045,7 +1045,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " cov(dsz, dsz) " << diffCovDszDsz;
       if(diffDxyAssocPV.outsideExpectedRange()
          || diffDzAssocPV.outsideExpectedRange()
-         || std::abs(diffDxyPV) > 0.002 || std::abs(diffDzPV) > 0.002) {
+         || std::abs(diffDxyPV) > 0.05 || std::abs(diffDzPV) > 0.05) {
         edm::LogWarning("PackedCandidateTrackValidator") << "PV " << pv.position() << " assocPV " << pcVertex.position()
                                                          << "\n"
                                                          << "dxy(PV) phi"
