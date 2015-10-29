@@ -603,9 +603,9 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffPt;
   MonitorElement *h_diffEta;
   MonitorElement *h_diffPhi;
-  MonitorElement *h_diffDxyAssocPV;
+  PackedValueCheck<Float16Helper> h_diffDxyAssocPV;
+  PackedValueCheck<Float16Helper> h_diffDzAssocPV;
   MonitorElement *h_diffDxyPV;
-  MonitorElement *h_diffDzAssocPV;
   MonitorElement *h_diffDzPV;
 
   MonitorElement *h_diffTrackDxy;
@@ -648,6 +648,8 @@ PackedCandidateTrackValidator::PackedCandidateTrackValidator(const edm::Paramete
   slimmedVerticesToken_(consumes<reco::VertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("slimmedVertices"))),
   trackToPackedCandidateToken_(consumes<edm::Association<pat::PackedCandidateCollection>>(iConfig.getUntrackedParameter<edm::InputTag>("trackToPackedCandidateAssociation"))),
   rootFolder_(iConfig.getUntrackedParameter<std::string>("rootFolder")),
+  h_diffDxyAssocPV(RangeAbs(0.001)),
+  h_diffDzAssocPV(RangeAbs(0.001)),
   h_diffCovQoverpQoverp(Range(0.0, 0.13), -15, 0),
   h_diffCovLambdaLambda(Range(0.0, 0.13), -20, -5),
   h_diffCovLambdaDsz(RangeAbs(0.13), -17, -4),
@@ -701,10 +703,14 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffEta    = iBooker.book1D("diffEta",    "PackedCandidate::bestTrack() - reco::Track in eta()",    diffBins, -0.0005, 0.0005); // not equal, keep
   h_diffPhi    = iBooker.book1D("diffPhi",    "PackedCandidate::bestTrack() - reco::Track in phi()",    diffBins, -0.0005, 0.0005); // expect equality within precision
 
-  h_diffDxyAssocPV = iBooker.book1D("diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",           diffBins, -0.002, 0.002); // expect equality within precision
-  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.002, 0.002); // expect equality within precision
-  h_diffDzAssocPV  = iBooker.book1D("diffDzAssocPV",  "(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track", diffBins, -0.002, 0.002); // expect equality within precision
-  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.002, 0.002); // expect equality wihtin precision
+  h_diffDxyAssocPV.book(iBooker, "diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",
+                        40, -0.001, 0.001, // expect equality within precision
+                        50, -0.5, 0.5);
+  h_diffDzAssocPV.book(iBooker, "diffDzAssocPV","(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track",
+                       40, -0.001, 0.001, // expect equality within precision
+                       50, -0.5, 0.5);
+  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.002, 0.002); // expect equality within precision (worse than assocPV)
+  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.002, 0.002); // expect equality wihtin precision (worse than assocPV)
   h_diffTrackDxy   = iBooker.book1D("diffTrackDxy",   "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxy()",          diffBins, -0.2, 0.2); // not equal
   h_diffTrackDz    = iBooker.book1D("diffTrackDz",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dz()",           diffBins, -0.2, 0.2); // not equal
 
@@ -851,16 +857,14 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffEta, trackPc.eta() - track.eta());
     fillNoFlow(h_diffPhi, trackPc.phi() - track.phi());
 
-    const auto diffDzPV       = diffRelative(pcRef->dz(pv.position()) , track.dz(pv.position()));
-    const auto diffDzAssocPV  = diffRelative(pcRef->dzAssociatedPV()  , track.dz(pcVertex.position()));
+    const auto diffDxyAssocPV = h_diffDxyAssocPV.fill(pcRef->dxy( )          , track.dxy(pcVertex.position()), [](double value){return value*100.;});
+    const auto diffDzAssocPV  = h_diffDzAssocPV.fill( pcRef->dzAssociatedPV(), track.dz(pcVertex.position()) , [](double value){return value*100.;});
     const auto diffDxyPV      = diffRelative(pcRef->dxy(pv.position()), track.dxy(pv.position()));
-    const auto diffDxyAssocPV = diffRelative(pcRef->dxy()             , track.dxy(pcVertex.position()));
-    fillNoFlow(h_diffDxyAssocPV, diffDxyAssocPV);
-    fillNoFlow(h_diffDxyPV     , diffDxyPV);
-    fillNoFlow(h_diffDzAssocPV , diffDzAssocPV);
-    fillNoFlow(h_diffDzPV      , diffDzPV);
-    fillNoFlow(h_diffTrackDxy  , diffRelative(trackPc.dxy(), track.dxy()   ));
-    fillNoFlow(h_diffTrackDz   , diffRelative(trackPc.dz() , track.dz()    ));
+    const auto diffDzPV       = diffRelative(pcRef->dz(pv.position()) , track.dz(pv.position()));
+    fillNoFlow(h_diffDxyPV   , diffDxyPV);
+    fillNoFlow(h_diffDzPV    , diffDzPV);
+    fillNoFlow(h_diffTrackDxy, diffRelative(trackPc.dxy(), track.dxy()));
+    fillNoFlow(h_diffTrackDz , diffRelative(trackPc.dz() , track.dz()));
 
     auto fillCov1 = [&](auto& hlp, const int i, const int j) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j));
@@ -972,8 +976,9 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     if(diffNormalizedChi2 < -1 || diffNormalizedChi2 > 0 || diffCharge != 0 || diffHP != 0
        || diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0
        || diffHitPatternHasValidHitInFirstPixelBarrel != 0
-       || std::abs(diffDzPV) > 0.002 || std::abs(diffDzAssocPV) > 0.002
-       || std::abs(diffDxyPV) > 0.002 || std::abs(diffDxyAssocPV) > 0.002
+       || diffDxyAssocPV.outsideExpectedRange()
+       || diffDzAssocPV.outsideExpectedRange()
+       || std::abs(diffDxyPV) > 0.002 || std::abs(diffDzPV) > 0.002
        || diffCovQoverpQoverp.outsideExpectedRange() || diffCovLambdaLambda.outsideExpectedRange()
        || diffCovLambdaDsz.outsideExpectedRange() || diffCovPhiPhi.outsideExpectedRange()
        || diffCovPhiDxy.outsideExpectedRange() || diffCovDxyDxy.outsideExpectedRange()
@@ -1017,11 +1022,13 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << "\n "
                                                        << " lostInnerHits  " << diffLostInnerHits << " " << pcRef->lostInnerHits() << " #"
                                                        << "\n "
-                                                       << " dz(PV) (0.002) " << diffDzPV << " " << pcRef->dz(pv.position()) << " " << track.dz(pv.position())
-                                                       << " dz(assocPV) (0.002) " << diffDzAssocPV << " " << pcRef->dzAssociatedPV() << " " << track.dz(pcVertex.position())
+                                                       << " dxy(assocPV) " << diffDxyAssocPV
+                                                       << "\n "
+                                                       << " dz(assocPV) " << diffDzAssocPV
                                                        << "\n "
                                                        << " dxy(PV) (0.002) " << diffDxyPV << " " << pcRef->dxy(pv.position()) << " " << track.dxy(pv.position())
-                                                       << " dxy(assocPV) (0.002) " << diffDxyAssocPV << " " << pcRef->dxy() << " " << track.dxy(pcVertex.position())
+                                                       << "\n "
+                                                       << " dz(PV) (0.002) " << diffDzPV << " " << pcRef->dz(pv.position()) << " " << track.dz(pv.position())
                                                        << "\n "
                                                        << " cov(qoverp, qoverp)  " << diffCovQoverpQoverp
                                                        << "\n "
@@ -1038,41 +1045,10 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " cov(dxy, dsz) " << diffCovDxyDsz
                                                        << "\n "
                                                        << " cov(dsz, dsz) " << diffCovDszDsz;
-      if(std::abs(diffDzPV) > 0.002 || std::abs(diffDzAssocPV) > 0.002
-         || std::abs(diffDxyPV) > 0.002 || std::abs(diffDxyAssocPV) > 0.002) {
+      if(diffDxyAssocPV.outsideExpectedRange()
+         || diffDzAssocPV.outsideExpectedRange()
+         || std::abs(diffDxyPV) > 0.002 || std::abs(diffDzPV) > 0.002) {
         edm::LogWarning("PackedCandidateTrackValidator") << "PV " << pv.position() << " assocPV " << pcVertex.position()
-                                                         << "\n"
-                                                         << "dz(PV) phi"
-                                                         << "\n"
-                                                         << " track " << DzCalculationPhiPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
-                                                         << "\n"
-                                                         << " PC    " << DzCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
-                                                         << "\n"
-                                                         << " PCvtx " << DzCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
-                                                         << "\n"
-                                                         << "dz(PV) dot"
-                                                         << "\n"
-                                                         << " track " << DzCalculationDotPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
-                                                         << "\n"
-                                                         << " PC    " << DzCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
-                                                         << "\n"
-                                                         << " PCvtx " << DzCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
-                                                         << "\n"
-                                                         << "dz(assocPV) phi"
-                                                         << "\n"
-                                                         << " track " << DzCalculationPhiPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
-                                                         << "\n"
-                                                         << " PC    " << DzCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
-                                                         << "\n"
-                                                         << " PCvtx " << DzCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx())
-                                                         << "\n"
-                                                         << "dz(assocPV) dot"
-                                                         << "\n"
-                                                         << " track " << DzCalculationDotPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
-                                                         << "\n"
-                                                         << " PC    " << DzCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
-                                                         << "\n"
-                                                         << " PCvtx " << DzCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx())
                                                          << "\n"
                                                          << "dxy(PV) phi"
                                                          << "\n"
@@ -1104,7 +1080,39 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                          << "\n"
                                                          << " PC    " << DxyCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
                                                          << "\n"
-                                                         << " PCvtx " << DxyCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx());
+                                                         << " PCvtx " << DxyCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dz(PV) phi"
+                                                         << "\n"
+                                                         << " track " << DzCalculationPhiPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationPhiPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dz(PV) dot"
+                                                         << "\n"
+                                                         << " track " << DzCalculationDotPrinter(track.referencePoint(), pv.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationDotPrinter(pcRef->vertex(), pv.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dz(assocPV) phi"
+                                                         << "\n"
+                                                         << " track " << DzCalculationPhiPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationPhiPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx())
+                                                         << "\n"
+                                                         << "dz(assocPV) dot"
+                                                         << "\n"
+                                                         << " track " << DzCalculationDotPrinter(track.referencePoint(), pcVertex.position(), track.momentum(), track.phi())
+                                                         << "\n"
+                                                         << " PC    " << DzCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phi())
+                                                         << "\n"
+                                                         << " PCvtx " << DzCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx());
       }
 
 
