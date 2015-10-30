@@ -704,7 +704,7 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffIsHighPurity = iBooker.book1D("diffIsHighPurity", "PackedCandidate::bestTrack() - reco::Track in quality(highPurity)", 3, -1.5, 1.5); // expect equality
 
   h_diffPt     = iBooker.book1D("diffPt",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in pt()",     diffBins, -1.1, 1.1); // not equal, keep
-  h_diffEta    = iBooker.book1D("diffEta",    "PackedCandidate::bestTrack() - reco::Track in eta()",    diffBins, -0.0005, 0.0005); // not equal, keep
+  h_diffEta    = iBooker.book1D("diffEta",    "PackedCandidate::bestTrack() - reco::Track in eta()",    diffBins, -0.001, 0.001); // not equal, keep
   h_diffPhi    = iBooker.book1D("diffPhi",    "PackedCandidate::bestTrack() - reco::Track in phi()",    diffBins, -0.0005, 0.0005); // expect equality within precision
 
   h_diffDxyAssocPV.book(iBooker, "diffDxyAssocPV", "(PackedCandidate::dxy() - reco::Track::dxy(assocPV))/reco::Track",
@@ -851,9 +851,10 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffIsHighPurity,  diffHP);
 
     const auto diffPt = diffRelative(trackPc.pt(), track.pt());
+    const auto diffPhi = trackPc.phi() - track.phi();
     fillNoFlow(h_diffPt , diffPt);
     fillNoFlow(h_diffEta, trackPc.eta() - track.eta());
-    fillNoFlow(h_diffPhi, trackPc.phi() - track.phi());
+    fillNoFlow(h_diffPhi, diffPhi);
 
     const auto diffDxyAssocPV = h_diffDxyAssocPV.fill(pcRef->dxy( )          , track.dxy(pcVertex.position()), [](double value){return value*100.;});
     const auto diffDzAssocPV  = h_diffDzAssocPV.fill( pcRef->dzAssociatedPV(), track.dz(pcVertex.position()) , [](double value){return value*100.;});
@@ -972,8 +973,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
 
     // Print warning if there are differences outside the expected range
     if(diffNormalizedChi2 < -1 || diffNormalizedChi2 > 0 || diffCharge != 0 || diffHP != 0
-       || diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0
-       || diffHitPatternHasValidHitInFirstPixelBarrel != 0
+       || std::abs(diffPhi) > 0.0005
        || diffDxyAssocPV.outsideExpectedRange()
        || diffDzAssocPV.outsideExpectedRange()
        || std::abs(diffDxyPV) > 0.05 || std::abs(diffDzPV) > 0.05
@@ -981,6 +981,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
        || diffCovLambdaDsz.outsideExpectedRange() || diffCovPhiPhi.outsideExpectedRange()
        || diffCovPhiDxy.outsideExpectedRange() || diffCovDxyDxy.outsideExpectedRange()
        || diffCovDxyDsz.outsideExpectedRange() || diffCovDszDsz.outsideExpectedRange()
+       || diffNumberOfPixelHits != 0 || diffNumberOfHits != 0 || diffLostInnerHits != 0
+       || diffHitPatternHasValidHitInFirstPixelBarrel != 0
        ) {
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
@@ -1019,14 +1021,15 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " hitPattern.hasValidHitInFirstPixelBarrel " << diffHitPatternHasValidHitInFirstPixelBarrel << " " << trackPc.hitPattern().hasValidHitInFirstPixelBarrel() << " " << track.hitPattern().hasValidHitInFirstPixelBarrel()
                                                        << "\n "
                                                        << " lostInnerHits  " << diffLostInnerHits << " " << pcRef->lostInnerHits() << " #"
+                                                       << " phi " << diffPhi << " " << trackPc.phi() << " " << track.phi()
                                                        << "\n "
                                                        << " dxy(assocPV) " << diffDxyAssocPV
                                                        << "\n "
                                                        << " dz(assocPV) " << diffDzAssocPV
                                                        << "\n "
-                                                       << " dxy(PV) (0.002) " << diffDxyPV << " " << pcRef->dxy(pv.position()) << " " << track.dxy(pv.position())
+                                                       << " dxy(PV) (0.05) " << diffDxyPV << " " << pcRef->dxy(pv.position()) << " " << track.dxy(pv.position())
                                                        << "\n "
-                                                       << " dz(PV) (0.002) " << diffDzPV << " " << pcRef->dz(pv.position()) << " " << track.dz(pv.position())
+                                                       << " dz(PV) (0.05) " << diffDzPV << " " << pcRef->dz(pv.position()) << " " << track.dz(pv.position())
                                                        << "\n "
                                                        << " cov(qoverp, qoverp)  " << diffCovQoverpQoverp
                                                        << "\n "
