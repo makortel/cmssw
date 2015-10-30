@@ -1046,6 +1046,28 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " cov(dxy, dsz) " << diffCovDxyDsz
                                                        << "\n "
                                                        << " cov(dsz, dsz) " << diffCovDszDsz;
+
+      /*
+      if(diffDzAssocPV.outsideExpectedRange()) {
+        const double PC_pzpt = pcRef->pz()/pcRef->pt();
+        const double track_pzpt = track.pz()/track.pt();
+
+        const double PC_dz = pcRef->dzAssociatedPV();
+        //const double PC_dz_zdiff = pcRef->vz()-pcVertex.position().z();
+        const double PC_dz_zdiff = track.vz()-pcVertex.position().z(); // need to use track.vz also here, since that is used in packVtx()
+
+        const double track_dz = track.dz(pcVertex.position());
+        const double track_dz_zdiff = track.vz()-pcVertex.position().z();
+
+        edm::LogWarning("PackedCandidateTrackValidator") << "PC pzpt " << PC_pzpt << " track " << track_pzpt
+                                                         << "\n"
+                                                         << "PC dz(assocPV)    " << PC_dz << " /PC*track pzpt " << ((PC_dz-PC_dz_zdiff)/PC_pzpt*track_pzpt + PC_dz_zdiff)
+                                                         << "\n"
+                                                         << "track dz(assocPV) " << track_dz << " /track*PC pzpt " << ((track_dz-track_dz_zdiff)/track_pzpt*PC_pzpt + track_dz_zdiff);
+      }
+      */
+
+      /*
       if(diffDxyAssocPV.outsideExpectedRange()
          || diffDzAssocPV.outsideExpectedRange()
          || std::abs(diffDxyPV) > 0.05 || std::abs(diffDzPV) > 0.05) {
@@ -1115,7 +1137,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                          << "\n"
                                                          << " PCvtx " << DzCalculationDotPrinter(pcRef->vertex(), pcVertex.position(), pcRef->momentum(), pcRef->phiAtVtx());
       }
-
+      */
 
       /*
                                                        << "\n"
