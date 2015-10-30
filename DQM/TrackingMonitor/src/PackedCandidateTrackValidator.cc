@@ -654,8 +654,8 @@ PackedCandidateTrackValidator::PackedCandidateTrackValidator(const edm::Paramete
   rootFolder_(iConfig.getUntrackedParameter<std::string>("rootFolder")),
   h_diffDxyAssocPV(RangeAbs(0.001)),
   h_diffDzAssocPV(RangeAbs(0.001)),
-  h_diffCovQoverpQoverp(Range(0.0, 0.13), -15, 0),
-  h_diffCovLambdaLambda(Range(0.0, 0.13), -20, -5),
+  h_diffCovQoverpQoverp(Range(-1e-6, 0.13), -15, 0),  // despite of ceil in pack, there is rounding in double->float
+  h_diffCovLambdaLambda(Range(-1e-6, 0.13), -20, -5), // despite of ceil in pack, there is rounding in double->float
   h_diffCovLambdaDsz(RangeAbs(0.13), -17, -4),
   h_diffCovPhiPhi(RangeAbs(0.13), -15, 0),
   h_diffCovPhiDxy(RangeAbs(0.13), -17, -4),
