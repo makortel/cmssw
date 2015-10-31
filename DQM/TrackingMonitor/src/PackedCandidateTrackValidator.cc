@@ -17,6 +17,7 @@
 #include "DataFormats/PatCandidates/interface/liblogintpack.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
 
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
@@ -851,7 +852,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     fillNoFlow(h_diffIsHighPurity,  diffHP);
 
     const auto diffPt = diffRelative(trackPc.pt(), track.pt());
-    const auto diffPhi = trackPc.phi() - track.phi();
+    const auto diffPhi = reco::deltaPhi(trackPc.phi(), track.phi());
     fillNoFlow(h_diffPt , diffPt);
     fillNoFlow(h_diffEta, trackPc.eta() - track.eta());
     fillNoFlow(h_diffPhi, diffPhi);
@@ -973,7 +974,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
 
     // Print warning if there are differences outside the expected range
     if(diffNormalizedChi2 < -1 || diffNormalizedChi2 > 0 || diffCharge != 0 || diffHP != 0
-       || std::abs(diffPhi) > 0.0005
+       || std::abs(diffPhi) > 5e-4
        || diffDxyAssocPV.outsideExpectedRange()
        || diffDzAssocPV.outsideExpectedRange()
        || std::abs(diffDxyPV) > 0.05 || std::abs(diffDzPV) > 0.05
@@ -987,7 +988,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
                                                        << "\n"
-                                                       << "  ptError " << track.ptError() << " etaError " << track.etaError() << " phi " << track.phiError()
+                                                       << "  ptError " << track.ptError() << " etaError " << track.etaError() << " phiError " << track.phiError()
                                                        << "\n"
                                                        << "  refpoint " << track.referencePoint() << " momentum " << track.momentum()
                                                        << "\n"
@@ -998,9 +999,9 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " lost outer hits " << track.hitPattern().numberOfLostHits(reco::HitPattern::MISSING_OUTER_HITS)
                                                        << " hitpattern " << HitPatternPrinter(track)
                                                        << " \n"
-                                                       << " PC " << pcRef.id() << ":" << pcRef.key() << " track pt " << trackPc.pt() << " eta " << trackPc.eta() << " phi " << trackPc.phi() << " chi2 " << trackPc.chi2() << " ndof " << trackPc.ndof() << " pdgId " << pcRef->pdgId() << " mass " << pcRef->mass()
+                                                       << " PC " << pcRef.id() << ":" << pcRef.key() << " track pt " << trackPc.pt() << " eta " << trackPc.eta() << " phi " << trackPc.phi() << " (PC " << pcRef->phi() << ") chi2 " << trackPc.chi2() << " ndof " << trackPc.ndof() << " pdgId " << pcRef->pdgId() << " mass " << pcRef->mass()
                                                        << "\n"
-                                                       << "  ptError " << trackPc.ptError() << " etaError " << trackPc.etaError() << " phi " << trackPc.phiError()
+                                                       << "  ptError " << trackPc.ptError() << " etaError " << trackPc.etaError() << " phiError " << trackPc.phiError()
                                                        << "\n"
                                                        << "  pc.vertex " << pcRef->vertex() << " momentum " << pcRef->momentum() << " track " << trackPc.momentum()
                                                        << "\n"
@@ -1021,7 +1022,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << " hitPattern.hasValidHitInFirstPixelBarrel " << diffHitPatternHasValidHitInFirstPixelBarrel << " " << trackPc.hitPattern().hasValidHitInFirstPixelBarrel() << " " << track.hitPattern().hasValidHitInFirstPixelBarrel()
                                                        << "\n "
                                                        << " lostInnerHits  " << diffLostInnerHits << " " << pcRef->lostInnerHits() << " #"
-                                                       << " phi " << diffPhi << " " << trackPc.phi() << " " << track.phi()
+                                                       << " phi (5e-4) " << diffPhi << " " << trackPc.phi() << " " << track.phi()
                                                        << "\n "
                                                        << " dxy(assocPV) " << diffDxyAssocPV
                                                        << "\n "
