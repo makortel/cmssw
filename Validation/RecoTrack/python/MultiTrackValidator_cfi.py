@@ -58,4 +58,6 @@ multiTrackValidator = cms.EDAnalyzer(
     ### output configuration
     dirName = cms.string('Tracking/Track/'),
     outputFile = cms.string(''),
+
+    doPlotsOnlyForTruePV = cms.untracked.bool(False),
 )

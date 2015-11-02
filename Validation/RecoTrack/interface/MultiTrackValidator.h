@@ -43,6 +43,7 @@ class MultiTrackValidator : public edm::EDAnalyzer, protected MultiTrackValidato
 
   bool useGsf;
   bool runStandalone;
+  const bool doPlotsOnlyForTruePV_;
   // select tracking particles 
   //(i.e. "denominator" of the efficiency ratio)
   TrackingParticleSelector tpSelector;				      

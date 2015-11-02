@@ -44,7 +44,8 @@ typedef edm::Ref<edm::HepMCProduct, HepMC::GenParticle > GenParticleRef;
 
 MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset):
   MultiTrackValidatorBase(pset),
-  parametersDefinerIsCosmic_(parametersDefiner == "CosmicParametersDefinerForTP")
+  parametersDefinerIsCosmic_(parametersDefiner == "CosmicParametersDefinerForTP"),
+  doPlotsOnlyForTruePV_(pset.getUntrackedParameter<bool>("doPlotsOnlyForTruePV"))
 {
   //theExtractor = IsoDepositExtractorFactory::get()->create( extractorName, extractorPSet);
 
@@ -225,6 +226,8 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
       }
     }
   }
+  if(doPlotsOnlyForTruePV_ && !thePVposition)
+    return;
   /*
   if(!isPVmatched)
     return;
