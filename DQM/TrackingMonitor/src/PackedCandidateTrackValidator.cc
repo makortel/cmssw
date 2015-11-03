@@ -988,7 +988,7 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
 
       edm::LogWarning("PackedCandidateTrackValidator") << "Track " << i << " pt " << track.pt() << " eta " << track.eta() << " phi " << track.phi() << " chi2 " << track.chi2() << " ndof " << track.ndof()
                                                        << "\n"
-                                                       << "  ptError " << track.ptError() << " etaError " << track.etaError() << " phiError " << track.phiError()
+                                                       << "  ptError " << track.ptError() << " etaError " << track.etaError() << " phiError " << track.phiError() << " dxyError " << track.dxyError() << " dzError " << track.dzError()
                                                        << "\n"
                                                        << "  refpoint " << track.referencePoint() << " momentum " << track.momentum()
                                                        << "\n"
@@ -1007,6 +1007,9 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
                                                        << "\n"
                                                        << "  dxy " << trackPc.dxy() << " dz " << trackPc.dz() << " pc.dz " << pcRef->dz()
                                                        << " dxyError " << trackPc.dxyError() << " dzError " << trackPc.dzError()
+                                                       << "\n"
+                                                       << "  dxy(PV) " << trackPc.dxy(pv.position()) << " dz(PV) " << trackPc.dz(pv.position())
+                                                       << " dxy(assocPV) " << trackPc.dxy(pcVertex.position()) << " dz(assocPV) " << trackPc.dz(pcVertex.position())
                                                        << "\n"
                                                        << " (diff PackedCandidate track)"
                                                        << " highPurity " << diffHP << " " << trackPc.quality(reco::TrackBase::highPurity) << " " << track.quality(reco::TrackBase::highPurity)
