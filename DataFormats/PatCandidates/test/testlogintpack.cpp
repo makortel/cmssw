@@ -21,13 +21,15 @@ public:
 private:
 };
 
-void testlogintpack::test() {
-  auto pack = [](double x){ return logintpack::pack8log(x, -15, 0); };
-  auto packceil = [](double x){ return logintpack::pack8logCeil(x, -15, 0); };
-  auto packclosed = [](double x){ return logintpack::pack8log(x, -15, 0); };
-  auto unpack = [](int8_t x){ return logintpack::unpack8log(x, -15, 0); };
-  auto unpackclosed = [](int8_t x){ return logintpack::unpack8logClosed(x, -15, 0); };
+namespace {
+  double pack(double x)         { return logintpack::pack8log        (x, -15, 0); }
+  double packceil(double x)     { return logintpack::pack8logCeil    (x, -15, 0); }
+  double packclosed(double x)   { return logintpack::pack8log        (x, -15, 0); }
+  double unpack(int8_t x)       { return logintpack::unpack8log      (x, -15, 0); }
+  double unpackclosed(int8_t x) { return logintpack::unpack8logClosed(x, -15, 0); }
+}
 
+void testlogintpack::test() {
   CPPUNIT_ASSERT(pack(std::exp(-15.f)) == logintpack::smallestPositive);
   CPPUNIT_ASSERT(packceil(std::exp(-15.f)) == logintpack::smallestPositive);
   CPPUNIT_ASSERT(packclosed(std::exp(-15.f)) == logintpack::smallestPositive);
