@@ -59,13 +59,21 @@ void testlogintpack::test() {
   CPPUNIT_ASSERT(packclosed(-largestValueClosed) == -127);
   CPPUNIT_ASSERT(unpackclosed(-127) == -largestValueClosed);
 
-  // The following fails currently, because of rounding in
-  // double->float in pack8logCeul,not sure if that is intended or not
+  const float someValue = std::exp(-15.f + 1/128.f*15.f);
+  CPPUNIT_ASSERT(unpack(packceil(someValue)) == someValue);
+  union { float flt; uint32_t i32; } conv;
+  conv.flt = someValue;
+  conv.i32 += 1;
+  // The someValue+1..5 ulps fail currently, because of rounding in
+  // float-log in pack8logCeil; to be enabled once the pack8logCeil gets fixed
   /*
-  const double someValue = std::exp(-15.f + 1/128.f*15.f);
-  const double someValuePlusTiny = someValue + 5.6e-14;
-  CPPUNIT_ASSERT(unpack(packceil(someValuePlusTiny)) >= someValuePlusTiny);
+  const float someValuePlus1Ulp = conv.flt;
+  CPPUNIT_ASSERT(unpack(packceil(someValuePlus1Ulp)) >= someValuePlus1Ulp);
   */
+  conv.i32 += 5;
+  const float someValuePlus6Ulp = conv.flt;
+  CPPUNIT_ASSERT(unpack(packceil(someValuePlus6Ulp)) >= someValuePlus6Ulp);
+
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(testlogintpack);
