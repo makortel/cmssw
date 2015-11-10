@@ -613,8 +613,8 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffDxyPV;
   MonitorElement *h_diffDzPV;
 
-  MonitorElement *h_diffTrackDxy;
-  MonitorElement *h_diffTrackDz;
+  MonitorElement *h_diffTrackDxyAssocPV;
+  MonitorElement *h_diffTrackDzAssocPV;
 
   PackedValueCheck<LogIntHelper> h_diffCovQoverpQoverp;
   PackedValueCheck<LogIntHelper> h_diffCovLambdaLambda;
@@ -719,8 +719,8 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
                        50, -0.5, 0.5);
   h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.05, 0.05); // expect equality within precision (worse than assocPV)
   h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.05, 0.05); // expect equality wihtin precision (worse than assocPV)
-  h_diffTrackDxy   = iBooker.book1D("diffTrackDxy",   "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxy()",          diffBins, -0.2, 0.2); // not equal
-  h_diffTrackDz    = iBooker.book1D("diffTrackDz",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dz()",           diffBins, -0.2, 0.2); // not equal
+  h_diffTrackDxyAssocPV   = iBooker.book1D("diffTrackDxyAssocPV",   "(PackedCandidate::bestTrack()::dxy(assocPV)) - reco::Track::dxy(assocPV))/reco::Track",         diffBins, -0.01, 0.01); // not equal
+  h_diffTrackDzAssocPV    = iBooker.book1D("diffTrackDzAssocPV",    "(PackedCandidate::bestTrack()::dz(assocPV)) - reco::Track::dz(assocPV))/reco::Track",           diffBins, -0.01, 0.01); // not equal
 
   h_diffCovQoverpQoverp.book(iBooker, "diffCovQoverpQoverp", "(PackedCandidate::bestTrack() - reco::Track)/reco::track in cov(qoverp, qoverp)",
                              40, -0.05, 0.15, // expect equality within precision (worst precision is exp(1/128*15) =~ 12 %
@@ -869,8 +869,8 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     const auto diffDzPV       = diffRelative(pcRef->dz(pv.position()) , track.dz(pv.position()));
     fillNoFlow(h_diffDxyPV   , diffDxyPV);
     fillNoFlow(h_diffDzPV    , diffDzPV);
-    fillNoFlow(h_diffTrackDxy, diffRelative(trackPc.dxy(), track.dxy()));
-    fillNoFlow(h_diffTrackDz , diffRelative(trackPc.dz() , track.dz()));
+    fillNoFlow(h_diffTrackDxyAssocPV, diffRelative(trackPc.dxy(pcVertex.position()), track.dxy(pcVertex.position())));
+    fillNoFlow(h_diffTrackDzAssocPV , diffRelative(trackPc.dz(pcVertex.position()) , track.dz(pcVertex.position())));
 
     auto fillCov1 = [&](auto& hlp, const int i, const int j) {
       return hlp.fill(trackPc.covariance(i, j), track.covariance(i, j));
