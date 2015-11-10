@@ -629,6 +629,9 @@ class PackedCandidateTrackValidator: public DQMEDAnalyzer{
   MonitorElement *h_diffDszError;
   MonitorElement *h_diffDzError;
 
+  MonitorElement *h_diffTrackDxyError;
+  MonitorElement *h_diffTrackDzError;
+
   MonitorElement *h_diffPtError;
   MonitorElement *h_diffEtaError;
 
@@ -747,6 +750,9 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffDxyError    = iBooker.book1D("diffDxyError", "(PackedCandidate::dxyError() - reco::Track::dxyError())/reco::Track", 40, -0.001, 0.001); // expect equality within precision
   h_diffDszError    = iBooker.book1D("diffDszError", "(PackedCandidate::dzError() - reco::Track::dszError())/reco::Track",  40, -0.001, 0.001);  // ideally, not equal, but for now they are
   h_diffDzError     = iBooker.book1D("diffDzError",  "(PackedCandidate::dzError() - reco::Track::dzError())/reco::Track",   40, -0.001, 0.001); // expect equality within precision (not currently the case)
+
+  h_diffTrackDxyError    = iBooker.book1D("diffTrackDxyError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dxyError()",    40, -0.001, 0.001); // expect equality within precision
+  h_diffTrackDzError     = iBooker.book1D("diffTrackDzError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in dzError()",     40, -0.05, 0.05); // not equal
 
   h_diffPtError     = iBooker.book1D("diffPtError",     "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in ptError()",     diffBins, -1.1, 1.1); // not equal
   h_diffEtaError    = iBooker.book1D("diffEtaError",    "(PackedCandidate::bestTrack() - reco::Track)/reco::Track in etaError()",    60, -0.15, 0.15); // not equal
@@ -889,9 +895,11 @@ void PackedCandidateTrackValidator::analyze(const edm::Event& iEvent, const edm:
     if(isInRange(diffCovDszDsz.status())) {
       fillNoFlow(h_diffDszError, diffRelative(pcRef->dzError(), track.dszError()));
       fillNoFlow(h_diffDzError,  diffRelative(pcRef->dzError(), track.dzError()));
+      fillNoFlow(h_diffTrackDzError, diffRelative(trackPc.dzError(), track.dzError()));
     }
     if(isInRange(diffCovDxyDxy.status())) {
       fillNoFlow(h_diffDxyError, diffRelative(pcRef->dxyError(), track.dxyError()));
+      fillNoFlow(h_diffTrackDxyError, diffRelative(trackPc.dxyError(), track.dxyError()));
     }
     fillNoFlow(h_diffPtError    , diffRelative(trackPc.ptError()    , track.ptError()    ));
     fillNoFlow(h_diffEtaError   , diffRelative(trackPc.etaError()   , track.etaError()   ));
