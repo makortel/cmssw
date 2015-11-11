@@ -717,8 +717,8 @@ void PackedCandidateTrackValidator::bookHistograms(DQMStore::IBooker& iBooker, e
   h_diffDzAssocPV.book(iBooker, "diffDzAssocPV","(PackedCandidate::dzAssociatedPV() - reco::Track::dz(assocPV))/reco::Track",
                        40, -0.001, 0.001, // expect equality within precision
                        50, -0.5, 0.5);
-  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.05, 0.05); // expect equality within precision (worse than assocPV)
-  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.05, 0.05); // expect equality wihtin precision (worse than assocPV)
+  h_diffDxyPV      = iBooker.book1D("diffDxyPV",      "(PackedCandidate::dxy(PV) - reco::Track::dxy(PV))/reco::Track",              diffBins, -0.01, 0.01); // expect equality within precision (worse than assocPV)
+  h_diffDzPV       = iBooker.book1D("diffDzPV",       "(PackedCandidate::dz(PV) - reco::Track::dz(PV))/reco::Track",                diffBins, -0.01, 0.01); // expect equality wihtin precision (worse than assocPV)
   h_diffTrackDxyAssocPV   = iBooker.book1D("diffTrackDxyAssocPV",   "(PackedCandidate::bestTrack()::dxy(assocPV)) - reco::Track::dxy(assocPV))/reco::Track",         diffBins, -0.01, 0.01); // not equal
   h_diffTrackDzAssocPV    = iBooker.book1D("diffTrackDzAssocPV",    "(PackedCandidate::bestTrack()::dz(assocPV)) - reco::Track::dz(assocPV))/reco::Track",           diffBins, -0.01, 0.01); // not equal
 
