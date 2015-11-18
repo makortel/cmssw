@@ -82,6 +82,7 @@ namespace
 	{
 		return collection[index];
 	}
+
 } // end of the unnamed namespace
 
 QuickTrackAssociatorByHitsImpl::QuickTrackAssociatorByHitsImpl(edm::EDProductGetter const& productGetter,
