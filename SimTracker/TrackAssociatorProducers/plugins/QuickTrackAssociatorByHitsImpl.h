@@ -24,8 +24,8 @@ namespace edm {
  *
  * Configuration parameters:
  *
- * AbsoluteNumberOfHits - bool - if true, Quality_SimToReco and Cut_RecoToSim are the absolute number of shared hits required for
- * association, not the percentage.
+ * AbsoluteNumberOfHits - bool - If true, Quality_SimToReco and Quality_RecoToSim are the absolute number of shared hits required for
+ * association, not the percentage. See also PixelHitWeight.
  *
  * Quality_SimToReco - double - The minimum amount of shared hits required, as a percentage of either the reconstructed hits or
  * simulated hits (see SimToRecoDenominator), for the track to be considered associated during a call to associateSimToReco. See
@@ -34,13 +34,26 @@ namespace edm {
  * Purity_SimToReco - double - The minimum amount of shared hits required, as a percentage of the reconstructed hits, for the
  * track to be considered associated during a call to associateSimToReco. Has no effect if AbsoluteNumberOfHits is true.
  *
- * Cut_RecoToSim - double - The minimum amount of shared hits required, as a percentage of the reconstructed hits, for the track
+ * Quality_RecoToSim - double - The minimum amount of shared hits required, as a percentage of the reconstructed hits, for the track
  * to be considered associated during a call to associateRecoToSim. See also AbsoluteNumberOfHits.
+ *
+ * Purity_RecoToSim - double - The minimum amount of shared hits required, as percentage of simulated hits, for the track
+ * to be considered associated during a call to associateRecoToSim. Has an effect only if AbsoluteNumberOfHits is false,
+ * and RecoToSimDenominator is "recoToSim"
  *
  * ThreeHitTracksAreSpecial - bool - If true, tracks with 3 hits must have all their hits associated.
  *
- * SimToRecoDenominator - string - Must be either "sim" or "reco". If "sim" Quality_SimToReco is the percentage of simulated hits
- * that need to be shared. If "reco" then it's the percentage of reconstructed hits (i.e. same as Purity_SimToReco).
+ * PixelHitWeight - double - Weight of pixel hits for the number of simulated hits, reconstructed hits, and shared hits. If AbsoluteNumberOfHits
+ * is true, this needs to be one (exception is raised if it is not).
+ *
+ * SimToRecoDenominator - string - Must be either "sim", "reco", or "recoOrSim". If "sim" Quality_SimToReco is the percentage of simulated hits
+ * that need to be shared. If "reco" then it's the percentage of reconstructed hits (i.e. same as Purity_SimToReco). If "recoOrSim", either
+ * Quality_SimToReco needs to be larger than the percentage of simulated hits, or Purity_SimToReco needs to be larger than the percentage of
+ * reconstructed hits.
+ *
+ * RecoToSimDenominator - string - Must be either "reco" or "recoOrSim". If "reco", Quality_RecoToSim is the percentage of reconstructed hits
+ * that need to be shared. If "recoOrSim", either Quality_RecoToSim needs to be larger than the percentage of reconstructed hits, or
+ * Purity_RecoToSim needs to be larger than the percentage of simulated hits.
  *
  * associatePixel - bool - Passed on to the hit associator.
  *
@@ -60,6 +73,7 @@ namespace edm {
  * Association for TrajectorySeeds added by Giuseppe Cerati sometime between 2011 and 2013.
  * Functionality to associate using pre calculated cluster to TrackingParticle maps added by Subir Sarker sometime in 2013.
  * Overhauled to remove mutables to make it thread safe by Mark Grimes 01/May/2014.
+ * Added PixelHitWeight, Purity_RecoToSim, and RecoToSimDenominator by Matti Kortelainen Nov/2015.
  */
 class QuickTrackAssociatorByHitsImpl : public reco::TrackToTrackingParticleAssociatorBaseImpl
 {
