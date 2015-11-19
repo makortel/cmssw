@@ -2,8 +2,10 @@ import FWCore.ParameterSet.Config as cms
 
 quickTrackAssociatorByHits = cms.EDProducer("QuickTrackAssociatorByHitsProducer",
 	AbsoluteNumberOfHits = cms.bool(False),
-	Cut_RecoToSim = cms.double(0.75),
-	SimToRecoDenominator = cms.string('reco'), # either "sim" or "reco"
+	Quality_RecoToSim = cms.double(0.75),
+	Purity_RecoToSim = cms.double(0.75),
+	RecoToSimDenominator = cms.string('reco'), # either "reco" or "recoOrSim"
+	SimToRecoDenominator = cms.string('reco'), # either "sim", "reco", or "recoOrSim"
 	Quality_SimToReco = cms.double(0.5),
 	Purity_SimToReco = cms.double(0.75),
 	ThreeHitTracksAreSpecial = cms.bool(True),

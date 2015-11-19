@@ -59,8 +59,10 @@ class QuickTrackAssociatorByHitsProducer : public edm::global::EDProducer<> {
   double qualitySimToReco_;
   double puritySimToReco_;
   double pixelHitWeight_;
-  double cutRecoToSim_;
+  double qualityRecoToSim_;
+  double purityRecoToSim_;
   QuickTrackAssociatorByHitsImpl::SimToRecoDenomType simToRecoDenominator_;
+  QuickTrackAssociatorByHitsImpl::SimToRecoDenomType recoToSimDenominator_;
   bool threeHitTracksAreSpecial_;
   bool useClusterTPAssociation_;
   bool absoluteNumberOfHits_;
@@ -84,7 +86,8 @@ QuickTrackAssociatorByHitsProducer::QuickTrackAssociatorByHitsProducer(const edm
   qualitySimToReco_( iConfig.getParameter<double>( "Quality_SimToReco" ) ),
   puritySimToReco_( iConfig.getParameter<double>( "Purity_SimToReco" ) ),
   pixelHitWeight_( iConfig.getParameter<double>( "PixelHitWeight" ) ),
-  cutRecoToSim_( iConfig.getParameter<double>( "Cut_RecoToSim" ) ),
+  qualityRecoToSim_( iConfig.getParameter<double>( "Quality_RecoToSim" ) ),
+  purityRecoToSim_( iConfig.getParameter<double>( "Purity_RecoToSim" ) ),
   threeHitTracksAreSpecial_( iConfig.getParameter<bool>( "ThreeHitTracksAreSpecial" ) ),
   useClusterTPAssociation_( iConfig.getParameter<bool>( "useClusterTPAssociation" ) ),
   absoluteNumberOfHits_( iConfig.getParameter<bool>( "AbsoluteNumberOfHits" ) )
@@ -97,7 +100,13 @@ QuickTrackAssociatorByHitsProducer::QuickTrackAssociatorByHitsProducer(const edm
   std::string denominatorString=iConfig.getParameter<std::string>("SimToRecoDenominator");
   if( denominatorString=="sim" ) simToRecoDenominator_=QuickTrackAssociatorByHitsImpl::denomsim;
   else if( denominatorString=="reco" ) simToRecoDenominator_=QuickTrackAssociatorByHitsImpl::denomreco;
-  else throw cms::Exception( "QuickTrackAssociatorByHitsImpl" ) << "SimToRecoDenominator not specified as sim or reco";
+  else if( denominatorString=="recoOrSim" ) simToRecoDenominator_=QuickTrackAssociatorByHitsImpl::denomRecoOrSim;
+  else throw cms::Exception( "QuickTrackAssociatorByHitsImpl" ) << "SimToRecoDenominator not specified as sim, reco, or recoOrSim";
+
+  denominatorString=iConfig.getParameter<std::string>("RecoToSimDenominator");
+  if( denominatorString=="reco" ) recoToSimDenominator_=QuickTrackAssociatorByHitsImpl::denomreco;
+  else if( denominatorString=="recoOrSim" ) recoToSimDenominator_=QuickTrackAssociatorByHitsImpl::denomRecoOrSim;
+  else throw cms::Exception( "QuickTrackAssociatorByHitsImpl" ) << "RecoToSimDenominator not specified as reco or recoOrSim";
   
   //
   // Do some checks on whether UseGrouped or UseSplitting have been set. They're not used
@@ -188,9 +197,11 @@ QuickTrackAssociatorByHitsProducer::produce(edm::StreamID, edm::Event& iEvent, c
                                                                 qualitySimToReco_,
                                                                 puritySimToReco_,
                                                                 pixelHitWeight_,
-                                                                cutRecoToSim_,
+                                                                qualityRecoToSim_,
+                                                                purityRecoToSim_,
                                                                 threeHitTracksAreSpecial_,
-                                                                simToRecoDenominator_);
+                                                                simToRecoDenominator_,
+                                                                recoToSimDenominator_);
 
    auto toPut = std::make_unique<reco::TrackToTrackingParticleAssociator>(std::move(impl));
    iEvent.put(std::move(toPut));

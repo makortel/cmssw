@@ -64,7 +64,7 @@ namespace edm {
 class QuickTrackAssociatorByHitsImpl : public reco::TrackToTrackingParticleAssociatorBaseImpl
 {
 public:
-  enum SimToRecoDenomType {denomnone,denomsim,denomreco};
+  enum SimToRecoDenomType {denomnone,denomsim,denomreco,denomRecoOrSim};
 
   QuickTrackAssociatorByHitsImpl(edm::EDProductGetter const& productGetter,
                                  std::unique_ptr<const TrackerHitAssociator> hitAssoc,
@@ -72,10 +72,12 @@ public:
                                  bool absoluteNumberOfHits,
                                  double qualitySimToReco,
                                  double puritySimToReco,
-                                 double cutRecoToSim,
+                                 double qualityRecoToSim,
+                                 double purityRecoToSim,
                                  double pixelHitWeight,
                                  bool threeHitTracksAreSpecial,
-                                 SimToRecoDenomType simToRecoDenominator);
+                                 SimToRecoDenomType simToRecoDenominator,
+                                 SimToRecoDenomType recoToSimDenominator);
   
   virtual
     reco::RecoToSimCollection associateRecoToSim( const edm::Handle<edm::View<reco::Track> >& trackCollectionHandle,
@@ -198,8 +200,10 @@ public:
   double qualitySimToReco_;
   double puritySimToReco_;
   double pixelHitWeight_;
-  double cutRecoToSim_;
+  double qualityRecoToSim_;
+  double purityRecoToSim_;
   SimToRecoDenomType simToRecoDenominator_;
+  SimToRecoDenomType recoToSimDenominator_;
   bool threeHitTracksAreSpecial_;
   bool absoluteNumberOfHits_;
   

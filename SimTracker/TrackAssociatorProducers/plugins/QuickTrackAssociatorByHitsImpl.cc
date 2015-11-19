@@ -93,17 +93,21 @@ QuickTrackAssociatorByHitsImpl::QuickTrackAssociatorByHitsImpl(edm::EDProductGet
                                                                double qualitySimToReco,
                                                                double puritySimToReco,
                                                                double pixelHitWeight,
-                                                               double cutRecoToSim,
+                                                               double qualityRecoToSim,
+                                                               double purityRecoToSim,
                                                                bool threeHitTracksAreSpecial,
-                                                               SimToRecoDenomType simToRecoDenominator):
+                                                               SimToRecoDenomType simToRecoDenominator,
+                                                               SimToRecoDenomType recoToSimDenominator):
   productGetter_(&productGetter),
   hitAssociator_(std::move(hitAssoc)),
   clusterToTPMap_(clusterToTPMap),
   qualitySimToReco_(qualitySimToReco),
   puritySimToReco_(puritySimToReco),
   pixelHitWeight_(pixelHitWeight),
-  cutRecoToSim_(cutRecoToSim),
-  simToRecoDenominator_(simToRecoDenominator) ,
+  qualityRecoToSim_(qualityRecoToSim),
+  purityRecoToSim_(purityRecoToSim),
+  simToRecoDenominator_(simToRecoDenominator),
+  recoToSimDenominator_(recoToSimDenominator),
   threeHitTracksAreSpecial_(threeHitTracksAreSpecial),
   absoluteNumberOfHits_(absoluteNumberOfHits)
   {}
@@ -164,8 +168,18 @@ reco::RecoToSimCollection QuickTrackAssociatorByHitsImpl::associateRecoToSimImpl
 			const edm::Ref<TrackingParticleCollection>& trackingParticleRef=iTrackingParticleQualityPair->first;
 			double numberOfSharedHits=iTrackingParticleQualityPair->second;
 			double numberOfValidTrackHits=weightedNumberOfTrackHits(*pTrack);
+			size_t numberOfSimulatedHits=0; // Set a few lines below, but only if required.
 
 			if( numberOfSharedHits == 0.0 ) continue; // No point in continuing if there was no association
+
+			if( simToRecoDenominator_ == denomRecoOrSim ) // the numberOfSimulatedHits is not always required, so can skip counting in some circumstances
+			{
+				// Note that in the standard TrackAssociatorByHits, all of the hits in associatedTrackingParticleHits are checked for
+				// various things.  I'm not sure what these checks are for but they depend on the UseGrouping and UseSplitting settings.
+				// This associator works as though both UseGrouping and UseSplitting were set to true, i.e. just counts the number of
+				// hits in the tracker.
+				numberOfSimulatedHits=trackingParticleRef->numberOfTrackerHits();
+			}
 
 			//if electron subtract double counting
 			if( abs( trackingParticleRef->pdgId() ) == 11 && (trackingParticleRef->g4Track_end() - trackingParticleRef->g4Track_begin()) > 1 )
@@ -173,11 +187,23 @@ reco::RecoToSimCollection QuickTrackAssociatorByHitsImpl::associateRecoToSimImpl
 				numberOfSharedHits-=getDoubleCount( hitOrClusterAssociator, pTrack->recHitsBegin(), pTrack->recHitsEnd(), trackingParticleRef );
 			}
 
-			double quality;
+			double quality = numberOfValidTrackHits != 0.0 ? numberOfSharedHits/numberOfValidTrackHits : 0.0;
+			double purity  = numberOfSimulatedHits != 0    ? numberOfSharedHits/numberOfSimulatedHits  : 0.0;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
-			else if( numberOfValidTrackHits != 0.0 ) quality = numberOfSharedHits / numberOfValidTrackHits;
-			else quality=0;
-			if( quality > cutRecoToSim_ && !(threeHitTracksAreSpecial_ && pTrack->numberOfValidHits() == 3 && numberOfSharedHits < 3.0) )
+
+                        // this could be written to a "one-line" conditional, but that would be difficult to read
+                        bool matched = false;
+                        if(threeHitTracksAreSpecial_) {
+                          matched = pTrack->numberOfValidHits() == 3 && numberOfSharedHits == 3.0; // TODO: disable pixel weighting if absoluteNumberOfHits
+                        }
+                        else if(absoluteNumberOfHits_ || recoToSimDenominator_ == denomreco) {
+                          matched = quality > qualityRecoToSim_;
+                        }
+                        else if(recoToSimDenominator_ == denomRecoOrSim) {
+                          matched = (quality > qualityRecoToSim_) || (purity > puritySimToReco_);
+                        }
+
+                        if(matched)
 			{
 				// Getting the RefToBase is dependent on the type of trackCollection, so delegate that to an overload.
 				returnValue.insert( ::getRefToTrackAt(trackCollection,i), std::make_pair( trackingParticleRef, quality ) );
@@ -213,7 +239,7 @@ reco::SimToRecoCollection QuickTrackAssociatorByHitsImpl::associateSimToRecoImpl
 
 			if( numberOfSharedHits==0.0 ) continue; // No point in continuing if there was no association
 
-			if( simToRecoDenominator_==denomsim || (numberOfSharedHits<3.0 && threeHitTracksAreSpecial_) ) // the numberOfSimulatedHits is not always required, so can skip counting in some circumstances
+			if( simToRecoDenominator_==denomsim || simToRecoDenominator_==denomRecoOrSim || (numberOfSharedHits<3.0 && threeHitTracksAreSpecial_) ) // the numberOfSimulatedHits is not always required, so can skip counting in some circumstances
 			{
 				// Note that in the standard TrackAssociatorByHits, all of the hits in associatedTrackingParticleHits are checked for
 				// various things.  I'm not sure what these checks are for but they depend on the UseGrouping and UseSplitting settings.
@@ -228,14 +254,28 @@ reco::SimToRecoCollection QuickTrackAssociatorByHitsImpl::associateSimToRecoImpl
 				numberOfSharedHits -= getDoubleCount( hitOrClusterAssociator, pTrack->recHitsBegin(), pTrack->recHitsEnd(), trackingParticleRef );
 			}
 
-			double purity = numberOfSharedHits/numberOfValidTrackHits;
-			double quality;
+                        // default to denomsim
+			double quality = numberOfSimulatedHits != 0    ? numberOfSharedHits/numberOfSimulatedHits  : 0.0;
+			double purity  = numberOfValidTrackHits != 0.0 ? numberOfSharedHits/numberOfValidTrackHits : 0.0;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
-			else if( simToRecoDenominator_==denomsim && numberOfSimulatedHits != 0 ) quality = numberOfSharedHits/static_cast<double>(numberOfSimulatedHits);
-			else if( simToRecoDenominator_==denomreco && numberOfValidTrackHits != 0 ) quality=purity;
-			else quality=0;
+			else if(simToRecoDenominator_==denomreco) quality = purity;
 
-			if( quality>qualitySimToReco_ && !( threeHitTracksAreSpecial_ && numberOfSimulatedHits==3 && numberOfSharedHits<3.0 ) && ( absoluteNumberOfHits_ || (purity>puritySimToReco_) ) )
+                        // this could be written to a "one-line" conditional, but that would be difficult to read
+                        bool matched = false;
+                        if(threeHitTracksAreSpecial_) {
+                          matched = numberOfSimulatedHits == 3 && numberOfSharedHits == 3.0;
+                        }
+                        else if(absoluteNumberOfHits_) {
+                          matched = quality > qualitySimToReco_;
+                        }
+                        else if(simToRecoDenominator_ == denomsim || simToRecoDenominator_ == denomreco) {
+                          matched = (quality > qualitySimToReco_) && (purity > puritySimToReco_);
+                        }
+                        else if(simToRecoDenominator_ == denomRecoOrSim) {
+                          matched = (quality > qualitySimToReco_) || (purity > puritySimToReco_);
+                        }
+
+                        if(matched)
 			{
 				// Getting the RefToBase is dependent on the type of trackCollection, so delegate that to an overload.
 				returnValue.insert( trackingParticleRef, std::make_pair( ::getRefToTrackAt(trackCollection,i), quality ) );
@@ -556,8 +596,18 @@ reco::RecoToSimCollectionSeed QuickTrackAssociatorByHitsImpl::associateRecoToSim
 			const edm::Ref<TrackingParticleCollection>& trackingParticleRef=iTrackingParticleQualityPair->first;
 			double numberOfSharedHits=iTrackingParticleQualityPair->second;
                         double numberOfValidTrackHits=weightedNumberOfTrackHits(*pSeed);
+			size_t numberOfSimulatedHits=0; // Set a few lines below, but only if required.
 
 			if( numberOfSharedHits == 0.0 ) continue; // No point in continuing if there was no association
+
+			if( simToRecoDenominator_ == denomRecoOrSim ) // the numberOfSimulatedHits is not always required, so can skip counting in some circumstances
+			{
+				// Note that in the standard TrackAssociatorByHits, all of the hits in associatedTrackingParticleHits are checked for
+				// various things.  I'm not sure what these checks are for but they depend on the UseGrouping and UseSplitting settings.
+				// This associator works as though both UseGrouping and UseSplitting were set to true, i.e. just counts the number of
+				// hits in the tracker.
+				numberOfSimulatedHits=trackingParticleRef->numberOfTrackerHits();
+			}
 
 			//if electron subtract double counting
 			if( abs( trackingParticleRef->pdgId() ) == 11 && (trackingParticleRef->g4Track_end() - trackingParticleRef->g4Track_begin()) > 1 )
@@ -566,12 +616,23 @@ reco::RecoToSimCollectionSeed QuickTrackAssociatorByHitsImpl::associateRecoToSim
 				else numberOfSharedHits-=getDoubleCount( *hitAssociator_, pSeed->recHits().first, pSeed->recHits().second, trackingParticleRef );
 			}
 
-			double quality;
+			double quality = numberOfValidTrackHits != 0.0 ? numberOfSharedHits/numberOfValidTrackHits : 0.0;
+			double purity  = numberOfSimulatedHits != 0    ? numberOfSharedHits/numberOfSimulatedHits  : 0.0;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
-			else if( numberOfValidTrackHits != 0.0 ) quality = numberOfSharedHits / numberOfValidTrackHits;
-			else quality=0;
 
-			if( quality > cutRecoToSim_ && !(threeHitTracksAreSpecial_ && pSeed->nHits() == 3 && numberOfSharedHits < 3.0) )
+                        // this could be written to a "one-line" conditional, but that would be difficult to read
+                        bool matched = false;
+                        if(threeHitTracksAreSpecial_) {
+                          matched = numberOfValidTrackHits == 3 && numberOfSharedHits == 3.0; // TODO: disable pixel weighting if absoluteNumberOfHits
+                        }
+                        else if(absoluteNumberOfHits_ || recoToSimDenominator_ == denomreco) {
+                          matched = quality > qualityRecoToSim_;
+                        }
+                        else if(recoToSimDenominator_ == denomRecoOrSim) {
+                          matched = (quality > qualityRecoToSim_) || (purity > puritySimToReco_);
+                        }
+
+                        if(matched)
 			{
 				returnValue.insert( edm::RefToBase < TrajectorySeed > (pSeedCollectionHandle_, i), std::make_pair( trackingParticleRef, quality ) );
 			}
@@ -620,7 +681,7 @@ reco::SimToRecoCollectionSeed QuickTrackAssociatorByHitsImpl::associateSimToReco
 				else numberOfSharedHits-=getDoubleCount( *hitAssociator_, pSeed->recHits().first, pSeed->recHits().second, trackingParticleRef );
 			}
 
-			if( simToRecoDenominator_ == denomsim || (numberOfSharedHits < 3.0 && threeHitTracksAreSpecial_) ) // the numberOfSimulatedHits is not always required, so can skip counting in some circumstances
+			if( simToRecoDenominator_ == denomsim || simToRecoDenominator_==denomRecoOrSim || (numberOfSharedHits < 3.0 && threeHitTracksAreSpecial_) ) // the numberOfSimulatedHits is not always required, so can skip counting in some circumstances
 			{
 				// Note that in the standard TrackAssociatorByHits, all of the hits in associatedTrackingParticleHits are checked for
 				// various things.  I'm not sure what these checks are for but they depend on the UseGrouping and UseSplitting settings.
@@ -629,16 +690,29 @@ reco::SimToRecoCollectionSeed QuickTrackAssociatorByHitsImpl::associateSimToReco
 				numberOfSimulatedHits=trackingParticleRef->numberOfTrackerHits();
 			}
 
-			double purity = numberOfSharedHits / numberOfValidTrackHits;
-			double quality;
+                        // default to denomsim
+			double quality = numberOfSimulatedHits != 0    ? numberOfSharedHits/numberOfSimulatedHits  : 0.0;
+			double purity  = numberOfValidTrackHits != 0.0 ? numberOfSharedHits/numberOfValidTrackHits : 0.0;
 			if( absoluteNumberOfHits_ ) quality = numberOfSharedHits;
-			else if( simToRecoDenominator_ == denomsim && numberOfSimulatedHits != 0 ) quality= numberOfSharedHits
-					/ static_cast<double>( numberOfSimulatedHits );
-			else if( simToRecoDenominator_ == denomreco && numberOfValidTrackHits != 0.0 ) quality=purity;
-			else quality=0;
+			else if(simToRecoDenominator_==denomreco) quality = purity;
 
-			if( quality > qualitySimToReco_ && !(threeHitTracksAreSpecial_ && numberOfSimulatedHits == 3 && numberOfSharedHits < 3.0)
-					&& (absoluteNumberOfHits_ || (purity > puritySimToReco_)) )
+
+                        // this could be written to a "one-line" conditional, but that would be difficult to read
+                        bool matched = false;
+                        if(threeHitTracksAreSpecial_) {
+                          matched = numberOfSimulatedHits == 3 && numberOfSharedHits == 3.0;
+                        }
+                        else if(absoluteNumberOfHits_) {
+                          matched = quality > qualitySimToReco_;
+                        }
+                        else if(simToRecoDenominator_ == denomsim || simToRecoDenominator_ == denomreco) {
+                          matched = (quality > qualitySimToReco_) && (purity > puritySimToReco_);
+                        }
+                        else if(simToRecoDenominator_ == denomRecoOrSim) {
+                          matched = (quality > qualitySimToReco_) || (purity > puritySimToReco_);
+                        }
+
+                        if(matched)
 			{
 				returnValue.insert( trackingParticleRef, std::make_pair( edm::RefToBase < TrajectorySeed > (pSeedCollectionHandle_, i), quality ) );
 			}
