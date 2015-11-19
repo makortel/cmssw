@@ -107,6 +107,14 @@ QuickTrackAssociatorByHitsProducer::QuickTrackAssociatorByHitsProducer(const edm
   if( denominatorString=="reco" ) recoToSimDenominator_=QuickTrackAssociatorByHitsImpl::denomreco;
   else if( denominatorString=="recoOrSim" ) recoToSimDenominator_=QuickTrackAssociatorByHitsImpl::denomRecoOrSim;
   else throw cms::Exception( "QuickTrackAssociatorByHitsImpl" ) << "RecoToSimDenominator not specified as reco or recoOrSim";
+
+  // If AbsoluteNumberOfHits is True, require that PixelHitWeight is
+  // 1.0. We could just set it to 1.0 here instead of throwing an
+  // exception, but in this way the user is forced to have a
+  // configuration from which the behaviour is easier to parse.
+  if(absoluteNumberOfHits_ && pixelHitWeight_ != 1.0) {
+    throw cms::Exception("Configuration") << "AbsoluteNumberOfHits is set to True, but PixelHitWeight is not 1.0 (is " << pixelHitWeight_ << "). Please set PixelHitWeight to 1.0";
+  }
   
   //
   // Do some checks on whether UseGrouped or UseSplitting have been set. They're not used
