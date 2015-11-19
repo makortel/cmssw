@@ -38,7 +38,7 @@ process.load("Validation.Configuration.postValidation_cff")
 
 process.quickTrackAssociatorByHits.SimToRecoDenominator = cms.string('reco')
 process.quickTrackAssociatorByHits.Purity_SimToReco = cms.double(0.75)
-process.quickTrackAssociatorByHits.Cut_RecoToSim = cms.double(0.75)
+process.quickTrackAssociatorByHits.Quality_RecoToSim = cms.double(0.75)
 
 
 ### configuration MultiTrackValidator ###
