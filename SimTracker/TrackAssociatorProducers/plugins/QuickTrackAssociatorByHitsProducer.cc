@@ -101,12 +101,12 @@ QuickTrackAssociatorByHitsProducer::QuickTrackAssociatorByHitsProducer(const edm
   if( denominatorString=="sim" ) simToRecoDenominator_=QuickTrackAssociatorByHitsImpl::denomsim;
   else if( denominatorString=="reco" ) simToRecoDenominator_=QuickTrackAssociatorByHitsImpl::denomreco;
   else if( denominatorString=="recoOrSim" ) simToRecoDenominator_=QuickTrackAssociatorByHitsImpl::denomRecoOrSim;
-  else throw cms::Exception( "QuickTrackAssociatorByHitsImpl" ) << "SimToRecoDenominator not specified as sim, reco, or recoOrSim";
+  else throw cms::Exception( "Configuration" ) << "SimToRecoDenominator not specified as sim, reco, or recoOrSim";
 
   denominatorString=iConfig.getParameter<std::string>("RecoToSimDenominator");
   if( denominatorString=="reco" ) recoToSimDenominator_=QuickTrackAssociatorByHitsImpl::denomreco;
   else if( denominatorString=="recoOrSim" ) recoToSimDenominator_=QuickTrackAssociatorByHitsImpl::denomRecoOrSim;
-  else throw cms::Exception( "QuickTrackAssociatorByHitsImpl" ) << "RecoToSimDenominator not specified as reco or recoOrSim";
+  else throw cms::Exception( "Configuration" ) << "RecoToSimDenominator not specified as reco or recoOrSim";
 
   // If AbsoluteNumberOfHits is True, require that PixelHitWeight is
   // 1.0. We could just set it to 1.0 here instead of throwing an
