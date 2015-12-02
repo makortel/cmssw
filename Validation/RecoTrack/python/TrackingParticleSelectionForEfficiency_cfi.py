@@ -15,5 +15,8 @@ TrackingParticleSelectionForEfficiency = cms.PSet(
 )
 
 from Configuration.StandardSequences.Eras import eras
+# Phase1
+TrackingParticleSelectionForEfficiency.minRapidityTP = -3
+TrackingParticleSelectionForEfficiency.maxRapidityTP = 3
 if eras.fastSim.isChosen():
     TrackingParticleSelectionForEfficiency.stableOnlyTP = True

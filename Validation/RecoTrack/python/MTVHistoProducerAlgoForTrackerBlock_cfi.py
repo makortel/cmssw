@@ -119,3 +119,8 @@ MTVHistoProducerAlgoForTrackerBlock = cms.PSet(
     maxDzpvsigCumulative = cms.double(10),
     nintDzpvsigCumulative = cms.int32(200),
 )
+
+# Phase1
+MTVHistoProducerAlgoForTrackerBlock.minEta = -3
+MTVHistoProducerAlgoForTrackerBlock.maxEta = 3
+MTVHistoProducerAlgoForTrackerBlock.nintEta = 60

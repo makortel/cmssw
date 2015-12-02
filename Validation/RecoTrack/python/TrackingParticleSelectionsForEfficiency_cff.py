@@ -23,3 +23,9 @@ TpSelectorForEfficiencyVsPhiBlock = generalTpSelectorBlock.clone()
 TpSelectorForEfficiencyVsPtBlock = generalTpSelectorBlock.clone(ptMin = 0.050 )
 TpSelectorForEfficiencyVsVTXRBlock = generalTpSelectorBlock.clone(tip = 60.0)
 TpSelectorForEfficiencyVsVTXZBlock = generalTpSelectorBlock.clone()
+
+# Phase1
+generalTpSelectorBlock.minRapidity = -3
+generalTpSelectorBlock.maxRapidity = 3
+TpSelectorForEfficiencyVsEtaBlock.minRapidity = -3
+TpSelectorForEfficiencyVsEtaBlock.maxRapidity = 3

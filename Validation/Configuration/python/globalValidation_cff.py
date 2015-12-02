@@ -105,37 +105,12 @@ if eras.fastSim.isChosen():
     globalValidation.remove(ecalRecHitsValidationSequence)
     
 #lite tracking validator to be used in the Validation matrix
-liteTrackValidator=trackValidator.clone()
-liteTrackValidator.label=cms.VInputTag(cms.InputTag("generalTracks"),
-                                          cms.InputTag("cutsRecoTracksHp")
-                                          )
-
 #lite validation
 globalValidationLiteTracking = cms.Sequence(globalValidation)
-globalValidationLiteTracking.replace(trackValidator,liteTrackValidator)
 
 #lite pre-validation
 globalPrevalidationLiteTracking = cms.Sequence(globalPrevalidation)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksInitialStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksInitialStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksLowPtTripletStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksLowPtTripletStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksPixelPairStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksPixelPairStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksDetachedTripletStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksDetachedTripletStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksMixedTripletStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksMixedTripletStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksPixelLessStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksPixelLessStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksTobTecStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksTobTecStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksJetCoreRegionalStep)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksJetCoreRegionalStepHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksMuonSeededStepInOut)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksMuonSeededStepInOutHp)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksMuonSeededStepOutIn)
-globalPrevalidationLiteTracking.remove(cutsRecoTracksMuonSeededStepOutInHp)
+globalPrevalidationLiteTracking.replace(tracksValidation, tracksValidationLite)
 
 # Tracking-only validation
 globalPrevalidationTrackingOnly = cms.Sequence(
