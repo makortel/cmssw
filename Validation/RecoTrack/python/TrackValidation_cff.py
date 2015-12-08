@@ -110,6 +110,21 @@ if eras.phase1Pixel.isChosen():
         "muonSeededTracksInOut",
         "muonSeededTracksOutIn",
     ]
+    _algos_v2 = [
+        "generalTracks",
+        "initialStep",
+        "highPtTripletStep",
+        "detachedTripletStep",
+        "detachedQuadStep",
+        "lowPtQuadStep",
+        "lowPtTripletStep",
+        "mixedTripletStep",
+        "jetCoreRegionalStep",
+        "tobTecStep",
+        "muonSeededStepInOut",
+        "muonSeededStepOutIn",
+    ]
+#    _algos = _algos_v2
 
 def _algoToSelector(algo):
     sel = ""
