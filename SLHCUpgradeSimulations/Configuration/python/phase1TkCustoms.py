@@ -208,7 +208,7 @@ def customise_Reco(process,pileup):
     # It can be removed if change one line in Configuration/StandardSequences/python/Reconstruction_cff.py
     # from RecoTracker_cff.py to RecoTrackerPhase1PU140_cff.py
 
-    if not eras.phase1Pixel.isChosen():
+    if not eras.tracking_phase1PU70.isChosen() or eras.tracking_phase1PU140.isChosen():
         # remove all the tracking first
         itIndex=process.globalreco.index(process.trackingGlobalReco)
         grIndex=process.reconstruction.index(process.globalreco)

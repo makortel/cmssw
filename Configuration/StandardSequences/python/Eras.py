@@ -1,5 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
+class _ProvideTargets:
+    class Tracking: pass
+
 class Eras (object):
     """
     Dummy container for all the cms.Modifier instances that config fragments
@@ -23,23 +26,30 @@ class Eras (object):
         # This era should not be set by the user with the "--era" command, it's
         # activated automatically if the "--fast" command is used.
         self.fastSim = cms.Modifier()
-        
+
+        # Tracking options
+        self.tracking_run1 = cms.Modifier(provides=_ProvideTargets.Tracking)
+        self.tracking_run2 = cms.Modifier(provides=_ProvideTargets.Tracking)
+        self.tracking_phase1PU70 = cms.Modifier(provides=_ProvideTargets.Tracking)
+        self.tracking_phase1PU140 = cms.Modifier(provides=_ProvideTargets.Tracking)
+
         #
         # These are the eras that the user should specify
         #
         # Run1 currently does nothing. It's useful to use as a no-operation era commands when scripting,
         # but also retains the flexibility to add Run1 specific commands at a later date.
         self.Run1 = cms.Modifier()
+        self.Run1.append(self.tracking_run2) # the default tracking is the run2 one
         # The various Run2 scenarios for 2015 startup.
-        self.Run2_25ns = cms.ModifierChain( self.run2_common, self.run2_25ns_specific, self.stage1L1Trigger )
-        self.Run2_50ns = cms.ModifierChain( self.run2_common, self.run2_50ns_specific, self.stage1L1Trigger )
-        self.Run2_HI = cms.ModifierChain( self.run2_common, self.run2_HI_specific, self.stage1L1Trigger )
+        self.Run2_25ns = cms.ModifierChain( self.run2_common, self.run2_25ns_specific, self.stage1L1Trigger, self.tracking_run2 )
+        self.Run2_50ns = cms.ModifierChain( self.run2_common, self.run2_50ns_specific, self.stage1L1Trigger, self.tracking_run2 )
+        self.Run2_HI = cms.ModifierChain( self.run2_common, self.run2_HI_specific, self.stage1L1Trigger, self.tracking_run2 )
         # Future Run 2 scenarios.
-        self.Run2_2016 = cms.ModifierChain( self.run2_common, self.run2_25ns_specific, self.stage2L1Trigger )
-        self.Run2_2017 = cms.ModifierChain( self.Run2_2016, self.phase1Pixel )
+        self.Run2_2016 = cms.ModifierChain( self.run2_common, self.run2_25ns_specific, self.stage2L1Trigger, self.tracking_run2 )
+        self.Run2_2017 = cms.ModifierChain( self.Run2_2016, self.phase1Pixel, self.tracking_phase1PU70 )
         # Scenarios further afield.
         # Phase2Dev is everything for the 2023 (2026?) detector that works so far in this release.
-        self.Phase2Dev = cms.Modifier()
+        self.Phase2Dev = cms.Modifier(self.tracking_run2) # the default tracking is the run2 one
         
         # The only thing this collection is used for is for cmsDriver to
         # warn the user if they specify an era that is discouraged from being
