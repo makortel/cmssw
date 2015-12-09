@@ -1123,12 +1123,12 @@ class Modifier(object):
   def __init__(self):
     self.__processModifiers = []
     self.__chosen = False
-  def makeProcessModifier(self,func):
+  def makeProcessModifier(self,func, depends=None):
     """This is used to create a ProcessModifer that can perform actions on the process as a whole.
        This takes as argument a callable object (e.g. function) that takes as its sole argument an instance of Process.
        In order to work, the value returned from this function must be assigned to a uniquely named variable.
     """
-    return ProcessModifier(self,func)
+    return ProcessModifier(self,func, depends)
   def toModify(self,obj, func=None,**kw):
     """This is used to register an action to be performed on the specific object. Two different forms are allowed
     Form 1: A callable object (e.g. function) can be passed as the second. This callable object is expected to take one argument
@@ -1178,13 +1178,16 @@ class ProcessModifier(object):
     ProcessModifier will be applied to the Process if and only if the 
     Modifier passed to the constructor has been chosen.
     """
-    def __init__(self, modifier, func):
+    def __init__(self, modifier, func, depends):
         self.__modifier = modifier
         self.__func = func
         self.__seenProcesses = set()
+        self.__depends = depends
     def apply(self,process):
         if self.__modifier.isChosen():
             if process not in self.__seenProcesses:
+                if self.__depends is not None:
+                   self.__depends.apply(process)
                 self.__func(process)
                 self.__seenProcesses.add(process)
 
