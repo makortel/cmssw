@@ -24,6 +24,9 @@ from ExceptionHandling import *
 if sys.getrecursionlimit()<5000:
    sys.setrecursionlimit(5000)
 
+def defaultModifier():
+   return _defaultModifier
+
 def checkImportPermission(minLevel = 2, allowedPatterns = []):
     """
     Raise an exception if called by special config files. This checks
@@ -130,6 +133,9 @@ class Process(object):
         self.__dict__['_Process__InExtendCall'] = False
         self.__dict__['_Process__partialschedules'] = {}
         self.__isStrict = False
+
+        if len(Mods) == 0:
+           Mods = [defaultModifier()]
         self.__dict__['_Process__modifiers'] = Mods
         for m in self.__modifiers:
             m._setChosen()
@@ -1144,6 +1150,8 @@ class Modifier(object):
     self.__chosen = True
   def isChosen(self):
     return self.__chosen
+
+_defaultModifier = Modifier()
 
 class ModifierChain(object):
     """A Modifier made up of a list of Modifiers
