@@ -105,9 +105,6 @@ reconstruction_noTracking = cms.Sequence()
 # visible only via process object
 from Configuration.StandardSequences.Eras import eras
 def _modifyForRun1(process):
-    if eras.phase1Pixel.isChosen():
-        return
-
     global reconstruction_fromRECO
     global reconstruction_fromRECO_noTrackingTest
     global reconstruction_fromRECO_noTracking
@@ -187,8 +184,7 @@ def _modifyForRun1(process):
     reconstruction_fromRECO_noTracking = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
     reconstruction_noTracking = reconstruction.copyAndExclude(noTrackingAndDependent)
 
-modifyConfigurationStandardSequencesReconstructionForRun1_ = eras.Run1.makeProcessModifier(_modifyForRun1, depends=modifyRecoTrackConfigurationRecoTrackerForRun1_)
-modifyConfigurationStandardSequencesReconstructionForRun2_ = eras.run2_common.makeProcessModifier(_modifyForRun1, depends=modifyRecoTrackConfigurationRecoTrackerForRun2_)
+modifyConfigurationStandardSequencesReconstructionForRun2_ = eras.tracking_run2.makeProcessModifier(_modifyForRun1, depends=modifyRecoTrackConfigurationRecoTrackerForRun2_)
 
 #sequences with additional stuff
 reconstruction_withPixellessTk  = cms.Sequence(localreco        *globalreco_plusPL*highlevelreco*logErrorHarvester)

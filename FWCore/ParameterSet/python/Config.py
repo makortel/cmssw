@@ -137,9 +137,9 @@ class Process(object):
         if len(Mods) == 0:
            Mods = [defaultModifier()]
 
-        self.__dict__['_Process__modifiers'] = Mods
-        for m in self.__modifiers:
-            m._setChosen()
+        self.__dict__['_Process__modifiers'] = ModifierChain(*Mods)
+        self.__modifiers.compact()
+        self.__modifiers._setChosen()
 
     def setStrict(self, value):
         self.__isStrict = value
@@ -1121,9 +1121,10 @@ class Modifier(object):
   The registered modifications will only occur if the Modifier was passed to 
   the cms.Process' constructor.
   """
-  def __init__(self):
+  def __init__(self, provides=None):
     self.__processModifiers = []
     self.__chosen = False
+    self.__provides = provides
   def makeProcessModifier(self,func, depends=None):
     """This is used to create a ProcessModifer that can perform actions on the process as a whole.
        This takes as argument a callable object (e.g. function) that takes as its sole argument an instance of Process.
@@ -1151,15 +1152,28 @@ class Modifier(object):
     self.__chosen = True
   def isChosen(self):
     return self.__chosen
-
-_defaultModifier = Modifier()
+  def provides(self):
+    if self.__provides is None:
+      return []
+    return [self.__provides]
 
 class ModifierChain(object):
     """A Modifier made up of a list of Modifiers
     """
     def __init__(self, *chainedModifiers):
         self.__chosen = False
-        self.__chain = chainedModifiers
+        self.__chain = list(chainedModifiers)
+    def append(self, modifier):
+        self.__chain.append(modifier)
+    def compact(self):
+        availableProvides = self.provides()
+        for provide in availableProvides:
+           mods = self._findModifiersProviding(provide)
+           # remove all but last one, note that the last modifier can
+           # exist multiple times in the modifier chain(s)
+           mods = filter(lambda m: m is not mods[-1], mods)
+           if len(mods) >= 1:
+              self._removeModifiers(mods)
     def _applyNewProcessModifiers(self,process):
         """Should only be called by cms.Process instances
         applies list of accumulated changes to the process"""
@@ -1172,6 +1186,30 @@ class ModifierChain(object):
             m._setChosen()
     def isChosen(self):
         return self.__chosen
+    def provides(self):
+        provlist = []
+        for m in self.__chain:
+           provlist.extend(m.provides())
+        return list(set(provlist))
+    def _findModifiersProviding(self, provideTarget):
+        modifiers = []
+        for m in self.__chain:
+           if isinstance(m, ModifierChain):
+              modifiers.extend(m._findModifiersProviding(provideTarget))
+           elif provideTarget in m.provides():
+              modifiers.append(m)
+        return modifiers
+    def _removeModifiers(self, modifiers):
+        keep = []
+        for m in self.__chain:
+           if isinstance(m, ModifierChain):
+              m._removeModifiers(modifiers)
+              keep.append(m)
+           elif m not in modifiers:
+              keep.append(m)
+        self.__chain[:] = keep # modify the original list object
+
+_defaultModifier = ModifierChain()
 
 class ProcessModifier(object):
     """A class used by a Modifier to affect an entire Process instance.
