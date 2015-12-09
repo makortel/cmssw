@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 from RecoTracker.IterativeTracking.iterativeTk_cff import *
 from RecoTracker.IterativeTracking.ElectronSeeds_cff import *
 from SLHCUpgradeSimulations.Configuration.customise_mixing import customise_pixelMixing_PU
+from Configuration.StandardSequences.Eras import eras
 
 def customise(process):
     if hasattr(process,'DigiToRaw'):
@@ -207,113 +208,116 @@ def customise_Reco(process,pileup):
     # It can be removed if change one line in Configuration/StandardSequences/python/Reconstruction_cff.py
     # from RecoTracker_cff.py to RecoTrackerPhase1PU140_cff.py
 
-    # remove all the tracking first
-    itIndex=process.globalreco.index(process.trackingGlobalReco)
-    grIndex=process.reconstruction.index(process.globalreco)
+    if not eras.phase1Pixel.isChosen():
+        # remove all the tracking first
+        itIndex=process.globalreco.index(process.trackingGlobalReco)
+        grIndex=process.reconstruction.index(process.globalreco)
 
-    process.reconstruction.remove(process.globalreco)
-    process.globalreco.remove(process.iterTracking)
-    process.globalreco.remove(process.electronSeedsSeq)
-    process.reconstruction_fromRECO.remove(process.trackingGlobalReco)
-    process.reconstruction_fromRECO.remove(process.electronSeedsSeq)
-    process.reconstruction_fromRECO.remove(process.initialStepSeedLayers)
-    process.reconstruction_fromRECO.remove(process.initialStepSeeds)
-    process.reconstruction_fromRECO.remove(process.initialStepClassifier1)
-    process.reconstruction_fromRECO.remove(process.initialStepClassifier2)
-    process.reconstruction_fromRECO.remove(process.initialStepClassifier3)
-    process.reconstruction_fromRECO.remove(initialStepTrackCandidates)
-    process.reconstruction_fromRECO.remove(initialStepTracks)
-    process.reconstruction_fromRECO.remove(lowPtTripletStepClusters)
-    process.reconstruction_fromRECO.remove(lowPtTripletStepSeedLayers)
-    process.reconstruction_fromRECO.remove(lowPtTripletStepSeeds)
-    process.reconstruction_fromRECO.remove(lowPtTripletStep)
-    process.reconstruction_fromRECO.remove(lowPtTripletStepTrackCandidates)
-    process.reconstruction_fromRECO.remove(lowPtTripletStepTracks)
+        process.reconstruction.remove(process.globalreco)
+        process.globalreco.remove(process.iterTracking)
+        process.globalreco.remove(process.electronSeedsSeq)
+        process.reconstruction_fromRECO.remove(process.trackingGlobalReco)
+        process.reconstruction_fromRECO.remove(process.electronSeedsSeq)
+        process.reconstruction_fromRECO.remove(process.initialStepSeedLayers)
+        process.reconstruction_fromRECO.remove(process.initialStepSeeds)
+        process.reconstruction_fromRECO.remove(process.initialStepClassifier1)
+        process.reconstruction_fromRECO.remove(process.initialStepClassifier2)
+        process.reconstruction_fromRECO.remove(process.initialStepClassifier3)
+        process.reconstruction_fromRECO.remove(initialStepTrackCandidates)
+        process.reconstruction_fromRECO.remove(initialStepTracks)
+        process.reconstruction_fromRECO.remove(lowPtTripletStepClusters)
+        process.reconstruction_fromRECO.remove(lowPtTripletStepSeedLayers)
+        process.reconstruction_fromRECO.remove(lowPtTripletStepSeeds)
+        process.reconstruction_fromRECO.remove(lowPtTripletStep)
+        process.reconstruction_fromRECO.remove(lowPtTripletStepTrackCandidates)
+        process.reconstruction_fromRECO.remove(lowPtTripletStepTracks)
 
-    process.reconstruction_fromRECO.remove(mixedTripletStep)
-    process.reconstruction_fromRECO.remove(mixedTripletStepClusters)
-    process.reconstruction_fromRECO.remove(mixedTripletStepSeedLayersA)
-    process.reconstruction_fromRECO.remove(mixedTripletStepSeedLayersB)
-    process.reconstruction_fromRECO.remove(mixedTripletStepSeeds)
-    process.reconstruction_fromRECO.remove(mixedTripletStepSeedsA)
-    process.reconstruction_fromRECO.remove(mixedTripletStepSeedsB)
-    process.reconstruction_fromRECO.remove(mixedTripletStepClassifier1)
-    process.reconstruction_fromRECO.remove(mixedTripletStepClassifier2)
-    process.reconstruction_fromRECO.remove(mixedTripletStepTrackCandidates)
-    process.reconstruction_fromRECO.remove(mixedTripletStepTracks)
+        process.reconstruction_fromRECO.remove(mixedTripletStep)
+        process.reconstruction_fromRECO.remove(mixedTripletStepClusters)
+        process.reconstruction_fromRECO.remove(mixedTripletStepSeedLayersA)
+        process.reconstruction_fromRECO.remove(mixedTripletStepSeedLayersB)
+        process.reconstruction_fromRECO.remove(mixedTripletStepSeeds)
+        process.reconstruction_fromRECO.remove(mixedTripletStepSeedsA)
+        process.reconstruction_fromRECO.remove(mixedTripletStepSeedsB)
+        process.reconstruction_fromRECO.remove(mixedTripletStepClassifier1)
+        process.reconstruction_fromRECO.remove(mixedTripletStepClassifier2)
+        process.reconstruction_fromRECO.remove(mixedTripletStepTrackCandidates)
+        process.reconstruction_fromRECO.remove(mixedTripletStepTracks)
 
-    process.reconstruction_fromRECO.remove(pixelPairStepClusters)
-    process.reconstruction_fromRECO.remove(pixelPairStepSeeds)
-    process.reconstruction_fromRECO.remove(pixelPairStepSeedLayers)
-    process.reconstruction_fromRECO.remove(pixelPairStep)
-    process.reconstruction_fromRECO.remove(pixelPairStepTrackCandidates)
-    process.reconstruction_fromRECO.remove(pixelPairStepTracks)
-    
-    process.reconstruction_fromRECO.remove(tobTecStepClusters)
-    process.reconstruction_fromRECO.remove(tobTecStepSeeds)
-    #process.reconstruction_fromRECO.remove(tobTecStepSeedLayers)
-    process.reconstruction_fromRECO.remove(tobTecStepClassifier1)
-    process.reconstruction_fromRECO.remove(tobTecStepClassifier2)
-    process.reconstruction_fromRECO.remove(tobTecStep)
-    process.reconstruction_fromRECO.remove(tobTecStepTrackCandidates)
-    process.reconstruction_fromRECO.remove(tobTecStepTracks)
+        process.reconstruction_fromRECO.remove(pixelPairStepClusters)
+        process.reconstruction_fromRECO.remove(pixelPairStepSeeds)
+        process.reconstruction_fromRECO.remove(pixelPairStepSeedLayers)
+        process.reconstruction_fromRECO.remove(pixelPairStep)
+        process.reconstruction_fromRECO.remove(pixelPairStepTrackCandidates)
+        process.reconstruction_fromRECO.remove(pixelPairStepTracks)
 
-    # Yes, needs to be done twice for InOut...
-    process.reconstruction_fromRECO.remove(process.muonSeededSeedsInOut)
-    process.reconstruction_fromRECO.remove(process.muonSeededSeedsInOut)
-    process.reconstruction_fromRECO.remove(process.muonSeededTrackCandidatesInOut)
-    process.reconstruction_fromRECO.remove(process.muonSeededTrackCandidatesInOut)
-    process.reconstruction_fromRECO.remove(process.muonSeededTracksInOut)
-    process.reconstruction_fromRECO.remove(process.muonSeededTracksInOut)
-    process.reconstruction_fromRECO.remove(process.muonSeededSeedsOutIn)
-    process.reconstruction_fromRECO.remove(process.muonSeededTrackCandidatesOutIn)
-    process.reconstruction_fromRECO.remove(process.muonSeededTracksOutIn)
-    # Why are these modules in this sequence (isn't iterTracking enough)?
-    process.muonSeededStepCoreDisplaced.remove(process.muonSeededSeedsInOut)
-    process.muonSeededStepCoreDisplaced.remove(process.muonSeededTrackCandidatesInOut)
-    process.muonSeededStepCoreDisplaced.remove(process.muonSeededTracksInOut)
-    process.muonSeededStepCoreDisplaced.remove(process.muonSeededSeedsOutIn)
-    process.muonSeededStepExtraDisplaced.remove(process.muonSeededTracksInOutClassifier)
+        process.reconstruction_fromRECO.remove(tobTecStepClusters)
+        process.reconstruction_fromRECO.remove(tobTecStepSeeds)
+        #process.reconstruction_fromRECO.remove(tobTecStepSeedLayers)
+        process.reconstruction_fromRECO.remove(tobTecStepClassifier1)
+        process.reconstruction_fromRECO.remove(tobTecStepClassifier2)
+        process.reconstruction_fromRECO.remove(tobTecStep)
+        process.reconstruction_fromRECO.remove(tobTecStepTrackCandidates)
+        process.reconstruction_fromRECO.remove(tobTecStepTracks)
 
-    process.reconstruction_fromRECO.remove(process.convClusters)
-    process.reconstruction_fromRECO.remove(process.convLayerPairs)
-    process.reconstruction_fromRECO.remove(process.convStepSelector)
-    process.reconstruction_fromRECO.remove(process.convTrackCandidates)
-    process.reconstruction_fromRECO.remove(process.convStepTracks)
-    process.reconstruction_fromRECO.remove(process.photonConvTrajSeedFromSingleLeg)
+        # Yes, needs to be done twice for InOut...
+        process.reconstruction_fromRECO.remove(process.muonSeededSeedsInOut)
+        process.reconstruction_fromRECO.remove(process.muonSeededSeedsInOut)
+        process.reconstruction_fromRECO.remove(process.muonSeededTrackCandidatesInOut)
+        process.reconstruction_fromRECO.remove(process.muonSeededTrackCandidatesInOut)
+        process.reconstruction_fromRECO.remove(process.muonSeededTracksInOut)
+        process.reconstruction_fromRECO.remove(process.muonSeededTracksInOut)
+        process.reconstruction_fromRECO.remove(process.muonSeededSeedsOutIn)
+        process.reconstruction_fromRECO.remove(process.muonSeededTrackCandidatesOutIn)
+        process.reconstruction_fromRECO.remove(process.muonSeededTracksOutIn)
+        # Why are these modules in this sequence (isn't iterTracking enough)?
+        process.muonSeededStepCoreDisplaced.remove(process.muonSeededSeedsInOut)
+        process.muonSeededStepCoreDisplaced.remove(process.muonSeededTrackCandidatesInOut)
+        process.muonSeededStepCoreDisplaced.remove(process.muonSeededTracksInOut)
+        process.muonSeededStepCoreDisplaced.remove(process.muonSeededSeedsOutIn)
+        process.muonSeededStepExtraDisplaced.remove(process.muonSeededTracksInOutClassifier)
 
-    process.reconstruction_fromRECO.remove(process.preDuplicateMergingGeneralTracks)
+        process.reconstruction_fromRECO.remove(process.convClusters)
+        process.reconstruction_fromRECO.remove(process.convLayerPairs)
+        process.reconstruction_fromRECO.remove(process.convStepSelector)
+        process.reconstruction_fromRECO.remove(process.convTrackCandidates)
+        process.reconstruction_fromRECO.remove(process.convStepTracks)
+        process.reconstruction_fromRECO.remove(process.photonConvTrajSeedFromSingleLeg)
 
-    # Needed to make the loading of recoFromSimDigis_cff below to work
-    process.InitialStepPreSplitting.remove(siPixelClusters)
+        process.reconstruction_fromRECO.remove(process.preDuplicateMergingGeneralTracks)
 
-    del process.iterTracking
-    del process.ckftracks
-    del process.ckftracks_woBH
-    del process.ckftracks_wodEdX
-    del process.ckftracks_plus_pixelless
-    del process.trackingGlobalReco
-    del process.electronSeedsSeq
-    del process.InitialStep
-    del process.LowPtTripletStep
-    del process.PixelPairStep
-    del process.DetachedTripletStep
-    del process.MixedTripletStep
-    del process.PixelLessStep
-    del process.TobTecStep
-    del process.earlyGeneralTracks
-    del process.muonSeededStep
-    del process.muonSeededStepCore
-    del process.muonSeededStepDebug
-    del process.muonSeededStepDebugDisplaced
-    del process.ConvStep
-    # add the correct tracking back in
-    process.load("RecoTracker.Configuration.RecoTrackerPhase1PU"+str(nPU)+"_cff")
+        # Needed to make the loading of recoFromSimDigis_cff below to work
+        process.InitialStepPreSplitting.remove(siPixelClusters)
 
-    process.globalreco.insert(itIndex,process.trackingGlobalReco)
-    process.reconstruction.insert(grIndex,process.globalreco)
-    #Note process.reconstruction_fromRECO is broken
-    
+        del process.iterTracking
+        del process.ckftracks
+        del process.ckftracks_woBH
+        del process.ckftracks_wodEdX
+        del process.ckftracks_plus_pixelless
+        del process.trackingGlobalReco
+        del process.electronSeedsSeq
+        del process.InitialStep
+        del process.LowPtTripletStep
+        del process.PixelPairStep
+        del process.DetachedTripletStep
+        del process.MixedTripletStep
+        del process.PixelLessStep
+        del process.TobTecStep
+        del process.earlyGeneralTracks
+        del process.muonSeededStep
+        del process.muonSeededStepCore
+        del process.muonSeededStepCoreInOut
+        del process.muonSeededStepDebug
+        del process.muonSeededStepDebugInOut
+        del process.muonSeededStepDebugDisplaced
+        del process.ConvStep
+        # add the correct tracking back in
+        process.load("RecoTracker.Configuration.RecoTrackerPhase1PU"+str(nPU)+"_cff")
+
+        process.globalreco.insert(itIndex,process.trackingGlobalReco)
+        process.reconstruction.insert(grIndex,process.globalreco)
+        #Note process.reconstruction_fromRECO is broken
+
     # End of new tracking configuration which can be removed if new Reconstruction is used.
 
 

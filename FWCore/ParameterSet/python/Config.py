@@ -136,6 +136,7 @@ class Process(object):
 
         if len(Mods) == 0:
            Mods = [defaultModifier()]
+
         self.__dict__['_Process__modifiers'] = Mods
         for m in self.__modifiers:
             m._setChosen()

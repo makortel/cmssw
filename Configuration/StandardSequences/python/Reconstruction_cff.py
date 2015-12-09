@@ -94,80 +94,101 @@ from FWCore.Modules.logErrorHarvester_cfi import *
 # "Export" Section
 reconstruction         = cms.Sequence(bunchSpacingProducer*localreco*globalreco*highlevelreco*logErrorHarvester)
 
-#need a fully expanded sequence copy
-modulesToRemove = list() # copy does not work well
-noTrackingAndDependent = list()
-noTrackingAndDependent.append(siPixelClustersPreSplitting)
-noTrackingAndDependent.append(siStripZeroSuppression)
-noTrackingAndDependent.append(siStripClusters)
-noTrackingAndDependent.append(initialStepSeedLayersPreSplitting)
-noTrackingAndDependent.append(initialStepSeedsPreSplitting)
-noTrackingAndDependent.append(initialStepTrackCandidatesPreSplitting)
-noTrackingAndDependent.append(initialStepTracksPreSplitting)
-noTrackingAndDependent.append(firstStepPrimaryVerticesPreSplitting)
-noTrackingAndDependent.append(initialStepTrackRefsForJetsPreSplitting)
-noTrackingAndDependent.append(caloTowerForTrkPreSplitting)
-noTrackingAndDependent.append(ak4CaloJetsForTrkPreSplitting)
-noTrackingAndDependent.append(jetsForCoreTrackingPreSplitting)
-noTrackingAndDependent.append(siPixelClusterShapeCachePreSplitting)
-noTrackingAndDependent.append(siPixelClusters)
-noTrackingAndDependent.append(clusterSummaryProducer)
-noTrackingAndDependent.append(siPixelRecHitsPreSplitting)
-noTrackingAndDependent.append(MeasurementTrackerEventPreSplitting)
-modulesToRemove.append(dt1DRecHits)
-modulesToRemove.append(dt1DCosmicRecHits)
-modulesToRemove.append(csc2DRecHits)
-modulesToRemove.append(rpcRecHits)
-#modulesToRemove.append(ecalGlobalUncalibRecHit)
-modulesToRemove.append(ecalMultiFitUncalibRecHit)
-modulesToRemove.append(ecalDetIdToBeRecovered)
-modulesToRemove.append(ecalRecHit)
-modulesToRemove.append(ecalCompactTrigPrim)
-modulesToRemove.append(ecalTPSkim)
-modulesToRemove.append(ecalPreshowerRecHit)
-modulesToRemove.append(selectDigi)
-modulesToRemove.append(hbheprereco)
-modulesToRemove.append(hbhereco)
-modulesToRemove.append(hfreco)
-modulesToRemove.append(horeco)
-modulesToRemove.append(hcalnoise)
-modulesToRemove.append(zdcreco)
-modulesToRemove.append(castorreco)
-##it's OK according to Ronny modulesToRemove.append(CSCHaloData)#needs digis
-reconstruction_fromRECO = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
-noTrackingAndDependent.append(siPixelRecHitsPreSplitting)
-noTrackingAndDependent.append(siStripMatchedRecHits)
-noTrackingAndDependent.append(pixelTracks)
-noTrackingAndDependent.append(ckftracks)
-reconstruction_fromRECO_noTrackingTest = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
-##requires generalTracks trajectories
-noTrackingAndDependent.append(trackerDrivenElectronSeeds)
-noTrackingAndDependent.append(ecalDrivenElectronSeeds)
-noTrackingAndDependent.append(uncleanedOnlyElectronSeeds)
-noTrackingAndDependent.append(uncleanedOnlyElectronCkfTrackCandidates)
-noTrackingAndDependent.append(uncleanedOnlyElectronGsfTracks)
-noTrackingAndDependent.append(uncleanedOnlyGeneralConversionTrackProducer)
-noTrackingAndDependent.append(uncleanedOnlyGsfConversionTrackProducer)
-noTrackingAndDependent.append(uncleanedOnlyPfTrackElec)
-noTrackingAndDependent.append(uncleanedOnlyGsfElectronCores)
-noTrackingAndDependent.append(uncleanedOnlyPfTrack)
-noTrackingAndDependent.append(uncleanedOnlyGeneralInOutOutInConversionTrackMerger)#can live with
-noTrackingAndDependent.append(uncleanedOnlyGsfGeneralInOutOutInConversionTrackMerger)#can live with
-noTrackingAndDependent.append(uncleanedOnlyAllConversions)
-noTrackingAndDependent.append(uncleanedOnlyGsfElectrons)#can live with
-noTrackingAndDependent.append(electronMergedSeeds)
-noTrackingAndDependent.append(electronCkfTrackCandidates)
-noTrackingAndDependent.append(electronGsfTracks)
-noTrackingAndDependent.append(generalConversionTrackProducer)
-noTrackingAndDependent.append(generalInOutOutInConversionTrackMerger)
-noTrackingAndDependent.append(gsfGeneralInOutOutInConversionTrackMerger)
-noTrackingAndDependent.append(ecalDrivenGsfElectrons)
-noTrackingAndDependent.append(gsfConversionTrackProducer)
-noTrackingAndDependent.append(allConversions)
-noTrackingAndDependent.append(gsfElectrons)
-reconstruction_fromRECO_noTracking = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
-reconstruction_noTracking = reconstruction.copyAndExclude(noTrackingAndDependent)
 
+# need to "declare" these in order to be modified in _modifyRun1
+reconstruction_fromRECO = cms.Sequence()
+reconstruction_fromRECO_noTrackingTest = cms.Sequence()
+reconstruction_fromRECO_noTracking = cms.Sequence()
+reconstruction_noTracking = cms.Sequence()
+# This stuff needs to done in a modifier function because the tracking
+# sequences are loaded via that mechanism, and their modules are
+# visible only via process object
+from Configuration.StandardSequences.Eras import eras
+def _modifyForRun1(process):
+    if eras.phase1Pixel.isChosen():
+        return
+
+    global reconstruction_fromRECO
+    global reconstruction_fromRECO_noTrackingTest
+    global reconstruction_fromRECO_noTracking
+    global reconstruction_noTracking
+
+    #need a fully expanded sequence copy
+    modulesToRemove = list() # copy does not work well
+    noTrackingAndDependent = list()
+    noTrackingAndDependent.append(siPixelClustersPreSplitting)
+    noTrackingAndDependent.append(siStripZeroSuppression)
+    noTrackingAndDependent.append(siStripClusters)
+    noTrackingAndDependent.append(process.initialStepSeedLayersPreSplitting)
+    noTrackingAndDependent.append(process.initialStepSeedsPreSplitting)
+    noTrackingAndDependent.append(process.initialStepTrackCandidatesPreSplitting)
+    noTrackingAndDependent.append(process.initialStepTracksPreSplitting)
+    noTrackingAndDependent.append(process.firstStepPrimaryVerticesPreSplitting)
+    noTrackingAndDependent.append(process.initialStepTrackRefsForJetsPreSplitting)
+    noTrackingAndDependent.append(process.caloTowerForTrkPreSplitting)
+    noTrackingAndDependent.append(process.ak4CaloJetsForTrkPreSplitting)
+    noTrackingAndDependent.append(process.jetsForCoreTrackingPreSplitting)
+    noTrackingAndDependent.append(siPixelClusterShapeCachePreSplitting)
+    noTrackingAndDependent.append(process.siPixelClusters)
+    noTrackingAndDependent.append(clusterSummaryProducer)
+    noTrackingAndDependent.append(siPixelRecHitsPreSplitting)
+    noTrackingAndDependent.append(MeasurementTrackerEventPreSplitting)
+    modulesToRemove.append(dt1DRecHits)
+    modulesToRemove.append(dt1DCosmicRecHits)
+    modulesToRemove.append(csc2DRecHits)
+    modulesToRemove.append(rpcRecHits)
+    #modulesToRemove.append(ecalGlobalUncalibRecHit)
+    modulesToRemove.append(ecalMultiFitUncalibRecHit)
+    modulesToRemove.append(ecalDetIdToBeRecovered)
+    modulesToRemove.append(ecalRecHit)
+    modulesToRemove.append(ecalCompactTrigPrim)
+    modulesToRemove.append(ecalTPSkim)
+    modulesToRemove.append(ecalPreshowerRecHit)
+    modulesToRemove.append(selectDigi)
+    modulesToRemove.append(hbheprereco)
+    modulesToRemove.append(hbhereco)
+    modulesToRemove.append(hfreco)
+    modulesToRemove.append(horeco)
+    modulesToRemove.append(hcalnoise)
+    modulesToRemove.append(zdcreco)
+    modulesToRemove.append(castorreco)
+    ##it's OK according to Ronny modulesToRemove.append(CSCHaloData)#needs digis
+    reconstruction_fromRECO = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
+#    noTrackingAndDependent.append(process.siPixelRecHitsPreSplitting)
+    noTrackingAndDependent.append(siStripMatchedRecHits)
+    noTrackingAndDependent.append(pixelTracks)
+    noTrackingAndDependent.append(ckftracks)
+    reconstruction_fromRECO_noTrackingTest = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
+    ##requires generalTracks trajectories
+    noTrackingAndDependent.append(trackerDrivenElectronSeeds)
+    noTrackingAndDependent.append(ecalDrivenElectronSeeds)
+    noTrackingAndDependent.append(uncleanedOnlyElectronSeeds)
+    noTrackingAndDependent.append(uncleanedOnlyElectronCkfTrackCandidates)
+    noTrackingAndDependent.append(uncleanedOnlyElectronGsfTracks)
+    noTrackingAndDependent.append(uncleanedOnlyGeneralConversionTrackProducer)
+    noTrackingAndDependent.append(uncleanedOnlyGsfConversionTrackProducer)
+    noTrackingAndDependent.append(uncleanedOnlyPfTrackElec)
+    noTrackingAndDependent.append(uncleanedOnlyGsfElectronCores)
+    noTrackingAndDependent.append(uncleanedOnlyPfTrack)
+    noTrackingAndDependent.append(uncleanedOnlyGeneralInOutOutInConversionTrackMerger)#can live with
+    noTrackingAndDependent.append(uncleanedOnlyGsfGeneralInOutOutInConversionTrackMerger)#can live with
+    noTrackingAndDependent.append(uncleanedOnlyAllConversions)
+    noTrackingAndDependent.append(uncleanedOnlyGsfElectrons)#can live with
+    noTrackingAndDependent.append(electronMergedSeeds)
+    noTrackingAndDependent.append(electronCkfTrackCandidates)
+    noTrackingAndDependent.append(electronGsfTracks)
+    noTrackingAndDependent.append(generalConversionTrackProducer)
+    noTrackingAndDependent.append(generalInOutOutInConversionTrackMerger)
+    noTrackingAndDependent.append(gsfGeneralInOutOutInConversionTrackMerger)
+    noTrackingAndDependent.append(ecalDrivenGsfElectrons)
+    noTrackingAndDependent.append(gsfConversionTrackProducer)
+    noTrackingAndDependent.append(allConversions)
+    noTrackingAndDependent.append(gsfElectrons)
+    reconstruction_fromRECO_noTracking = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
+    reconstruction_noTracking = reconstruction.copyAndExclude(noTrackingAndDependent)
+
+modifyConfigurationStandardSequencesReconstructionForRun1_ = eras.Run1.makeProcessModifier(_modifyForRun1, depends=modifyRecoTrackConfigurationRecoTrackerForRun1_)
+modifyConfigurationStandardSequencesReconstructionForRun2_ = eras.run2_common.makeProcessModifier(_modifyForRun1, depends=modifyRecoTrackConfigurationRecoTrackerForRun2_)
 
 #sequences with additional stuff
 reconstruction_withPixellessTk  = cms.Sequence(localreco        *globalreco_plusPL*highlevelreco*logErrorHarvester)
