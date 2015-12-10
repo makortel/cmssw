@@ -72,7 +72,7 @@ if eras.fastSim.isChosen():
     _trackProducers.remove("muonSeededTracksInOut")
     _trackProducers.remove("muonSeededTracksOutIn")
 if eras.phase1Pixel.isChosen():
-    _algos = [
+    _algos_v1 = [
         "generalTracks",
         "initialStep",
         "highPtTripletStep",
@@ -124,6 +124,7 @@ if eras.phase1Pixel.isChosen():
         "muonSeededStepInOut",
         "muonSeededStepOutIn",
     ]
+    _algos = _algos_v1
 #    _algos = _algos_v2
 
 def _algoToSelector(algo):
