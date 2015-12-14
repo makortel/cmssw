@@ -1,10 +1,16 @@
 import FWCore.ParameterSet.Config as cms
 
 from RecoTracker.MeasurementDet.MeasurementTrackerEventProducer_cfi import *
-# Iterative steps
-from RecoTracker.IterativeTracking.iterativeTk_cff import *
-from RecoTracker.IterativeTracking.ElectronSeeds_cff import *
-
+# Iterative steps (select by era)
+from Configuration.StandardSequences.Eras import eras
+if eras.phase1Pixel.isChosen():
+    print "Phase1 tracking"
+    from RecoTracker.IterativeTracking.Phase1PU70_iterativeTk_cff import *
+    from RecoTracker.IterativeTracking.Phase1PU70_ElectronSeeds_cff import *
+else:
+    print "Run2 tracking"
+    from RecoTracker.IterativeTracking.iterativeTk_cff import *
+    from RecoTracker.IterativeTracking.ElectronSeeds_cff import *
 
 import copy
 
