@@ -158,7 +158,7 @@ upgradeFragments=['FourMuPt_1_200_pythia8_cfi','SingleElectronPt10_cfi',
 # step7 is fastsim harvesting
 upgradeSteps=['GenSimFull','GenSimHLBeamSpotFull','DigiFull','RecoFull','RecoFullHGCAL','HARVESTFull','DigiTrkTrigFull','FastSim','HARVESTFast','DigiFullPU','RecoFullPU','RecoFullPUHGCAL','HARVESTFullPU','DigiFullTrigger']
 
-upgradeScenToRun={ '2017':['GenSimFull','DigiFull','RecoFull'],#HARVESTING REMOVED
+upgradeScenToRun={ '2017':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
                    '2019':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
                    '2019WithGEM':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
                    '2017Aging':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
@@ -186,7 +186,7 @@ upgradeScenToRun={ '2017':['GenSimFull','DigiFull','RecoFull'],#HARVESTING REMOV
                    'Extended2023HGCalMuonPU' : ['GenSimHLBeamSpotFull','DigiFullPU','RecoFullPUHGCAL'],
                    'Extended2023SHCalNoTaperPU' : ['GenSimHLBeamSpotFull','DigiFullPU','RecoFullPU','HARVESTFullPU'],
                    '2019WithGEMAgingPU':['GenSimFull','DigiFullPU','RecoFullPU','HARVESTFullPU'],
-		   '2017PU':['GenSimFull','DigiFullPU','RecoFullPU']
+		   '2017PU':['GenSimFull','DigiFullPU','RecoFullPU','HARVESTFullPU']
                    }
 
 from  Configuration.PyReleaseValidation.relval_steps import Kby
