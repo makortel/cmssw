@@ -814,6 +814,10 @@ def customise_Reco_v2(process):
     process.preDuplicateMergingDisplacedTracks.inputClassifiers.remove("muonSeededTracksInOutClassifier")
     process.preDuplicateMergingDisplacedTracks.trackProducers.remove("muonSeededTracksInOut")
 
+    # Disable CCC
+    process.SiStripClusterChargeCutLoose.value = -1
+    process.SiStripClusterChargeCutTight.value = -1
+
     return process
 
 def customise_Reco_Run2(process):
