@@ -818,6 +818,12 @@ def customise_Reco_v2(process):
     process.SiStripClusterChargeCutLoose.value = -1
     process.SiStripClusterChargeCutTight.value = -1
 
+    # Seed creator
+    process.initialStepSeeds.SeedCreatorPSet.magneticField = ''
+    process.initialStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
+    process.highPtTripletStepSeeds.SeedCreatorPSet.magneticField = ''
+    process.highPtTripletStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
+    
     return process
 
 def customise_Reco_Run2(process):
