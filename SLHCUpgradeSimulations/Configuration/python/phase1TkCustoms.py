@@ -824,6 +824,19 @@ def customise_Reco_v2(process):
     process.highPtTripletStepSeeds.SeedCreatorPSet.magneticField = ''
     process.highPtTripletStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
     
+    # maxCand
+    process.initialStepTrajectoryBuilder.maxCand = 6
+    process.highPtTripletStepTrajectoryBuilder.maxCand = 4
+
+    # trajectory cleaner
+    from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import trajectoryCleanerBySharedHits
+    process.highPtTripletStepTrajectoryCleanerBySharedHits = trajectoryCleanerBySharedHits.clone(
+        ComponentName = cms.string('highPtTripletStepTrajectoryCleanerBySharedHits'),
+        fractionShared = cms.double(0.16),
+        allowSharedFirstHit = cms.bool(True)
+    )
+    process.highPtTripletStepTrackCandidates.TrajectoryCleaner = 'highPtTripletStepTrajectoryCleanerBySharedHits'
+
     return process
 
 def customise_Reco_Run2(process):
