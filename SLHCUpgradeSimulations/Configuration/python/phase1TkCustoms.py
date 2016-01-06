@@ -837,6 +837,15 @@ def customise_Reco_v2(process):
     )
     process.highPtTripletStepTrackCandidates.TrajectoryCleaner = 'highPtTripletStepTrajectoryCleanerBySharedHits'
 
+    # pixel cluster splitting
+    process.iterTracking.remove(process.InitialStepPreSplitting)
+    process.siPixelClusters = process.siPixelClustersPreSplitting.clone()
+    process.pixeltrackerlocalreco.replace(process.siPixelClustersPreSplitting, process.siPixelClusters)
+    process.pixeltrackerlocalreco.replace(process.siPixelRecHitsPreSplitting, process.siPixelRecHits)
+    process.clusterSummaryProducer.pixelClusters = 'siPixelClusters'
+    process.reconstruction.replace(process.MeasurementTrackerEventPreSplitting, process.MeasurementTrackerEvent)
+    process.reconstruction.replace(process.siPixelClusterShapeCachePreSplitting, process.siPixelClusterShapeCache)
+
     return process
 
 def customise_Reco_Run2(process):
