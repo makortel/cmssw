@@ -846,6 +846,53 @@ def customise_Reco_v2(process):
     process.reconstruction.replace(process.MeasurementTrackerEventPreSplitting, process.MeasurementTrackerEvent)
     process.reconstruction.replace(process.siPixelClusterShapeCachePreSplitting, process.siPixelClusterShapeCache)
 
+    ## pixel vertices
+    # Make pixelTracks use quadruplets
+    process.pixelTracks.SeedMergerPSet = cms.PSet(
+        layerList = cms.PSet(refToPSet_ = cms.string('PixelSeedMergerQuadruplets')),
+        addRemainingTriplets = cms.bool(False),
+        mergeTriplets = cms.bool(True),
+        ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
+        )
+    process.pixelTracks.FilterPSet.chi2 = cms.double(50.0)
+    process.pixelTracks.FilterPSet.tipMax = cms.double(0.05)
+    process.pixelTracks.RegionFactoryPSet.RegionPSet.originRadius =  cms.double(0.02)
+    process.templates.DoLorentz=False
+    process.templates.LoadTemplatesFromDB = cms.bool(False)
+    process.PixelCPEGenericESProducer.useLAWidthFromDB = cms.bool(False)
+
+    # Enable, for now, pixel tracks and vertices
+    # To be removed later together with the cluster splitting
+    process.reconstruction.replace(process.standalonemuontracking,
+                                   process.standalonemuontracking+process.recopixelvertexing)
+    process.initialStepClassifier1.vertices = "pixelVertices"
+    process.initialStepClassifier2.vertices = "pixelVertices"
+    process.initialStepClassifier3.vertices = "pixelVertices"
+    process.highPtTripletStepClassifier1.vertices = "pixelVertices"
+    process.highPtTripletStepClassifier2.vertices = "pixelVertices"
+    process.highPtTripletStepClassifier3.vertices = "pixelVertices"
+    process.detachedQuadStepClassifier1.vertices = "pixelVertices"
+    process.detachedQuadStepClassifier2.vertices = "pixelVertices"
+    process.detachedTripletStepClassifier1.vertices = "pixelVertices"
+    process.detachedTripletStepClassifier2.vertices = "pixelVertices"
+    process.lowPtQuadStep.vertices = "pixelVertices"
+    process.lowPtTripletStep.vertices = "pixelVertices"
+    process.mixedTripletStepClassifier1.vertices = "pixelVertices"
+    process.mixedTripletStepClassifier2.vertices = "pixelVertices"
+    process.pixelLessStepClassifier1.vertices = "pixelVertices"
+    process.pixelLessStepClassifier2.vertices = "pixelVertices"
+    process.tobTecStepClassifier1.vertices = "pixelVertices"
+    process.tobTecStepClassifier2.vertices = "pixelVertices"
+    process.jetCoreRegionalStep.vertices = "pixelVertices"
+    process.muonSeededTracksInOutClassifier.vertices = "pixelVertices"
+    process.muonSeededTracksOutInClassifier.vertices = "pixelVertices"
+    process.duplicateTrackClassifier.vertices = "pixelVertices"
+    process.convStepSelector.vertices = "pixelVertices"
+    process.ak4CaloJetsForTrk.srcPVs = "pixelVertices"
+    process.muonSeededTracksOutInDisplacedClassifier.vertices = "pixelVertices"
+    process.duplicateDisplacedTrackClassifier.vertices = "pixelVertices"
+    ## end pixel vertices
+
     return process
 
 def customise_Reco_Run2(process):
