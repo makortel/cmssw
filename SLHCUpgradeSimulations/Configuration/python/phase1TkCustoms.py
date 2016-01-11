@@ -898,66 +898,21 @@ def customise_Reco_v2(process):
     process.InitialStep.remove(process.initialStepClassifier2)
     process.InitialStep.remove(process.initialStepClassifier3)
     process.InitialStep.remove(process.initialStep)
-    import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
-    process.initialStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(
-        src='initialStepTracks',
-        trackSelectors= cms.VPSet(
-            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
-                name = 'initialStepLoose',
-                chi2n_par = 2.0,
-                res_par = ( 0.003, 0.002 ),
-                minNumberLayers = 3,
-                maxNumberLostLayers = 3,
-                minNumber3DLayers = 3,
-                d0_par1 = ( 0.7, 4.0 ),
-                dz_par1 = ( 0.8, 4.0 ),
-                d0_par2 = ( 0.4, 4.0 ),
-                dz_par2 = ( 0.6, 4.0 )
-                ), #end of pset
-            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.tightMTS.clone(
-                name = 'initialStepTight',
-                preFilterName = 'initialStepLoose',
-                chi2n_par = 1.0,
-                res_par = ( 0.003, 0.002 ),
-                minNumberLayers = 3,
-                maxNumberLostLayers = 2,
-                minNumber3DLayers = 3,
-                d0_par1 = ( 0.6, 4.0 ),
-                dz_par1 = ( 0.7, 4.0 ),
-                d0_par2 = ( 0.35, 4.0 ),
-                dz_par2 = ( 0.5, 4.0 )
-                ),
-            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.highpurityMTS.clone(
-                name = 'initialStep',
-                preFilterName = 'initialStepTight',
-                chi2n_par = 0.7,
-                res_par = ( 0.003, 0.001 ),
-                minNumberLayers = 3,
-                maxNumberLostLayers = 2,
-                minNumber3DLayers = 3,
-                d0_par1 = ( 0.5, 4.0 ),
-                dz_par1 = ( 0.7, 4.0 ),
-                d0_par2 = ( 0.25, 4.0 ),
-                dz_par2 = ( 0.4, 4.0 )
-                ),
-            ) #end of vpset
-        ) #end of clone
-    process.InitialStep += process.initialStepSelector
-    process.HighPtTripletStep.remove(process.highPtTripletStepClusters)
-    from RecoLocalTracker.SubCollectionProducers.trackClusterRemover_cfi import trackClusterRemover
-    process.highPtTripletStepClusters = trackClusterRemover.clone(
-        maxChi2                                  = cms.double(9.0),
-        trajectories                             = cms.InputTag("initialStepTracks"),
-        pixelClusters                            = cms.InputTag("siPixelClusters"),
-        stripClusters                            = cms.InputTag("siStripClusters"),
-        overrideTrkQuals                         = cms.InputTag('initialStepSelector','initialStep'),
-        TrackQuality                             = cms.string('highPurity'),
-        minNumberOfLayersWithMeasBeforeFiltering = cms.int32(0),
+
+    from RecoTracker.FinalTrackSelectors.TrackCutClassifier_cfi import TrackCutClassifier
+    process.initialStep = TrackCutClassifier.clone(
+        src = "initialStepTracks",
+        vertices = "pixelVertices",
     )
-    process.HighPtTripletStep.insert(0, process.highPtTripletStepClusters)
-    process.earlyGeneralTracks.trackProducers = filter(lambda t: t != "initialStepTracks", process.earlyGeneralTracks.trackProducers)
-    process.earlyGeneralTracks.inputClassifiers = filter(lambda t: t != "initialStep", process.earlyGeneralTracks.inputClassifiers)
-#    print process.earlyGeneralTracks.trackProducers, process.earlyGeneralTracks.inputClassifiers
+    process.initialStep.mva.minPixelHits = [1,1,1]
+    process.initialStep.mva.maxChi2 = [9999.,9999.,9999.]
+    process.initialStep.mva.maxChi2n = [1.6,1.0,0.7]
+    process.initialStep.mva.minLayers = [3,3,3]
+    process.initialStep.mva.min3DLayers = [3,3,3]
+    process.initialStep.mva.maxLostLayers = [3,2,2]
+    process.initialStep.mva.maxDz = [0.7,0.6,0.55];
+    process.initialStep.mva.maxDr = [0.4,0.3,0.2];
+    process.InitialStep += process.initialStep
 
     return process
 
