@@ -893,7 +893,7 @@ def customise_Reco_v2(process):
     process.duplicateDisplacedTrackClassifier.vertices = "pixelVertices"
     ## end pixel vertices
 
-    # old-style track selector, initialStep
+    # cut-based track selector, initialStep
     process.InitialStep.remove(process.initialStepClassifier1)
     process.InitialStep.remove(process.initialStepClassifier2)
     process.InitialStep.remove(process.initialStepClassifier3)
@@ -913,6 +913,27 @@ def customise_Reco_v2(process):
     process.initialStep.mva.maxDz = [0.7,0.6,0.55];
     process.initialStep.mva.maxDr = [0.4,0.3,0.2];
     process.InitialStep += process.initialStep
+
+    # cut-based track selector, highPtTripletStep
+    process.HighPtTripletStep.remove(process.highPtTripletStepClassifier1)
+    process.HighPtTripletStep.remove(process.highPtTripletStepClassifier2)
+    process.HighPtTripletStep.remove(process.highPtTripletStepClassifier3)
+    process.HighPtTripletStep.remove(process.highPtTripletStep)
+
+    from RecoTracker.FinalTrackSelectors.TrackCutClassifier_cfi import TrackCutClassifier
+    process.highPtTripletStep = TrackCutClassifier.clone(
+        src = "highPtTripletStepTracks",
+        vertices = "pixelVertices",
+    )
+    process.highPtTripletStep.mva.minPixelHits = [1,1,1]
+    process.highPtTripletStep.mva.maxChi2 = [9999.,9999.,9999.]
+    process.highPtTripletStep.mva.maxChi2n = [1.6,1.0,0.7]
+    process.highPtTripletStep.mva.minLayers = [3,3,3]
+    process.highPtTripletStep.mva.min3DLayers = [3,3,3]
+    process.highPtTripletStep.mva.maxLostLayers = [3,2,2]
+    process.highPtTripletStep.mva.maxDz = [0.7,0.6,0.55];
+    process.highPtTripletStep.mva.maxDr = [0.4,0.3,0.2];
+    process.HighPtTripletStep += process.highPtTripletStep
 
     return process
 
