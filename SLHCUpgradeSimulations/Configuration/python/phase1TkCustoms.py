@@ -910,8 +910,8 @@ def customise_Reco_v2(process):
     process.initialStep.mva.minLayers = [3,3,3]
     process.initialStep.mva.min3DLayers = [3,3,3]
     process.initialStep.mva.maxLostLayers = [3,2,2]
-    process.initialStep.mva.maxDz = [0.7,0.6,0.55];
-    process.initialStep.mva.maxDr = [0.4,0.3,0.2];
+    process.initialStep.mva.maxDz = [0.5,0.35,0.2];
+    process.initialStep.mva.maxDr = [0.3,0.2,0.1];
     process.InitialStep += process.initialStep
 
     # cut-based track selector, highPtTripletStep
@@ -931,8 +931,8 @@ def customise_Reco_v2(process):
     process.highPtTripletStep.mva.minLayers = [3,3,3]
     process.highPtTripletStep.mva.min3DLayers = [3,3,3]
     process.highPtTripletStep.mva.maxLostLayers = [3,2,2]
-    process.highPtTripletStep.mva.maxDz = [0.7,0.6,0.55];
-    process.highPtTripletStep.mva.maxDr = [0.4,0.3,0.2];
+    process.initialStep.mva.maxDz = [0.5,0.35,0.2];
+    process.initialStep.mva.maxDr = [0.3,0.2,0.1];
     process.HighPtTripletStep += process.highPtTripletStep
 
     return process
