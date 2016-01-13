@@ -820,8 +820,10 @@ def customise_Reco_v2(process):
     trajectoryCleaner = False
     disablePixelClusterSplitting = False
     pixelVertices = False
+    disableClusterCheck = False
     cutBasedInitialStep = False
     cutBasedHighPtTripletStep = False
+    adjustMVACutsHighPtTripletStep = False
 
     # Disable CCC
     if disableCCC:
@@ -908,6 +910,20 @@ def customise_Reco_v2(process):
         process.duplicateDisplacedTrackClassifier.vertices = "pixelVertices"
     ## end pixel vertices
 
+    if disableClusterCheck:
+        process.initialStepSeedsPreSplitting.ClusterCheckPSet.doClusterCheck = False
+        process.initialStepSeeds.ClusterCheckPSet.doClusterCheck = False
+        process.highPtTripletStepSeeds.ClusterCheckPSet.doClusterCheck = False
+        process.detachedQuadStepSeeds.ClusterCheckPSet.doClusterCheck = False
+        process.detachedTripletStepSeeds.ClusterCheckPSet.doClusterCheck = False
+        process.lowPtQuadStepSeeds.ClusterCheckPSet.doClusterCheck = False
+        process.lowPtTripletStepSeeds.ClusterCheckPSet.doClusterCheck = False
+        process.mixedTripletStepSeedsA.ClusterCheckPSet.doClusterCheck = False
+        process.pixelLessStepSeeds.ClusterCheckPSet.doClusterCheck = False
+        process.tobTecStepSeedsTripl.ClusterCheckPSet.doClusterCheck = False
+        process.tobTecStepSeedsPair.ClusterCheckPSet.doClusterCheck = False
+        process.jetCoreRegionalStepSeeds.ClusterCheckPSet.doClusterCheck = False
+
     # cut-based track selector, initialStep
     if cutBasedInitialStep:
         process.InitialStep.remove(process.initialStepClassifier1)
@@ -956,10 +972,11 @@ def customise_Reco_v2(process):
         process.initialStep.mva.maxDr = [0.3,0.2,0.1];
         process.HighPtTripletStep += process.highPtTripletStep
     else:
-        # prompt
-        process.highPtTripletStepClassifier1.qualityCuts = [-0.5,-0.4,-0.3]
-        # detached
-        process.highPtTripletStepClassifier2.qualityCuts = [0.6, 1.0, 1.5]
+        if adjustMVACutsHighPtTripletStep:
+            # prompt
+            process.highPtTripletStepClassifier1.qualityCuts = [-0.5,-0.4,-0.3]
+            # detached
+            process.highPtTripletStepClassifier2.qualityCuts = [0.6, 1.0, 1.5]
 
     return process
 
