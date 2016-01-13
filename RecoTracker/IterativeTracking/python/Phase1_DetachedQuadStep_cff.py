@@ -58,7 +58,9 @@ detachedQuadStepTrajectoryFilterBase = TrackingTools.TrajectoryFiltering.Traject
 #    maxLostHitsFraction = cms.double(1./10.),
 #    constantValueForLostHitsFractionFilter = cms.double(0.701),
     minimumNumberOfHits = 3,
-    minPt = 0.075
+    minPt = 0.075,
+    maxCCCLostHits = 2,
+    minGoodStripCharge = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutLoose'))
     )
 import RecoPixelVertexing.PixelLowPtUtilities.StripSubClusterShapeTrajectoryFilter_cfi
 detachedQuadStepTrajectoryFilter = cms.PSet(
@@ -74,7 +76,7 @@ detachedQuadStepChi2Est = RecoTracker.MeasurementDet.Chi2ChargeMeasurementEstima
     ComponentName = cms.string('detachedQuadStepChi2Est'),
     nSigma = cms.double(3.0),
     MaxChi2 = cms.double(9.0),
-    clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
+    clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTiny')),
 )
 
 # TRACK BUILDING
