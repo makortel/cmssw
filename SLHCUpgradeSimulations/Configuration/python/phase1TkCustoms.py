@@ -814,126 +814,149 @@ def customise_Reco_v2(process):
     process.preDuplicateMergingDisplacedTracks.inputClassifiers.remove("muonSeededTracksInOutClassifier")
     process.preDuplicateMergingDisplacedTracks.trackProducers.remove("muonSeededTracksInOut")
 
+    disableCCC = True
+    oldSeedCreator = True
+    oldMaxCand = True
+    trajectoryCleaner = True
+    disablePixelClusterSplitting = True
+    pixelVertices = True
+    cutBasedInitialStep = False
+    cutBasedHighPtTripletStep = False
+
     # Disable CCC
-    process.SiStripClusterChargeCutLoose.value = -1
-    process.SiStripClusterChargeCutTight.value = -1
+    if disableCCC:
+        process.SiStripClusterChargeCutLoose.value = -1
+        process.SiStripClusterChargeCutTight.value = -1
 
     # Seed creator
-    process.initialStepSeeds.SeedCreatorPSet.magneticField = ''
-    process.initialStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
-    process.highPtTripletStepSeeds.SeedCreatorPSet.magneticField = ''
-    process.highPtTripletStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
+    if oldSeedCreator:
+        process.initialStepSeeds.SeedCreatorPSet.magneticField = ''
+        process.initialStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
+        process.highPtTripletStepSeeds.SeedCreatorPSet.magneticField = ''
+        process.highPtTripletStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
     
     # maxCand
-    process.initialStepTrajectoryBuilder.maxCand = 6
-    process.highPtTripletStepTrajectoryBuilder.maxCand = 4
+    if oldMaxCand:
+        process.initialStepTrajectoryBuilder.maxCand = 6
+        process.highPtTripletStepTrajectoryBuilder.maxCand = 4
 
     # trajectory cleaner
-    from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import trajectoryCleanerBySharedHits
-    process.highPtTripletStepTrajectoryCleanerBySharedHits = trajectoryCleanerBySharedHits.clone(
-        ComponentName = cms.string('highPtTripletStepTrajectoryCleanerBySharedHits'),
-        fractionShared = cms.double(0.16),
-        allowSharedFirstHit = cms.bool(True)
-    )
-    process.highPtTripletStepTrackCandidates.TrajectoryCleaner = 'highPtTripletStepTrajectoryCleanerBySharedHits'
+    if trajectoryCleaner:
+        from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import trajectoryCleanerBySharedHits
+        process.highPtTripletStepTrajectoryCleanerBySharedHits = trajectoryCleanerBySharedHits.clone(
+            ComponentName = cms.string('highPtTripletStepTrajectoryCleanerBySharedHits'),
+            fractionShared = cms.double(0.16),
+            allowSharedFirstHit = cms.bool(True)
+        )
+        process.highPtTripletStepTrackCandidates.TrajectoryCleaner = 'highPtTripletStepTrajectoryCleanerBySharedHits'
 
     # pixel cluster splitting
-    process.iterTracking.remove(process.InitialStepPreSplitting)
-    process.siPixelClusters = process.siPixelClustersPreSplitting.clone()
-    process.pixeltrackerlocalreco.replace(process.siPixelClustersPreSplitting, process.siPixelClusters)
-    process.pixeltrackerlocalreco.replace(process.siPixelRecHitsPreSplitting, process.siPixelRecHits)
-    process.clusterSummaryProducer.pixelClusters = 'siPixelClusters'
-    process.reconstruction.replace(process.MeasurementTrackerEventPreSplitting, process.MeasurementTrackerEvent)
-    process.reconstruction.replace(process.siPixelClusterShapeCachePreSplitting, process.siPixelClusterShapeCache)
+    if disablePixelClusterSplitting:
+        process.iterTracking.remove(process.InitialStepPreSplitting)
+        process.siPixelClusters = process.siPixelClustersPreSplitting.clone()
+        process.pixeltrackerlocalreco.replace(process.siPixelClustersPreSplitting, process.siPixelClusters)
+        process.pixeltrackerlocalreco.replace(process.siPixelRecHitsPreSplitting, process.siPixelRecHits)
+        process.clusterSummaryProducer.pixelClusters = 'siPixelClusters'
+        process.reconstruction.replace(process.MeasurementTrackerEventPreSplitting, process.MeasurementTrackerEvent)
+        process.reconstruction.replace(process.siPixelClusterShapeCachePreSplitting, process.siPixelClusterShapeCache)
 
     ## pixel vertices
-    # Make pixelTracks use quadruplets
-    process.pixelTracks.SeedMergerPSet = cms.PSet(
-        layerList = cms.PSet(refToPSet_ = cms.string('PixelSeedMergerQuadruplets')),
-        addRemainingTriplets = cms.bool(False),
-        mergeTriplets = cms.bool(True),
-        ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
-        )
-    process.pixelTracks.FilterPSet.chi2 = cms.double(50.0)
-    process.pixelTracks.FilterPSet.tipMax = cms.double(0.05)
-    process.pixelTracks.RegionFactoryPSet.RegionPSet.originRadius =  cms.double(0.02)
-    process.templates.DoLorentz=False
-    process.templates.LoadTemplatesFromDB = cms.bool(False)
-    process.PixelCPEGenericESProducer.useLAWidthFromDB = cms.bool(False)
-
-    # Enable, for now, pixel tracks and vertices
-    # To be removed later together with the cluster splitting
-    process.reconstruction.replace(process.standalonemuontracking,
-                                   process.standalonemuontracking+process.recopixelvertexing)
-    process.initialStepClassifier1.vertices = "pixelVertices"
-    process.initialStepClassifier2.vertices = "pixelVertices"
-    process.initialStepClassifier3.vertices = "pixelVertices"
-    process.highPtTripletStepClassifier1.vertices = "pixelVertices"
-    process.highPtTripletStepClassifier2.vertices = "pixelVertices"
-    process.highPtTripletStepClassifier3.vertices = "pixelVertices"
-    process.detachedQuadStepClassifier1.vertices = "pixelVertices"
-    process.detachedQuadStepClassifier2.vertices = "pixelVertices"
-    process.detachedTripletStepClassifier1.vertices = "pixelVertices"
-    process.detachedTripletStepClassifier2.vertices = "pixelVertices"
-    process.lowPtQuadStep.vertices = "pixelVertices"
-    process.lowPtTripletStep.vertices = "pixelVertices"
-    process.mixedTripletStepClassifier1.vertices = "pixelVertices"
-    process.mixedTripletStepClassifier2.vertices = "pixelVertices"
-    process.pixelLessStepClassifier1.vertices = "pixelVertices"
-    process.pixelLessStepClassifier2.vertices = "pixelVertices"
-    process.tobTecStepClassifier1.vertices = "pixelVertices"
-    process.tobTecStepClassifier2.vertices = "pixelVertices"
-    process.jetCoreRegionalStep.vertices = "pixelVertices"
-    process.muonSeededTracksInOutClassifier.vertices = "pixelVertices"
-    process.muonSeededTracksOutInClassifier.vertices = "pixelVertices"
-    process.duplicateTrackClassifier.vertices = "pixelVertices"
-    process.convStepSelector.vertices = "pixelVertices"
-    process.ak4CaloJetsForTrk.srcPVs = "pixelVertices"
-    process.muonSeededTracksOutInDisplacedClassifier.vertices = "pixelVertices"
-    process.duplicateDisplacedTrackClassifier.vertices = "pixelVertices"
+    if pixelVertices:
+        # Make pixelTracks use quadruplets
+        process.pixelTracks.SeedMergerPSet = cms.PSet(
+            layerList = cms.PSet(refToPSet_ = cms.string('PixelSeedMergerQuadruplets')),
+            addRemainingTriplets = cms.bool(False),
+            mergeTriplets = cms.bool(True),
+            ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
+            )
+        process.pixelTracks.FilterPSet.chi2 = cms.double(50.0)
+        process.pixelTracks.FilterPSet.tipMax = cms.double(0.05)
+        process.pixelTracks.RegionFactoryPSet.RegionPSet.originRadius =  cms.double(0.02)
+        process.templates.DoLorentz=False
+        process.templates.LoadTemplatesFromDB = cms.bool(False)
+        process.PixelCPEGenericESProducer.useLAWidthFromDB = cms.bool(False)
+        
+        # Enable, for now, pixel tracks and vertices
+        # To be removed later together with the cluster splitting
+        process.reconstruction.replace(process.standalonemuontracking,
+                                       process.standalonemuontracking+process.recopixelvertexing)
+        process.initialStepClassifier1.vertices = "pixelVertices"
+        process.initialStepClassifier2.vertices = "pixelVertices"
+        process.initialStepClassifier3.vertices = "pixelVertices"
+        process.highPtTripletStepClassifier1.vertices = "pixelVertices"
+        process.highPtTripletStepClassifier2.vertices = "pixelVertices"
+        process.highPtTripletStepClassifier3.vertices = "pixelVertices"
+        process.detachedQuadStepClassifier1.vertices = "pixelVertices"
+        process.detachedQuadStepClassifier2.vertices = "pixelVertices"
+        process.detachedTripletStepClassifier1.vertices = "pixelVertices"
+        process.detachedTripletStepClassifier2.vertices = "pixelVertices"
+        process.lowPtQuadStep.vertices = "pixelVertices"
+        process.lowPtTripletStep.vertices = "pixelVertices"
+        process.mixedTripletStepClassifier1.vertices = "pixelVertices"
+        process.mixedTripletStepClassifier2.vertices = "pixelVertices"
+        process.pixelLessStepClassifier1.vertices = "pixelVertices"
+        process.pixelLessStepClassifier2.vertices = "pixelVertices"
+        process.tobTecStepClassifier1.vertices = "pixelVertices"
+        process.tobTecStepClassifier2.vertices = "pixelVertices"
+        process.jetCoreRegionalStep.vertices = "pixelVertices"
+        process.muonSeededTracksInOutClassifier.vertices = "pixelVertices"
+        process.muonSeededTracksOutInClassifier.vertices = "pixelVertices"
+        process.duplicateTrackClassifier.vertices = "pixelVertices"
+        process.convStepSelector.vertices = "pixelVertices"
+        process.ak4CaloJetsForTrk.srcPVs = "pixelVertices"
+        process.muonSeededTracksOutInDisplacedClassifier.vertices = "pixelVertices"
+        process.duplicateDisplacedTrackClassifier.vertices = "pixelVertices"
     ## end pixel vertices
 
     # cut-based track selector, initialStep
-    process.InitialStep.remove(process.initialStepClassifier1)
-    process.InitialStep.remove(process.initialStepClassifier2)
-    process.InitialStep.remove(process.initialStepClassifier3)
-    process.InitialStep.remove(process.initialStep)
+    if cutBasedInitialStep:
+        process.InitialStep.remove(process.initialStepClassifier1)
+        process.InitialStep.remove(process.initialStepClassifier2)
+        process.InitialStep.remove(process.initialStepClassifier3)
+        process.InitialStep.remove(process.initialStep)
 
-    from RecoTracker.FinalTrackSelectors.TrackCutClassifier_cfi import TrackCutClassifier
-    process.initialStep = TrackCutClassifier.clone(
-        src = "initialStepTracks",
-        vertices = "pixelVertices",
-    )
-    process.initialStep.mva.minPixelHits = [1,1,1]
-    process.initialStep.mva.maxChi2 = [9999.,9999.,9999.]
-    process.initialStep.mva.maxChi2n = [1.6,1.0,0.7]
-    process.initialStep.mva.minLayers = [3,3,3]
-    process.initialStep.mva.min3DLayers = [3,3,3]
-    process.initialStep.mva.maxLostLayers = [3,2,2]
-    process.initialStep.mva.maxDz = [0.5,0.35,0.2];
-    process.initialStep.mva.maxDr = [0.3,0.2,0.1];
-    process.InitialStep += process.initialStep
+        from RecoTracker.FinalTrackSelectors.TrackCutClassifier_cfi import TrackCutClassifier
+        process.initialStep = TrackCutClassifier.clone(
+            src = "initialStepTracks",
+            vertices = "firstStepPrimaryVertices",
+        )
+        if pixelVertices:
+            process.initialStep.vertices = "pixelVertices"
+        process.initialStep.mva.minPixelHits = [1,1,1]
+        process.initialStep.mva.maxChi2 = [9999.,9999.,9999.]
+        process.initialStep.mva.maxChi2n = [1.6,1.0,0.7]
+        process.initialStep.mva.minLayers = [3,3,3]
+        process.initialStep.mva.min3DLayers = [3,3,3]
+        process.initialStep.mva.maxLostLayers = [3,2,2]
+        process.initialStep.mva.maxDz = [0.5,0.35,0.2];
+        process.initialStep.mva.maxDr = [0.3,0.2,0.1];
+        process.InitialStep += process.initialStep
 
     # cut-based track selector, highPtTripletStep
-    process.HighPtTripletStep.remove(process.highPtTripletStepClassifier1)
-    process.HighPtTripletStep.remove(process.highPtTripletStepClassifier2)
-    process.HighPtTripletStep.remove(process.highPtTripletStepClassifier3)
-    process.HighPtTripletStep.remove(process.highPtTripletStep)
-
-    from RecoTracker.FinalTrackSelectors.TrackCutClassifier_cfi import TrackCutClassifier
-    process.highPtTripletStep = TrackCutClassifier.clone(
-        src = "highPtTripletStepTracks",
-        vertices = "pixelVertices",
-    )
-    process.highPtTripletStep.mva.minPixelHits = [1,1,1]
-    process.highPtTripletStep.mva.maxChi2 = [9999.,9999.,9999.]
-    process.highPtTripletStep.mva.maxChi2n = [1.6,1.0,0.7]
-    process.highPtTripletStep.mva.minLayers = [3,3,3]
-    process.highPtTripletStep.mva.min3DLayers = [3,3,3]
-    process.highPtTripletStep.mva.maxLostLayers = [3,2,2]
-    process.initialStep.mva.maxDz = [0.5,0.35,0.2];
-    process.initialStep.mva.maxDr = [0.3,0.2,0.1];
-    process.HighPtTripletStep += process.highPtTripletStep
+    if cutBasedHighPtTripletStep:
+        process.HighPtTripletStep.remove(process.highPtTripletStepClassifier1)
+        process.HighPtTripletStep.remove(process.highPtTripletStepClassifier2)
+        process.HighPtTripletStep.remove(process.highPtTripletStepClassifier3)
+        process.HighPtTripletStep.remove(process.highPtTripletStep)
+        
+        from RecoTracker.FinalTrackSelectors.TrackCutClassifier_cfi import TrackCutClassifier
+        process.highPtTripletStep = TrackCutClassifier.clone(
+            src = "highPtTripletStepTracks",
+            vertices = "firstStepPrimaryVertices",
+        )
+        if pixelVertices:
+            process.highPtTripletStep.vertices = "pixelVertices"
+        process.highPtTripletStep.mva.minPixelHits = [1,1,1]
+        process.highPtTripletStep.mva.maxChi2 = [9999.,9999.,9999.]
+        process.highPtTripletStep.mva.maxChi2n = [1.6,1.0,0.7]
+        process.highPtTripletStep.mva.minLayers = [3,3,3]
+        process.highPtTripletStep.mva.min3DLayers = [3,3,3]
+        process.highPtTripletStep.mva.maxLostLayers = [3,2,2]
+        process.initialStep.mva.maxDz = [0.5,0.35,0.2];
+        process.initialStep.mva.maxDr = [0.3,0.2,0.1];
+        process.HighPtTripletStep += process.highPtTripletStep
+    else:
+        process.highPtTripletStepClassifier1.qualityCuts = [-0.5,-0.4,-0.3]
 
     return process
 
