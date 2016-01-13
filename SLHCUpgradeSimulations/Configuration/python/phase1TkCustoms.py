@@ -956,7 +956,10 @@ def customise_Reco_v2(process):
         process.initialStep.mva.maxDr = [0.3,0.2,0.1];
         process.HighPtTripletStep += process.highPtTripletStep
     else:
+        # prompt
         process.highPtTripletStepClassifier1.qualityCuts = [-0.5,-0.4,-0.3]
+        # detached
+        process.highPtTripletStepClassifier2.qualityCuts = [0.6, 1.0, 1.5]
 
     return process
 
