@@ -85,7 +85,7 @@ if eras.phase1Pixel.isChosen():
         "muonSeededStepInOut",
         "muonSeededStepOutIn",
     ]
-    _seedProducers = [
+    _seedProducers_v1 = [
         "initialStepSeeds",
         "highPtTripletStepSeeds",
         "lowPtQuadStepSeeds",
@@ -98,7 +98,7 @@ if eras.phase1Pixel.isChosen():
         "muonSeededSeedsInOut",
         "muonSeededSeedsOutIn",
     ]
-    _trackProducers = [
+    _trackProducers_v1 = [
         "initialStepTracks",
         "highPtTripletStepTracks",
         "lowPtQuadStepTracks",
@@ -124,8 +124,35 @@ if eras.phase1Pixel.isChosen():
         "muonSeededStepInOut",
         "muonSeededStepOutIn",
     ]
-    _algos = _algos_v1
-#    _algos = _algos_v2
+    _seedProducers_v2 = [
+        "initialStepSeeds",
+        "highPtTripletStepSeeds",
+        "detachedQuadStepSeeds",
+        "detachedTripletStepSeeds",
+        "lowPtQuadStepSeeds",
+        "lowPtTripletStepSeeds",
+        "mixedTripletStepSeedsA",
+        "mixedTripletStepSeedsB",
+        "jetCoreRegionalStepSeeds",
+        "tobTecStepSeeds",
+        "muonSeededSeedsInOut",
+        "muonSeededSeedsOutIn",
+    ]
+    _trackProducers_v2 = [
+        "initialStepTracks",
+        "highPtTripletStepTracks",
+        "detachedQuadStepTracks",
+        "detachedTripletStepTracks",
+        "lowPtQuadStepTracks",
+        "lowPtTripletStepTracks",
+        "mixedTripletStepTracks",
+        "tobTecStepTracks",
+        "jetCoreRegionalStepTracks",
+        "muonSeededTracksInOut",
+        "muonSeededTracksOutIn",
+    ]
+    (_algos, _seedProducers, _trackProducers) = (_algos_v1, _seedProducers_v1, _trackProducers_v1)
+#    (_algos, _seedProducers, _trackProducers) = (_algos_v2, _seedProducers_v2, _trackProducers_v2)
 
 def _algoToSelector(algo):
     sel = ""
