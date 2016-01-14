@@ -84,6 +84,7 @@ if eras.phase1Pixel.isChosen():
         "tobTecStep",
         "muonSeededStepInOut",
         "muonSeededStepOutIn",
+        "duplicateMerge",
     ]
     _seedProducers_v1 = [
         "initialStepSeeds",
@@ -119,10 +120,12 @@ if eras.phase1Pixel.isChosen():
         "lowPtQuadStep",
         "lowPtTripletStep",
         "mixedTripletStep",
-        "jetCoreRegionalStep",
+        "pixelLessStep",
         "tobTecStep",
+        "jetCoreRegionalStep",
         "muonSeededStepInOut",
         "muonSeededStepOutIn",
+        "duplicateMerge",
     ]
     _seedProducers_v2 = [
         "initialStepSeeds",
@@ -133,8 +136,10 @@ if eras.phase1Pixel.isChosen():
         "lowPtTripletStepSeeds",
         "mixedTripletStepSeedsA",
         "mixedTripletStepSeedsB",
+        "pixelLessStepSeeds",
+        "tobTecStepSeedsPair",
+        "tobTecStepSeedsTripl",
         "jetCoreRegionalStepSeeds",
-        "tobTecStepSeeds",
         "muonSeededSeedsInOut",
         "muonSeededSeedsOutIn",
     ]
@@ -146,6 +151,7 @@ if eras.phase1Pixel.isChosen():
         "lowPtQuadStepTracks",
         "lowPtTripletStepTracks",
         "mixedTripletStepTracks",
+        "pixelLessStepTracks",
         "tobTecStepTracks",
         "jetCoreRegionalStepTracks",
         "muonSeededTracksInOut",
