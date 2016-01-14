@@ -859,8 +859,8 @@ def customise_Reco_v2(process):
         process.pixeltrackerlocalreco.replace(process.siPixelClustersPreSplitting, process.siPixelClusters)
         process.pixeltrackerlocalreco.replace(process.siPixelRecHitsPreSplitting, process.siPixelRecHits)
         process.clusterSummaryProducer.pixelClusters = 'siPixelClusters'
-        process.reconstruction.replace(process.MeasurementTrackerEventPreSplitting, process.MeasurementTrackerEvent)
-        process.reconstruction.replace(process.siPixelClusterShapeCachePreSplitting, process.siPixelClusterShapeCache)
+        process.globalreco_tracking.replace(process.MeasurementTrackerEventPreSplitting, process.MeasurementTrackerEvent)
+        process.globalreco_tracking.replace(process.siPixelClusterShapeCachePreSplitting, process.siPixelClusterShapeCache)
 
     ## pixel vertices
     if pixelVertices:
@@ -880,8 +880,8 @@ def customise_Reco_v2(process):
         
         # Enable, for now, pixel tracks and vertices
         # To be removed later together with the cluster splitting
-        process.reconstruction.replace(process.standalonemuontracking,
-                                       process.standalonemuontracking+process.recopixelvertexing)
+        process.globalreco_tracking.replace(process.standalonemuontracking,
+                                            process.standalonemuontracking+process.recopixelvertexing)
         process.initialStepClassifier1.vertices = "pixelVertices"
         process.initialStepClassifier2.vertices = "pixelVertices"
         process.initialStepClassifier3.vertices = "pixelVertices"
