@@ -814,12 +814,12 @@ def customise_Reco_v2(process):
     process.preDuplicateMergingDisplacedTracks.inputClassifiers.remove("muonSeededTracksInOutClassifier")
     process.preDuplicateMergingDisplacedTracks.trackProducers.remove("muonSeededTracksInOut")
 
-    disableCCC = True
-    oldSeedCreator = True
-    oldMaxCand = True
-    trajectoryCleaner = True
-    disablePixelClusterSplitting = True
-    pixelVertices = True
+    disableCCC = False
+    oldSeedCreator = False
+    oldMaxCand = False
+    trajectoryCleaner = False
+    disablePixelClusterSplitting = False
+    pixelVertices = False
     cutBasedInitialStep = False
     cutBasedHighPtTripletStep = False
 
