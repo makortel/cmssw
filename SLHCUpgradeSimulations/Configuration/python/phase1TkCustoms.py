@@ -596,12 +596,12 @@ def customise_Reco_v2(process):
     # from RecoTracker_cff.py to RecoTrackerPhase1PU140_cff.py
 
     # remove all the tracking first
-    itIndex=process.globalreco.index(process.trackingGlobalReco)
-    grIndex=process.reconstruction.index(process.globalreco)
+    itIndex=process.globalreco_tracking.index(process.trackingGlobalReco)
+    grIndex=process.globalreco.index(process.globalreco_tracking)
 
-    process.reconstruction.remove(process.globalreco)
-    process.globalreco.remove(process.iterTracking)
-    process.globalreco.remove(process.electronSeedsSeq)
+    process.globalreco.remove(process.globalreco_tracking)
+    process.globalreco_tracking.remove(process.iterTracking)
+    process.globalreco_tracking.remove(process.electronSeedsSeq)
     process.reconstruction_fromRECO.remove(process.trackingGlobalReco)
     process.reconstruction_fromRECO.remove(process.electronSeedsSeq)
     process.reconstruction_fromRECO.remove(process.initialStep)
@@ -740,8 +740,8 @@ def customise_Reco_v2(process):
     # add the correct tracking back in
     process.load("RecoTracker.Configuration.RecoTrackerPhase1_cff")
 
-    process.globalreco.insert(itIndex,process.trackingGlobalReco)
-    process.reconstruction.insert(grIndex,process.globalreco)
+    process.globalreco_tracking.insert(itIndex,process.trackingGlobalReco)
+    process.globalreco.insert(grIndex,process.globalreco_tracking)
     #Note process.reconstruction_fromRECO is broken
     
     # End of new tracking configuration which can be removed if new Reconstruction is used.
