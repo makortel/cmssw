@@ -19,3 +19,22 @@ PixelLayerTriplets.FPix = cms.PSet(
 )
 
 
+from Configuration.StandardSequences.Eras import eras
+def _modifyForPhase1(module):
+    module.layerList = [
+        'BPix1+BPix2+BPix3',
+        'BPix2+BPix3+BPix4',
+        'BPix1+BPix3+BPix4',
+        'BPix1+BPix2+BPix4',
+        'BPix2+BPix3+FPix1_pos',
+        'BPix2+BPix3+FPix1_neg',
+        'BPix1+BPix2+FPix1_pos',
+        'BPix1+BPix2+FPix1_neg',
+        'BPix2+FPix1_pos+FPix2_pos',
+        'BPix2+FPix1_neg+FPix2_neg',
+        'BPix1+FPix1_pos+FPix2_pos',
+        'BPix1+FPix1_neg+FPix2_neg',
+        'FPix1_pos+FPix2_pos+FPix3_pos',
+        'FPix1_neg+FPix2_neg+FPix3_neg'
+    ]
+eras.phase1Pixel.toModify(PixelLayerTriplets, _modifyForPhase1)

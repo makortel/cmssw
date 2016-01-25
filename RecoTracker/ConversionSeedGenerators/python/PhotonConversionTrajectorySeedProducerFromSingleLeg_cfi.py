@@ -44,3 +44,13 @@ photonConvTrajSeedFromSingleLeg  = cms.EDProducer("PhotonConversionTrajectorySee
                                                       TTRHBuilder = cms.string('WithTrackAngle')
                                                       )
                                                   )
+
+from Configuration.StandardSequences.Eras import eras
+def _modifyForPhase1(module):
+    module.ClusterCheckPSet.MaxNumberOfCosmicClusters = 1000000
+    module.ClusterCheckPSet.MaxNumberOfPixelClusters = 1000000
+    module.ClusterCheckPSet.cut = 'strip < 1000000 && pixel < 100000 && (strip < 100000 + 20*pixel) && (pixel < 20000 + 0.1*strip)'
+    module.OrderedHitsFactoryPSet.maxElement = 100000
+    module.RegionFactoryPSet.RegionPSet.ptMin = 0.3
+
+eras.phase1Pixel.toModify(photonConvTrajSeedFromSingleLeg, _modifyForPhase1)
