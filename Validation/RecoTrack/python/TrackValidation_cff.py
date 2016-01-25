@@ -485,3 +485,13 @@ tracksValidationTrackingOnly = cms.Sequence(
     tracksValidationSeedSelectorsTrackingOnly +
     trackValidatorsTrackingOnly
 )
+
+### Lite mode (only generalTracks and HP)
+trackValidatorLite = trackValidator.clone(
+    label = ["generalTracks", "cutsRecoTracksHp"]
+)
+tracksValidationLite = cms.Sequence(
+    cutsRecoTracksHp +
+    tracksValidationTruth +
+    trackValidatorLite
+)
