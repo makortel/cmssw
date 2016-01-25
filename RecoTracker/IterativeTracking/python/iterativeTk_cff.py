@@ -32,3 +32,48 @@ iterTracking = cms.Sequence(InitialStepPreSplitting*
                             ConvStep*
                             conversionStepTracks
                             )
+
+from Configuration.StandardSequences.Eras import eras
+def _modifyIterTrackingForPhase1(process):
+    # Clear
+    global iterTracking
+    iterTracking.remove(InitialStepPreSplitting)
+    iterTracking.remove(InitialStep)
+    iterTracking.remove(DetachedTripletStep)
+    iterTracking.remove(LowPtTripletStep)
+    iterTracking.remove(PixelPairStep)
+    iterTracking.remove(MixedTripletStep)
+    iterTracking.remove(PixelLessStep)
+    iterTracking.remove(TobTecStep) 
+    iterTracking.remove(JetCoreRegionalStep)
+    iterTracking.remove(earlyGeneralTracks) 
+    iterTracking.remove(muonSeededStep) 
+    iterTracking.remove(preDuplicateMergingGeneralTracks)
+    iterTracking.remove(generalTracksSequence) 
+    iterTracking.remove(ConvStep) 
+    iterTracking.remove(conversionStepTracks) 
+
+    process.load("RecoTracker.IterativeTracking.Phase1PU70_HighPtTripletStep_cff")
+    process.load("RecoTracker.IterativeTracking.Phase1PU70_LowPtQuadStep_cff")
+    process.load("RecoTracker.IterativeTracking.Phase1PU70_DetachedQuadStep_cff")
+    process.load("RecoTracker.IterativeTracking.Phase1PU70_TobTecStep_cff") # too different from Run2 that patching with era makes no sense
+    process.load("RecoTracker.FinalTrackSelectors.Phase1PU70_earlyGeneralTracks_cfi") # too different from Run2 that patching with era makes no sense
+    process.load("RecoTracker.FinalTrackSelectors.Phase1PU70_preDuplicateMergingGeneralTracks_cfi") # too different from Run2 that patching with era makes no sense
+
+    # Build new sequence (need to use the existing Sequence object)
+    iterTracking += (InitialStep +
+                     process.HighPtTripletStep +
+                     process.LowPtQuadStep +
+                     LowPtTripletStep +
+                     process.DetachedQuadStep +
+                     MixedTripletStep +
+                     PixelPairStep +
+                     process.TobTecStep +
+                     process.earlyGeneralTracks +
+                     muonSeededStep +
+                     process.preDuplicateMergingGeneralTracks +
+                     generalTracksSequence +
+                     ConvStep +
+                     conversionStepTracks)
+
+modifyRecoTrackerIterativeTrackingIterativeTkForPhase1Pixel_ = eras.phase1Pixel.makeProcessModifier(_modifyIterTrackingForPhase1)

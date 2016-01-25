@@ -323,6 +323,39 @@ ConvStep = cms.Sequence( convClusters
                          #+ Conv2Step #full quad-seeding sequence
                          )
 
+from Configuration.StandardSequences.Eras import eras
+# Customization for phase1
+def _modifyForPhase1(process):
+    del convClusters.trackClassifier
+    convClusters.overrideTrkQuals = "tobTecStepSelector:tobTecStep"
+
+    convLayerPairs.BPix.TTRHBuilder = "WithTrackAngle"
+    convLayerPairs.FPix.TTRHBuilder = "WithTrackAngle"
+    convLayerPairs.TIB1.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TIB2.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TIB3.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TIB4.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TID1.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TID2.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TID3.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TEC.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TOB1.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TOB2.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TOB3.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TOB4.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TOB5.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+    convLayerPairs.TOB6.clusterChargeCut_.refToPSet_ = "SiStripClusterChargeCutNone"
+
+    photonConvTrajSeedFromSingleLeg.primaryVerticesTag = pixelVertices
+
+    convCkfTrajectoryBuilder.maxCand = 2
+    convCkfTrajectoryBuilder.estimator = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.estimator.value()
+
+    convStepTracks.TTRHBuilder = 'WithTrackAngle'
+
+modifyRecoTrackerConversionSeedGeneratorsConversionStepPhase1Pixel_ = eras.phase1Pixel.makeProcessModifier(_modifyForPhase1)
+
+
 
 ### Quad-seeding sequence disabled (#+ Conv2Step)
 # if enabled, the quad-seeded tracks have to be merged with the single-leg seeded tracks
@@ -357,3 +390,4 @@ ConvStep = cms.Sequence( convClusters
 #    makeReKeyedSeeds = cms.untracked.bool(False)
 #    )
 ###
+

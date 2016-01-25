@@ -172,3 +172,95 @@ muonSeededStepDebug = cms.Sequence(
     muonSeededSeedsOutInAsTracks + muonSeededTrackCandidatesOutInAsTracks +
     muonSeededStepDebugInOut
 )
+
+
+from Configuration.StandardSequences.Eras import eras
+# Customization for phase1
+def _modifyForPhase1(process):
+    muonSeededMeasurementEstimatorForInOut.MaxChi2 = 400
+
+    import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
+    process.muonSeededTracksInOutSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(
+        src='muonSeededTracksInOut',
+        trackSelectors= cms.VPSet(
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
+                name = 'muonSeededTracksInOutLoose',
+                applyAdaptedPVCuts = cms.bool(False),
+                chi2n_par = 10.0,
+                minNumberLayers = 3,
+                min_nhits = 5,
+                maxNumberLostLayers = 4,
+                minNumber3DLayers = 0,
+                minHitsToBypassChecks = 7
+                ),
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.tightMTS.clone(
+                name = 'muonSeededTracksInOutTight',
+                preFilterName = 'muonSeededTracksInOutLoose',
+                applyAdaptedPVCuts = cms.bool(False),
+                chi2n_par = 1.0,
+                minNumberLayers = 5,
+                min_nhits = 6,
+                maxNumberLostLayers = 3,
+                minNumber3DLayers = 2,
+                minHitsToBypassChecks = 10
+                ),
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.highpurityMTS.clone(
+                name = 'muonSeededTracksInOutHighPurity',
+                preFilterName = 'muonSeededTracksInOutTight',
+                applyAdaptedPVCuts = cms.bool(False),
+                chi2n_par = 0.4,
+                minNumberLayers = 5,
+                min_nhits = 7,
+                maxNumberLostLayers = 2,
+                minNumber3DLayers = 2,
+                minHitsToBypassChecks = 20
+                ),
+            ) #end of vpset
+        ) #end of clone
+    
+    process.muonSeededTracksOutInSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(
+        src='muonSeededTracksOutIn',
+        trackSelectors= cms.VPSet(
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
+                name = 'muonSeededTracksOutInLoose',
+                applyAdaptedPVCuts = cms.bool(False),
+                chi2n_par = 10.0,
+                minNumberLayers = 3,
+                min_nhits = 5,
+                maxNumberLostLayers = 4,
+                minNumber3DLayers = 0,
+                minHitsToBypassChecks = 7
+                ),
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.tightMTS.clone(
+                name = 'muonSeededTracksOutInTight',
+                preFilterName = 'muonSeededTracksOutInLoose',
+                applyAdaptedPVCuts = cms.bool(False),
+                chi2n_par = 1.0,
+                minNumberLayers = 5,
+                min_nhits = 6,
+                maxNumberLostLayers = 3,
+                minNumber3DLayers = 2,
+                minHitsToBypassChecks = 10
+                ),
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.highpurityMTS.clone(
+                name = 'muonSeededTracksOutInHighPurity',
+                preFilterName = 'muonSeededTracksOutInTight',
+                applyAdaptedPVCuts = cms.bool(False),
+                chi2n_par = 0.4,
+                minNumberLayers = 5,
+                min_nhits = 7,
+                maxNumberLostLayers = 2,
+                minNumber3DLayers = 2,
+                minHitsToBypassChecks = 20
+                ),
+            ) #end of vpset
+        ) #end of clone
+
+    global muonSeededStepExtraInOut, muonSeededStepExtra
+    muonSeededStepExtraInOut.remove(muonSeededTracksInOutClassifier)
+    muonSeededStepExtra.remove(muonSeededTracksOutInClassifier)
+
+    muonSeededStepExtraInOut += process.muonSeededTracksInOutSelector
+    muonSeededStepExtra += process.muonSeededTracksOutInSelector
+
+modifyRecoTrackerIterativeTrackingMuonSeededStepPhase1Pixel_ = eras.phase1Pixel.makeProcessModifier(_modifyForPhase1)

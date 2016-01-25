@@ -26,6 +26,7 @@ initialStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.globa
     )
 initialStepSeeds.OrderedHitsFactoryPSet.SeedingLayers = 'initialStepSeedLayers'
 
+
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
 import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi
 initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
@@ -132,3 +133,88 @@ InitialStep = cms.Sequence(initialStepSeedLayers*
                            firstStepPrimaryVertices*
                            initialStepClassifier1*initialStepClassifier2*initialStepClassifier3*
                            initialStep)
+
+
+from Configuration.StandardSequences.Eras import eras
+# Customization for phase1
+def _modifyForPhase1(process):
+    # Seeding
+    initialStepSeeds.RegionFactoryPSet.RegionPSet.ptMin = 0.7
+    initialStepSeeds.SeedMergerPSet = cms.PSet(
+        layerList = cms.PSet(refToPSet_ = cms.string("PixelSeedMergerQuadruplets")),
+	addRemainingTriplets = cms.bool(False),
+	mergeTriplets = cms.bool(True),
+	ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
+    )
+    initialStepSeeds.SeedCreatorPSet.magneticField = ''
+    initialStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
+    initialStepSeeds.ClusterCheckPSet.doClusterCheck = False
+    initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.maxElement = 0
+
+    # Building quality cuts
+    import RecoTracker.MeasurementDet.Chi2ChargeMeasurementEstimatorESProducer_cfi
+    initialStepChi2Est.clusterChargeCut = RecoTracker.MeasurementDet.Chi2ChargeMeasurementEstimatorESProducer_cfi.Chi2ChargeMeasurementEstimator.clusterChargeCut.value()
+    initialStepChi2Est.pTChargeCutThreshold = RecoTracker.MeasurementDet.Chi2ChargeMeasurementEstimatorESProducer_cfi.Chi2ChargeMeasurementEstimator.pTChargeCutThreshold.value()
+
+    # Building
+    initialStepTrajectoryBuilder.maxCand = 6
+
+    # Fitting
+    initialStepTracks.TTRHBuilder = 'WithTrackAngle'
+
+    # Remove modules not used in Phase1PU70
+    global InitialStep
+    InitialStep.remove(firstStepPrimaryVertices)
+    InitialStep.remove(initialStepClassifier1)
+    InitialStep.remove(initialStepClassifier2)
+    InitialStep.remove(initialStepClassifier3)
+    InitialStep.remove(initialStep)
+
+    # Then add the old-style cut-based track selector back
+    import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
+    process.initialStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(
+        src='initialStepTracks',
+        trackSelectors= cms.VPSet(
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
+                name = 'initialStepLoose',
+                chi2n_par = 2.0,
+                res_par = ( 0.003, 0.002 ),
+                minNumberLayers = 3,
+                maxNumberLostLayers = 3,
+                minNumber3DLayers = 3,
+                d0_par1 = ( 0.7, 4.0 ),
+                dz_par1 = ( 0.8, 4.0 ),
+                d0_par2 = ( 0.4, 4.0 ),
+                dz_par2 = ( 0.6, 4.0 )
+                ), #end of pset
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.tightMTS.clone(
+                name = 'initialStepTight',
+                preFilterName = 'initialStepLoose',
+                chi2n_par = 1.0,
+                res_par = ( 0.003, 0.002 ),
+                minNumberLayers = 3,
+                maxNumberLostLayers = 2,
+                minNumber3DLayers = 3,
+                d0_par1 = ( 0.6, 4.0 ),
+                dz_par1 = ( 0.7, 4.0 ),
+                d0_par2 = ( 0.35, 4.0 ),
+                dz_par2 = ( 0.5, 4.0 )
+                ),
+            RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.highpurityMTS.clone(
+                name = 'initialStep',
+                preFilterName = 'initialStepTight',
+                chi2n_par = 0.7,
+                res_par = ( 0.003, 0.001 ),
+                minNumberLayers = 3,
+                maxNumberLostLayers = 2,
+                minNumber3DLayers = 3,
+                d0_par1 = ( 0.5, 4.0 ),
+                dz_par1 = ( 0.7, 4.0 ),
+                d0_par2 = ( 0.25, 4.0 ),
+                dz_par2 = ( 0.4, 4.0 )
+                ),
+            ) #end of vpset
+        ) #end of clone
+    InitialStep += process.initialStepSelector
+
+modifyRecoTrackerIterativeTrackingInitialStepPhase1Pixel_ = eras.phase1Pixel.makeProcessModifier(_modifyForPhase1)
