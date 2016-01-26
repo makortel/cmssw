@@ -160,8 +160,8 @@ _trackProducers_Phase1New = [
     "muonSeededTracksOutIn",
 ]
 if eras.phase1Pixel.isChosen():
-    (_algos, _seedProducers, _trackProducers) = (_algos_Phase1PU70, _seedProducers_Phase1PU70, _trackProducers_Phase1PU70)
-#    (_algos, _seedProducers, _trackProducers) = (_algos_Phase1New, _seedProducers_Phase1New, _trackProducers_Phase1New)
+#    (_algos, _seedProducers, _trackProducers) = (_algos_Phase1PU70, _seedProducers_Phase1PU70, _trackProducers_Phase1PU70)
+    (_algos, _seedProducers, _trackProducers) = (_algos_Phase1New, _seedProducers_Phase1New, _trackProducers_Phase1New)
 
 def _algoToSelector(algo):
     sel = ""
