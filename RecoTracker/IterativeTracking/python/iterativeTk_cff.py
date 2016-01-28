@@ -10,9 +10,9 @@ from RecoTracker.IterativeTracking.PixelLessStep_cff import *
 from RecoTracker.IterativeTracking.TobTecStep_cff import *
 from RecoTracker.IterativeTracking.JetCoreRegionalStep_cff import *
 
-from RecoTracker.FinalTrackSelectors.earlyGeneralTracks_cfi import *
+from RecoTracker.FinalTrackSelectors.earlyGeneralTracks_cff import *
 from RecoTracker.IterativeTracking.MuonSeededStep_cff import *
-from RecoTracker.FinalTrackSelectors.preDuplicateMergingGeneralTracks_cfi import *
+from RecoTracker.FinalTrackSelectors.preDuplicateMergingGeneralTracks_cff import *
 from RecoTracker.FinalTrackSelectors.MergeTrackCollections_cff import *
 from RecoTracker.ConversionSeedGenerators.ConversionStep_cff import *
 
@@ -25,9 +25,9 @@ iterTracking = cms.Sequence(InitialStepPreSplitting*
                             PixelLessStep*
                             TobTecStep*
 			    JetCoreRegionalStep *	
-                            earlyGeneralTracks*
+                            earlyGeneralTracksSequence*
                             muonSeededStep*
-                            preDuplicateMergingGeneralTracks*
+                            preDuplicateMergingGeneralTracksSequence*
                             generalTracksSequence*
                             ConvStep*
                             conversionStepTracks
@@ -48,14 +48,14 @@ def _modifyForPhase1(process):
     iterTracking.remove(PixelLessStep)
     iterTracking.remove(TobTecStep) 
     iterTracking.remove(JetCoreRegionalStep)
-    iterTracking.remove(earlyGeneralTracks) 
+    iterTracking.remove(earlyGeneralTracksSequence)
     iterTracking.remove(muonSeededStep) 
-    iterTracking.remove(preDuplicateMergingGeneralTracks)
+    iterTracking.remove(preDuplicateMergingGeneralTracksSequence)
     iterTracking.remove(generalTracksSequence) 
     iterTracking.remove(ConvStep) 
     iterTracking.remove(conversionStepTracks) 
 
-    # Need to clear this sequence too because of the loads below
+    # Need to clear this sequence too because of the load below
     # It would be nice if cms.Sequence would have .clear() or similar
     TobTecStep.remove(tobTecStepClusters)
     TobTecStep.remove(tobTecStepSeedLayersTripl)
@@ -73,8 +73,6 @@ def _modifyForPhase1(process):
     process.load("RecoTracker.IterativeTracking.Phase1PU70_LowPtQuadStep_cff")
     process.load("RecoTracker.IterativeTracking.Phase1PU70_DetachedQuadStep_cff")
     process.load("RecoTracker.IterativeTracking.Phase1PU70_TobTecStep_cff") # too different from Run2 that patching with era makes no sense
-    process.load("RecoTracker.FinalTrackSelectors.Phase1PU70_earlyGeneralTracks_cfi") # too different from Run2 that patching with era makes no sense
-    process.load("RecoTracker.FinalTrackSelectors.Phase1PU70_preDuplicateMergingGeneralTracks_cfi") # too different from Run2 that patching with era makes no sense
 
     # Build new sequence (need to use the existing Sequence object)
     iterTracking += (InitialStep +
@@ -85,9 +83,9 @@ def _modifyForPhase1(process):
                      MixedTripletStep +
                      PixelPairStep +
                      process.TobTecStep +
-                     process.earlyGeneralTracks +
+                     process.earlyGeneralTracksSequence +
                      muonSeededStep +
-                     process.preDuplicateMergingGeneralTracks +
+                     process.preDuplicateMergingGeneralTracksSequence +
                      generalTracksSequence +
                      ConvStep +
                      conversionStepTracks)
