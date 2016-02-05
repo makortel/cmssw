@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.StandardSequences.Eras import eras
 
 ###############################################################
 # Large impact parameter Tracking using mixed-triplet seeding #
@@ -24,6 +25,11 @@ mixedTripletStepClusters = trackClusterRemover.clone(
     TrackQuality                             = cms.string('highPurity'),
     minNumberOfLayersWithMeasBeforeFiltering = cms.int32(0),
 )
+eras.phase1Pixel.toModify(mixedTripletStepClusters,
+                          trajectories = "detachedQuadStepTracks",
+                          oldClusterRemovalInfo ="detachedQuadStepClusters",
+                          overrideTrkQuals = "detachedQuadStep",
+                          trackClassifier = "")
 
 # SEEDING LAYERS
 from RecoLocalTracker.SiStripClusterizer.SiStripClusterChargeCut_cfi import *
@@ -53,6 +59,17 @@ mixedTripletStepSeedLayersA = cms.EDProducer("SeedingLayersEDProducer",
         skipClusters = cms.InputTag('mixedTripletStepClusters')
     )
 )
+eras.phase1Pixel.toModify(mixedTripletStepSeedLayersA, layerList = [
+    'BPix1+BPix2+FPix1_pos', 'BPix1+BPix2+FPix1_neg', 
+    'BPix1+FPix1_pos+FPix2_pos', 'BPix1+FPix1_neg+FPix2_neg', 
+    'FPix1_pos+FPix2_pos+FPix3_pos', 'FPix1_neg+FPix2_neg+FPix3_neg', 
+    'BPix2+FPix1_pos+FPix2_pos', 'BPix2+FPix1_neg+FPix2_neg', 
+    'BPix1+FPix1_pos+FPix3_pos', 'BPix1+FPix1_neg+FPix3_neg', 
+    'FPix2_pos+FPix3_pos+TEC1_pos', 'FPix2_neg+FPix3_neg+TEC1_neg'
+])
+eras.phase1Pixel.toModify(mixedTripletStepSeedLayersA.TEC.clusterChargeCut, refToPSet_ = 'SiStripClusterChargeCutNone')
+eras.phase1Pixel.toModify(mixedTripletStepSeedLayersA.TEC, maxRing = 2)
+
 
 # SEEDS
 from RecoPixelVertexing.PixelTriplets.PixelTripletLargeTipGenerator_cfi import *
@@ -82,6 +99,11 @@ mixedTripletStepSeedsA.SeedComparitorPSet = cms.PSet(
         ClusterShapeHitFilterName = cms.string('mixedTripletStepClusterShapeHitFilter'),
         ClusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCache')
     )
+eras.phase1Pixel.toModify(mixedTripletStepSeedsA.RegionFactoryPSet.RegionPSet, ptMin = 0.7)
+eras.phase1Pixel.toModify(mixedTripletStepSeedsA.SeedComparitorPSet, ClusterShapeHitFilterName = 'ClusterShapeHitFilter')
+eras.phase1Pixel.toModify(mixedTripletStepSeedsA.SeedCreatorPSet, magneticField = '', propagator = 'PropagatorWithMaterial')
+eras.phase1Pixel.toModify(mixedTripletStepSeedsA.ClusterCheckPSet, doClusterCheck = False)
+eras.phase1Pixel.toModify(mixedTripletStepSeedsA.OrderedHitsFactoryPSet.GeneratorPSet, maxElement = 0)
 
 # SEEDING LAYERS
 mixedTripletStepSeedLayersB = cms.EDProducer("SeedingLayersEDProducer",
@@ -97,6 +119,10 @@ mixedTripletStepSeedLayersB = cms.EDProducer("SeedingLayersEDProducer",
         skipClusters = cms.InputTag('mixedTripletStepClusters')
     )
 )
+eras.phase1Pixel.toModify(mixedTripletStepSeedLayersB, layerList = [
+    'BPix1+BPix2+BPix3', 'BPix2+BPix3+BPix4','BPix1+BPix2+BPix4', 'BPix1+BPix3+BPix4'
+])
+eras.phase1Pixel.toModify(mixedTripletStepSeedLayersB, TIB = cms.PSet())
 
 # SEEDS
 from RecoPixelVertexing.PixelTriplets.PixelTripletLargeTipGenerator_cfi import *
@@ -119,6 +145,12 @@ mixedTripletStepSeedsB.SeedComparitorPSet = cms.PSet(
         ClusterShapeHitFilterName = cms.string('mixedTripletStepClusterShapeHitFilter'),
         ClusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCache')
     )
+eras.phase1Pixel.toModify(mixedTripletStepSeedsB.RegionFactoryPSet.RegionPSet, ptMin = 0.5, originHalfLength = 15.0, originRadius = 1.0)
+eras.phase1Pixel.toModify(mixedTripletStepSeedsB.SeedComparitorPSet, ClusterShapeHitFilterName = 'ClusterShapeHitFilter')
+eras.phase1Pixel.toModify(mixedTripletStepSeedsB.SeedCreatorPSet, magneticField = '', propagator = 'PropagatorWithMaterial')
+eras.phase1Pixel.toModify(mixedTripletStepSeedsB.ClusterCheckPSet, doClusterCheck = False)
+eras.phase1Pixel.toModify(mixedTripletStepSeedsB.OrderedHitsFactoryPSet.GeneratorPSet, maxElement = 0)
+
 
 import RecoTracker.TkSeedGenerator.GlobalCombinedSeeds_cfi
 mixedTripletStepSeeds = RecoTracker.TkSeedGenerator.GlobalCombinedSeeds_cfi.globalCombinedSeeds.clone()
@@ -128,13 +160,16 @@ mixedTripletStepSeeds.seedCollections = cms.VInputTag(
         )
 
 # QUALITY CUTS DURING TRACK BUILDING
-import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
-mixedTripletStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
+from TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff import CkfBaseTrajectoryFilter_block as _CkfBaseTrajectoryFilter_block
+mixedTripletStepTrajectoryFilter = _CkfBaseTrajectoryFilter_block.clone(
 #    maxLostHits = 0,
     constantValueForLostHitsFractionFilter = 1.4,
     minimumNumberOfHits = 3,
     minPt = 0.1
     )
+eras.phase1Pixel.toModify(mixedTripletStepTrajectoryFilter,
+                          maxLostHits = 0,
+                          constantValueForLostHitsFractionFilter = _CkfBaseTrajectoryFilter_block.constantValueForLostHitsFractionFilter.value())
 
 # Propagator taking into account momentum uncertainty in multiple scattering calculation.
 import TrackingTools.MaterialEffects.MaterialPropagatorParabolicMf_cff
@@ -152,13 +187,14 @@ mixedTripletStepPropagatorOpposite = TrackingTools.MaterialEffects.OppositeMater
     ptMin = 0.1
     )
 
-import RecoTracker.MeasurementDet.Chi2ChargeMeasurementEstimator_cfi
-mixedTripletStepChi2Est = RecoTracker.MeasurementDet.Chi2ChargeMeasurementEstimator_cfi.Chi2ChargeMeasurementEstimator.clone(
+from RecoTracker.MeasurementDet.Chi2ChargeMeasurementEstimator_cfi import Chi2ChargeMeasurementEstimator as _Chi2ChargeMeasurementEstimator
+mixedTripletStepChi2Est = _Chi2ChargeMeasurementEstimator.clone(
     ComponentName = cms.string('mixedTripletStepChi2Est'),
     nSigma = cms.double(3.0),
     MaxChi2 = cms.double(16.0),
     clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight'))
 )
+eras.phase1Pixel.toModify(mixedTripletStepChi2Est, clusterChargeCut = _Chi2ChargeMeasurementEstimator.clusterChargeCut.value())
 
 # TRACK BUILDING
 import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
@@ -195,6 +231,7 @@ mixedTripletStepTrajectoryCleanerBySharedHits = trajectoryCleanerBySharedHits.cl
             allowSharedFirstHit = cms.bool(True)
             )
 mixedTripletStepTrackCandidates.TrajectoryCleaner = 'mixedTripletStepTrajectoryCleanerBySharedHits'
+eras.phase1Pixel.toModify(mixedTripletStepTrajectoryCleanerBySharedHits, fractionShared = 0.095)
 
 
 # TRACK FITTING
@@ -204,6 +241,7 @@ mixedTripletStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProduc
     src = 'mixedTripletStepTrackCandidates',
     Fitter = cms.string('FlexibleKFFittingSmoother')
 )
+eras.phase1Pixel.toModify(mixedTripletStepTracks, TTRHBuilder = 'WithTrackAngle')
 
 # TRACK SELECTION AND QUALITY FLAG SETTING.
 from RecoTracker.FinalTrackSelectors.TrackMVAClassifierPrompt_cfi import *
@@ -221,7 +259,105 @@ from RecoTracker.FinalTrackSelectors.ClassifierMerger_cfi import *
 mixedTripletStep = ClassifierMerger.clone()
 mixedTripletStep.inputClassifiers=['mixedTripletStepClassifier1','mixedTripletStepClassifier2']
 
+# For Phase1PU70
+import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
+mixedTripletStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(
+    src='mixedTripletStepTracks',
+    trackSelectors= cms.VPSet(
+        RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
+            name = 'mixedTripletStepVtxLoose',
+            chi2n_par = 0.9,
+            res_par = ( 0.003, 0.001 ),
+            minNumberLayers = 3,
+            maxNumberLostLayers = 1,
+            minNumber3DLayers = 2,
+            d0_par1 = ( 1.2, 3.0 ),
+            dz_par1 = ( 1.2, 3.0 ),
+            d0_par2 = ( 1.3, 3.0 ),
+            dz_par2 = ( 1.3, 3.0 )
+            ),
+        RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
+            name = 'mixedTripletStepTrkLoose',
+            chi2n_par = 0.5,
+            res_par = ( 0.003, 0.001 ),
+            minNumberLayers = 4,
+            maxNumberLostLayers = 1,
+            minNumber3DLayers = 3,
+            d0_par1 = ( 1.1, 4.0 ),
+            dz_par1 = ( 1.1, 4.0 ),
+            d0_par2 = ( 1.1, 4.0 ),
+            dz_par2 = ( 1.1, 4.0 )
+            ),
+        RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.tightMTS.clone(
+            name = 'mixedTripletStepVtxTight',
+            preFilterName = 'mixedTripletStepVtxLoose',
+            chi2n_par = 0.6,
+            res_par = ( 0.003, 0.001 ),
+            minNumberLayers = 3,
+            maxNumberLostLayers = 1,
+            minNumber3DLayers = 3,
+            d0_par1 = ( 1.1, 3.0 ),
+            dz_par1 = ( 1.1, 3.0 ),
+            d0_par2 = ( 1.2, 3.0 ),
+            dz_par2 = ( 1.2, 3.0 )
+            ),
+        RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.tightMTS.clone(
+            name = 'mixedTripletStepTrkTight',
+            preFilterName = 'mixedTripletStepTrkLoose',
+            chi2n_par = 0.35,
+            res_par = ( 0.003, 0.001 ),
+            minNumberLayers = 5,
+            maxNumberLostLayers = 1,
+            minNumber3DLayers = 4,
+            d0_par1 = ( 0.9, 4.0 ),
+            dz_par1 = ( 0.9, 4.0 ),
+            d0_par2 = ( 0.9, 4.0 ),
+            dz_par2 = ( 0.9, 4.0 )
+            ),
+        RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.highpurityMTS.clone(
+            name = 'mixedTripletStepVtx',
+            preFilterName = 'mixedTripletStepVtxTight',
+            chi2n_par = 0.4,
+            res_par = ( 0.003, 0.001 ),
+            minNumberLayers = 3,
+            maxNumberLostLayers = 1,
+            minNumber3DLayers = 3,
+            max_minMissHitOutOrIn = 1,
+            d0_par1 = ( 0.9, 3.0 ),
+            dz_par1 = ( 0.9, 3.0 ),
+            d0_par2 = ( 1.0, 3.0 ),
+            dz_par2 = ( 1.0, 3.0 )
+            ),
+        RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.highpurityMTS.clone(
+            name = 'mixedTripletStepTrk',
+            preFilterName = 'mixedTripletStepTrkTight',
+            chi2n_par = 0.2,
+            res_par = ( 0.003, 0.001 ),
+            minNumberLayers = 5,
+            maxNumberLostLayers = 0,
+            minNumber3DLayers = 4,
+            max_minMissHitOutOrIn = 1,
+            d0_par1 = ( 0.7, 4.0 ),
+            dz_par1 = ( 0.7, 4.0 ),
+            d0_par2 = ( 0.7, 4.0 ),
+            dz_par2 = ( 0.7, 4.0 )
+            )
+        ) #end of vpset
+    ) #end of clone
 
+import RecoTracker.FinalTrackSelectors.trackListMerger_cfi
+_mixedTripletStep_Phase1PU70 = RecoTracker.FinalTrackSelectors.trackListMerger_cfi.trackListMerger.clone(
+    TrackProducers = cms.VInputTag(cms.InputTag('mixedTripletStepTracks'),
+                                   cms.InputTag('mixedTripletStepTracks')),
+    hasSelector=cms.vint32(1,1),
+    shareFrac=cms.double(0.095),
+    indivShareFrac=cms.vdouble(0.095,0.095),
+    selectedTrackQuals = cms.VInputTag(cms.InputTag("mixedTripletStepSelector","mixedTripletStepVtx"),
+                                       cms.InputTag("mixedTripletStepSelector","mixedTripletStepTrk")),
+    setsToMerge = cms.VPSet( cms.PSet( tLists=cms.vint32(0,1), pQual=cms.bool(True) )),
+    writeOnlyTrkQuals=cms.bool(True)
+)
+eras.phase1Pixel.toReplaceWith(mixedTripletStep, _mixedTripletStep_Phase1PU70)
 
 
 
@@ -235,3 +371,15 @@ MixedTripletStep = cms.Sequence(chargeCut2069Clusters*mixedTripletStepClusters*
                                 mixedTripletStepTracks*
                                 mixedTripletStepClassifier1*mixedTripletStepClassifier2*
                                 mixedTripletStep)
+eras.phase1Pixel.toReplaceWith(MixedTripletStep, cms.Sequence(
+    mixedTripletStepClusters*
+    mixedTripletStepSeedLayersA*
+    mixedTripletStepSeedsA*
+    mixedTripletStepSeedLayersB*
+    mixedTripletStepSeedsB*
+    mixedTripletStepSeeds*
+    mixedTripletStepTrackCandidates*
+    mixedTripletStepTracks*
+    mixedTripletStepSelector*
+    mixedTripletStep
+))
