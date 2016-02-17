@@ -14,7 +14,8 @@ from SimTracker.TrackerHitAssociation.clusterTpAssociationProducer_cfi import *
 from SimTracker.VertexAssociation.VertexAssociatorByPositionAndTracks_cfi import *
 from CommonTools.RecoAlgos.trackingParticleRefSelector_cfi import trackingParticleRefSelector as _trackingParticleRefSelector
 from CommonTools.RecoAlgos.trackingParticleConversionRefSelector_cfi import trackingParticleConversionRefSelector as _trackingParticleConversionRefSelector
-from SimGeneral.TrackingAnalysis.trackingParticleNumberOfLayersProducer_cff import *
+from SimGeneral.TrackingAnalysis.trackingParticleNumberOfLayersProducer_cfi import *
+from SimGeneral.TrackingAnalysis.trackingParticleNumberOfLayersProducerFastSim_cfi import *
 from CommonTools.RecoAlgos.recoChargedRefCandidateToTrackRefProducer_cfi import recoChargedRefCandidateToTrackRefProducer as _recoChargedRefCandidateToTrackRefProducer
 
 from Configuration.StandardSequences.Eras import eras
@@ -293,8 +294,16 @@ trackValidator = Validation.RecoTrack.MultiTrackValidator_cfi.multiTrackValidato
     #,maxpT = cms.double(3)
     #,nintpT = cms.int32(40)
 )
+def _replaceFS(inputTag):
+    tag = cms.InputTag(inputTag.value())
+    tag.setModuleLabel(tag.getModuleLabel()+"FastSim")
+    return tag.value()
 eras.fastSim.toModify(trackValidator, 
-                      dodEdxPlots = False)
+                      dodEdxPlots = False,
+                      label_tp_nlayers = _replaceFS(trackValidator.label_tp_nlayers),
+                      label_tp_npixellayers = _replaceFS(trackValidator.label_tp_npixellayers),
+                      label_tp_nstripstereolayers = _replaceFS(trackValidator.label_tp_nstripstereolayers),
+)
 eras.phase1Pixel.toModify(trackValidator,
                       label = ["generalTracks", _generalTracksHp_phase1Pixel] + _selectorsByAlgo_phase1Pixel + _selectorsByAlgoHp_phase1Pixel +  [
         "cutsRecoTracksBtvLike",
@@ -394,7 +403,9 @@ tracksValidationTruth = cms.Sequence(
     VertexAssociatorByPositionAndTracks +
     trackingParticleNumberOfLayersProducer
 )
-eras.fastSim.toModify(tracksValidationTruth, lambda x: x.remove(tpClusterProducer))
+eras.fastSim.toReplaceWith(tracksValidationTruth, cms.Sequence(
+    tracksValidationTruth.copyAndExclude([tpClusterProducer, trackingParticleNumberOfLayersProducer]) + trackingParticleNumberOfLayersProducerFastSim).expandAndClone()
+)
 
 tracksPreValidation = cms.Sequence(
     tracksValidationSelectors +

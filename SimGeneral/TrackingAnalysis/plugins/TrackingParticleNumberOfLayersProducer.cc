@@ -57,6 +57,13 @@ void TrackingParticleNumberOfLayersProducer::fillDescriptions(edm::Configuration
     });
 
   descriptions.add("trackingParticleNumberOfLayersProducer", desc);
+
+  edm::ParameterSetDescription descFS;
+  descFS.add<edm::InputTag>("trackingParticles", edm::InputTag("mix", "MergedTrackTruth"));
+  descFS.add<std::vector<edm::InputTag> >("simHits", {
+      edm::InputTag("famosSimHits", "TrackerHits")
+    });
+  descriptions.add("trackingParticleNumberOfLayersProducerFastSim", descFS);
 }
 
 void TrackingParticleNumberOfLayersProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
