@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.StandardSequences.Eras import eras
 
 clusterSummaryProducer = cms.EDProducer('ClusterSummaryProducer',
                                         stripClusters=cms.InputTag('siStripClusters'),
@@ -10,3 +11,7 @@ clusterSummaryProducer = cms.EDProducer('ClusterSummaryProducer',
                                         wantedUserSubDets = cms.VPSet()
                                         )
 clusterSummaryProducerNoSplitting = clusterSummaryProducer.clone(pixelClusters = 'siPixelClusters')
+
+eras.trackingPhase1.toModify(clusterSummaryProducer,
+    pixelClusters = "siPixelClusters"
+)

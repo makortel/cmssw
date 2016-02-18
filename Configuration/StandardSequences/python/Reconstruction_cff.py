@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.StandardSequences.Eras import eras
 
 from RecoLuminosity.LumiProducer.lumiProducer_cff import *
 from RecoLuminosity.LumiProducer.bunchSpacingProducer_cfi import *
@@ -58,6 +59,15 @@ globalreco_tracking = cms.Sequence(offlineBeamSpot*
                           standalonemuontracking*
                           trackingGlobalReco*
                           vertexreco)
+eras.trackingPhase1.toReplaceWith(globalreco_tracking, cms.Sequence(
+    offlineBeamSpot*
+    MeasurementTrackerEvent* # unclear where to put this
+    siPixelClusterShapeCache* # unclear where to put this
+    standalonemuontracking*
+    trackingGlobalReco*
+    vertexreco
+))
+
 globalreco = cms.Sequence(globalreco_tracking*
                           hcalGlobalRecoSequence*
                           particleFlowCluster*
@@ -101,6 +111,7 @@ reconstruction_trackingOnly = cms.Sequence(bunchSpacingProducer*localreco*global
 modulesToRemove = list() # copy does not work well
 noTrackingAndDependent = list()
 noTrackingAndDependent.append(siPixelClustersPreSplitting)
+noTrackingAndDependent.append(siPixelClusters)
 noTrackingAndDependent.append(siStripZeroSuppression)
 noTrackingAndDependent.append(siStripClusters)
 noTrackingAndDependent.append(initialStepSeedLayersPreSplitting)
@@ -113,10 +124,12 @@ noTrackingAndDependent.append(caloTowerForTrkPreSplitting)
 noTrackingAndDependent.append(ak4CaloJetsForTrkPreSplitting)
 noTrackingAndDependent.append(jetsForCoreTrackingPreSplitting)
 noTrackingAndDependent.append(siPixelClusterShapeCachePreSplitting)
-noTrackingAndDependent.append(siPixelClusters)
+noTrackingAndDependent.append(siPixelClusterShapeCache)
 noTrackingAndDependent.append(clusterSummaryProducer)
 noTrackingAndDependent.append(siPixelRecHitsPreSplitting)
+noTrackingAndDependent.append(siPixelRecHits)
 noTrackingAndDependent.append(MeasurementTrackerEventPreSplitting)
+noTrackingAndDependent.append(MeasurementTrackerEvent)
 modulesToRemove.append(dt1DRecHits)
 modulesToRemove.append(dt1DCosmicRecHits)
 modulesToRemove.append(csc2DRecHits)

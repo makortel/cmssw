@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.StandardSequences.Eras import eras
 
 ### STEP 0 ###
 
@@ -122,6 +123,11 @@ siPixelClusters = jetCoreClusterSplitter.clone(
     vertices      = 'firstStepPrimaryVerticesPreSplitting',
     cores         = 'jetsForCoreTrackingPreSplitting'
 )
+# Getting siPixelClusters back to the original is a bit convoluted,
+# but that's what you get by redefining modules
+from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi import siPixelClusters as _siPixelClusters
+eras.trackingPhase1.toReplaceWith(siPixelClusters, _siPixelClusters)
+
 
 # Final sequence
 from RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi import siPixelRecHits
@@ -140,4 +146,4 @@ InitialStepPreSplitting = cms.Sequence(initialStepSeedLayersPreSplitting*
                                        siPixelRecHits*
                                        MeasurementTrackerEvent*
                                        siPixelClusterShapeCache)
-
+eras.trackingPhase1.toReplaceWith(InitialStepPreSplitting, InitialStepPreSplitting.copyAndExclude([siPixelClusters]))
