@@ -164,7 +164,6 @@ pixelPairStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.
     src = 'pixelPairStepTrackCandidates',
     Fitter = cms.string('FlexibleKFFittingSmoother')
     )
-eras.trackingPhase1.toModify(pixelPairStepTracks, TTRHBuilder = 'WithTrackAngle')
 
 # Final selection
 from RecoTracker.FinalTrackSelectors.TrackMVAClassifierPrompt_cfi import *
