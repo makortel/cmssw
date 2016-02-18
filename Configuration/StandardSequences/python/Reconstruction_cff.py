@@ -64,6 +64,7 @@ eras.trackingPhase1.toReplaceWith(globalreco_tracking, cms.Sequence(
     MeasurementTrackerEvent* # unclear where to put this
     siPixelClusterShapeCache* # unclear where to put this
     standalonemuontracking*
+    recopixelvertexing*
     trackingGlobalReco*
     vertexreco
 ))
@@ -130,6 +131,9 @@ noTrackingAndDependent.append(siPixelRecHitsPreSplitting)
 noTrackingAndDependent.append(siPixelRecHits)
 noTrackingAndDependent.append(MeasurementTrackerEventPreSplitting)
 noTrackingAndDependent.append(MeasurementTrackerEvent)
+noTrackingAndDependent.append(PixelLayerTriplets)
+noTrackingAndDependent.append(pixelTracks)
+noTrackingAndDependent.append(pixelVertices)
 modulesToRemove.append(dt1DRecHits)
 modulesToRemove.append(dt1DCosmicRecHits)
 modulesToRemove.append(csc2DRecHits)
