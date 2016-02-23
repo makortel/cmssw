@@ -10,7 +10,7 @@ from RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitMatcher_cfi import *
 from RecoLocalTracker.SiStripRecHitConverter.StripCPEfromTrackAngle_cfi import *
 from RecoLocalTracker.SiStripZeroSuppression.SiStripZeroSuppression_cfi import *
 from RecoLocalTracker.SiStripClusterizer.SiStripClusterizer_cfi import *
-from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi import *
+from RecoLocalTracker.SiPixelClusterizer.siPixelClusters_cfi import *
 from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizerPreSplitting_cfi import *
 from RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi import *
 from RecoLocalTracker.SubCollectionProducers.clustersummaryproducer_cfi import *

@@ -117,16 +117,8 @@ jetsForCoreTrackingPreSplitting = jetsForCoreTracking.clone(
     src = 'ak4CaloJetsForTrkPreSplitting')
 
 #Cluster Splitting
-from RecoLocalTracker.SubCollectionProducers.jetCoreClusterSplitter_cfi import jetCoreClusterSplitter
-siPixelClusters = jetCoreClusterSplitter.clone(
-    pixelClusters = cms.InputTag('siPixelClustersPreSplitting'),
-    vertices      = 'firstStepPrimaryVerticesPreSplitting',
-    cores         = 'jetsForCoreTrackingPreSplitting'
-)
-# Getting siPixelClusters back to the original is a bit convoluted,
-# but that's what you get by redefining modules
-from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi import siPixelClusters as _siPixelClusters
-eras.trackingPhase1.toReplaceWith(siPixelClusters, _siPixelClusters)
+# Note that the input parameters are set in siPixelClusters_cfi as to collections produced in this file
+from RecoLocalTracker.SiPixelClusterizer.siPixelClusters_cfi import siPixelClusters
 
 
 # Final sequence
@@ -146,4 +138,4 @@ InitialStepPreSplitting = cms.Sequence(initialStepSeedLayersPreSplitting*
                                        siPixelRecHits*
                                        MeasurementTrackerEvent*
                                        siPixelClusterShapeCache)
-eras.trackingPhase1.toReplaceWith(InitialStepPreSplitting, InitialStepPreSplitting.copyAndExclude([siPixelClusters]))
+

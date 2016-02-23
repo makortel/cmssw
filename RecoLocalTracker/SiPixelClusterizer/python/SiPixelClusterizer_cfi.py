@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 
 #
 from CondTools.SiPixel.SiPixelGainCalibrationService_cfi import *
-siPixelClusters = cms.EDProducer("SiPixelClusterProducer",
+SiPixelClusterizer = cms.EDProducer("SiPixelClusterProducer",
     SiPixelGainCalibrationServiceParameters,
     src = cms.InputTag("siPixelDigis"),
     ChannelThreshold = cms.int32(1000),
@@ -26,7 +26,7 @@ siPixelClusters = cms.EDProducer("SiPixelClusterProducer",
 
 # This customization will be removed once we have phase1 pixel digis
 from Configuration.StandardSequences.Eras import eras
-eras.phase1Pixel.toModify(siPixelClusters, # FIXME
+eras.phase1Pixel.toModify(SiPixelClusterizer, # FIXME
     src = 'simSiPixelDigis',
     MissCalibrate = False
 )
