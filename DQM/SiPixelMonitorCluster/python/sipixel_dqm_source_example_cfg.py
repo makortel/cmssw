@@ -12,6 +12,7 @@ process.load("Geometry.TrackerNumberingBuilder.trackerNumberingGeometry_cfi")
 #process.load("CondTools.SiPixel.SiPixelGainCalibrationService_cfi")
 
 process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
 
 process.load("DQM.SiPixelMonitorCluster.SiPixelMonitorCluster_cfi")
 

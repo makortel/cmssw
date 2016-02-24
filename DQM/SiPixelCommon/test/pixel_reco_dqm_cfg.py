@@ -12,6 +12,7 @@ process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("EventFilter.SiPixelRawToDigi.SiPixelRawToDigi_cfi")
 
 process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
 
 process.load("DQM.SiPixelMonitorRawData.SiPixelMonitorRawData_cfi")
 

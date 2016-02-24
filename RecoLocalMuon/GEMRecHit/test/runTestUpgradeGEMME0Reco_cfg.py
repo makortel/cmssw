@@ -72,6 +72,7 @@ process.load("RecoPixelVertexing.Configuration.RecoPixelVertexing_cff")
 # process.striptrackerlocalreco = cms.Sequence(process.siStripZeroSuppression*process.siStripClusters*process.siStripMatchedRecHits)
 # process.trackerlocalreco = cms.Sequence(process.pixeltrackerlocalreco*process.striptrackerlocalreco*process.clusterSummaryProducer)
 # Run-I Local Reco
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
 process.pixeltrackerlocalreco = cms.Sequence(process.siPixelClusters*process.siPixelRecHits)
 process.striptrackerlocalreco = cms.Sequence(process.siStripZeroSuppression*process.siStripClusters*process.siStripMatchedRecHits)
 process.trackerlocalreco = cms.Sequence(process.pixeltrackerlocalreco*process.striptrackerlocalreco*process.clusterSummaryProducerNoSplitting)

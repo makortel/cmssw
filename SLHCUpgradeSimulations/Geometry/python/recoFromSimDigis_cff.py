@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
-from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi import *
+from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi import SiPixelClusterizer as _SiPixelClusterizer
+siPixelClusters = _SiPixelClusterizer.clone() # this file is a hack anyway and will get removed soon
 siPixelClusters.src = 'simSiPixelDigis'
 siPixelClusters.MissCalibrate = False
 

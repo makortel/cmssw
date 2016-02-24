@@ -25,6 +25,8 @@ process.load("CalibTracker.SiPixelSCurveCalibration.SiPixelSCurveCalibrationAnal
 process.load("CalibTracker.SiPixelIsAliveCalibration.SiPixelIsAliveCalibration_cfi")
 process.load("CalibTracker.SiPixelGainCalibration.SiPixelGainCalibrationAnalysis_cfi")
 
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
+
 # get the global tag with all cabling maps, alignment info, etc.
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff")
 

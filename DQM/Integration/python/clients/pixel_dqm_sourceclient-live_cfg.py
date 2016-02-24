@@ -71,6 +71,7 @@ process.siPixelDigis.IncludeErrors = True
 
 # Local Reconstruction
 process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
 
 #----------------------------------
 # High Pileup Configuration Changes

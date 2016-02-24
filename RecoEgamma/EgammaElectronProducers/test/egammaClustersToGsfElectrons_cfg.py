@@ -14,7 +14,6 @@ process.load("RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitMatcher_cfi")
 process.load("RecoLocalTracker.SiStripRecHitConverter.StripCPEfromTrackAngle_cfi")
 process.load("RecoLocalTracker.SiStripZeroSuppression.SiStripZeroSuppression_cfi")
 process.load("RecoLocalTracker.SiStripClusterizer.SiStripClusterizer_cfi")
-process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
 process.load("RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff")
 process.load("RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff")
 
@@ -97,6 +96,9 @@ process.load("Configuration.StandardSequences.Reconstruction_cff")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.load("Configuration.EventContent.EventContent_cff")
 
+# The sequences below are probably broken because trackerlocalreco
+# contains siPixelClustersPreSplitting and siPixelRecHitsPreSplitting,
+# but e.g. recopixelvertexing expects siPixelRecHits
 process.mylocalreco =  cms.Sequence(process.trackerlocalreco*process.calolocalreco)
 process.myglobalreco = cms.Sequence(process.offlineBeamSpot+process.recopixelvertexing*process.ckftracks+process.ecalClusters+process.caloTowersRec*process.vertexreco*process.gsfElectronSequence)
 process.p = cms.Path(process.RawToDigi*process.mylocalreco*process.myglobalreco*process.gsfElectronAnalysis)

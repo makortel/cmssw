@@ -11,6 +11,7 @@ process.siPixelDigis.InputLabel = 'source'
 process.siPixelDigis.IncludeErrors = True
 
 process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
 
 process.load("RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi")
 process.load("RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff")

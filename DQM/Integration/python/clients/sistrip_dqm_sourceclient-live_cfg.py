@@ -346,6 +346,8 @@ if (process.runType.getRunType() == process.runType.pp_run or process.runType.ge
 
     # Redefinition of siPixelClusters: has to be after RecoTracker.IterativeTracking.InitialStepPreSplitting_cff
     process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
+    process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
+
 
     from RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi import *
     process.PixelLayerTriplets.BPix.HitProducer = cms.string('siPixelRecHitsPreSplitting')

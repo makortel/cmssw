@@ -14,6 +14,7 @@ process.load("RecoLocalTracker.SiStripClusterizer.SiStripClusterizer_cfi")
 process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
 process.load("RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff")
 process.load("RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff")
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(10)

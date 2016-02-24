@@ -18,6 +18,7 @@ useCPEGeneric = True
 #useCPEGeneric = False
 
 process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
+process.siPixelClusters = process.SiPixelClusterizer.clone() # minimal migration of label change in SiPixelClusterizer_cfi
 
 process.load("RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi")
 if useCPEGeneric:
