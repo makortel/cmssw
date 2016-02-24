@@ -48,6 +48,23 @@ _algosForPhase1Pixel = [
     "muonSeededStepInOut",
     "muonSeededStepOutIn",
     ]
+_algosForPhase1PixelNew = [
+    "generalTracks",
+    "initialStep",
+    "highPtTripletStep",
+    "lowPtQuadStep",
+    "lowPtTripletStep",
+    "detachedQuadStep",
+    "mixedTripletStep",
+    "pixelLessStep",
+    "tobTecStep",
+    "jetCoreRegionalStep",
+    "muonSeededStepInOut",
+    "muonSeededStepOutIn",
+    "duplicateMerge",
+]
+#_algosForPhase1Pixel = _algosForPhase1PixelNew
+#_algosForPhase1Pixel = _algos
 
 _seedProducers = [
     "initialStepSeedsPreSplitting",
