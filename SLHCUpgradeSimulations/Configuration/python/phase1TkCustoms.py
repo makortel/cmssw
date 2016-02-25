@@ -325,6 +325,8 @@ def remove_pixel_ineff(process):
     
 
 def customise_Reco(process,pileup):
+    if eras.phase1Pixel.isChosen():
+        return process
 
     #this code supports either 70 or 140 pileup configurations - should fix as to support 0
     nPU=70
