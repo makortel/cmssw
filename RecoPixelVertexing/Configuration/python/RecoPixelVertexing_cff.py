@@ -16,7 +16,7 @@ PixelLayerTripletsPreSplitting = PixelLayerTriplets.clone(
 )
 _recopixelvertexing_Phase1PU70 = recopixelvertexing.copy()
 _recopixelvertexing_Phase1PU70.replace(PixelLayerTriplets, PixelLayerTripletsPreSplitting)
-eras.trackingPhase1.toReplaceWith(recopixelvertexing, _recopixelvertexing_Phase1PU70)
-eras.trackingPhase1.toModify(pixelTracks,
+eras.trackingPhase1PU70.toReplaceWith(recopixelvertexing, _recopixelvertexing_Phase1PU70)
+eras.trackingPhase1PU70.toModify(pixelTracks,
     OrderedHitsFactoryPSet = dict(SeedingLayers = "PixelLayerTripletsPreSplitting")
 )
