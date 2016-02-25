@@ -45,6 +45,7 @@ from RecoLocalCalo.CastorReco.CastorSimpleReconstructor_cfi import *
 
 localreco = cms.Sequence(trackerlocalreco+muonlocalreco+calolocalreco+castorreco)
 localreco_HcalNZS = cms.Sequence(trackerlocalreco+muonlocalreco+calolocalrecoNZS+castorreco)
+eras.phase1Pixel.toReplaceWith(localreco, localreco.copyAndExclude([castorreco])) # FIXME, no castor in 2017 geometry yet?
 
 #
 # temporarily switching off recoGenJets; since this are MC and wil be moved to a proper sequence
@@ -74,6 +75,7 @@ globalreco = cms.Sequence(globalreco_tracking*
                           pfTrackingGlobalReco*
                           muoncosmicreco*
                           CastorFullReco)
+eras.phase1Pixel.toReplaceWith(globalreco, globalreco.copyAndExclude([CastorFullReco])) # FIXME, no castor in 2017 geometry yet?
 
 globalreco_plusPL= cms.Sequence(globalreco*ctfTracksPixelLess)
 
