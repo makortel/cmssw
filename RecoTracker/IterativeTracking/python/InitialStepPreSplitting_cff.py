@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.StandardSequences.Eras import eras
 
 ### STEP 0 ###
 
@@ -123,6 +124,7 @@ siPixelClusters = jetCoreClusterSplitter.clone(
     cores         = 'jetsForCoreTrackingPreSplitting'
 )
 
+
 # Final sequence
 from RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi import siPixelRecHits
 from RecoTracker.MeasurementDet.MeasurementTrackerEventProducer_cfi import MeasurementTrackerEvent
@@ -140,4 +142,25 @@ InitialStepPreSplitting = cms.Sequence(initialStepSeedLayersPreSplitting*
                                        siPixelRecHits*
                                        MeasurementTrackerEvent*
                                        siPixelClusterShapeCache)
-
+# Although InitialStepPreSplitting is not really part of Phase1PU70
+# tracking, we use it to get siPixelClusters and siPixelRecHits
+# collections for non-splitted pixel clusters. All modules before
+# iterTracking sequence use siPixelClustersPreSplitting and
+# siPixelRecHitsPreSplitting for that purpose.
+#
+# If siPixelClusters would be defined in
+# RecoLocalTracker.Configuration.RecoLocalTracker_cff, we would have a
+# situation where
+# - Phase1PU70 has siPixelClusters defined in RecoLocalTracker_cff
+# - everything else has siPixelClusters defined here
+# and this leads to a mess. The way it is done here we have only
+# one place (within Reconstruction_cff) where siPixelClusters
+# module is defined.
+from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi import siPixelClusters as _siPixelClusters
+eras.trackingPhase1.toReplaceWith(siPixelClusters, _siPixelClusters)
+eras.trackingPhase1.toReplaceWith(InitialStepPreSplitting, cms.Sequence(
+    siPixelClusters +
+    siPixelRecHits +
+    MeasurementTrackerEvent +
+    siPixelClusterShapeCache
+))
