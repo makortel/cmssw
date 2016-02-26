@@ -26,16 +26,10 @@ initialStepSeedsPreSplitting = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriple
     )
     )
     )
-# In the following we need the PreSplitting version of
-# PixelSeedMergerQuadruplets. It is a bit stupid given that
-# QuadrupletSeedMerger does not even read the hits. Oh well, since the
-# plan is to replace the merger with something better, maybe it is
-# better to live with this than to modify the seeding layer code to
-# avoid calling consumes() when not needed.
 initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.SeedingLayers = 'initialStepSeedLayersPreSplitting'
 eras.trackingPhase1.toModify(initialStepSeedsPreSplitting,
     SeedMergerPSet = cms.PSet(
-        layerList = cms.PSet(refToPSet_ = cms.string("PixelSeedMergerQuadrupletsPreSplitting")),
+        layerList = cms.PSet(refToPSet_ = cms.string("PixelSeedMergerQuadruplets")),
 	addRemainingTriplets = cms.bool(False),
 	mergeTriplets = cms.bool(True),
 	ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
