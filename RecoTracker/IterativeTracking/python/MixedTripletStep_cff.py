@@ -30,7 +30,6 @@ mixedTripletStepClusters = _mixedTripletStepClustersBase.clone(
 )
 eras.trackingPhase1.toModify(mixedTripletStepClusters,
     trajectories                             = "lowPtTripletStepTracks",
-    oldClusterRemovalInfo                    = "lowPtTripletStepClusters",
     trackClassifier                          = "lowPtTripletStep:QualityMasks",
 )
 eras.trackingPhase1PU70.toReplaceWith(mixedTripletStepClusters, _mixedTripletStepClustersBase.clone(
