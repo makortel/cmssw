@@ -13,7 +13,7 @@ from RecoTracker.IterativeTracking.JetCoreRegionalStep_cff import *
 # Phase1 specific iterations
 from RecoTracker.IterativeTracking.HighPtTripletStep_cff import *
 from RecoTracker.IterativeTracking.DetachedQuadStep_cff import *
-from RecoTracker.IterativeTracking.Phase1PU70_LowPtQuadStep_cff import *
+from RecoTracker.IterativeTracking.LowPtQuadStep_cff import *
 
 from RecoTracker.FinalTrackSelectors.earlyGeneralTracks_cfi import *
 from RecoTracker.IterativeTracking.MuonSeededStep_cff import *
