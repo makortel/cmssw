@@ -47,7 +47,7 @@ _algosForTrackingPhase1PU70 = [
     "tobTecStep",
     "muonSeededStepInOut",
     "muonSeededStepOutIn",
-    ]
+]
 
 _seedProducers = [
     "initialStepSeedsPreSplitting",
@@ -73,18 +73,18 @@ _seedProducersForFastSim = [ x for x in _seedProducers if x not in _removeForFas
 
 
 _seedProducersForTrackingPhase1PU70 = [
-        "initialStepSeeds",
-        "highPtTripletStepSeeds",
-        "lowPtQuadStepSeeds",
-        "lowPtTripletStepSeeds",
-        "detachedQuadStepSeeds",
-        "mixedTripletStepSeedsA",
-        "mixedTripletStepSeedsB",
-        "pixelPairStepSeeds",
-        "tobTecStepSeeds",
-        "muonSeededSeedsInOut",
-        "muonSeededSeedsOutIn",
-    ]
+    "initialStepSeeds",
+    "highPtTripletStepSeeds",
+    "lowPtQuadStepSeeds",
+    "lowPtTripletStepSeeds",
+    "detachedQuadStepSeeds",
+    "mixedTripletStepSeedsA",
+    "mixedTripletStepSeedsB",
+    "pixelPairStepSeeds",
+    "tobTecStepSeeds",
+    "muonSeededSeedsInOut",
+    "muonSeededSeedsOutIn",
+]
 
 
 _trackProducers = [
