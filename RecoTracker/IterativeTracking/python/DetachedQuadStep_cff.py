@@ -7,8 +7,8 @@ from Configuration.StandardSequences.Eras import eras
 
 # REMOVE HITS ASSIGNED TO GOOD TRACKS FROM PREVIOUS ITERATIONS
 
-from RecoLocalTracker.SubCollectionProducers.trackClusterRemover_cfi import *
-_detachedQuadStepClustersBase = trackClusterRemover.clone(
+from RecoLocalTracker.SubCollectionProducers.trackClusterRemover_cfi import trackClusterRemover as _trackClusterRemover
+_detachedQuadStepClustersBase = _trackClusterRemover.clone(
     maxChi2                                  = cms.double(9.0),
     trajectories                             = cms.InputTag("highPtTripletStepTracks"),
     pixelClusters                            = cms.InputTag("siPixelClusters"),
