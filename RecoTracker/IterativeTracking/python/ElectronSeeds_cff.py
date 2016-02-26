@@ -16,9 +16,17 @@ pixelPairStepSeedClusterMask = seedClusterRemover.clone(
     oldClusterRemovalInfo = cms.InputTag("initialStepSeedClusterMask")
 )
 eras.trackingPhase1PU70.toModify(pixelPairStepSeedClusterMask, oldClusterRemovalInfo = "highPtTripletStepSeedClusterMask")
+# This is a pure guess to use lowPtTripletStep for phase1 here instead of the pixelPair in Run2 configuration
+lowPtTripletStepSeedClusterMask = seedClusterRemover.clone(
+    trajectories = cms.InputTag("lowPtTripletStepSeeds"),
+    oldClusterRemovalInfo = cms.InputTag("initialStepSeedClusterMask")
+)
 mixedTripletStepSeedClusterMask = seedClusterRemover.clone(
     trajectories = cms.InputTag("mixedTripletStepSeeds"),
     oldClusterRemovalInfo = cms.InputTag("pixelPairStepSeedClusterMask")
+)
+eras.trackingPhase1.toModify(mixedTripletStepSeedClusterMask,
+    oldClusterRemovalInfo = "lowPtTripletStepSeedClusterMask"
 )
 pixelLessStepSeedClusterMask = seedClusterRemover.clone(
     trajectories = cms.InputTag("pixelLessStepSeeds"),
@@ -196,7 +204,9 @@ electronSeedsSeq = cms.Sequence( initialStepSeedClusterMask*
                                  stripPairElectronSeedLayers*
                                  stripPairElectronSeeds*
                                  newCombinedSeeds)
-eras.trackingPhase1.toReplaceWith(electronSeedsSeq, electronSeedsSeq.copyAndExclude([pixelPairStepSeedClusterMask]))
+_electronSeedsSeq_Phase1 = electronSeedsSeq.copy()
+_electronSeedsSeq_Phase1.replace(pixelPairStepSeedClusterMask, lowPtTripletStepSeedClusterMask)
+eras.trackingPhase1.toReplaceWith(electronSeedsSeq, _electronSeedsSeq_Phase1)
 eras.trackingPhase1PU70.toReplaceWith(electronSeedsSeq, cms.Sequence(
     initialStepSeedClusterMask*
     highPtTripletStepSeedClusterMask*
