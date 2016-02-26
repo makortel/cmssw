@@ -10,10 +10,10 @@ from RecoTracker.IterativeTracking.PixelLessStep_cff import *
 from RecoTracker.IterativeTracking.TobTecStep_cff import *
 from RecoTracker.IterativeTracking.JetCoreRegionalStep_cff import *
 
-# Phase1PU70 specific iterations
+# Phase1 specific iterations
 from RecoTracker.IterativeTracking.Phase1PU70_HighPtTripletStep_cff import *
+from RecoTracker.IterativeTracking.DetachedQuadStep_cff import *
 from RecoTracker.IterativeTracking.Phase1PU70_LowPtQuadStep_cff import *
-from RecoTracker.IterativeTracking.Phase1PU70_DetachedQuadStep_cff import *
 
 from RecoTracker.FinalTrackSelectors.earlyGeneralTracks_cfi import *
 from RecoTracker.IterativeTracking.MuonSeededStep_cff import *
