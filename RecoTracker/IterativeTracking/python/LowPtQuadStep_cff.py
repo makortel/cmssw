@@ -142,7 +142,6 @@ lowPtQuadStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.
     src = 'lowPtQuadStepTrackCandidates',
     AlgorithmName = 'lowPtQuadStep',
     Fitter = 'FlexibleKFFittingSmoother',
-    TTRHBuilder='WithTrackAngle' # FIXME: to be updated once we get the templates to GT
 )
 
 
