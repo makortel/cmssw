@@ -138,7 +138,6 @@ highPtTripletStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProdu
     src = 'highPtTripletStepTrackCandidates',
     AlgorithmName = 'highPtTripletStep',
     Fitter = 'FlexibleKFFittingSmoother',
-    TTRHBuilder = 'WithTrackAngle' # FIXME: to be updated once we get the templates to GT
 )
 
 # Final selection
