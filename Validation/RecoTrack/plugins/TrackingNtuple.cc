@@ -80,7 +80,6 @@
 /*
 todo: 
 add refitted hit position after track/seed fit
-add original algo (needs >=CMSSW746)
 add local angle, path length!
 add n 3d hits for sim tracks
 */
@@ -261,6 +260,8 @@ private:
   std::vector<unsigned char> trk_nStrip  ;
   std::vector<unsigned char> trk_n3DLay  ;
   std::vector<unsigned char> trk_algo    ;
+  std::vector<unsigned char> trk_originalAlgo;
+  std::vector<decltype(reco::TrackBase().algoMaskUL())> trk_algoMask;
   std::vector<bool> trk_isHP    ;
   std::vector<int> trk_seedIdx ;
   std::vector<std::vector<float> > trk_shareFrac;
@@ -471,6 +472,8 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("trk_nStrip"   , &trk_nStrip  );
   t->Branch("trk_n3DLay"   , &trk_n3DLay  );
   t->Branch("trk_algo"     , &trk_algo    );
+  t->Branch("trk_originalAlgo", &trk_originalAlgo);
+  t->Branch("trk_algoMask" , &trk_algoMask);
   t->Branch("trk_isHP"     , &trk_isHP    );
   if(includeSeeds_) {
     t->Branch("trk_seedIdx"  , &trk_seedIdx );
@@ -673,6 +676,8 @@ void TrackingNtuple::clearVariables() {
   trk_nStrip   .clear();
   trk_n3DLay   .clear();
   trk_algo     .clear();
+  trk_originalAlgo.clear();
+  trk_algoMask .clear();
   trk_isHP     .clear();
   trk_seedIdx  .clear();
   trk_shareFrac.clear();
@@ -1432,6 +1437,8 @@ void TrackingNtuple::fillTracks(const edm::Handle<edm::View<reco::Track> >& trac
     trk_nStrip   .push_back(hp.numberOfValidStripHits());
     trk_n3DLay   .push_back(hp.numberOfValidStripLayersWithMonoAndStereo()+hp.pixelLayersWithMeasurement());
     trk_algo     .push_back(itTrack->algo());
+    trk_originalAlgo.push_back(itTrack->originalAlgo());
+    trk_algoMask .push_back(itTrack->algoMaskUL());
     trk_isHP     .push_back(itTrack->quality(reco::TrackBase::highPurity));
     if(includeSeeds_) {
       trk_seedIdx  .push_back( algo_offset[itTrack->algo()] + itTrack->seedRef().key() );
