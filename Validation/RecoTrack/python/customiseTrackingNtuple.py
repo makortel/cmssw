@@ -6,6 +6,9 @@ def customiseTrackingNtuple(process):
         fileName = cms.string('trackingNtuple.root')
     )
 
+    if process.trackingNtuple.includeSeeds.value() and not hasattr(process, "reconstruction_step"):
+        raise Exception("TrackingNtuple includeSeeds=True needs reconstruction which is missing")
+
     # Replace validation_step with ntuplePath
     if not hasattr(process, "validation_step"):
         raise Exception("TrackingNtuple customise assumes process.validation_step exists")
