@@ -195,7 +195,7 @@ def _addSeedToTrackProducers(seedProducers,modDict):
         modName = "seedTracks"+seed
         if modName not in modDict:
             mod = _trajectorySeedTracks.clone(src=seed)
-            globals()[modName] = mod
+            modDict[modName] = mod
         else:
             mod = modDict[modName]
         names.append(modName)
