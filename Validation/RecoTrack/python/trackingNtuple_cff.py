@@ -85,7 +85,7 @@ if _includeSeeds:
 
 trackingNtupleSequence += (
     # sim information
-    trackingParticlesIntime +
+    cms.ignore(trackingParticlesIntime) +
     simHitTPAssocProducerIntime +
     tpClusterProducerIntime +
     quickTrackAssociatorByHitsIntime +
