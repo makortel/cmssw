@@ -81,7 +81,6 @@
 todo: 
 add refitted hit position after track/seed fit
 add original algo (needs >=CMSSW746)
-add vertices
 add local angle, path length!
 add n 3d hits for sim tracks
 */
