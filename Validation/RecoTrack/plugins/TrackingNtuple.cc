@@ -1411,8 +1411,7 @@ void TrackingNtuple::fillTracks(edm::Handle<edm::View<reco::Track> >& tracks,
 	bool isPixel = (hitId.subdetId() == (int) PixelSubdetector::PixelBarrel || hitId.subdetId() == (int) PixelSubdetector::PixelEndcap );
 	if (hit->isValid()) {
 	  //ugly... but works
-	  /// const BaseTrackerRecHit* bhit = dynamic_cast<const BaseTrackerRecHit*>(&*hit); // 80x
-	  const BaseTrackerRecHit* bhit = dynamic_cast<const BaseTrackerRecHit*>(hit->hit());
+	  const BaseTrackerRecHit* bhit = dynamic_cast<const BaseTrackerRecHit*>(&*hit);
           LogTrace("TrackingNtuple") << " id: " << hitId.rawId() << " - globalPos =" << hit->globalPosition()
                                      << " cluster=" << (bhit->firstClusterRef().isPixel() ? bhit->firstClusterRef().cluster_pixel().key() :  bhit->firstClusterRef().cluster_strip().key())
                                      << " eta,phi: " << hit->globalPosition().eta() << "," << hit->globalPosition().phi();
