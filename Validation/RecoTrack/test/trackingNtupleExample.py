@@ -15,6 +15,7 @@ def main():
 
     tot_ntracks = 0
     tot_fakes = 0
+    tot_fakes_ninvalidhits = 0
     tot_fakes_npixhits = 0
     tot_fakes_nstrhits = 0
     tot_fakes_npixhits_true = 0
@@ -60,6 +61,7 @@ def main():
         ntracks = tree.trk_px.size()
         tot_ntracks += ntracks
         nfakes = 0
+        nfakes_invalidhits = 0
         nfakes_pixhits = 0
         nfakes_strhits = 0
         nfakes_pixhits_true = 0
@@ -75,15 +77,21 @@ def main():
                 if hasattr(tree, "pix_nSimTrk"):
                     pix_simTrkIds = set()
 
-                    nfakes_pixhits += tree.trk_pixelIdx[itrack].size()
-                    nfakes_strhits += tree.trk_stripIdx[itrack].size()
                     for ihit in tree.trk_pixelIdx[itrack]:
+                        if ihit == -1:
+                            nfakes_invalidhits += 1
+                            continue
+                        nfakes_pixhits += 1
                         if tree.pix_nSimTrk[ihit] >= 1:
                             nfakes_pixhits_true += 1
                         pix_simTrkIds.add(tree.pix_simTrkIdx[ihit]) # currently the index of only the "first" matched TP is stored
                     nfakes_pixhits_tps += len(pix_simTrkIds)
 
                     for ihit in tree.trk_stripIdx[itrack]:
+                        if ihit == -1:
+                            nfakes_invalidhits += 1
+                            continue
+                        nfakes_strhits += 1
                         if tree.str_nSimTrk[ihit] >= 1:
                             nfakes_strhits_true += 1
             else:
@@ -92,6 +100,7 @@ def main():
                         ndups += 1
                         break
         tot_fakes += nfakes
+        tot_fakes_ninvalidhits += nfakes_invalidhits
         tot_fakes_npixhits += nfakes_pixhits
         tot_fakes_nstrhits += nfakes_strhits
         tot_fakes_npixhits_true += nfakes_pixhits_true
@@ -131,6 +140,7 @@ def main():
         print "  on average %f %% of pixel hits are true" % (float(tot_fakes_npixhits_true)/tot_fakes_npixhits * 100)
         print "   pixel hits from %f TrackingParticles/track" % (float(tot_fakes_npixhits_tps)/tot_fakes)
         print "  on average %f %% of strip hits are true" % (float(tot_fakes_nstrhits_true)/tot_fakes_nstrhits * 100)
+        print "  on average %f %% of hits are invalid" % (float(tot_fakes_ninvalidhits)/(tot_fakes_npixhits+tot_fakes_nstrhits) * 100)
     print " with duplicate rate %f %%" % (float(tot_duplicates)/tot_ntracks * 100)
     if tot_seeds > 0:
         print " of which %f %% had a true seed" % (float(tot_track_seeds_true)/tot_ntracks * 100)
