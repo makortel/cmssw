@@ -109,7 +109,7 @@ def customise_DQM(process,pileup):
 
     process.DQMOfflinePreDPG.remove(process.siPixelOfflineDQM_source)
 
-    process.DQMOffline.remove(process.HLTMonitoring)
+    process.DQMOffline.remove(process.HLTMonitoring) # this works technically but does it make sense?
 
     process.DQMOfflineTracking.remove(process.TrackingDQMSourceTier0Common)
 
@@ -149,45 +149,12 @@ def customise_Validation(process):
     #
     # The customizations are done here instead of in the central files
     # with era because they are temporary
-    process.globalPrevalidation.remove(process.photonPrevalidationSequence)
-    process.globalPrevalidation.remove(process.produceDenoms)
-    process.globalPrevalidation.remove(process.prebTagSequenceMC)
     # With era, would modify process.globalValidation
     process.validation.remove(process.trackerHitsValidation)
     process.validation.remove(process.trackerDigisValidation)
     process.validation.remove(process.trackerRecHitsValidation)
     process.validation.remove(process.trackingTruthValid)
     process.validation.remove(process.trackingRecHitsValid)
-    process.validation.remove(process.ecalSimHitsValidationSequence)
-    process.validation.remove(process.ecalDigisValidationSequence)
-    process.validation.remove(process.ecalRecHitsValidationSequence)
-    process.validation.remove(process.ecalClustersValidationSequence)
-    process.validation.remove(process.hcalSimHitsValidationSequence)
-    process.validation.remove(process.hcaldigisValidationSequence)
-    process.validation.remove(process.hcalSimHitStudy)
-    process.validation.remove(process.hcalRecHitsValidationSequence)
-    process.validation.remove(process.calotowersValidationSequence)
-    process.validation.remove(process.validSimHit)
-    process.validation.remove(process.muondtdigianalyzer)
-    process.validation.remove(process.cscDigiValidation)
-    process.validation.remove(process.validationMuonRPCDigis)
-    process.validation.remove(process.recoMuonValidation)
-    process.validation.remove(process.muIsoVal_seq)
-    process.validation.remove(process.muonIdValDQMSeq)
-    process.validation.remove(process.mixCollectionValidation)
-    process.validation.remove(process.JetValidation)
-    process.validation.remove(process.METValidation)
-    process.validation.remove(process.egammaValidation)
-    process.validation.remove(process.pfJetValidationSequence)
-    process.validation.remove(process.pfMETValidationSequence)
-    process.validation.remove(process.pfElectronValidationSequence)
-    process.validation.remove(process.pfJetResValidationSequence)
-    process.validation.remove(process.pfMuonValidationSequence)
-    process.validation.remove(process.rpcRecHitValidation_step)
-    process.validation.remove(process.dtLocalRecoValidation_no2D)
-    process.validation.remove(process.pfTauRunDQMValidation)
-    process.validation.remove(process.bTagPlotsMCbcl)
-    process.validation.remove(process.L1Validator)
 
     process.hltassociation = cms.Sequence()
     process.hltvalidation = cms.Sequence()
