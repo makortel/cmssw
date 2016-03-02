@@ -29,6 +29,7 @@ def main():
 
     tot_seeds = 0
     tot_seeds_true = 0
+    tot_seeds_lowPtTriplet = 0
     tot_track_seeds_true = 0
 
     for jentry in xrange(entries):
@@ -113,6 +114,13 @@ def main():
             nseeds = tree.see_simIdx.size()
             tot_seeds += nseeds
 
+            # finding seeds of a particular iteration
+            for ioffset, offset in enumerate(tree.see_offset):
+                if tree.see_algo[offset] == 5: # = lowPtTripletStep
+                    next_offset = tree.see_offset[ioffset+1] if ioffset < tree.see_offset.size() else tree.see_algo.size()
+                    tot_seeds_lowPtTriplet += next_offset - offset
+                    break
+
             # links from seeds to TrackingParticles
             ntrue = 0
             for iseed in xrange(nseeds):
@@ -145,7 +153,9 @@ def main():
     if tot_seeds > 0:
         print " of which %f %% had a true seed" % (float(tot_track_seeds_true)/tot_ntracks * 100)
         print "On average %f seeds" % (float(tot_seeds)/tot_nevents)
+        print " of which %f were from lowPtTripletStep" % (float(tot_seeds_lowPtTriplet)/tot_nevents)
         print " of which %f %% were true" % (float(tot_seeds_true)/tot_seeds * 100)
+
 
 if __name__ == "__main__":
     main()
