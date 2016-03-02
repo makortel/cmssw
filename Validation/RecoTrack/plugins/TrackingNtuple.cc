@@ -262,6 +262,11 @@ private:
   const bool includeAllHits_;
 
   TTree* t;
+  // event
+  edm::RunNumber_t ev_run;
+  edm::LuminosityBlockNumber_t ev_lumi;
+  edm::EventNumber_t ev_event;
+
   //tracks
   std::vector<float> trk_px       ;
   std::vector<float> trk_py       ;
@@ -469,6 +474,10 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   edm::Service<TFileService> fs;
   t = fs->make<TTree>("tree","tree");
 
+  t->Branch("event"        , &ev_event);
+  t->Branch("lumi"         , &ev_lumi);
+  t->Branch("run"          , &ev_run);
+
   //tracks
   t->Branch("trk_px"       , &trk_px);
   t->Branch("trk_py"       , &trk_py);
@@ -673,6 +682,10 @@ TrackingNtuple::~TrackingNtuple() {
 // member functions
 //
 void TrackingNtuple::clearVariables() {
+
+  ev_run = 0;
+  ev_lumi = 0;
+  ev_event = 0;
 
   //tracks
   trk_px       .clear();
@@ -890,6 +903,11 @@ void TrackingNtuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
   std::set<edm::ProductID> hitProductIds;
   std::map<edm::ProductID, size_t> seedCollToOffset;
+
+  ev_run = iEvent.id().run();
+  ev_lumi = iEvent.id().luminosityBlock();
+  ev_event = iEvent.id().event();
+
 
   //beamspot
   Handle<reco::BeamSpot> recoBeamSpotHandle;
