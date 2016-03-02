@@ -106,17 +106,9 @@ def customise_DQM(process,pileup):
     # The customizations are done here instead of in the central files
     # with era because they are temporary
     process.DQMOfflinePrePOG.remove(process.TrackingDQMSourceTier0)
-    process.DQMOfflinePrePOG.remove(process.muonMonitors)
-    process.DQMOfflinePrePOG.remove(process.jetMETDQMOfflineSource)
-    process.DQMOfflinePrePOG.remove(process.egammaDQMOffline)
-    process.DQMOfflinePrePOG.remove(process.triggerOfflineDQMSource)
-    process.DQMOfflinePrePOG.remove(process.bTagPlotsDATA)
-    process.DQMOfflinePrePOG.remove(process.alcaBeamMonitor)
-    process.DQMOfflinePrePOG.remove(process.dqmPhysics)
-    process.DQMOfflinePrePOG.remove(process.produceDenoms)
-    process.DQMOfflinePrePOG.remove(process.pfTauRunDQMValidation)
 
-    process.DQMOffline.remove(process.DQMOfflinePreDPG)
+    process.DQMOfflinePreDPG.remove(process.siPixelOfflineDQM_source)
+
     process.DQMOffline.remove(process.HLTMonitoring)
 
     process.DQMOfflineTracking.remove(process.TrackingDQMSourceTier0Common)
