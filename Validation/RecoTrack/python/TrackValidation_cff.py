@@ -35,7 +35,7 @@ _algos = [
     "muonSeededStepOutIn",
     "duplicateMerge",
 ]
-_algosForTrackingPhase1 = [
+_algos_trackingPhase1 = [
     "generalTracks",
     "initialStep",
     "highPtTripletStep",
@@ -51,7 +51,7 @@ _algosForTrackingPhase1 = [
     "muonSeededStepOutIn",
     "duplicateMerge",
 ]
-_algosForTrackingPhase1PU70 = [
+_algos_trackingPhase1PU70 = [
     "generalTracks",
     "initialStep",
     "highPtTripletStep",
@@ -249,26 +249,66 @@ def _addSeedToTrackProducers(seedProducers,modDict):
         seq += mod
     return (names, seq)
 
+# This is a bit of a hack, but makes the rest of the file much more readable
+_relevantEras = ["", "trackingPhase1", "trackingPhase1PU70"]
+class _AppendEra:
+    def __init__(self, name):
+        self._name = name
+    def getName(self, postfix):
+        return self._name+postfix
+    def getObject(self, postfix, modDict):
+        return modDict[self._name+postfix]
+    def setObject(self, value, postfix, modDict):
+        modDict[self._name+postfix] = value
+def _eraPostfix(eraName):
+    return "_"+eraName if eraName != "" else eraName
+def _translateArgs(args, postfix, modDict):
+    ret = []
+    for arg in args:
+        if isinstance(arg, list):
+            ret.append(_translateArgs(arg, postfix, modDict))
+        elif isinstance(arg, _AppendEra):
+            ret.append(arg.getObject(postfix, modDict))
+        else:
+            ret.append(arg)
+    return ret
+def _forEachEra(function, args, returns, modDict):
+    for eraName in _relevantEras:
+        postfix = _eraPostfix(eraName)
+        args_translated = _translateArgs(args, postfix, modDict)
+        ret = function(*args_translated, modDict=modDict)
+        if len(ret) != len(returns):
+            raise Exception("_forEachEra is expected to return %d values, but function returned %d" % (len(returns), len(ret)))
+        for ret, val in zip(returns, ret):
+            ret.setObject(val, postfix, modDict)
+def _sequenceForEachEra(function, args, names, sequence, modDict, modifySequence=None):
+    if sequence.getName("")[0] != "_":
+        raise Exception("Sequence name is expected to begin with _")
+
+    _forEachEra(function, args, [names, sequence], modDict)
+
+    # The sequence of the first era will be the default one
+    defaultSequenceName = sequence.getName(_eraPostfix(_relevantEras[0]))
+    defaultSequence = modDict[defaultSequenceName]
+    modDict[defaultSequenceName[1:]] = defaultSequence # remove leading underscore
+
+    # Optionally modify sequences before applying the era
+    if modifySequence is not None:
+        for eraName in _relevantEras:
+            modifySequence(sequence.getObject(_eraPostfix(eraName), modDict))
+
+    # Apply eras
+    for eraName in _relevantEras[1:]:
+        getattr(eras, eraName).toReplaceWith(defaultSequence, sequence.getObject(_eraPostfix(eraName), modDict))
+
 # Validation iterative steps
-(_selectorsByAlgo, tracksValidationSelectorsByAlgo) = _addSelectorsByAlgo(_algos, globals())
-(_selectorsByAlgo_trackingPhase1, _tracksValidationSelectorsByAlgo_trackingPhase1) = _addSelectorsByAlgo(_algosForTrackingPhase1, globals())
-(_selectorsByAlgo_trackingPhase1PU70, _tracksValidationSelectorsByAlgo_trackingPhase1PU70) = _addSelectorsByAlgo(_algosForTrackingPhase1PU70, globals())
-eras.trackingPhase1.toReplaceWith(tracksValidationSelectorsByAlgo, _tracksValidationSelectorsByAlgo_trackingPhase1)
-eras.trackingPhase1PU70.toReplaceWith(tracksValidationSelectorsByAlgo, _tracksValidationSelectorsByAlgo_trackingPhase1PU70)
+_sequenceForEachEra(_addSelectorsByAlgo, args=[_AppendEra("_algos")], names=_AppendEra("_selectorsByAlgo"), sequence=_AppendEra("_tracksValidationSelectorsByAlgo"), modDict=globals())
 
 # high purity
-(_selectorsByAlgoHp, tracksValidationSelectorsByAlgoHp) = _addSelectorsByHp(_algos,globals())
-(_selectorsByAlgoHp_trackingPhase1, _tracksValidationSelectorsByAlgoHp_trackingPhase1) = _addSelectorsByHp(_algosForTrackingPhase1, globals())
-(_selectorsByAlgoHp_trackingPhase1PU70, _tracksValidationSelectorsByAlgoHp_trackingPhase1PU70) = _addSelectorsByHp(_algosForTrackingPhase1PU70, globals())
-eras.trackingPhase1.toReplaceWith(tracksValidationSelectorsByAlgoHp, _tracksValidationSelectorsByAlgoHp_trackingPhase1)
-eras.trackingPhase1PU70.toReplaceWith(tracksValidationSelectorsByAlgoHp, _tracksValidationSelectorsByAlgoHp_trackingPhase1PU70)
+_sequenceForEachEra(_addSelectorsByHp, args=[_AppendEra("_algos")], names=_AppendEra("_selectorsByAlgoHp"), sequence=_AppendEra("_tracksValidationSelectorsByAlgoHp"), modDict=globals())
 
-_generalTracksHp = _selectorsByAlgoHp[0]
-_generalTracksHp_trackingPhase1 = _selectorsByAlgoHp_trackingPhase1[0]
-_generalTracksHp_trackingPhase1PU70 = _selectorsByAlgoHp_trackingPhase1PU70[0]
-_selectorsByAlgoHp = _selectorsByAlgoHp[1:]
-_selectorsByAlgoHp_trackingPhase1 = _selectorsByAlgoHp_trackingPhase1[1:]
-_selectorsByAlgoHp_trackingPhase1PU70 = _selectorsByAlgoHp_trackingPhase1PU70[1:]
+_forEachEra(lambda selectors, modDict: [selectors[0]], args=[_AppendEra("_selectorsByAlgoHp")], returns=[_AppendEra("_generalTracksHp")], modDict=globals())
+_forEachEra(lambda selectors, modDict: [selectors[1:]], args=[_AppendEra("_selectorsByAlgoHp")], returns=[_AppendEra("_selectorsByAlgoHp")], modDict=globals())
 
 # BTV-like selection
 import PhysicsTools.RecoAlgos.btvTracks_cfi as btvTracks_cfi
@@ -324,14 +364,11 @@ generalTracksFromPV = _trackWithVertexRefSelector.clone(
     rhoVtx = 1e10, # intentionally no dxy cut
 )
 # and then the selectors
-(_selectorsFromPV, tracksValidationSelectorsFromPV) = _addSelectorsBySrc([_generalTracksHp], "FromPV", "generalTracksFromPV", globals())
-(_selectorsFromPV_trackingPhase1, _tracksValidationSelectorsFromPV_trackingPhase1) = _addSelectorsBySrc([_generalTracksHp_trackingPhase1], "FromPV", "generalTracksFromPV", globals())
-(_selectorsFromPV_trackingPhase1PU70, _tracksValidationSelectorsFromPV_trackingPhase1PU70) = _addSelectorsBySrc([_generalTracksHp_trackingPhase1PU70], "FromPV", "generalTracksFromPV", globals())
-tracksValidationSelectorsFromPV.insert(0, generalTracksFromPV)
-_tracksValidationSelectorsFromPV_trackingPhase1.insert(0, generalTracksFromPV)
-_tracksValidationSelectorsFromPV_trackingPhase1PU70.insert(0, generalTracksFromPV)
-eras.trackingPhase1.toReplaceWith(tracksValidationSelectorsFromPV, _tracksValidationSelectorsFromPV_trackingPhase1)
-eras.trackingPhase1PU70.toReplaceWith(tracksValidationSelectorsFromPV, _tracksValidationSelectorsFromPV_trackingPhase1PU70)
+_sequenceForEachEra(_addSelectorsBySrc,
+                    args=[[_AppendEra("_generalTracksHp")], "FromPV", "generalTracksFromPV"],
+                    names=_AppendEra("_selectorsFromPV"), sequence=_AppendEra("_tracksValidationSelectorsFromPV"),
+                    modifySequence=lambda seq: seq.insert(0, generalTracksFromPV),
+                    modDict=globals())
 
 ## Select conversion TrackingParticles, and define the corresponding associator
 # (do not use associations because the collections of interest are not subsets of each other)
