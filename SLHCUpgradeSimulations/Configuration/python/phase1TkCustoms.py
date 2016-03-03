@@ -220,38 +220,26 @@ def customise_Validation_Trackingonly(process):
 def customise_harvesting(process):
     # FIXME
     #
-    # These should be added back once somebody checks that they work,
-    # and those that do not, get fixed
+    # These should be added back once they get fixed
     #
     # The customizations are done here instead of in the central files
     # with era because they are temporary
-    process.DQMOffline_SecondStep.remove(process.DQMOffline_SecondStep_PreDPG)
-    process.DQMOffline_SecondStep.remove(process.DQMOffline_SecondStep_PrePOG)
-    process.DQMOffline_SecondStep.remove(process.HLTMonitoringClient)
 
+    # Tracking DQM needs to be migrated for phase1
     process.DQMHarvestTracking.remove(process.TrackingOfflineDQMClient)
 
-    process.postValidation.remove(process.recoMuonPostProcessors)
-    process.postValidation.remove(process.MuIsoValPostProcessor)
-    process.postValidation.remove(process.calotowersPostProcessor)
-    process.postValidation.remove(process.hcalSimHitsPostProcessor)
-    process.postValidation.remove(process.hcaldigisPostProcessor)
-    process.postValidation.remove(process.hcalrechitsPostProcessor)
-    process.postValidation.remove(process.electronPostValidationSequence)
-    process.postValidation.remove(process.photonPostProcessor)
-    process.postValidation.remove(process.pfJetClient)
-    process.postValidation.remove(process.pfMETClient)
-    process.postValidation.remove(process.pfJetResClient)
-    process.postValidation.remove(process.pfElectronClient)
-    process.postValidation.remove(process.rpcRecHitPostValidation_step)
-    process.postValidation.remove(process.runTauEff)
-    process.postValidation.remove(process.makeBetterPlots)
-    process.postValidation.remove(process.bTagCollectorSequenceMCbcl)
-    process.postValidation.remove(process.METPostProcessor)
-    process.postValidation_preprod.remove(process.recoMuonPostProcessors)
-    process.postValidation_preprod.remove(process.MuIsoValPostProcessor)
-
+    # No HLT yet for 2017, so no need to run the DQM (avoiding excessive printouts)
+    process.DQMOffline_SecondStep.remove(process.HLTMonitoringClient)
+    process.DQMOffline_SecondStep_PrePOG.remove(process.hltOfflineDQMClient)
     process.hltpostvalidation = cms.Sequence()
+    process.crt_dqmoffline.remove(process.dqmOfflineTriggerCert)
+
+    # Excessive printouts because 2017 doesn't have HLT yet
+    process.DQMOffline_SecondStep_PrePOG.remove(process.efficienciesRealData)
+    process.DQMOffline_SecondStep_PrePOG.remove(process.efficienciesRealElectronsData)
+    process.DQMOffline_SecondStep_PrePOG.remove(process.efficienciesRealMuonsData)
+    process.DQMOffline_SecondStep_PrePOG.remove(process.normalizePlotsRealMuonsData)
+    process.postValidation.remove(process.runTauEff)
 
     # these were migrated in #12440
     if eras.phase1Pixel.isChosen():
