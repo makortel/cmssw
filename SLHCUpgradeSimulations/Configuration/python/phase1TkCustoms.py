@@ -116,6 +116,14 @@ def customise_DQM(process,pileup):
     # Doesn't work because TriggerResults::HLT is missing
     process.muonAnalyzer.remove(process.muonRecoOneHLT)
 
+    # Excessive printouts because 2017 doesn't have HLT yet
+    process.SiStripDQMTier0.remove(process.MonitorTrackResiduals)
+    process.SiStripDQMTier0MinBias.remove(process.MonitorTrackResiduals)
+    process.jetMETDQMOfflineSource.remove(process.jetDQMAnalyzerSequence)
+    process.jetMETDQMOfflineSource.remove(process.METDQMAnalyzerSequence)
+    process.offlineHLTSource.remove(process.hltResults)
+
+
     # Ok, this customization does not work currently at all
     # Need to be fixed before the tracking DQM can be enabled
     return process
@@ -156,6 +164,7 @@ def customise_Validation(process):
 
     # Pixel validation needs to be migrated to phase1
     process.trackingRecHitsValid.remove(process.PixelTrackingRecHitsValid)
+
 
     # hltOnlineBeamSpot product is missing
     process.hltassociation.remove(process.hltMultiTrackValidation)
