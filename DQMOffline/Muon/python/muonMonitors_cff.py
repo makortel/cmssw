@@ -1,10 +1,5 @@
 import FWCore.ParameterSet.Config as cms
 
-#
-# This object is used to make changes for different running scenarios
-#
-from Configuration.StandardSequences.Eras import eras
-
 #Analyzer taken from online dqm
 from DQM.TrackingMonitor.MonitorTrackSTAMuons_cfi import *
 from DQM.TrackingMonitor.MonitorTrackGLBMuons_cfi import *
