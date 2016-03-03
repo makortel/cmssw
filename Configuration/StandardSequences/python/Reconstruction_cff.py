@@ -59,9 +59,15 @@ globalreco_tracking = cms.Sequence(offlineBeamSpot*
                           standalonemuontracking*
                           trackingGlobalReco*
                           vertexreco)
-_globalreco_tracking_Phase1PU70 = globalreco_tracking.copy()
-_globalreco_tracking_Phase1PU70.replace(trackingGlobalReco, recopixelvertexing+trackingGlobalReco)
-eras.trackingPhase1.toReplaceWith(globalreco_tracking, _globalreco_tracking_Phase1PU70)
+eras.trackingPhase1.toReplaceWith(globalreco_tracking, cms.Sequence(
+    offlineBeamSpot*
+    MeasurementTrackerEvent* # unclear where to put this
+    siPixelClusterShapeCache* # unclear where to put this
+    standalonemuontracking*
+    recopixelvertexing*
+    trackingGlobalReco*
+    vertexreco
+))
 
 globalreco = cms.Sequence(globalreco_tracking*
                           hcalGlobalRecoSequence*

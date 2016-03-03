@@ -1138,6 +1138,10 @@ class EDAlias(_ConfigureComponent,_Labelable):
         """Returns the name of the parameters"""
         return self.__parameterNames[:]
 
+    @staticmethod
+    def __raiseBadSetAttr(name):
+        raise TypeError(name+" does not already exist, so it can only be set to a CMS python configuration type")
+
     def __addParameter(self, name, value):
         if not isinstance(value,_ParameterTypeBase):
             self.__raiseBadSetAttr(name)
@@ -1147,6 +1151,13 @@ class EDAlias(_ConfigureComponent,_Labelable):
     def __setParameters(self,parameters):
         for name,value in parameters.iteritems():
             self.__addParameter(name, value)
+
+    def _removeParameter(self, name):
+        super(EDAlias,self).__delattr__(name)
+        self.__parameterNames.remove(name)
+
+    def _addParameter(self, name, value):
+        self.__addParameter(name, value)
 
     def _place(self,name,proc):
         proc._placeAlias(name,self)

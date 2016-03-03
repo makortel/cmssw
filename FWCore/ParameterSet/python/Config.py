@@ -1201,7 +1201,11 @@ class Modifier(object):
             setattr(toObj,p,getattr(fromObj,p))
         if isinstance(fromObj,_TypedParameterizable):
             toObj._TypedParameterizable__type = fromObj._TypedParameterizable__type
-            
+    elif isinstance(fromObj, EDAlias):
+        for p in toObj.parameterNames_():
+            toObj._removeParameter(p)
+        for p in fromObj.parameterNames_():
+            toObj._addParameter(p,getattr(fromObj,p))
     else:
         raise TypeError("toReplaceWith does not work with type "+str(type(toObj)))
 
