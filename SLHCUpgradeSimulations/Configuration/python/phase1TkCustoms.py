@@ -150,11 +150,6 @@ def customise_Validation(process):
     # The customizations are done here instead of in the central files
     # with era because they are temporary
     # With era, would modify process.globalValidation
-    process.validation.remove(process.trackerHitsValidation)
-    process.validation.remove(process.trackerDigisValidation)
-    process.validation.remove(process.trackerRecHitsValidation)
-    process.validation.remove(process.trackingTruthValid)
-    process.validation.remove(process.trackingRecHitsValid)
 
     process.hltassociation = cms.Sequence()
     process.hltvalidation = cms.Sequence()
