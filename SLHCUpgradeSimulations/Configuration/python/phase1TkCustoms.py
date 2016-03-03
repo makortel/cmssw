@@ -157,8 +157,17 @@ def customise_Validation(process):
     # Pixel validation needs to be migrated to phase1
     process.trackingRecHitsValid.remove(process.PixelTrackingRecHitsValid)
 
-    process.hltassociation = cms.Sequence()
-    process.hltvalidation = cms.Sequence()
+    # hltOnlineBeamSpot product is missing
+    process.hltassociation.remove(process.hltMultiTrackValidation)
+
+    # TriggerResults::HLT product is missing
+    process.hltvalidation.remove(process.topHLTriggerValidation)
+    process.hltvalidation.remove(process.b2gHLTriggerValidation)
+
+    # Segfault
+    process.hltvalidation.remove(process.HiggsValidationSequence)
+    process.hltvalidation.remove(process.SMPValidationSequence)
+    process.hltvalidation.remove(process.ExoticaValidationSequence)
 
     # these were migrated in #12359
     if eras.phase1Pixel.isChosen():
