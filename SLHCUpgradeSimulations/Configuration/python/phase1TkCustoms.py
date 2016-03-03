@@ -121,8 +121,14 @@ def customise_DQM(process,pileup):
     process.SiStripDQMTier0MinBias.remove(process.MonitorTrackResiduals)
     process.jetMETDQMOfflineSource.remove(process.jetDQMAnalyzerSequence)
     process.jetMETDQMOfflineSource.remove(process.METDQMAnalyzerSequence)
-    process.offlineHLTSource.remove(process.hltResults)
+    process.dqmPhysics.remove(process.ewkMuDQM)
+    process.dqmPhysics.remove(process.ewkElecDQM)
+    process.dqmPhysics.remove(process.ewkMuLumiMonitorDQM)
+    process.DQMOfflinePrePOG.remove(process.pfTauRunDQMValidation)
 
+    # No HLT yet for 2017, so no need to run the DQM (avoiding excessive printouts)
+    process.DQMOffline.remove(process.HLTMonitoring)
+    process.DQMOfflinePrePOG.remove(process.triggerOfflineDQMSource)
 
     # Ok, this customization does not work currently at all
     # Need to be fixed before the tracking DQM can be enabled
@@ -165,18 +171,17 @@ def customise_Validation(process):
     # Pixel validation needs to be migrated to phase1
     process.trackingRecHitsValid.remove(process.PixelTrackingRecHitsValid)
 
+    # Excessive printouts because 2017 doesn't have HLT yet
+    process.globalValidation.remove(process.TauValNumeratorAndDenominatorRealData)
+    process.globalValidation.remove(process.TauValNumeratorAndDenominatorRealElectronsData)
+    process.globalValidation.remove(process.TauValNumeratorAndDenominatorRealMuonsData)
+    process.validation.remove(process.TauValNumeratorAndDenominatorRealData)
+    process.validation.remove(process.TauValNumeratorAndDenominatorRealElectronsData)
+    process.validation.remove(process.TauValNumeratorAndDenominatorRealMuonsData)
 
-    # hltOnlineBeamSpot product is missing
-    process.hltassociation.remove(process.hltMultiTrackValidation)
-
-    # TriggerResults::HLT product is missing
-    process.hltvalidation.remove(process.topHLTriggerValidation)
-    process.hltvalidation.remove(process.b2gHLTriggerValidation)
-
-    # Segfault
-    process.hltvalidation.remove(process.HiggsValidationSequence)
-    process.hltvalidation.remove(process.SMPValidationSequence)
-    process.hltvalidation.remove(process.ExoticaValidationSequence)
+    # No HLT yet for 2017, so no need to run the validation
+    process.hltassociation = cms.Sequence()
+    process.hltvalidation = cms.Sequence()
 
     # these were migrated in #12359
     if eras.phase1Pixel.isChosen():
