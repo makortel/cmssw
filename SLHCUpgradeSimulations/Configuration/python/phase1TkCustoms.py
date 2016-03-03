@@ -154,6 +154,9 @@ def customise_Validation(process):
     # with era because they are temporary
     # With era, would modify process.globalValidation
 
+    # Pixel validation needs to be migrated to phase1
+    process.trackingRecHitsValid.remove(process.PixelTrackingRecHitsValid)
+
     process.hltassociation = cms.Sequence()
     process.hltvalidation = cms.Sequence()
 
