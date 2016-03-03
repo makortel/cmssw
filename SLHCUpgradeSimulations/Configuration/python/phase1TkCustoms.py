@@ -105,13 +105,13 @@ def customise_DQM(process,pileup):
     #
     # The customizations are done here instead of in the central files
     # with era because they are temporary
+
+    # Tracking DQM needs to be migrated for phase1
     process.DQMOfflinePrePOG.remove(process.TrackingDQMSourceTier0)
-
-    process.DQMOfflinePreDPG.remove(process.siPixelOfflineDQM_source)
-
-    process.DQMOffline.remove(process.HLTMonitoring) # this works technically but does it make sense?
-
     process.DQMOfflineTracking.remove(process.TrackingDQMSourceTier0Common)
+
+    # Pixel DQM needs to be updated for phase1
+    process.DQMOfflinePreDPG.remove(process.siPixelOfflineDQM_source)
 
     # Ok, this customization does not work currently at all
     # Need to be fixed before the tracking DQM can be enabled
