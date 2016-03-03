@@ -113,6 +113,9 @@ def customise_DQM(process,pileup):
     # Pixel DQM needs to be updated for phase1
     process.DQMOfflinePreDPG.remove(process.siPixelOfflineDQM_source)
 
+    # Doesn't work because TriggerResults::HLT is missing
+    process.muonAnalyzer.remove(process.muonRecoOneHLT)
+
     # Ok, this customization does not work currently at all
     # Need to be fixed before the tracking DQM can be enabled
     return process

@@ -32,9 +32,6 @@ muonMonitors = cms.Sequence(muonTrackAnalyzers*
                             muonIdDQM*
                             dqmInfoMuons*
                             muIsoDQM_seq)
-# Modify for if the phase 1 pixel detector is active
-if eras.phase1Pixel.isChosen() :
-    muonMonitors.remove(muonAnalyzer)
 
 muonMonitorsAndQualityTests = cms.Sequence(muonMonitors*muonQualityTests)
 
