@@ -79,9 +79,9 @@ muonRPCDigis.InputLabel = 'rawDataCollector'
 castorDigis.InputLabel = 'rawDataCollector'
 
 
-if eras.phase1Pixel.isChosen() :
-    RawToDigi.remove(siPixelDigis)
-    RawToDigi.remove(castorDigis)
+# Remove siPixelDigis until we have phase1 pixel digis
+# Remove castorDigis until castor is included in the geometry(?)
+eras.phase1Pixel.toReplaceWith(RawToDigi, RawToDigi.copyAndExclude([siPixelDigis, castorDigis])) # FIXME
 
 
 
