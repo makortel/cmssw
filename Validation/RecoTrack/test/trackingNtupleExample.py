@@ -2,13 +2,13 @@
 
 import ROOT
 
+from Validation.RecoTrack.plotting.ntuple import *
+
 # The purpose of this file is to demonstrate mainly the links between
 # tracks, hits, seeds, and TrackingParticles.
 
 def main():
-    inputFile = ROOT.TFile.Open("trackingNtuple.root")
-    tree = inputFile.Get("trackingNtuple/tree")
-    entries = tree.GetEntriesFast()
+    ntuple = TrackingNtuple("trackingNtuple.root")
 
     tot_nevents = 0
     tot_pv_ntracks = 0
@@ -22,6 +22,7 @@ def main():
     tot_fakes_nstrhits_true = 0
     tot_fakes_npixhits_tps = 0
     tot_duplicates = 0
+    tot_secondaries = 0
 
     tot_tps = 0
     tot_recoed = 0
@@ -30,36 +31,39 @@ def main():
     tot_seeds = 0
     tot_seeds_true = 0
     tot_seeds_lowPtTriplet = 0
+    tot_seeds_pixelhits = 0
+    tot_seeds_striphits = 0
+    tot_seeds_gluedhits = 0
     tot_track_seeds_true = 0
 
-    for jentry in xrange(entries):
-        # get the next tree in the chain and verify
-        ientry = tree.LoadTree( jentry )
-        if ientry < 0: break
-        # copy next entry into memory and verify
-        nb = tree.GetEntry( jentry )
-        if nb <= 0: continue
-
-        #print "Event", jentry
+    for event in ntuple:
+        #print "Event", event.entry()
         tot_nevents += 1
 
-        tot_pv_ntracks += tree.vtx_trkIdx[0].size()
+        vertices = event.vertices()
+        tot_pv_ntracks += vertices[0].nTracks()
 
         # links from TrackingParticles to tracks
-        ntps = tree.sim_px.size()
-        tot_tps += ntps
+        tps = event.trackingParticles()
+        tot_tps += len(tps)
         neff = 0
         ndups = 0
-        for itp in xrange(ntps):
-            if tree.sim_trkIdx[itp].size() >= 1:
+        for tp in tps:
+            if tp.nMatchedTracks() >= 1:
                 neff += 1
-                if tree.sim_trkIdx[itp].size() > 1:
+                if tp.nMatchedTracks() > 1:
                     ndups += 1
+
+                # links from TrackingParticles to reco hits
+                #print "TP", tp.index()
+                #for hit in tp.hits():
+                #    print " %s %d x %f y %f tof %f" % (hit.layerStr(), hit.detId(), hit.x(), hit.y(), hit.tof())
         tot_recoed += neff
         tot_tp_dups += ndups
 
         # links from tracks to TrackingParticles
-        ntracks = tree.trk_px.size()
+        tracks = event.tracks()
+        ntracks = len(tracks) # also tracks.size() works
         tot_ntracks += ntracks
         nfakes = 0
         nfakes_invalidhits = 0
@@ -69,37 +73,48 @@ def main():
         nfakes_strhits_true = 0
         nfakes_pixhits_tps = 0
         ndups = 0
-        for itrack in xrange(ntracks):
-            if tree.trk_simIdx[itrack].size() == 0:
-                #print "Track", itrack, " is fake"
+        nsecondaries = 0
+        for track in tracks:
+            if track.nMatchedTrackingParticles() == 0:
+                #print "Track", track.index(), " is fake"
                 nfakes += 1
 
+
                 # links from tracks to hits
-                if hasattr(tree, "pix_nSimTrk"):
+                if ntuple.hasHits():
                     pix_simTrkIds = set()
 
-                    for ihit in tree.trk_pixelIdx[itrack]:
-                        if ihit == -1:
+                    for hit in track.pixelHits():
+                        #print hit.layerStr()
+                        if not hit.isValid():
                             nfakes_invalidhits += 1
                             continue
                         nfakes_pixhits += 1
-                        if tree.pix_nSimTrk[ihit] >= 1:
+                        if hit.nMatchedTrackingParticles() >= 1:
+                            # links from hits to TrackingParticles
                             nfakes_pixhits_true += 1
-                        pix_simTrkIds.add(tree.pix_simTrkIdx[ihit]) # currently the index of only the "first" matched TP is stored
+                            for match in hit.matchedTrackingParticleInfos():
+                                pix_simTrkIds.add(match.trackingParticle().index())
                     nfakes_pixhits_tps += len(pix_simTrkIds)
 
-                    for ihit in tree.trk_stripIdx[itrack]:
-                        if ihit == -1:
+                    for hit in track.stripHits():
+                        #print hit.layerStr()
+                        if not hit.isValid():
                             nfakes_invalidhits += 1
                             continue
                         nfakes_strhits += 1
-                        if tree.str_nSimTrk[ihit] >= 1:
+                        if hit.nMatchedTrackingParticles() >= 1:
                             nfakes_strhits_true += 1
             else:
-                for itp in tree.trk_simIdx[itrack]:
-                    if tree.sim_trkIdx[itp].size() > 1:
+                for tp in track.matchedTrackingParticles():
+                    if tp.nMatchedTracks() > 1:
                         ndups += 1
                         break
+
+                    # TrackinParticle <-> TrackingVertex links
+                    if tp.parentVertex().nSourceTrackingParticles() > 0:
+                        nsecondaries += 1
+
         tot_fakes += nfakes
         tot_fakes_ninvalidhits += nfakes_invalidhits
         tot_fakes_npixhits += nfakes_pixhits
@@ -108,31 +123,39 @@ def main():
         tot_fakes_nstrhits_true += nfakes_strhits_true
         tot_fakes_npixhits_tps += nfakes_pixhits_tps
         tot_duplicates += ndups
+        tot_secondaries += nsecondaries
 
-        # seeds
-        if hasattr(tree, "see_simIdx"):
-            nseeds = tree.see_simIdx.size()
+#        # seeds
+        if ntuple.hasSeeds():
+            seeds = event.seeds()
+            nseeds = len(seeds)
             tot_seeds += nseeds
 
             # finding seeds of a particular iteration
-            for ioffset, offset in enumerate(tree.see_offset):
-                if tree.see_algo[offset] == 5: # = lowPtTripletStep
-                    next_offset = tree.see_offset[ioffset+1] if ioffset < tree.see_offset.size() else tree.see_algo.size()
-                    tot_seeds_lowPtTriplet += next_offset - offset
-                    break
+            tot_seeds_lowPtTriplet += seeds.nSeedsForAlgo(5) # = lowPtTripletStep
 
             # links from seeds to TrackingParticles
             ntrue = 0
-            for iseed in xrange(nseeds):
-                if tree.see_simIdx[iseed].size() >= 1:
+            for seed in seeds:
+                if seed.nMatchedTrackingParticles() >= 1:
                     ntrue += 1
             tot_seeds_true = ntrue
 
+            # links from seeds to hits
+            for seed in seeds:
+                for hit in seed.hits():
+                    if isinstance(hit, PixelHit):
+                        tot_seeds_pixelhits += 1
+                    elif isinstance(hit, StripHit):
+                        tot_seeds_striphits += 1
+                    elif isinstance(hit, GluedHit):
+                        tot_seeds_gluedhits += 1
+
             # links from tracks to seeds
             ntracktrue = 0
-            for itrack in xrange(ntracks):
-                iseed = tree.trk_seedIdx[itrack]
-                if tree.see_simIdx[iseed].size() >= 1:
+            for track in tracks:
+                seed = track.seed()
+                if seed.nMatchedTrackingParticles() >= 1:
                     ntracktrue += 1
             tot_track_seeds_true += ntracktrue
 
@@ -143,6 +166,7 @@ def main():
     print " with %f %% reconstructed" % (float(tot_recoed)/tot_tps * 100)
     print "  of which %f %% were reconstructed at least twice" % (float(tot_tp_dups)/tot_recoed * 100)
     print "On average %f tracks" % (float(tot_ntracks)/tot_nevents)
+    print " with %f %% of true tracks being secondaries" % (float(tot_secondaries)/(tot_ntracks-tot_fakes) * 100)
     print " with fake rate %f %%" % (float(tot_fakes)/tot_ntracks * 100)
     if tot_fakes_npixhits > 0:
         print "  on average %f %% of pixel hits are true" % (float(tot_fakes_npixhits_true)/tot_fakes_npixhits * 100)
@@ -155,6 +179,9 @@ def main():
         print "On average %f seeds" % (float(tot_seeds)/tot_nevents)
         print " of which %f were from lowPtTripletStep" % (float(tot_seeds_lowPtTriplet)/tot_nevents)
         print " of which %f %% were true" % (float(tot_seeds_true)/tot_seeds * 100)
+        print " on average %f pixel hits / seed" % (float(tot_seeds_pixelhits)/tot_seeds)
+        print " on average %f strip hits / seed" % (float(tot_seeds_striphits)/tot_seeds)
+        print " on average %f glued hits / seed" % (float(tot_seeds_gluedhits)/tot_seeds)
 
 
 if __name__ == "__main__":
