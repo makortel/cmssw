@@ -108,11 +108,11 @@ def customise_DQM(process,pileup):
     return process
 
 def customise_Validation(process):
-    process.validation_step.remove(process.PixelTrackingRecHitsValid)
-    # We don't run the HLT
-    process.validation_step.remove(process.HLTSusyExoVal)
-    process.validation_step.remove(process.hltHiggsValidator)
-    process.validation_step.remove(process.relvalMuonBits)
+#    process.validation_step.remove(process.PixelTrackingRecHitsValid)
+#    # We don't run the HLT
+#    process.validation_step.remove(process.HLTSusyExoVal)
+#    process.validation_step.remove(process.hltHiggsValidator)
+#    process.validation_step.remove(process.relvalMuonBits)
     return process
 
 def customise_Validation_Trackingonly(process):
@@ -186,6 +186,7 @@ def customise_Reco_common(process):
     process.MeasurementTrackerEvent.inactivePixelDetectorLabels = cms.VInputTag()
 
     process.reconstruction.remove(process.castorreco)
+    process.reconstruction_trackingOnly.remove(process.castorreco)
     process.reconstruction.remove(process.CastorTowerReco)
     process.reconstruction.remove(process.ak5CastorJets)
     process.reconstruction.remove(process.ak5CastorJetID)
@@ -238,8 +239,6 @@ def customise_Reco_common(process):
     process.PixelCPEGenericESProducer.useLAWidthFromDB = cms.bool(False)
 
 def customise_Reco(process,pileup):
-    customise_Reco_common(process)
-
     #this code supports either 70 or 140 pileup configurations - should fix as to support 0
     nPU=70
     if pileup>100: nPU=140
@@ -434,13 +433,13 @@ def customise_Reco(process,pileup):
     process.preDuplicateMergingDisplacedTracks.inputClassifiers.remove("muonSeededTracksInOutClassifier")
     process.preDuplicateMergingDisplacedTracks.trackProducers.remove("muonSeededTracksInOut")
 
+    customise_Reco_common(process)
+
     return process
 
 
 
 def customise_Reco_new(process):
-    customise_Reco_common(process)
-
     # new layer list (3/4 pixel seeding) in InitialStep and pixelTracks
     process.PixelLayerTriplets.layerList = cms.vstring( 'BPix1+BPix2+BPix3',
                                                         'BPix2+BPix3+BPix4',
@@ -637,11 +636,11 @@ def customise_Reco_new(process):
     process.preDuplicateMergingDisplacedTracks.inputClassifiers.remove("muonSeededTracksInOutClassifier")
     process.preDuplicateMergingDisplacedTracks.trackProducers.remove("muonSeededTracksInOut")
 
+    customise_Reco_common(process)
+
     return process
 
 def customise_Reco_Run2(process):
-    customise_Reco_common(process)
-
     # Needed to make the loading of recoFromSimDigis_cff below to work
     pixelClusterIndex = process.InitialStepPreSplitting.index(process.siPixelClusters)
     process.InitialStepPreSplitting.remove(siPixelClusters)
@@ -665,5 +664,7 @@ def customise_Reco_Run2(process):
     process.jetCoreRegionalStepTracks.TTRHBuilder = 'WithTrackAngle'
     process.convStepTracks.TTRHBuilder = 'WithTrackAngle'
     # End of pixel template needed section
+
+    customise_Reco_common(process)
 
     return process
