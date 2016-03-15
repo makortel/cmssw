@@ -17,6 +17,8 @@ from CommonTools.RecoAlgos.trackingParticleConversionSelector_cfi import trackin
 from CommonTools.RecoAlgos.sortedPrimaryVertices_cfi import sortedPrimaryVertices as _sortedPrimaryVertices
 from CommonTools.RecoAlgos.recoChargedRefCandidateToTrackRefProducer_cfi import recoChargedRefCandidateToTrackRefProducer as _recoChargedRefCandidateToTrackRefProducer
 
+from Configuration.StandardSequences.Eras import eras
+
 ### First define the stuff for the standard validation sequence
 ## Track selectors
 _algos = [
@@ -70,6 +72,96 @@ if eras.fastSim.isChosen():
     _trackProducers.remove("jetCoreRegionalStepTracks")
     _trackProducers.remove("muonSeededTracksInOut")
     _trackProducers.remove("muonSeededTracksOutIn")
+_algos_Phase1PU70 = [
+    "generalTracks",
+    "initialStep",
+    "highPtTripletStep",
+    "lowPtQuadStep",
+    "lowPtTripletStep",
+    "detachedQuadStep",
+    "mixedTripletStep",
+    "pixelPairStep",
+    "tobTecStep",
+    "muonSeededStepInOut",
+    "muonSeededStepOutIn",
+    "duplicateMerge",
+]
+_seedProducers_Phase1PU70 = [
+    "initialStepSeeds",
+    "highPtTripletStepSeeds",
+    "lowPtQuadStepSeeds",
+    "lowPtTripletStepSeeds",
+    "detachedQuadStepSeeds",
+    "mixedTripletStepSeedsA",
+    "mixedTripletStepSeedsB",
+    "pixelPairStepSeeds",
+    "tobTecStepSeeds",
+    "muonSeededSeedsInOut",
+    "muonSeededSeedsOutIn",
+]
+_trackProducers_Phase1PU70 = [
+    "initialStepTracks",
+    "highPtTripletStepTracks",
+    "lowPtQuadStepTracks",
+    "lowPtTripletStepTracks",
+    "detachedQuadStepTracks",
+    "mixedTripletStepTracks",
+    "pixelPairStepTracks",
+    "tobTecStepTracks",
+    "muonSeededTracksInOut",
+    "muonSeededTracksOutIn",
+]
+_algos_Phase1New = [
+    "generalTracks",
+    "initialStep",
+    "highPtTripletStep",
+    "detachedQuadStep",
+#    "detachedTripletStep",
+    "lowPtQuadStep",
+    "lowPtTripletStep",
+    "mixedTripletStep",
+    "pixelLessStep",
+    "tobTecStep",
+    "jetCoreRegionalStep",
+    "muonSeededStepInOut",
+    "muonSeededStepOutIn",
+    "duplicateMerge",
+]
+_seedProducers_Phase1New = [
+    "initialStepSeedsPreSplitting",
+    "initialStepSeeds",
+    "highPtTripletStepSeeds",
+    "detachedQuadStepSeeds",
+#    "detachedTripletStepSeeds",
+    "lowPtQuadStepSeeds",
+    "lowPtTripletStepSeeds",
+    "mixedTripletStepSeedsA",
+    "mixedTripletStepSeedsB",
+    "pixelLessStepSeeds",
+    "tobTecStepSeedsPair",
+    "tobTecStepSeedsTripl",
+    "jetCoreRegionalStepSeeds",
+    "muonSeededSeedsInOut",
+    "muonSeededSeedsOutIn",
+]
+_trackProducers_Phase1New = [
+    "initialStepTracksPreSplitting",
+    "initialStepTracks",
+    "highPtTripletStepTracks",
+    "detachedQuadStepTracks",
+#    "detachedTripletStepTracks",
+    "lowPtQuadStepTracks",
+    "lowPtTripletStepTracks",
+    "mixedTripletStepTracks",
+    "pixelLessStepTracks",
+    "tobTecStepTracks",
+    "jetCoreRegionalStepTracks",
+    "muonSeededTracksInOut",
+    "muonSeededTracksOutIn",
+]
+# Phase1
+#(_algos, _seedProducers, _trackProducers) = (_algos_Phase1PU70, _seedProducers_Phase1PU70, _trackProducers_Phase1PU70)
+(_algos, _seedProducers, _trackProducers) = (_algos_Phase1New, _seedProducers_Phase1New, _trackProducers_Phase1New)
 
 def _algoToSelector(algo):
     sel = ""
