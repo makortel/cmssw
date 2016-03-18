@@ -44,7 +44,6 @@ UserCode/L1Trigger/src/L1MuonRecoTreeProducer.cc
 #include "TrackingTools/TransientTrack/interface/TrackTransientTrack.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateOnSurface.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
