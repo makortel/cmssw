@@ -6,7 +6,6 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 
@@ -14,6 +13,8 @@
 
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
+
+class Trajectory;
 
 TrackProducer::TrackProducer(const edm::ParameterSet& iConfig):
   KfTrackProducerBase(iConfig.getParameter<bool>("TrajectoryInEvent"),

@@ -7,13 +7,13 @@
  *  \author R. Bellan - INFN Torino
  */
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "RecoMuon/TrackingTools/interface/MuonCandidate.h"
 #include <vector>
 
 namespace edm {class Event;}
 
+class Trajectory;
 class TrajectorySeed;
 
 class MuonTrajectoryBuilder {

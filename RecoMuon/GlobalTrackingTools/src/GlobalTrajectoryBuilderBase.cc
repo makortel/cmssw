@@ -63,6 +63,7 @@
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 #include "RecoTracker/TkTrackingRegions/interface/TkTrackingRegionsMargin.h"
 #include "RecoTracker/TkMSParametrization/interface/PixelRecoRange.h"

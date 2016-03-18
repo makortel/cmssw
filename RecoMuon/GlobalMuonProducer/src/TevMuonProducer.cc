@@ -24,6 +24,7 @@
 #include "RecoMuon/TrackingTools/interface/MuonTrackLoader.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 #include "RecoMuon/GlobalTrackingTools/interface/GlobalMuonRefitter.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 
 using namespace edm;

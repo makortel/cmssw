@@ -27,6 +27,7 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrajectorySeed/interface/PropagationDirection.h"
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "Fireworks/Core/interface/FWProxyBuilderConfiguration.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Common/interface/EventBase.h"

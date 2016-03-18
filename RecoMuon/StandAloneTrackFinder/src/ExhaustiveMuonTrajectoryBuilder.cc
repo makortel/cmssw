@@ -2,6 +2,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHitBuilder.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 
 ExhaustiveMuonTrajectoryBuilder::ExhaustiveMuonTrajectoryBuilder(const edm::ParameterSet & pset, 

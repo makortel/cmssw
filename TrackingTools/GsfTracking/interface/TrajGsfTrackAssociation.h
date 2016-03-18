@@ -3,6 +3,7 @@
 
 #include "DataFormats/Common/interface/AssociationMap.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackFwd.h"
+class Trajectory;
 
 typedef edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,
                                           reco::GsfTrackCollection,unsigned short> > TrajGsfTrackAssociationCollection;

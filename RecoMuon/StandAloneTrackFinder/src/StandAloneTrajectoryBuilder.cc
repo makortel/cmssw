@@ -27,6 +27,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "DataFormats/TrajectoryState/interface/PTrajectoryStateOnDet.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateOnSurface.h"

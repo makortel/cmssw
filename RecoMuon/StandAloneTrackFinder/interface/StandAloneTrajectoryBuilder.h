@@ -11,7 +11,7 @@
 
 #include "RecoMuon/TrackingTools/interface/RecoMuonEnumerators.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
-
+#include "DataFormats/DetId/interface/DetId.h"
 
 class TrajectorySeed;
 class StandAloneMuonFilter;
@@ -19,6 +19,8 @@ class StandAloneMuonBackwardFilter;
 class StandAloneMuonRefitter;
 class MuonServiceProxy;
 class SeedTransformer;
+class DetLayer;
+class TrajectoryStateOnSurface;
 
 namespace edm {class ParameterSet;}
 

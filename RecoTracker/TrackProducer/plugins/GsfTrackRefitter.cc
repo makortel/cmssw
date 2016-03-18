@@ -6,14 +6,14 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-#include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 #include "TrackingTools/GsfTracking/interface/TrajGsfTrackAssociation.h"
 #include "TrackingTools/GsfTracking/interface/GsfTrackConstraintAssociation.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
+
+class Trajectory;
 
 GsfTrackRefitter::GsfTrackRefitter(const edm::ParameterSet& iConfig):
   GsfTrackProducerBase(iConfig.getParameter<bool>("TrajectoryInEvent"),

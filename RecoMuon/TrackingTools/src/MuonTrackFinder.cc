@@ -19,6 +19,7 @@
 #include "RecoMuon/TrackingTools/interface/MuonTrajectoryCleaner.h"
 #include "RecoMuon/TrackingTools/interface/MuonTrackLoader.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include "TrackingTools/PatternTools/interface/Trajectory.h"
 

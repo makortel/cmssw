@@ -39,6 +39,7 @@
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "RecoTracker/NuclearSeedGenerator/interface/TrajectoryToSeedMap.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 
 #include "DataFormats/VertexReco/interface/NuclearInteraction.h"

@@ -3,7 +3,7 @@
 
 #include "DataFormats/Common/interface/AssociationMap.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
+class Trajectory;
 
 typedef edm::AssociationMap<edm::OneToOne<std::vector<Trajectory>,
                                           reco::TrackCollection,unsigned short> > TrajTrackAssociationCollection;

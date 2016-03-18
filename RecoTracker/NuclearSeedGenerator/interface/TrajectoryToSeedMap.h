@@ -7,12 +7,9 @@
 #include "DataFormats/Common/interface/RefProd.h"
 #include "DataFormats/Common/interface/AssociationMap.h"
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-#include "DataFormats/TrajectorySeed/interface/TrajectorySeedCollection.h"
-
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackBase.h"
+#include "DataFormats/TrajectorySeed/interface/TrajectorySeedFwd.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+class Trajectory;
 
     typedef std::vector<Trajectory> TrajectoryCollection;
 
