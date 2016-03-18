@@ -8,8 +8,6 @@
 //CMSSW includes
 #include "Calibration/Tools/plugins/ElectronSqPtTkIsolation.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-#include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/GeometryVector/interface/GlobalVector.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"

@@ -4,7 +4,6 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "boost/foreach.hpp"
 
 ShallowTracksProducer::ShallowTracksProducer(const edm::ParameterSet& iConfig)

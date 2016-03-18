@@ -15,7 +15,6 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 // in header, too
 // end in header, too
 

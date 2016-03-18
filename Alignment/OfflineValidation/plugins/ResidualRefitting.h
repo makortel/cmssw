@@ -24,16 +24,6 @@
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
-//#include "TrackingTools/GeomPropagators/interface/AnalyticalPropagator.h"
-//#include "TrackPropagation/SteppingHelixPropagator/interface/SteppingHelixPropagator.h"
-
-//#include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
-
-//#include "TrackPropagation/SteppingHelixPropagator/interface/SteppingHelixPropagator.h"
-
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-//#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-//#include "TrackingTools/TrackRefitter/interface/TrackTransformer.h"
 
 class TrackerTopology;
 
