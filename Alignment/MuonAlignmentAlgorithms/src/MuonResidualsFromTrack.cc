@@ -15,6 +15,7 @@
 
 #include "TrackingTools/TrackRefitter/interface/TrackTransformer.h"
 #include "TrackingTools/TrackAssociator/interface/DetIdAssociator.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 #include "TDecompChol.h"
 #include <math.h>
