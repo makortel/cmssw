@@ -19,8 +19,6 @@
 #include <Geometry/DTGeometry/interface/DTGeometry.h>
 #include <Geometry/RPCGeometry/interface/RPCGeometry.h>
 #include "Geometry/RPCGeometry/interface/RPCGeomServ.h"
-#include "MagneticField/Engine/interface/MagneticField.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include <Geometry/Records/interface/MuonGeometryRecord.h>
 #include "Geometry/Records/interface/GlobalTrackingGeometryRecord.h"
 #include "Geometry/CommonDetUnit/interface/GeomDet.h"
