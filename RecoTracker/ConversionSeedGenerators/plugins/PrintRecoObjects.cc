@@ -2,6 +2,8 @@
 #include "DataFormats/SiStripDetId/interface/SiStripDetId.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 
+#include <sstream>
+
 void PrintRecoObjects::
 print(std::stringstream& ss, const SiStripCluster& clus){
   ss << "\n\t"

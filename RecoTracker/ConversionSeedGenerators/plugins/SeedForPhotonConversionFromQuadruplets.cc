@@ -29,6 +29,8 @@
 #include "TrackingTools/PatternTools/interface/TSCBLBuilderNoMaterial.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 
+#include "boost/foreach.hpp"
+
 //#define mydebug_knuenz
 //#define mydebug_sguazz
 //#define quadDispLine

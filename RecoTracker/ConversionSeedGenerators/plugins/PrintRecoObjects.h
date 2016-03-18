@@ -5,17 +5,7 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-#include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 #include "DataFormats/SiStripCluster/interface/SiStripCluster.h"
-#include "DataFormats/Common/interface/DetSetVector.h"
-#include "DataFormats/Common/interface/DetSetVectorNew.h"
-
-#include <sstream>
-#include "boost/foreach.hpp"
-
-typedef edmNew::DetSet<SiStripCluster>::const_iterator ClusIter;
-typedef edmNew::DetSetVector<SiStripCluster> ClusterCollection;
 
 class TrackerTopology;
 

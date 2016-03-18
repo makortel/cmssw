@@ -26,9 +26,6 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-#include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
-#include "DataFormats/TrackerRecHit2D/interface/SiStripRecHit1D.h"
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
 

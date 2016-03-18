@@ -79,9 +79,6 @@ class DuplicateListMerger final : public edm::global::EDProducer<> {
 };
 }
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-#include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
-#include "DataFormats/TrajectorySeed/interface/TrajectorySeedCollection.h"
 #include "DataFormats/TrackerRecHit2D/interface/ClusterRemovalRefSetter.h"
 
 #include "FWCore/Framework/interface/Event.h"

@@ -29,7 +29,6 @@
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "TrackingTools/GeomPropagators/interface/StateOnTrackerBound.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 

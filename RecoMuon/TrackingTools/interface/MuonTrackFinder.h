@@ -9,8 +9,7 @@
 
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackReco/interface/TrackExtraFwd.h"
-#include "DataFormats/TrajectorySeed/interface/TrajectorySeedCollection.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
+#include "DataFormats/TrajectorySeed/interface/TrajectorySeedFwd.h"
 #include "RecoMuon/TrackingTools/interface/MuonCandidate.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -19,6 +18,7 @@
 
 namespace edm {class ParameterSet; class Event; class EventSetup;}
 class TrackerTopology;
+class Trajectory;
 
 class MuonTrajectoryBuilder;
 class MuonTrajectoryCleaner;
