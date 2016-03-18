@@ -11,6 +11,7 @@
 
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/KalmanUpdators/interface/Chi2MeasurementEstimator.h"
 #include "TrackingTools/KalmanUpdators/interface/KFUpdator.h"
 #include "TrackingTools/TrackFitters/interface/KFTrajectorySmoother.h"

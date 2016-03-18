@@ -5,6 +5,7 @@
  */
 #include "RecoMuon/TrackingTools/interface/MuonTrajectoryCleaner.h"
 #include "DataFormats/TrackReco/interface/Track.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/Common/interface/RefToBase.h"

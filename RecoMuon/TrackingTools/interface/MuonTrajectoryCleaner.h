@@ -7,10 +7,11 @@
  *  \author R. Bellan - INFN Torino
  */
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "RecoMuon/TrackingTools/interface/MuonCandidate.h"
 #include "FWCore/Framework/interface/Event.h"
 #include <vector>
+
+class TrajectorySeed;
 
 //class Event;
 class MuonTrajectoryCleaner {

@@ -8,9 +8,9 @@
  */
 
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include <vector>
 
+class Trajectory;
 
 class MuonCandidate { 
   

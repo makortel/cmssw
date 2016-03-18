@@ -9,6 +9,7 @@
 
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/TrackFitters/interface/TrajectoryFitter.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"

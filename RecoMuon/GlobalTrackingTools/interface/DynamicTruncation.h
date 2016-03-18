@@ -24,7 +24,6 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "RecoMuon/GlobalTrackingTools/interface/StateSegmentMatcher.h"
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHit.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
@@ -40,6 +39,7 @@
 #include "RecoMuon/GlobalTrackingTools/interface/ThrParameters.h"
 #include "RecoMuon/GlobalTrackingTools/interface/ChamberSegmentUtility.h"
 
+class Trajectory;
 
 class DynamicTruncation {
   

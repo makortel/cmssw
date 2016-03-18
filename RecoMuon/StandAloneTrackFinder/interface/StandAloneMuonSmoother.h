@@ -10,8 +10,7 @@
  *  \author R. Bellan - INFN Torino <riccardo.bellan@cern.ch>
  */
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
-
+class Trajectory;
 class MuonServiceProxy;
 class TrajectoryStateUpdator;
 class MeasurementEstimator;

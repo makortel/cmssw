@@ -7,6 +7,7 @@
 #include "RecoMuon/TrackingTools/interface/DirectMuonTrajectoryBuilder.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/TrackRefitter/interface/SeedTransformer.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"

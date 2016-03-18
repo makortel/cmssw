@@ -41,6 +41,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "DataFormats/TrackReco/interface/Track.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 #include "RecoMuon/TrackingTools/interface/MuonCandidate.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"

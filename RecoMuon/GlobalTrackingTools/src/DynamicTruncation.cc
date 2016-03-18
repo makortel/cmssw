@@ -20,6 +20,7 @@
 #include "RecoMuon/Records/interface/MuonRecoGeometryRecord.h"
 #include "RecoMuon/Navigation/interface/MuonNavigationSchool.h"
 #include "RecoMuon/Navigation/interface/MuonNavigationPrinter.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "RecoTracker/Record/interface/NavigationSchoolRecord.h"
 #include "RecoMuon/TrackingTools/interface/MuonPatternRecoDumper.h"

@@ -7,7 +7,6 @@
  *  \author R. Bellan - INFN Torino
  */
 
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "RecoMuon/TrackingTools/interface/MuonCandidate.h"
 #include "RecoMuon/TrackingTools/interface/MuonTrajectoryBuilder.h"
 #include <vector>

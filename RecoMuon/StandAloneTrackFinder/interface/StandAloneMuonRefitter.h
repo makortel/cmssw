@@ -10,7 +10,6 @@
 
 
 #include "FWCore/Framework/interface/ESHandle.h"
-#include "TrackingTools/PatternTools/interface/Trajectory.h"
 
 namespace edm {class ParameterSet;}
 class MuonServiceProxy;
