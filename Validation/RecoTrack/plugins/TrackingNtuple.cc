@@ -369,6 +369,7 @@ private:
   //sim tracks
   std::vector<int>   sim_event    ;
   std::vector<int>   sim_bunchCrossing;
+  std::vector<int>   sim_pdgId    ;
   std::vector<float> sim_px       ;
   std::vector<float> sim_py       ;
   std::vector<float> sim_pz       ;
@@ -599,6 +600,7 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   //sim tracks
   t->Branch("sim_event"    , &sim_event    );
   t->Branch("sim_bunchCrossing", &sim_bunchCrossing);
+  t->Branch("sim_pdgId"    , &sim_pdgId    );
   t->Branch("sim_px"       , &sim_px       );
   t->Branch("sim_py"       , &sim_py       );
   t->Branch("sim_pz"       , &sim_pz       );
@@ -809,6 +811,7 @@ void TrackingNtuple::clearVariables() {
   //sim tracks
   sim_event    .clear();
   sim_bunchCrossing.clear();
+  sim_pdgId    .clear();
   sim_px       .clear();
   sim_py       .clear();
   sim_pz       .clear();
@@ -1743,6 +1746,7 @@ void TrackingNtuple::fillTrackingParticles(const edm::Event& iEvent, const edm::
     LogTrace("TrackingNtuple") << "matched to tracks = " << make_VectorPrinter(tkIdx) << " isRecoMatched=" << isRecoMatched;
     sim_event    .push_back(tp->eventId().event());
     sim_bunchCrossing.push_back(tp->eventId().bunchCrossing());
+    sim_pdgId    .push_back(tp->pdgId());
     sim_px       .push_back(tp->px());
     sim_py       .push_back(tp->py());
     sim_pz       .push_back(tp->pz());
