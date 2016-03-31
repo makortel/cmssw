@@ -54,14 +54,14 @@ def _filterForNtuple(lst):
         ret.append(item)
     return ret
 _seedProducers = _filterForNtuple(_TrackValidation_cff._seedProducers)
-_seedProducersForPhase1Pixel = _filterForNtuple(_TrackValidation_cff._seedProducersForPhase1Pixel)
+_seedProducers_trackingPhase1 = _filterForNtuple(_TrackValidation_cff._seedProducers_trackingPhase1)
 
 (_seedSelectors, trackingNtupleSeedSelectors) = _TrackValidation_cff._addSeedToTrackProducers(_seedProducers, globals())
-(_phase1PixelSeedSelectors_, _phase1PixelTrackingNtupleSeedSelectors) = _TrackValidation_cff._addSeedToTrackProducers(_seedProducersForPhase1Pixel, globals())
-eras.phase1Pixel.toReplaceWith(trackingNtupleSeedSelectors, _phase1PixelTrackingNtupleSeedSelectors)
+(_seedSelectors_trackingPhase1, _trackingNtupleSeedSelectors_trackingPhase1) = _TrackValidation_cff._addSeedToTrackProducers(_seedProducers_trackingPhase1, globals())
+eras.phase1Pixel.toReplaceWith(trackingNtupleSeedSelectors, _trackingNtupleSeedSelectors_trackingPhase1)
 
 trackingNtuple.seedTracks = _seedSelectors
-eras.phase1Pixel.toModify(trackingNtuple, seedTracks = _seedProducersForPhase1Pixel)
+eras.trackingPhase1.toModify(trackingNtuple, seedTracks = _seedSelectors_trackingPhase1)
 
 trackingNtupleSequence = cms.Sequence()
 # reproduce hits because they're not stored in RECO
