@@ -510,6 +510,7 @@ private:
   // Tracking vertices
   std::vector<int>   simvtx_event;
   std::vector<int>   simvtx_bunchCrossing;
+  std::vector<unsigned int> simvtx_processType; // only from first SimVertex of TrackingVertex
   std::vector<float> simvtx_x;
   std::vector<float> simvtx_y;
   std::vector<float> simvtx_z;
@@ -748,6 +749,7 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   // tracking vertices
   t->Branch("simvtx_event"   , &simvtx_event    );
   t->Branch("simvtx_bunchCrossing", &simvtx_bunchCrossing);
+  t->Branch("simvtx_processType", &simvtx_processType);
   t->Branch("simvtx_x"       , &simvtx_x);
   t->Branch("simvtx_y"       , &simvtx_y);
   t->Branch("simvtx_z"       , &simvtx_z);
@@ -1826,8 +1828,15 @@ void TrackingNtuple::fillTrackingVertices(const TrackingVertexRefVector& trackin
       simpv_idx.push_back(simvtx_x.size());
     }
 
+    unsigned int processType = std::numeric_limits<unsigned int>::max();
+    if(!v.g4Vertices().empty()) {
+      processType = v.g4Vertices()[0].processType();
+    }
+
     simvtx_event.push_back(v.eventId().event());
     simvtx_bunchCrossing.push_back(v.eventId().bunchCrossing());
+    simvtx_processType.push_back(processType);
+
     simvtx_x.push_back(v.position().x());
     simvtx_y.push_back(v.position().y());
     simvtx_z.push_back(v.position().z());
