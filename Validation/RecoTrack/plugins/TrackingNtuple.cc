@@ -953,6 +953,7 @@ void TrackingNtuple::clearVariables() {
   simvtx_bunchCrossing.clear();
   simvtx_x.clear();
   simvtx_y.clear();
+  simvtx_z.clear();
   simvtx_sourceSimIdx.clear();
   simvtx_daughterSimIdx.clear();
   simpv_idx.clear();
