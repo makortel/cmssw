@@ -109,6 +109,15 @@ class Event(object):
     def entry(self):
         return self._entry
 
+    def event(self):
+        return self._tree.event
+
+    def lumi(self):
+        return self._tree.lumi
+
+    def run(self):
+        return self._tree.run
+
     def tracks(self):
         return Tracks(self._tree)
 
@@ -262,6 +271,14 @@ class Seed(_Object, _HitAdaptor):
         self._checkIsValid()
         for isim in self._tree.see_simIdx[self._index]:
             yield TrackingParticle(self._tree, isim)
+
+    def indexWithinAlgo(self):
+        self._checkIsValid()
+        algo = self._tree.see_algo[self._index]
+        for ioffset, offset in enumerate(self._tree.see_offset):
+            if self._tree.see_algo[offset] == algo:
+               return self._index -  offset
+        return -1
 
 class Seeds(_Collection):
     def __init__(self, tree):
