@@ -259,6 +259,13 @@ class GluedHits(_Collection):
 
 
 ##########
+def _seedOffsetForAlgo(tree, algo):
+    for ioffset, offset in enumerate(tree.see_offset):
+        if tree.see_algo[offset] == algo:
+            next_offset = tree.see_offset[ioffset+1] if ioffset < tree.see_offset.size()-1 else tree.see_algo.size()
+            return (offset, next_offset)
+    return (-1, -1)
+
 class Seed(_Object, _HitAdaptor):
     def __init__(self, tree, index):
         super(Seed, self).__init__(tree, index, "see")
@@ -275,10 +282,10 @@ class Seed(_Object, _HitAdaptor):
     def indexWithinAlgo(self):
         self._checkIsValid()
         algo = self._tree.see_algo[self._index]
-        for ioffset, offset in enumerate(self._tree.see_offset):
-            if self._tree.see_algo[offset] == algo:
-               return self._index -  offset
-        return -1
+        (offset, next_offset) = _seedOffsetForAlgo(self._tree, algo)
+        if offset == -1: # algo not found
+            return -1
+        return self._index - offset
 
 class Seeds(_Collection):
     def __init__(self, tree):
@@ -293,17 +300,9 @@ class Seeds(_Collection):
         return next_offset - offset
 
     def seedsForAlgo(self, algo):
-        (offset, next_offset) = self._seedsForAlgo(algo)
+        (offset, next_offset) = _seedOffsetForAlgo(self._tree, algo)
         for isee in xrange(offset, next_offset):
             yield Seed(self._tree, isee)
-
-    def _seedsForAlgo(self, algo):
-        for ioffset, offset in enumerate(self._tree.see_offset):
-            if self._tree.see_algo[offset] == algo:
-                next_offset = self._tree.see_offset[ioffset+1] if ioffset < self._tree.see_offset.size() else self._tree.see_algo.size()
-                return (offset, next_offset)
-        return (-1, -1)
-
 
 ##########
 class TrackingParticle(_Object, _HitAdaptor):
