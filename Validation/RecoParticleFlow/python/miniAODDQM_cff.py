@@ -82,8 +82,10 @@ ElectronValidation1.MatchCollection = cms.InputTag('gedGsfElectrons')
 
 from JetMETCorrections.Type1MET.pfMETCorrectionType0_cfi import type0PFMEtCorrectionPFCandToVertexAssociationForValidationMiniAOD
 
+miniAODDQMSequencePre = cms.Sequence(
+    type0PFMEtCorrectionPFCandToVertexAssociationForValidationMiniAOD
+)
 miniAODDQMSequence = cms.Sequence(
-                                  type0PFMEtCorrectionPFCandToVertexAssociationForValidationMiniAOD *
                                   JetValidation1 * JetValidation2 *
                                   JetResValidation1 * JetResValidation2 *
                                   METValidation1 * METValidation2 *
