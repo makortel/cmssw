@@ -1,9 +1,10 @@
 import ROOT
 
 class _Collection(object):
-    def __init__(self, tree, sizeBranch):
+    def __init__(self, tree, sizeBranch, objclass):
         self._tree = tree
         self._sizeBranch = sizeBranch
+        self._objclass = objclass
 
     def size(self):
         return int(getattr(self._tree, self._sizeBranch).size())
@@ -11,6 +12,8 @@ class _Collection(object):
     def __len__(self):
         return self.size()
 
+    def __getitem__(self, index):
+        return self._objclass(self._tree, index)
 
 class _Object(object):
     def __init__(self, tree, index, prefix):
@@ -162,7 +165,7 @@ class Track(_Object, _HitAdaptor):
 
 class Tracks(_Collection):
     def __init__(self, tree):
-        super(Tracks, self).__init__(tree, "trk_pt")
+        super(Tracks, self).__init__(tree, "trk_pt", Track)
 
     def __iter__(self):
         for itrk in xrange(self.size()):
@@ -202,7 +205,7 @@ class PixelHit(_Object):
 
 class PixelHits(_Collection):
     def __init__(self, tree):
-        super(PixelHits, self).__init__(tree, "pix_isBarrel")
+        super(PixelHits, self).__init__(tree, "pix_isBarrel", PixelHit)
 
     def __iter__(self):
         for ipix in xrange(self.size()):
@@ -230,7 +233,7 @@ class StripHit(_Object):
 
 class StripHits(_Collection):
     def __init__(self, tree):
-        super(StripHits, self).__init__(tree, "str_isBarrel")
+        super(StripHits, self).__init__(tree, "str_isBarrel", StripHit)
 
     def __iter__(self):
         for istr in xrange(self.size()):
@@ -251,7 +254,7 @@ class GluedHit(_Object):
 
 class GluedHits(_Collection):
     def __init__(self, tree):
-        super(GluedHits, self).__init__(tree, "glu_isBarrel")
+        super(GluedHits, self).__init__(tree, "glu_isBarrel", GluedHit)
 
     def __iter__(self):
         for iglu in xrange(self.size()):
@@ -289,7 +292,7 @@ class Seed(_Object, _HitAdaptor):
 
 class Seeds(_Collection):
     def __init__(self, tree):
-        super(Seeds, self).__init__(tree, "see_pt")
+        super(Seeds, self).__init__(tree, "see_pt", Seed)
 
     def __iter__(self):
         for isee in xrange(self.size()):
@@ -329,7 +332,7 @@ class TrackingParticle(_Object, _HitAdaptor):
 
 class TrackingParticles(_Collection):
     def __init__(self, tree):
-        super(TrackingParticles, self).__init__(tree, "sim_pt")
+        super(TrackingParticles, self).__init__(tree, "sim_pt", TrackingParticle)
         
     def __iter__(self):
         for isim in xrange(self.size()):
@@ -351,10 +354,7 @@ class Vertex(_Object):
 
 class Vertices(_Collection):
     def __init__(self, tree):
-        super(Vertices, self).__init__(tree, "vtx_valid")
-
-    def __getitem__(self, index):
-        return Vertex(self._tree, index)
+        super(Vertices, self).__init__(tree, "vtx_valid", Vertex)
 
     def __iter__(self):
         for ivtx in xrange(self.size()):
@@ -384,7 +384,7 @@ class TrackingVertex(_Object):
         for isim in self._tree.simvtx_daughterSimIdx[self._index]:
             yield TrackingParticle(self._tree, isim)
 
-class TrackingVertices(_Collection):
+class TrackingVertices(_Collection, TrackingVertex):
     def __init__(self, tree):
         super(TrackingVertex, self).__init__(tree, "simvtx_x")
 
