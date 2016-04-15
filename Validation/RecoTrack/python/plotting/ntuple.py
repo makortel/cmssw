@@ -220,10 +220,10 @@ class StripHit(_Object):
         self._checkIsValid()
         return self._tree.str_simTrkIdx[self._index].size()
 
-    def matchedTrackingParticles(self):
+    def matchedTrackingParticleInfos(self):
         self._checkIsValid()
-        for isim in self._tree.str_simTrkIdx[self._index]:
-            yield TrackingParticle(self._tree, isim)
+        for imatch in self._tree.str_simTrkIdx[self._index]:
+            yield TPHitMatchInfo(self._tree, self._index, imatch, self._prefix)
 
     def layerStr(self):
         if not self.isValid():
