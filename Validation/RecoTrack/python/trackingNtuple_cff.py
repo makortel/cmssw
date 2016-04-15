@@ -15,10 +15,10 @@ from SimGeneral.TrackingAnalysis.trackingParticleNumberOfLayersProducer_cff impo
 import Validation.RecoTrack.TrackValidation_cff as _TrackValidation_cff
 
 _includeHits = False
-#_includeHits = True
+_includeHits = True
 
 _includeSeeds = False
-#_includeSeeds = True
+_includeSeeds = True
 
 from CommonTools.RecoAlgos.trackingParticleRefSelector_cfi import trackingParticleRefSelector as _trackingParticleRefSelector
 trackingParticlesIntime = _trackingParticleRefSelector.clone(
