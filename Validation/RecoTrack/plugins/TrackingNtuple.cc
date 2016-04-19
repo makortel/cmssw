@@ -395,6 +395,7 @@ private:
   std::vector<bool> pix_isBarrel ;
   std::vector<unsigned int> pix_lay      ;
   std::vector<unsigned int> pix_detId    ;
+  std::vector<std::vector<int> > pix_trkIdx;
   std::vector<std::vector<int> > pix_simTrkIdx;
   std::vector<std::vector<int> > pix_particle ;
   std::vector<std::vector<int> > pix_process  ;
@@ -420,6 +421,7 @@ private:
   std::vector<unsigned int> str_det      ;
   std::vector<unsigned int> str_lay      ;
   std::vector<unsigned int> str_detId    ;
+  std::vector<std::vector<int> > str_trkIdx;
   std::vector<std::vector<int> > str_simTrkIdx;
   std::vector<std::vector<int> > str_particle ;
   std::vector<std::vector<int> > str_process  ;
@@ -630,6 +632,7 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("pix_isBarrel"  , &pix_isBarrel );
     t->Branch("pix_lay"       , &pix_lay      );
     t->Branch("pix_detId"     , &pix_detId    );
+    t->Branch("pix_trkIdx"    , &pix_trkIdx   );
     t->Branch("pix_simTrkIdx" , &pix_simTrkIdx);
     t->Branch("pix_particle"  , &pix_particle );
     t->Branch("pix_process"   , &pix_process  );
@@ -655,6 +658,7 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("str_det"       , &str_det      );
     t->Branch("str_lay"       , &str_lay      );
     t->Branch("str_detId"     , &str_detId    );
+    t->Branch("str_trkIdx"    , &str_trkIdx   );
     t->Branch("str_simTrkIdx" , &str_simTrkIdx);
     t->Branch("str_particle"  , &str_particle );
     t->Branch("str_process"   , &str_process  );
@@ -1192,6 +1196,7 @@ void TrackingNtuple::fillPixelHits(const edm::Event& iEvent,
       pix_isBarrel .push_back( hitId.subdetId()==1 );
       pix_lay      .push_back( lay );
       pix_detId    .push_back( hitId.rawId() );
+      pix_trkIdx   .emplace_back(); // filled in fillTracks
       pix_simTrkIdx.push_back( simHitData.matchingTp );
       pix_particle .push_back( simHitData.particleType );
       pix_process  .push_back( simHitData.processType );
@@ -1251,6 +1256,7 @@ void TrackingNtuple::fillStripRphiStereoHits(const edm::Event& iEvent,
   str_det      .resize(totalStripHits);
   str_lay      .resize(totalStripHits);
   str_detId    .resize(totalStripHits);
+  str_trkIdx   .resize(totalStripHits); // filled in fillTracks
   str_simTrkIdx.resize(totalStripHits);
   str_particle .resize(totalStripHits);
   str_process  .resize(totalStripHits);
@@ -1596,7 +1602,8 @@ void TrackingNtuple::fillTracks(const edm::RefToBaseVector<reco::Track>& tracks,
   edm::EDConsumerBase::Labels labels;
   labelsForToken(trackToken_, labels);
   LogTrace("TrackingNtuple") << "NEW TRACK LABEL: " << labels.module;
-  for(const auto& itTrack: tracks) {
+  for(size_t iTrack = 0; iTrack<tracks.size(); ++iTrack) {
+    const auto& itTrack = tracks[iTrack];
     int nSimHits = 0;
     bool isSimMatched = false;
     std::vector<float> sharedFraction;
@@ -1692,7 +1699,11 @@ void TrackingNtuple::fillTracks(const edm::RefToBaseVector<reco::Track>& tracks,
         LogTrace("TrackingNtuple") << " id: " << hitId.rawId() << " - globalPos =" << hit->globalPosition()
                                    << " cluster=" << clusterKey
                                    << " eta,phi: " << hit->globalPosition().eta() << "," << hit->globalPosition().phi();
-        if(includeAllHits_) checkProductID(hitProductIds, clusterRef.id(), "track");
+        if(includeAllHits_) {
+          checkProductID(hitProductIds, clusterRef.id(), "track");
+          if(isPixel) pix_trkIdx[clusterKey].push_back(iTrack);
+          else        str_trkIdx[clusterKey].push_back(iTrack);
+        }
 
         hitIdx.push_back(clusterKey);
       } else  {
