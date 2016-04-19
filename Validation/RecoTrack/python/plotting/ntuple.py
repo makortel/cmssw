@@ -57,6 +57,16 @@ class _HitObject(_Object):
         for itrack in getattr(self._tree, self._prefix+"_trkIdx")[self._index]:
             yield Track(self._tree, itrack)
 
+    def nseeds(self):
+        self._checkIsValid()
+        return getattr(self._tree, self._prefix+"_seeIdx")[self._index].size()
+
+    def seeds(self):
+        self._checkIsValid()
+        for iseed in getattr(self._tree, self._prefix+"_seeIdx")[self._index]:
+            yield Seed(self._tree, iseed)
+
+
 class _HitAdaptor(object):
     def _hits(self):
         self._checkIsValid()
@@ -255,6 +265,15 @@ class GluedHit(_Object):
     def stereoHit(self):
         self._checkIsValid()
         return StripHit(self._tree, self._tree.glu_stereoIdx[self._index])
+
+    def nseeds(self):
+        self._checkIsValid()
+        return self._tree.glu_seeIdx[self._index].size()
+
+    def seeds(self):
+        self._checkIsValid()
+        for iseed in self._tree.glu_seeIdx[self._index]:
+            yield Seed(self._tree, iseed)
 
 class GluedHits(_Collection):
     def __init__(self, tree):
