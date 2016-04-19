@@ -28,6 +28,11 @@ def main():
     tot_recoed = 0
     tot_tp_dups = 0
 
+    tot_pix = 0
+    tot_pix_ntracks = 0
+    tot_str = 0
+    tot_str_ntracks = 0
+
     tot_seeds = 0
     tot_seeds_true = 0
     tot_seeds_lowPtTriplet = 0
@@ -125,7 +130,22 @@ def main():
         tot_duplicates += ndups
         tot_secondaries += nsecondaries
 
-#        # seeds
+        # hits
+        if ntuple.hasHits():
+            # links from hits to tracks
+            for hit in event.pixelHits():
+                tot_pix += 1
+                # hit -> track links
+                for track in hit.tracks():
+                    tot_pix_ntracks += 1
+
+            for hit in event.stripHits():
+                tot_str += 1
+                # hit -> track links
+                for track in hit.tracks():
+                    tot_str_ntracks += 1
+
+        # seeds
         if ntuple.hasSeeds():
             seeds = event.seeds()
             nseeds = len(seeds)
@@ -182,6 +202,11 @@ def main():
         print " on average %f pixel hits / seed" % (float(tot_seeds_pixelhits)/tot_seeds)
         print " on average %f strip hits / seed" % (float(tot_seeds_striphits)/tot_seeds)
         print " on average %f glued hits / seed" % (float(tot_seeds_gluedhits)/tot_seeds)
+    if tot_pix > 0:
+        print "On average %f pixel hits" % (float(tot_pix)/tot_nevents)
+        print " on average %f tracks per hit" % (float(tot_pix_ntracks)/tot_pix)
+        print "On average %f strip hits" % (float(tot_str)/tot_nevents)
+        print " on average %f tracks per hit" % (float(tot_str_ntracks)/tot_str)
 
 
 if __name__ == "__main__":
