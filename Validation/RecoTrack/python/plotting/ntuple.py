@@ -39,6 +39,15 @@ class _HitObject(_Object):
     def __init__(self, tree, index, prefix):
         super(_HitObject, self).__init__(tree, index, prefix)
 
+    def nMatchedTrackingParticles(self):
+        self._checkIsValid()
+        return getattr(self._tree, self._prefix+"_simTrkIdx")[self._index].size()
+
+    def matchedTrackingParticles(self):
+        self._checkIsValid()
+        for itp in getattr(self._tree, self._prefix+"_simTrkIdx")[self._index]:
+            yield TrackingParticle(self._tree, itp)
+
     def ntracks(self):
         self._checkIsValid()
         return getattr(self._tree, self._prefix+"_trkIdx")[self._index].size()
@@ -194,27 +203,9 @@ class Tracks(_Collection):
             yield Track(self._tree, itrk)
 
 ##########
-class TPHitMatchInfo(_Object):
-    def __init__(self, tree, index, tpindex, prefix):
-        super(TPHitMatchInfo, self).__init__(tree, index, prefix)
-        self._tpindex = tpindex
-
-    def trackingParticle(self):
-        self._checkIsValid()
-        return TrackingParticle(self._tree, getattr(self._tree, self._prefix+"_simTrkIdx")[self._index][self._tpindex])
-
 class PixelHit(_HitObject):
     def __init__(self, tree, index):
         super(PixelHit, self).__init__(tree, index, "pix")
-
-    def nMatchedTrackingParticles(self):
-        self._checkIsValid()
-        return self._tree.pix_simTrkIdx[self._index].size()
-
-    def matchedTrackingParticleInfos(self):
-        self._checkIsValid()
-        for imatch in xrange(self.nMatchedTrackingParticles()):
-            yield TPHitMatchInfo(self._tree, self._index, imatch, self._prefix)
 
     def layerStr(self):
         if not self.isValid():
@@ -237,15 +228,6 @@ class PixelHits(_Collection):
 class StripHit(_HitObject):
     def __init__(self, tree, index):
         super(StripHit, self).__init__(tree, index, "str")
-
-    def nMatchedTrackingParticles(self):
-        self._checkIsValid()
-        return self._tree.str_simTrkIdx[self._index].size()
-
-    def matchedTrackingParticleInfos(self):
-        self._checkIsValid()
-        for imatch in self._tree.str_simTrkIdx[self._index]:
-            yield TPHitMatchInfo(self._tree, self._index, imatch, self._prefix)
 
     def layerStr(self):
         if not self.isValid():
