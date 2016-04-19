@@ -843,6 +843,7 @@ void TrackingNtuple::clearVariables() {
   pix_isBarrel .clear();
   pix_lay      .clear();
   pix_detId    .clear();
+  pix_trkIdx   .clear();
   pix_simTrkIdx.clear();
   pix_particle .clear();
   pix_process  .clear();
@@ -868,6 +869,7 @@ void TrackingNtuple::clearVariables() {
   str_det      .clear();
   str_lay      .clear();
   str_detId    .clear();
+  str_trkIdx   .clear();
   str_simTrkIdx.clear();
   str_particle .clear();
   str_process  .clear();
