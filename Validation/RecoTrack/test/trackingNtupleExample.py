@@ -98,8 +98,8 @@ def main():
                         if hit.nMatchedTrackingParticles() >= 1:
                             # links from hits to TrackingParticles
                             nfakes_pixhits_true += 1
-                            for match in hit.matchedTrackingParticleInfos():
-                                pix_simTrkIds.add(match.trackingParticle().index())
+                            for tp in hit.matchedTrackingParticles():
+                                pix_simTrkIds.add(tp.index())
                     nfakes_pixhits_tps += len(pix_simTrkIds)
 
                     for hit in track.stripHits():
