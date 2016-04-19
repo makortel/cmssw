@@ -35,6 +35,19 @@ class _Object(object):
     def index(self):
         return self._index
 
+class _HitObject(_Object):
+    def __init__(self, tree, index, prefix):
+        super(_HitObject, self).__init__(tree, index, prefix)
+
+    def ntracks(self):
+        self._checkIsValid()
+        return getattr(self._tree, self._prefix+"_trkIdx")[self._index].size()
+
+    def tracks(self):
+        self._checkIsValid()
+        for itrack in getattr(self._tree, self._prefix+"_trkIdx")[self._index]:
+            yield Track(self._tree, itrack)
+
 class _HitAdaptor(object):
     def _hits(self):
         self._checkIsValid()
@@ -146,6 +159,15 @@ class Event(object):
         return TrackingVertices(self._tree)
 
 ##########
+class BeamSpot(object):
+    def __init__(self, tree):
+        self._tree = tree
+        self._prefix = "bsp"
+
+    def __getattr__(self, attr):
+        return lambda: getattr(self._tree, self._prefix+"_"+attr)
+
+##########
 class Track(_Object, _HitAdaptor):
     def __init__(self, tree, index):
         super(Track, self).__init__(tree, index, "trk")
@@ -181,7 +203,7 @@ class TPHitMatchInfo(_Object):
         self._checkIsValid()
         return TrackingParticle(self._tree, getattr(self._tree, self._prefix+"_simTrkIdx")[self._index][self._tpindex])
 
-class PixelHit(_Object):
+class PixelHit(_HitObject):
     def __init__(self, tree, index):
         super(PixelHit, self).__init__(tree, index, "pix")
 
@@ -212,7 +234,7 @@ class PixelHits(_Collection):
             yield PixelHit(self._tree, ipix)
 
 ##########
-class StripHit(_Object):
+class StripHit(_HitObject):
     def __init__(self, tree, index):
         super(StripHit, self).__init__(tree, index, "str")
 
@@ -299,7 +321,7 @@ class Seeds(_Collection):
             yield Seed(self._tree, isee)
 
     def nSeedsForAlgo(self, algo):
-        (offset, next_offset) = self._seedsForAlgo(algo)
+        (offset, next_offset) = _seedOffsetForAlgo(self._tree, algo)
         return next_offset - offset
 
     def seedsForAlgo(self, algo):
