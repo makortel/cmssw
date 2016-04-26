@@ -15,6 +15,15 @@ eras.trackingPhase1.toModify(initialStepSeedLayers,
     layerList = RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff.PixelSeedMergerQuadruplets.layerList.value()
 )
 
+# TrackingRegion
+from RecoTracker.TkTrackingRegions.globalTrackingRegionFromBeamSpot_cfi import globalTrackingRegionFromBeamSpot as _globalTrackingRegionFromBeamSpot
+initialStepTrackingRegions = _globalTrackingRegionFromBeamSpot.clone(
+    RegionPSet = dict(
+        ptMin = 0.6,
+        originRadius = 0.02,
+        nSigmaZ = 4.0
+    )
+)
 
 # seeding
 from RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff import *
@@ -227,6 +236,12 @@ InitialStep = cms.Sequence(initialStepSeedLayers*
                            firstStepPrimaryVertices*
                            initialStepClassifier1*initialStepClassifier2*initialStepClassifier3*
                            initialStep)
+_InitialStep_Phase1 = InitialStep.copy()
+_InitialStep_Phase1.replace(initialStepSeeds,
+                            initialStepTrackingRegions+initialStepSeeds
+)
+eras.trackingPhase1.toReplaceWith(InitialStep, _InitialStep_Phase1)
+
 _InitialStep_Phase1PU70 = InitialStep.copyAndExclude([firstStepPrimaryVertices, initialStepClassifier1, initialStepClassifier2, initialStepClassifier3])
 _InitialStep_Phase1PU70.replace(initialStep, initialStepSelector)
 eras.trackingPhase1PU70.toReplaceWith(InitialStep, _InitialStep_Phase1PU70)
