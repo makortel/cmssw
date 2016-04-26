@@ -49,7 +49,11 @@ public:
       desc.add<double>("ptMin", 0.9);
       desc.add<edm::InputTag>("beamSpot", edm::InputTag("offlineBeamSpot"));
 
-      descriptions.add("globalTrackingRegionFromBeamSpot", desc);
+      // Only for backwards-compatibility
+      edm::ParameterSetDescription descRegion;
+      descRegion.add<edm::ParameterSetDescription>("RegionPSet", desc);
+
+      descriptions.add("globalTrackingRegionFromBeamSpot", descRegion);
     }
 
     {
@@ -62,7 +66,11 @@ public:
       desc.add<double>("ptMin", 0.9);
       desc.add<edm::InputTag>("beamSpot", edm::InputTag("offlineBeamSpot"));
 
-      descriptions.add("globalTrackingRegionFromBeamSpotFixedZ", desc);
+      // Only for backwards-compatibility
+      edm::ParameterSetDescription descRegion;
+      descRegion.add<edm::ParameterSetDescription>("RegionPSet", desc);
+
+      descriptions.add("globalTrackingRegionFromBeamSpotFixedZ", descRegion);
     }
   }
 
