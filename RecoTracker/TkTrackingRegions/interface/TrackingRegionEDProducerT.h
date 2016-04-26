@@ -19,6 +19,10 @@ public:
 
   ~TrackingRegionEDProducerT() = default;
 
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+    T_TrackingRegionProducer::fillDescriptions(descriptions);
+  }
+
   virtual void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override {
     auto regions = std::make_unique<ProductType>(regionProducer_.regions(iEvent, iSetup));
     iEvent.put(std::move(regions));
