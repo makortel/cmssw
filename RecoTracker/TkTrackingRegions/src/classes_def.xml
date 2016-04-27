@@ -1,4 +1,4 @@
 <lcgdict>
-  <class name="std::vector<std::unique_ptr<TrackingRegion> >" persistence="false"/>
-  <class name="edm::Wrapper<std::vector<std::unique_ptr<TrackingRegion> >>" persistent="false"/>
+  <class name="edm::OwnVector<TrackingRegion>" persistent="false"/>
+  <class name="edm::Wrapper<edm::OwnVector<TrackingRegion> >" persistent="false"/>
 </lcgdict>
