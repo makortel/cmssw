@@ -113,7 +113,7 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
   const RecHitsSortedInPhi * thirdHitMap[size];
 
   for(int il = 0; il < size; il++) {
-    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, ev, es);
+    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, es);
     auto const & hits = *thirdHitMap[il];
  
     const DetLayer *layer = thirdLayers[il].detLayer();
@@ -317,7 +317,7 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
       MatchedHitRZCorrectionFromBending l2rzFixup(doublets.hit(ip,HitDoublets::outer)->det()->geographicalId(), tTopo);
       MatchedHitRZCorrectionFromBending l3rzFixup = predRZ.rzPositionFixup;
 
-      thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, ev, es);
+      thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, es);
       auto const & hits = *thirdHitMap[il];
       for (auto KDdata : foundNodes) {
 	GlobalPoint p3 = hits.gp(KDdata); 

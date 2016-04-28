@@ -97,7 +97,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
 
   // fill the prediction vector
   for (int il=0; il<size; ++il) {
-    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, ev, es);
+    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, es);
     auto const & hits = *thirdHitMap[il];
     ThirdHitRZPrediction<PixelRecoLineRZ> & pred = preds[il];
     pred.initLayer(thirdLayers[il].detLayer());

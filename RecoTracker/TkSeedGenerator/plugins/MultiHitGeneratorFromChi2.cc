@@ -186,7 +186,7 @@ void MultiHitGeneratorFromChi2::hitSets(const TrackingRegion& region,
 
   //gc: loop over each layer
   for(int il = 0; il < size; il++) {
-    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, ev, es);
+    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, es);
     LogTrace("MultiHitGeneratorFromChi2") << "considering third layer: " << thirdLayers[il].name() << " with hits: " << thirdHitMap[il]->all().second-thirdHitMap[il]->all().first;
     const DetLayer *layer = thirdLayers[il].detLayer();
     LayerRZPredictions &predRZ = mapPred[thirdLayers[il].name()];
