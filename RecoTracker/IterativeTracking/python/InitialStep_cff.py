@@ -24,6 +24,12 @@ initialStepTrackingRegions = _globalTrackingRegionFromBeamSpot.clone(
         nSigmaZ = 4.0
     )
 )
+from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+initialStepHitDoublets = _hitPairEDProducer.clone(
+    seedingLayers = "initialStepSeedLayers",
+    trackingRegions = "initialStepTrackingRegions",
+    produceIntermediateHitDoublets = True,
+)
 
 # seeding
 from RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff import *
@@ -238,7 +244,9 @@ InitialStep = cms.Sequence(initialStepSeedLayers*
                            initialStep)
 _InitialStep_Phase1 = InitialStep.copy()
 _InitialStep_Phase1.replace(initialStepSeeds,
-                            initialStepTrackingRegions+initialStepSeeds
+                            initialStepTrackingRegions +
+                            initialStepHitDoublets +
+                            initialStepSeeds
 )
 eras.trackingPhase1.toReplaceWith(InitialStep, _InitialStep_Phase1)
 
