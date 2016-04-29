@@ -21,7 +21,7 @@ template <typename T_HitTripletGenerator>
 class HitTripletEDProducerT: public edm::stream::EDProducer<> {
 public:
   HitTripletEDProducerT(const edm::ParameterSet& iConfig);
-  ~TrackingRegionEDProducerT() = default;
+  ~HitTripletEDProducerT() = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -40,7 +40,7 @@ private:
 
 template <typename T_HitTripletGenerator>
 HitTripletEDProducerT<T_HitTripletGenerator>::HitTripletEDProducerT(const edm::ParameterSet& iConfig):
-  doubletToken_(consumes<IntermediateHitDoublets>(iConfig.getParameter<edm::InputTag>("doublets")))
+  doubletToken_(consumes<IntermediateHitDoublets>(iConfig.getParameter<edm::InputTag>("doublets"))),
   generator_(iConfig, consumesCollector()),
   produceSeedingHitSets_(iConfig.getParameter<bool>("produceSeedingHitSets")),
   produceIntermediateHitTriplets_(iConfig.getParameter<bool>("produceIntermediateHitTriplets"))
@@ -79,9 +79,11 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
 
   // match-making of pair and triplet layers
   std::vector<LayerTriplets::LayerSetAndLayers> trilayers = LayerTriplets::layers(seedingLayerHits);
+  std::vector<unsigned int> thirdLayerHitBeginIndices;
+  thirdLayerHitBeginIndices.reserve(3); // Yes, vector is a bit overkill as there can be at most 3 3rd layers for a doublet. But better be consistent and migrate later everything to e.g. std::array or edm::VecArray.
 
   OrderedHitTriplets triplets;
-  triplets->reserve(localRA_.upper());
+  triplets.reserve(localRA_.upper());
   size_t triplets_total = 0;
 
   for(const auto& regionLayerPairs: regionDoublets) {
@@ -98,15 +100,26 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
       LayerHitMapCache hitCache;
       hitCache.extend(layerPair.cache());
 
-      generator_->hitTriplets(region, triplets, iEvent, iSetup, layerPair.doublets(), found->second, hitCache);
+      thirdLayerHitBeginIndices.clear();
+      generator_.hitTriplets(region, triplets, iEvent, iSetup, layerPair.doublets(), found->second, &thirdLayerHitBeginIndices, hitCache);
+      if(triplets.empty())
+        continue;
+
       triplets_total += triplets.size();
       if(produceSeedingHitSets_) {
         for(const auto& trpl: triplets) {
-          seedingHitSets.emplace_back(trpl.inner(), trpl.middle(), trpl.outer());
+          seedingHitSets->emplace_back(trpl.inner(), trpl.middle(), trpl.outer());
         }
       }
       if(produceIntermediateHitTriplets_) {
-        intermediateHitTriplets->addTriplets(layerTriplet, triplets, std::move(hitCache));
+        assert(thirdLayerHitBeginIndices.size() == trilayers.size());
+        for(size_t i=0, size=trilayers.size(); i<size; ++i) {
+          const size_t begin = thirdLayerHitBeginIndices[i];
+          const size_t end = i<size ? thirdLayerHitBeginIndices[i+1] : triplets.size();
+          intermediateHitTriplets->addTriplets(found->first, found->second[i],
+                                               std::next(triplets.begin(), begin), std::next(triplets.begin(), end),
+                                               std::move(hitCache));
+        }
       }
     }
   }
