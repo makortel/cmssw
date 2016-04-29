@@ -30,6 +30,12 @@ initialStepHitDoublets = _hitPairEDProducer.clone(
     trackingRegions = "initialStepTrackingRegions",
     produceIntermediateHitDoublets = True,
 )
+from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
+initialStepHitTriplets = _pixelTripletHLTEDProducer.clone(
+    doublets = "initialStepHitDoublets",
+    maxElement = 1000000,
+    produceIntermediateHitTriplets = True,
+)
 
 # seeding
 from RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff import *
@@ -246,6 +252,7 @@ _InitialStep_Phase1 = InitialStep.copy()
 _InitialStep_Phase1.replace(initialStepSeeds,
                             initialStepTrackingRegions +
                             initialStepHitDoublets +
+                            initialStepHitTriplets +
                             initialStepSeeds
 )
 eras.trackingPhase1.toReplaceWith(InitialStep, _InitialStep_Phase1)
