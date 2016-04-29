@@ -64,7 +64,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
   if (doublets.empty()) return;
 
   assert(theLayerCache);
-  hitTriplets(region, result, ev, es, doublets, thirdLayers, *theLayerCache);
+  hitTriplets(region, result, ev, es, doublets, thirdLayers, nullptr, *theLayerCache);
 }
 
 void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
@@ -73,6 +73,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
                                            const edm::EventSetup& es,
                                            const HitDoublets& doublets,
                                            const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,
+                                           std::vector<unsigned int> *thirdLayerHitBeginIndices,
                                            LayerCacheType& layerCache)
 {
   if (theComparitor) theComparitor->init(ev, es);
@@ -170,6 +171,9 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
     for (int il=0; il!=size; ++il) {
       const DetLayer * layer = thirdLayers[il].detLayer();
       auto barrelLayer = layer->isBarrel();
+
+      // to bookkeep the triplets and 3rd layers in triplet EDProducer
+      if(thirdLayerHitBeginIndices) thirdLayerHitBeginIndices->push_back(result.size());
 
       if ( (!barrelLayer) & (toPos != std::signbit(layer->position().z())) ) continue;
 

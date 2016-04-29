@@ -22,6 +22,7 @@ class PixelTripletHLTGenerator : public HitTripletGeneratorFromPairAndLayers {
 typedef CombinedHitTripletGenerator::LayerCacheType       LayerCacheType;
 
 public:
+  PixelTripletHLTGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector&& iC): PixelTripletHLTGenerator(cfg, iC) {}
   PixelTripletHLTGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
 
   virtual ~PixelTripletHLTGenerator();
@@ -35,6 +36,7 @@ public:
                    const edm::Event& ev, const edm::EventSetup& es,
                    const HitDoublets& doublets,
                    const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,
+                   std::vector<unsigned int> *thirdLayerHitBeginIndices,
                    LayerCacheType& layerCache);
 
 private:
