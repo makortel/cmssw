@@ -3,12 +3,8 @@
 
 #include <vector>
 
-namespace RecoTracker_TkTrackingRegions {
+namespace RecoTracker_TkHitPairs {
   struct dictionary {
-    /*
-    std::vector<IntermediateHitDoublets> vihd;
-    edm::Wrapper<std::vector<IntermediateHitDoublets> > wvihd;
-    */
     IntermediateHitDoublets ihd;
     edm::Wrapper<IntermediateHitDoublets> wihd;
   };
