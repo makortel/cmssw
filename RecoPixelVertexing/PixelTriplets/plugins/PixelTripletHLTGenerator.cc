@@ -58,17 +58,26 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
 					   const edm::Event & ev,
 					   const edm::EventSetup& es,
 					   const SeedingLayerSetsHits::SeedingLayerSet& pairLayers,
-					   const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers)
-{
-
-  if (theComparitor) theComparitor->init(ev, es);
-  
+					   const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers) {
   auto const & doublets = thePairGenerator->doublets(region,ev,es, pairLayers);
-  
+
   if (doublets.empty()) return;
 
-  auto outSeq =  doublets.detLayer(HitDoublets::outer)->seqNum();
+  assert(theLayerCache);
+  hitTriplets(region, result, ev, es, doublets, thirdLayers, *theLayerCache);
+}
 
+void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
+                                           OrderedHitTriplets & result,
+                                           const edm::Event & ev,
+                                           const edm::EventSetup& es,
+                                           const HitDoublets& doublets,
+                                           const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,
+                                           LayerCacheType& layerCache)
+{
+  if (theComparitor) theComparitor->init(ev, es);
+
+  auto outSeq =  doublets.detLayer(HitDoublets::outer)->seqNum();
 
   // std::cout << "pairs " << doublets.size() << std::endl;
   
@@ -97,7 +106,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
 
   // fill the prediction vector
   for (int il=0; il<size; ++il) {
-    thirdHitMap[il] = &(*theLayerCache)(thirdLayers[il], region, es);
+    thirdHitMap[il] = &layerCache(thirdLayers[il], region, es);
     auto const & hits = *thirdHitMap[il];
     ThirdHitRZPrediction<PixelRecoLineRZ> & pred = preds[il];
     pred.initLayer(thirdLayers[il].detLayer());
