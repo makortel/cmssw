@@ -63,7 +63,7 @@ void HitPairEDProducer::fillDescriptions(edm::ConfigurationDescriptions& descrip
   desc.add<edm::InputTag>("trackingRegions", edm::InputTag("globalTrackingRegionFromBeamSpot"));
   desc.add<bool>("produceSeedingHitSets", false);
   desc.add<bool>("produceIntermediateHitDoublets", false);
-  desc.add<unsigned int>("maxElement", 1000000);
+  desc.add<unsigned int>("maxElement", 0); // default is really 0? Also when used from CombinedHitTripletGenerator?
 
   descriptions.add("hitPairEDProducer", desc);
 }
