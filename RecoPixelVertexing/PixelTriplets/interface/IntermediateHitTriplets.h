@@ -21,8 +21,9 @@ public:
 
   class LayerTripletHitIndex {
   public:
-    LayerTripletHitIndex(const SeedingLayerSetsHits::SeedingLayerSet& layerSet, size_t begin, LayerHitMapCache&& cache):
-      layerTriplet_(layerSet[0].index(), layerSet[1].index(), layerSet[2].index()),
+    LayerTripletHitIndex(const SeedingLayerSetsHits::SeedingLayerSet& layerPair, const SeedingLayerSetsHits::SeedingLayer& thirdLayer,
+                         size_t begin, LayerHitMapCache&& cache):
+      layerTriplet_(layerPair[0].index(), layerPair[1].index(), thirdLayer.index()),
       hitsBegin_(begin),
       cache_(std::move(cache))
     {}
@@ -63,10 +64,11 @@ public:
     regions_.emplace_back(region, layerTriplets_.size());
   }
 
-  void addTriplets(const SeedingLayerSetsHits::SeedingLayerSet& layerSet, OrderedHitTriplets& hitTriplets, LayerHitMapCache&& cache) {
-    layerTriplets_.emplace_back(layerSet, hitTriplets_.size(), std::move(cache));
-    std::move(hitTriplets.begin(), hitTriplets.end(), std::back_inserter(hitTriplets_)); // probably not much different from std::copy as we're just moving pointers...
-    hitTriplets.clear();
+  void addTriplets(const SeedingLayerSetsHits::SeedingLayerSet& layerPair, const SeedingLayerSetsHits::SeedingLayer& thirdLayer,
+                   OrderedHitTriplets::iterator hitTripletsBegin, OrderedHitTriplets::iterator hitTripletsEnd,
+                   LayerHitMapCache&& cache) {
+    layerTriplets_.emplace_back(layerPair, thirdLayer, std::distance(hitTripletsBegin, hitTripletsEnd), std::move(cache));
+    std::move(hitTripletsBegin, hitTripletsEnd, std::back_inserter(hitTriplets_)); // probably not much different from std::copy as we're just moving pointers...
   }
 
 private:
