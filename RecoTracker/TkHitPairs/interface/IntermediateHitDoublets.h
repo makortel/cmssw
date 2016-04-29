@@ -4,20 +4,28 @@
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 
+namespace ihd {
+  class RegionIndex {
+  public:
+    RegionIndex(const TrackingRegion *reg, unsigned int ind): region_(reg), layerSetIndex_(ind) {}
+
+    const TrackingRegion& region() const { return *region_; }
+    unsigned int layerSetIndex() const { return layerSetIndex_; }
+
+  private:
+    const TrackingRegion *region_;
+    unsigned int layerSetIndex_;  /// index to doublets_, pointing to the beginning of the layer pairs of this region
+  };
+}
+
 /**
  * Simple container of temporary information delivered from hit pair
  * generator to hit triplet generator via edm::Event.
  */
 class IntermediateHitDoublets {
-  struct RegionIndex {
-    RegionIndex(const TrackingRegion *reg, unsigned int ind): region_(reg), layerPairIndex_(ind) {}
-
-    const TrackingRegion *region_;
-    unsigned int layerPairIndex_;  /// index to doublets_, pointing to the beginning of the layer pairs of this region
-  };
-
 public:
   using LayerPair = std::tuple<SeedingLayerSetsHits::LayerIndex, SeedingLayerSetsHits::LayerIndex>;
+  using RegionIndex = ihd::RegionIndex;
 
   class LayerPairHitDoublets {
   public:
@@ -26,6 +34,9 @@ public:
       doublets_(std::move(doublets)),
       cache_(std::move(cache))
     {}
+
+    SeedingLayerSetsHits::LayerIndex innerLayerIndex() const { return std::get<0>(layerPair_); }
+    SeedingLayerSetsHits::LayerIndex outerLayerIndex() const { return std::get<1>(layerPair_); }
 
     const HitDoublets& doublets() const { return doublets_; }
     const LayerHitMapCache& cache() const { return cache_; }
@@ -71,10 +82,10 @@ public:
       auto next = iter_+1;
       unsigned int end = hitDoublets_->layerPairs_.size();
       if(next != hitDoublets_->regions_.end())
-        end = next->layerPairIndex_;
+        end = next->layerSetIndex();
 
-      return RegionLayerHits(iter_->region_,
-                             hitDoublets_->layerPairs_.begin() + iter_->layerPairIndex_,
+      return RegionLayerHits(&(iter_->region()),
+                             hitDoublets_->layerPairs_.begin() + iter_->layerSetIndex(),
                              hitDoublets_->layerPairs_.begin() + end);
     }
 
@@ -101,6 +112,7 @@ public:
   ~IntermediateHitDoublets() = default;
 
   void swap(IntermediateHitDoublets& rh) {
+    std::swap(seedingLayers_, rh.seedingLayers_);
     std::swap(regions_, rh.regions_);
     std::swap(layerPairs_, rh.layerPairs_);
   }
@@ -124,6 +136,7 @@ public:
   }
 
   const SeedingLayerSetsHits& seedingLayerHits() const { return *seedingLayers_; }
+  size_t regionSize() const { return regions_.size(); }
 
   const_iterator begin() const { return const_iterator(this, regions_.begin()); }
   const_iterator cbegin() const { return begin(); }
