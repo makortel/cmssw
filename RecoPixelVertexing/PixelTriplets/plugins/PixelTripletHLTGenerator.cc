@@ -1,5 +1,6 @@
 #include "RecoPixelVertexing/PixelTriplets/plugins/PixelTripletHLTGenerator.h"
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "ThirdHitPredictionFromInvParabola.h"
 #include "ThirdHitRZPrediction.h"
@@ -52,6 +53,21 @@ PixelTripletHLTGenerator:: PixelTripletHLTGenerator(const edm::ParameterSet& cfg
 }
 
 PixelTripletHLTGenerator::~PixelTripletHLTGenerator() {}
+
+void PixelTripletHLTGenerator::fillDescriptions(edm::ParameterSetDescription& desc) {
+  HitTripletGeneratorFromPairAndLayers::fillDescriptions(desc);
+  desc.add<double>("extraHitRZtolerance", 0.032);
+  desc.add<double>("extraHitRPhitolerance", 0.037);
+  desc.add<bool>("useMultScattering", true);
+  desc.add<bool>("useBending", true);
+  desc.add<bool>("useFixedPreFiltering", false);
+  desc.add<double>("phiPreFiltering", 0.3);
+
+  edm::ParameterSetDescription descComparitor;
+  descComparitor.add<std::string>("ComponentName", "none");
+  descComparitor.setAllowAnything(); // until we have moved SeedComparitor too to EDProducers
+  desc.add<edm::ParameterSetDescription>("SeedComparitorPSet", descComparitor);
+}
 
 void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, 
 					   OrderedHitTriplets & result,

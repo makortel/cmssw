@@ -27,6 +27,9 @@ public:
 
   virtual ~PixelTripletHLTGenerator();
 
+  static void fillDescriptions(edm::ParameterSetDescription& desc);
+  static const char *fillDescriptionsLabel() { return "pixelTripletHLTEDProducer"; }
+
   virtual void hitTriplets( const TrackingRegion& region, OrderedHitTriplets & trs,
                             const edm::Event & ev, const edm::EventSetup& es,
                             const SeedingLayerSetsHits::SeedingLayerSet& pairLayers,

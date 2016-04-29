@@ -55,7 +55,15 @@ HitTripletEDProducerT<T_HitTripletGenerator>::HitTripletEDProducerT(const edm::P
 
 template <typename T_HitTripletGenerator>
 void HitTripletEDProducerT<T_HitTripletGenerator>::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  //T_HitTripletGenerator::fillDescriptions(descriptions);
+  edm::ParameterSetDescription desc;
+
+  desc.add<edm::InputTag>("doublets", edm::InputTag("hitPairEDProducer"));
+  desc.add<bool>("produceSeedingHitSets", false);
+  desc.add<bool>("produceIntermediateHitDoublets", false);
+
+  T_HitTripletGenerator::fillDescriptions(desc);
+
+  descriptions.add(T_HitTripletGenerator::fillDescriptionsLabel(), desc);
 }
 
 template <typename T_HitTripletGenerator>
