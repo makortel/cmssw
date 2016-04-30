@@ -88,7 +88,7 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
   // match-making of pair and triplet layers
   std::vector<LayerTriplets::LayerSetAndLayers> trilayers = LayerTriplets::layers(seedingLayerHits);
   std::vector<unsigned int> thirdLayerHitBeginIndices;
-  thirdLayerHitBeginIndices.reserve(3); // Yes, vector is a bit overkill as there can be at most 3 3rd layers for a doublet. But better be consistent and migrate later everything to e.g. std::array or edm::VecArray.
+  thirdLayerHitBeginIndices.reserve(3); // Yes, vector is a bit overkill as there can be at most 3 3rd layers for a doublet. But better be consistent and migrate later everything to e.g. std::array or edm::VecArray. Except with phase1 there can be more than 3 3rd layers...
 
   OrderedHitTriplets triplets;
   triplets.reserve(localRA_.upper());
@@ -102,8 +102,18 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
       auto found = std::find_if(trilayers.begin(), trilayers.end(), [&](const LayerTriplets::LayerSetAndLayers& a) {
           return a.first[0].index() == layerPair.innerLayerIndex() && a.first[1].index() == layerPair.outerLayerIndex();
         });
-      if(found == trilayers.end())
-        throw cms::Exception("LogicError") << "Did not find the layer pair from vector<pair+third layers>. This is a sign of some internal inconsistency";
+      if(found == trilayers.end()) {
+        auto exp = cms::Exception("LogicError") << "Did not find the layer pair from vector<pair+third layers>. This is a sign of some internal inconsistency\n";
+        exp << "I was looking for layer pair " << layerPair.innerLayerIndex() << "," << layerPair.outerLayerIndex() << ". Triplets have the following pairs:\n";
+        for(const auto& a: trilayers) {
+          exp << " " << a.first[0].index() << "," << a.first[1].index() << ": 3rd layers";
+          for(const auto& b: a.second) {
+            exp << " " << b.index();
+          }
+          exp << "\n";
+        }
+        throw exp;
+      }
 
       LayerHitMapCache hitCache;
       hitCache.extend(layerPair.cache());
