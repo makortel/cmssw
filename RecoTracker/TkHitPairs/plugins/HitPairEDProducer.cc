@@ -86,7 +86,7 @@ void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   }
   std::unique_ptr<IntermediateHitDoublets> intermediateHitDoublets;
   if(produceIntermediateHitDoublets_) {
-    intermediateHitDoublets = std::make_unique<IntermediateHitDoublets>();
+    intermediateHitDoublets = std::make_unique<IntermediateHitDoublets>(&layers);
     intermediateHitDoublets->reserve(regions.size(), layers.size());
   }
 
