@@ -133,7 +133,10 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
         }
       }
       if(produceIntermediateHitTriplets_) {
-        assert(thirdLayerHitBeginIndices.size() == trilayers.size());
+        if(thirdLayerHitBeginIndices.size() != trilayers.size()) {
+          throw cms::Exception("LogicError") << "thirdLayerHitBeginIndices.size() " << thirdLayerHitBeginIndices.size()
+                                             << " trilayers.size() " << trilayers.size();
+        }
         for(size_t i=0, size=trilayers.size(); i<size; ++i) {
           const size_t begin = thirdLayerHitBeginIndices[i];
           const size_t end = i<size ? thirdLayerHitBeginIndices[i+1] : triplets.size();
