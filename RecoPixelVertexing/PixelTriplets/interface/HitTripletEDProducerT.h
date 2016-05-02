@@ -73,6 +73,9 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
   const auto& regionDoublets = *hdoublets;
 
   const SeedingLayerSetsHits& seedingLayerHits = regionDoublets.seedingLayerHits();
+  if(seedingLayerHits.numberOfLayersInSet() < 3) {
+    throw cms::Exception("Configuration") << "HitTripletEDProducerT expects SeedingLayerSetsHits::numberOfLayersInSet() to be >= 3, got " << seedingLayerHits.numberOfLayersInSet();
+  }
 
   std::unique_ptr<std::vector<SeedingHitSet> > seedingHitSets;
   if(produceSeedingHitSets_) {
