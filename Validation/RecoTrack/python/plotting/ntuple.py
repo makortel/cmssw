@@ -50,7 +50,7 @@ class _HitObject(_Object):
 
     def ntracks(self):
         self._checkIsValid()
-         return getattr(self._tree, self._prefix+"_trkIdx")[self._index].size()
+        return getattr(self._tree, self._prefix+"_trkIdx")[self._index].size()
 
     def tracks(self):
         self._checkIsValid()
