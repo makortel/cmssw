@@ -360,7 +360,7 @@ private:
   std::vector<unsigned int> trk_originalAlgo;
   std::vector<decltype(reco::TrackBase().algoMaskUL())> trk_algoMask;
   std::vector<unsigned int> trk_stopReason;
-  std::vector<bool> trk_isHP    ;
+  std::vector<short> trk_isHP    ;
   std::vector<int> trk_seedIdx ;
   std::vector<std::vector<float> > trk_shareFrac;
   std::vector<std::vector<int> > trk_simIdx;
@@ -392,7 +392,7 @@ private:
   std::vector<std::vector<int> > sim_hitIdx;
   std::vector<std::vector<int> > sim_hitType;
   //pixels: reco and sim hits
-  std::vector<bool> pix_isBarrel ;
+  std::vector<short> pix_isBarrel ;
   std::vector<unsigned int> pix_lay      ;
   std::vector<unsigned int> pix_detId    ;
   std::vector<std::vector<int> > pix_trkIdx;
@@ -417,8 +417,8 @@ private:
   std::vector<float> pix_radL ;  //http://cmslxr.fnal.gov/lxr/source/DataFormats/GeometrySurface/interface/MediumProperties.h
   std::vector<float> pix_bbxi ;
   //strips: reco and sim hits
-  std::vector<bool> str_isBarrel ;
-  std::vector<bool> str_isStereo ;
+  std::vector<short> str_isBarrel ;
+  std::vector<short> str_isStereo ;
   std::vector<unsigned int> str_det      ;
   std::vector<unsigned int> str_lay      ;
   std::vector<unsigned int> str_detId    ;
@@ -444,7 +444,7 @@ private:
   std::vector<float> str_radL ;  //http://cmslxr.fnal.gov/lxr/source/DataFormats/GeometrySurface/interface/MediumProperties.h
   std::vector<float> str_bbxi ;
   //strip matched hits: reco hits
-  std::vector<bool> glu_isBarrel ;
+  std::vector<short> glu_isBarrel ;
   std::vector<unsigned int> glu_det      ;
   std::vector<unsigned int> glu_lay      ;
   std::vector<unsigned int> glu_detId    ;
@@ -470,7 +470,7 @@ private:
   float bsp_sigmay;
   float bsp_sigmaz;
   //seeds
-  std::vector<bool> see_fitok     ;
+  std::vector<short> see_fitok     ;
   std::vector<float> see_px       ;
   std::vector<float> see_py       ;
   std::vector<float> see_pz       ;
@@ -508,8 +508,8 @@ private:
   std::vector<float> vtx_zErr;
   std::vector<float> vtx_ndof;
   std::vector<float> vtx_chi2;
-  std::vector<bool> vtx_fake;
-  std::vector<bool> vtx_valid;
+  std::vector<short> vtx_fake;
+  std::vector<short> vtx_valid;
   std::vector<std::vector<int> > vtx_trkIdx;
 
   // Tracking vertices
