@@ -31,6 +31,11 @@ class _Collection(object):
         """Get object 'index' in the collection."""
         return self._objclass(self._tree, index)
 
+    def __iter__(self):
+        """Returns generator for the objects."""
+        for index in xrange(self.size()):
+            yield self._objclass(self._tree, index)
+
 class _Object(object):
     """Adaptor class representing a single object in a collection.
 
@@ -404,14 +409,6 @@ class Tracks(_Collection):
         """
         super(Tracks, self).__init__(tree, "trk_pt", Track)
 
-    def __iter__(self):
-        """Returns generator iterating over the tracks.
-
-        Generator returns Track object.
-        """
-        for itrk in xrange(self.size()):
-            yield Track(self._tree, itrk)
-
 ##########
 class PixelHit(_HitObject, _TrackingParticleMatchAdaptor):
     """Class representing a pixel hit."""
@@ -444,14 +441,6 @@ class PixelHits(_Collection):
         """
         super(PixelHits, self).__init__(tree, "pix_isBarrel", PixelHit)
 
-    def __iter__(self):
-        """Returns generator iterating over the pixel hits.
-
-        Generator returns PixelHit object.
-        """
-        for ipix in xrange(self.size()):
-            yield PixelHit(self._tree, ipix)
-
 ##########
 class StripHit(_HitObject, _TrackingParticleMatchAdaptor):
     """Class representing a strip hit."""
@@ -480,14 +469,6 @@ class StripHits(_Collection):
         tree -- TTree object
         """
         super(StripHits, self).__init__(tree, "str_isBarrel", StripHit)
-
-    def __iter__(self):
-        """Returns generator iterating over the strip hits.
-
-        Generator returns StripHit object.
-        """
-        for istr in xrange(self.size()):
-            yield StripHit(self._tree, istr)
 
 ##########
 class GluedHit(_Object):
@@ -535,15 +516,6 @@ class GluedHits(_Collection):
         """
         super(GluedHits, self).__init__(tree, "glu_isBarrel", GluedHit)
 
-    def __iter__(self):
-        """Returns generator iterating over the matched strip hits.
-
-        Generator returns GluedHit object.
-        """
-        for iglu in xrange(self.size()):
-            yield GluedHit(self._tree, iglu)
-
-
 ##########
 def _seedOffsetForAlgo(tree, algo):
     """Internal function for returning a pair of indices for the beginning of seeds of a given 'algo', and the one-beyond-last index of the seeds."""
@@ -585,14 +557,6 @@ class Seeds(_Collection):
         tree -- TTree object
         """
         super(Seeds, self).__init__(tree, "see_pt", Seed)
-
-    def __iter__(self):
-        """Returns generator iterating over the seeds.
-
-        Generator returns Seed object.
-        """
-        for isee in xrange(self.size()):
-            yield Seed(self._tree, isee)
 
     def nSeedsForAlgo(self, algo):
         """Returns the number of seeds for a given 'algo'."""
@@ -662,11 +626,6 @@ class TrackingParticles(_Collection):
         """
         super(TrackingParticles, self).__init__(tree, "sim_pt", TrackingParticle)
 
-    def __iter__(self):
-        """Returns generator for the TrackingParticles."""
-        for isim in xrange(self.size()):
-            yield TrackingParticle(self._tree, isim)
-
 ##########
 class Vertex(_Object):
     """Class presenting a primary vertex."""
@@ -702,15 +661,6 @@ class Vertices(_Collection):
         tree -- TTree object
         """
         super(Vertices, self).__init__(tree, "vtx_valid", Vertex)
-
-    def __iter__(self):
-        """Returns generator iterating over the vertices.
-
-        Generator returns Vertex object.
-        """
-        for ivtx in xrange(self.size()):
-            yield Vertex(self._tree, ivtx)
-
 
 ##########
 class TrackingVertex(_Object):
@@ -755,8 +705,3 @@ class TrackingVertices(_Collection, TrackingVertex):
         tree -- TTree object
         """
         super(TrackingVertex, self).__init__(tree, "simvtx_x")
-
-    def __iter__(self):
-        """Returns generator for the TrackingVertices.o"""
-        for isim in xrange(self.size()):
-            yield TrackingVertex(self._tree, isim)
