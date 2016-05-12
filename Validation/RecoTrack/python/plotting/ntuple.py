@@ -2,6 +2,7 @@ import ROOT
 
 class _Collection(object):
     def __init__(self, tree, sizeBranch, objclass):
+        super(_Collection, self).__init__()
         self._tree = tree
         self._sizeBranch = sizeBranch
         self._objclass = objclass
@@ -17,6 +18,7 @@ class _Collection(object):
 
 class _Object(object):
     def __init__(self, tree, index, prefix):
+        super(_Object, self).__init__()
         self._tree = tree
         self._index = index
         self._prefix = prefix
@@ -34,15 +36,6 @@ class _Object(object):
 
     def index(self):
         return self._index
-
-    def nMatchedTrackingParticles(self):
-        self._checkIsValid()
-        return getattr(self._tree, self._prefix+"_simTrkIdx")[self._index].size()
-
-    def matchedTrackingParticles(self):
-        self._checkIsValid()
-        for itp in getattr(self._tree, self._prefix+"_simTrkIdx")[self._index]:
-            yield TrackingParticle(self._tree, itp)
 
 class _HitObject(_Object):
     def __init__(self, tree, index, prefix):
@@ -68,6 +61,9 @@ class _HitObject(_Object):
 
 
 class _HitAdaptor(object):
+    def __init__(self):
+        super(_HitAdaptor, self).__init__()
+
     def _hits(self):
         self._checkIsValid()
         for ihit, hitType in zip(self.hitIdx(), self.hitType()):
@@ -105,9 +101,26 @@ class _HitAdaptor(object):
                 continue
             yield GluedHit(self._tree, ihit)
 
+class _TrackingParticleMatchAdaptor(object):
+    def __init__(self):
+        super(_TrackingParticleMatchAdaptor, self).__init__()
+
+    def _nMatchedTrackingParticles(self):
+        return getattr(self._tree, self._prefix+"_simTrkIdx")[self._index].size()
+
+    def nMatchedTrackingParticles(self):
+        self._checkIsValid()
+        return self._nMatchedTrackingParticles()
+
+    def matchedTrackingParticleInfos(self):
+        self._checkIsValid()
+        for imatch in xrange(self._nMatchedTrackingParticles()):
+            yield TrackingParticleMatchInfo(self._tree, self._index, imatch, self._prefix)
+
 ##########
 class TrackingNtuple(object):
     def __init__(self, fileName, tree="trackingNtuple/tree"):
+        super(TrackingNtuple, self).__init__()
         self._file = ROOT.TFile.Open(fileName)
         self._tree = self._file.Get(tree)
         self._entries = self._tree.GetEntriesFast()
@@ -138,6 +151,7 @@ class TrackingNtuple(object):
 ##########
 class Event(object):
     def __init__(self, tree, entry):
+        super(Event, self).__init__()
         self._tree = tree
         self._entry = entry
 
@@ -180,6 +194,7 @@ class Event(object):
 ##########
 class BeamSpot(object):
     def __init__(self, tree):
+        super(BeamSpot, self).__init__()
         self._tree = tree
         self._prefix = "bsp"
 
@@ -187,18 +202,28 @@ class BeamSpot(object):
         return lambda: getattr(self._tree, self._prefix+"_"+attr)
 
 ##########
-class Track(_Object, _HitAdaptor):
+class TrackingParticleMatchInfo(_Object):
+    def __init__(self, tree, index, tpindex, prefix):
+        super(TrackingParticleMatchInfo, self).__init__(tree, index, prefix)
+        self._tpindex = tpindex
+
+    def trackingParticle(self):
+        self._checkIsValid()
+        return TrackingParticle(self._tree, getattr(self._tree, self._prefix+"_simTrkIdx")[self._index][self._tpindex])
+
+class TrackMatchInfo(_Object):
+    def __init__(self, tree, index, tpindex, prefix, postfix):
+        super(TrackMatchInfo, self).__init__(tree, index, prefix)
+        self._tpindex = tpindex
+
+    def track(self):
+        self._checkIsValid()
+        return Track(self._tree, getattr(self._tree, self._prefix+"_trkIdx")[self._index][self._tpindex])
+
+##########
+class Track(_Object, _HitAdaptor, _TrackingParticleMatchAdaptor):
     def __init__(self, tree, index):
         super(Track, self).__init__(tree, index, "trk")
-
-    def nMatchedTrackingParticles(self):
-        self._checkIsValid()
-        return self._tree.trk_simIdx[self._index].size()
-
-    def matchedTrackingParticles(self):
-        self._checkIsValid()
-        for isim in self._tree.trk_simIdx[self._index]:
-            yield TrackingParticle(self._tree, isim)
 
     def seed(self):
         self._checkIsValid()
@@ -213,7 +238,7 @@ class Tracks(_Collection):
             yield Track(self._tree, itrk)
 
 ##########
-class PixelHit(_HitObject):
+class PixelHit(_HitObject, _TrackingParticleMatchAdaptor):
     def __init__(self, tree, index):
         super(PixelHit, self).__init__(tree, index, "pix")
 
@@ -235,7 +260,7 @@ class PixelHits(_Collection):
             yield PixelHit(self._tree, ipix)
 
 ##########
-class StripHit(_HitObject):
+class StripHit(_HitObject, _TrackingParticleMatchAdaptor):
     def __init__(self, tree, index):
         super(StripHit, self).__init__(tree, index, "str")
 
@@ -292,18 +317,9 @@ def _seedOffsetForAlgo(tree, algo):
             return (offset, next_offset)
     return (-1, -1)
 
-class Seed(_Object, _HitAdaptor):
+class Seed(_Object, _HitAdaptor, _TrackingParticleMatchAdaptor):
     def __init__(self, tree, index):
         super(Seed, self).__init__(tree, index, "see")
-
-    def nMatchedTrackingParticles(self):
-        self._checkIsValid()
-        return self._tree.see_simIdx[self._index].size()
-
-    def matchedTrackingParticles(self):
-        self._checkIsValid()
-        for isim in self._tree.see_simIdx[self._index]:
-            yield TrackingParticle(self._tree, isim)
 
     def indexWithinAlgo(self):
         self._checkIsValid()
@@ -335,14 +351,17 @@ class TrackingParticle(_Object, _HitAdaptor):
     def __init__(self, tree, index):
         super(TrackingParticle, self).__init__(tree, index, "sim")
 
-    def nMatchedTracks(self):
-        self._checkIsValid()
+    def _nMatchedTracks(self):
         return self._tree.sim_trkIdx[self._index].size()
 
-    def matchedTracks(self):
+    def nMatchedTracks(self):
         self._checkIsValid()
-        for itrk in self._tree.sim_trkIdx[self._index]:
-            yield Track(self._tree, itrk)
+        return self._nMatchedTracks()
+
+    def matchedTrackInfos(self):
+        self._checkIsValid()
+        for imach in xrange(self._nMatchedTracks()):
+            yield TrackMatchInfo(self._tree, self._index, imatch, self._prefix)
 
     def parentVertex(self):
         self._checkIsValid()
