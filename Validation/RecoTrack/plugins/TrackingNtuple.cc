@@ -363,7 +363,7 @@ private:
   std::vector<short> trk_isHP    ;
   std::vector<int> trk_seedIdx ;
   std::vector<std::vector<float> > trk_shareFrac;
-  std::vector<std::vector<int> > trk_simIdx;
+  std::vector<std::vector<int> > trk_simTrkIdx;
   std::vector<std::vector<int> > trk_hitIdx;
   std::vector<std::vector<int> > trk_hitType;
   //sim tracks
@@ -492,7 +492,7 @@ private:
   std::vector<unsigned int> see_nStrip  ;
   std::vector<unsigned int> see_algo    ;
   std::vector<std::vector<float> > see_shareFrac;
-  std::vector<std::vector<int> > see_simIdx;
+  std::vector<std::vector<int> > see_simTrkIdx;
   std::vector<std::vector<int> > see_hitIdx;
   std::vector<std::vector<int> > see_hitType;
   //seed algo offset
@@ -598,7 +598,7 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("trk_seedIdx"  , &trk_seedIdx );
   }
   t->Branch("trk_shareFrac", &trk_shareFrac);
-  t->Branch("trk_simIdx"   , &trk_simIdx  );
+  t->Branch("trk_simTrkIdx", &trk_simTrkIdx  );
   if(includeAllHits_) {
     t->Branch("trk_hitIdx" , &trk_hitIdx);
     t->Branch("trk_hitType", &trk_hitType);
@@ -740,7 +740,7 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("see_nStrip"   , &see_nStrip  );
     t->Branch("see_algo"     , &see_algo    );
     t->Branch("see_shareFrac", &see_shareFrac);
-    t->Branch("see_simIdx"   , &see_simIdx  );
+    t->Branch("see_simTrkIdx", &see_simTrkIdx  );
     if(includeAllHits_) {
       t->Branch("see_hitIdx" , &see_hitIdx  );
       t->Branch("see_hitType", &see_hitType );
@@ -823,7 +823,7 @@ void TrackingNtuple::clearVariables() {
   trk_isHP     .clear();
   trk_seedIdx  .clear();
   trk_shareFrac.clear();
-  trk_simIdx   .clear();
+  trk_simTrkIdx.clear();
   trk_hitIdx   .clear();
   trk_hitType  .clear();
   //sim tracks
@@ -952,7 +952,7 @@ void TrackingNtuple::clearVariables() {
   see_nStrip  .clear();
   see_algo    .clear();
   see_shareFrac.clear();
-  see_simIdx   .clear();
+  see_simTrkIdx.clear();
   see_hitIdx  .clear();
   see_hitType .clear();
   //seed algo offset
@@ -1491,7 +1491,7 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
       see_algo    .push_back( algo );
 
       see_shareFrac.push_back( sharedFraction );
-      see_simIdx   .push_back( tpIdx );
+      see_simTrkIdx.push_back( tpIdx );
 
       /// Hmm, the following could make sense instead of plain failing if propagation to beam line fails
       /*
@@ -1697,7 +1697,7 @@ void TrackingNtuple::fillTracks(const edm::RefToBaseVector<reco::Track>& tracks,
 
       trk_seedIdx  .push_back( offset->second + itTrack->seedRef().key() );
     }
-    trk_simIdx   .push_back(tpIdx);
+    trk_simTrkIdx.push_back(tpIdx);
     LogTrace("TrackingNtuple") << "Track #" << itTrack.key() << " with q=" << charge
                                << ", pT=" << pt << " GeV, eta: " << eta << ", phi: " << phi
                                << ", chi2=" << chi2
