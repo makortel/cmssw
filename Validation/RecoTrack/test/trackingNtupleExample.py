@@ -106,8 +106,8 @@ def main():
                         if hit.nMatchedTrackingParticles() >= 1:
                             # links from hits to TrackingParticles
                             nfakes_pixhits_true += 1
-                            for tp in hit.matchedTrackingParticles():
-                                pix_simTrkIds.add(tp.index())
+                            for tpInfo in hit.matchedTrackingParticleInfos():
+                                pix_simTrkIds.add(tpInfo.trackingParticle().index())
                     nfakes_pixhits_tps += len(pix_simTrkIds)
 
                     for hit in track.stripHits():
@@ -119,7 +119,8 @@ def main():
                         if hit.nMatchedTrackingParticles() >= 1:
                             nfakes_strhits_true += 1
             else:
-                for tp in track.matchedTrackingParticles():
+                for tpInfo in track.matchedTrackingParticleInfos():
+                    tp = tpInfo.trackingParticle()
                     if tp.nMatchedTracks() > 1:
                         ndups += 1
                         break
