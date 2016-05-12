@@ -610,88 +610,153 @@ class Seeds(_Collection):
 
 ##########
 class TrackingParticle(_Object, _HitAdaptor):
+    """Class representing a TrackingParticle."""
     def __init__(self, tree, index):
+        """Constructor.
+
+        Arguments:
+        tree  -- TTree object
+        index -- Index of the TrackingParticle
+        """
         super(TrackingParticle, self).__init__(tree, index, "sim")
 
     def _nMatchedTracks(self):
+        """Internal function to get the number of matched tracks."""
         return self._tree.sim_trkIdx[self._index].size()
 
     def nMatchedTracks(self):
+        """Returns the number of matched tracks."""
         self._checkIsValid()
         return self._nMatchedTracks()
 
     def matchedTrackInfos(self):
+        """Returns a generator for matched tracks.
+
+        The generator returns TrackMatchInfo objects.
+        """
         self._checkIsValid()
         for imach in xrange(self._nMatchedTracks()):
             yield TrackMatchInfo(self._tree, self._index, imatch, self._prefix)
 
     def parentVertex(self):
+        """Returns the parent TrackingVertex."""
         self._checkIsValid()
         return TrackingVertex(self._tree, self._tree.sim_parentVtxIdx[self._index])
 
     def decayVertices(self):
+        """Returns a generator for decay vertices.
+
+        The generator returns TrackingVertex objects.
+        """
         self._checkIsValid()
         for ivtx in self._tree.sim_decayVtxIdx[self._index]:
             yield TrackingVertex(self._tree, ivtx)
 
 class TrackingParticles(_Collection):
+    """Class presenting a collection of TrackingParticles."""
     def __init__(self, tree):
+        """Constructor.
+
+        Arguments:
+        tree -- TTree object
+        """
         super(TrackingParticles, self).__init__(tree, "sim_pt", TrackingParticle)
-        
+
     def __iter__(self):
+        """Returns generator for the TrackingParticles."""
         for isim in xrange(self.size()):
             yield TrackingParticle(self._tree, isim)
 
 ##########
 class Vertex(_Object):
+    """Class presenting a primary vertex."""
     def __init__(self, tree, index):
+        """Constructor.
+
+        Arguments:
+        tree  -- TTree object
+        index -- Index of the vertex
+        """
         super(Vertex, self).__init__(tree, index, "vtx")
 
     def nTracks(self):
+        """Returns the number of tracks used in the vertex fit."""
         self._checkIsValid()
         return self._tree.vtx_trkIdx[self._index].size()
 
     def tracks(self):
+        """Returns a generator for the tracks used in the vertex fit.
+
+        The generator returns Track object.
+        """
         self._checkIsValid()
         for itrk in self._tree.vtx_trkIdx[self._index]:
             yield Track(self._tree, itrk)
 
 class Vertices(_Collection):
+    """Class presenting a collection of vertices."""
     def __init__(self, tree):
+        """Constructor.
+
+        Arguments:
+        tree -- TTree object
+        """
         super(Vertices, self).__init__(tree, "vtx_valid", Vertex)
 
     def __iter__(self):
+        """Returns generator iterating over the vertices.
+
+        Generator returns Vertex object.
+        """
         for ivtx in xrange(self.size()):
             yield Vertex(self._tree, ivtx)
 
 
 ##########
 class TrackingVertex(_Object):
+    """Class representing a TrackingVertex."""
     def __init__(self, tree, index):
+        """Constructor.
+
+        Arguments:
+        tree  -- TTree object
+        index -- Index of the TrackingVertex
+        """
         super(TrackingVertex, self).__init__(tree, index, "simvtx")
 
     def nSourceTrackingParticles(self):
+        """Returns the number of source TrackingParticles."""
         self._checkIsValid()
         return self._tree.simvtx_sourceSimIdx[self._index].size()
 
     def nDaughterTrackingParticles(self):
+        """Returns the number of daughter TrackingParticles."""
         self._checkIsValid()
         return self._tree.simvtx_daughterSimIdx[self._index].size()
 
     def sourceTrackingParticles(self):
+        """Returns a generator for the source TrackingParticles."""
         self._checkIsValid()
         for isim in self._tree.simvtx_sourceSimIdx[self._index]:
             yield TrackingParticle(self._tree, isim)
 
     def daughterTrackingParticles(self):
+        """Returns a generator for the daughter TrackingParticles."""
         self._checkIsValid()
         for isim in self._tree.simvtx_daughterSimIdx[self._index]:
             yield TrackingParticle(self._tree, isim)
 
 class TrackingVertices(_Collection, TrackingVertex):
+    """Class presenting a collection of TrackingVertices."""
     def __init__(self, tree):
+        """Constructor.
+
+        Arguments:
+        tree -- TTree object
+        """
         super(TrackingVertex, self).__init__(tree, "simvtx_x")
 
     def __iter__(self):
+        """Returns generator for the TrackingVertices.o"""
         for isim in xrange(self.size()):
             yield TrackingVertex(self._tree, isim)
