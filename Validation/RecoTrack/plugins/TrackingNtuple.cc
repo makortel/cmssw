@@ -378,7 +378,6 @@ private:
   std::vector<float> sim_phi      ;
   std::vector<float> sim_dxy      ;
   std::vector<float> sim_dz       ;
-  std::vector<std::vector<float> > sim_shareFrac;
   std::vector<int> sim_q       ;
   std::vector<unsigned int> sim_nValid  ;
   std::vector<unsigned int> sim_nPixel  ;
@@ -386,9 +385,10 @@ private:
   std::vector<unsigned int> sim_nLay;
   std::vector<unsigned int> sim_nPixelLay;
   std::vector<unsigned int> sim_n3DLay  ;
+  std::vector<std::vector<int> > sim_trkIdx  ;
+  std::vector<std::vector<float> > sim_shareFrac;
   std::vector<int> sim_parentVtxIdx;
   std::vector<std::vector<int> > sim_decayVtxIdx;
-  std::vector<std::vector<int> > sim_trkIdx  ;
   std::vector<std::vector<int> > sim_hitIdx;
   std::vector<std::vector<int> > sim_hitType;
   //pixels: reco and sim hits
@@ -615,7 +615,6 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("sim_phi"      , &sim_phi      );
   t->Branch("sim_dxy"      , &sim_dxy      );
   t->Branch("sim_dz"       , &sim_dz       );
-  t->Branch("sim_shareFrac", &sim_shareFrac);
   t->Branch("sim_q"        , &sim_q        );
   t->Branch("sim_nValid"   , &sim_nValid   );
   t->Branch("sim_nPixel"   , &sim_nPixel   );
@@ -623,9 +622,10 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("sim_nLay"     , &sim_nLay     );
   t->Branch("sim_nPixelLay", &sim_nPixelLay);
   t->Branch("sim_n3DLay"   , &sim_n3DLay   );
+  t->Branch("sim_trkIdx"   , &sim_trkIdx   );
+  t->Branch("sim_shareFrac", &sim_shareFrac);
   t->Branch("sim_parentVtxIdx", &sim_parentVtxIdx);
   t->Branch("sim_decayVtxIdx", &sim_decayVtxIdx);
-  t->Branch("sim_trkIdx"   , &sim_trkIdx   );
   if(includeAllHits_) {
     t->Branch("sim_hitIdx" , &sim_hitIdx );
     t->Branch("sim_hitType", &sim_hitType );
@@ -838,7 +838,6 @@ void TrackingNtuple::clearVariables() {
   sim_phi      .clear();
   sim_dxy      .clear();
   sim_dz       .clear();
-  sim_shareFrac.clear();
   sim_q        .clear();
   sim_nValid   .clear();
   sim_nPixel   .clear();
@@ -846,9 +845,10 @@ void TrackingNtuple::clearVariables() {
   sim_nLay     .clear();
   sim_nPixelLay.clear();
   sim_n3DLay   .clear();
+  sim_trkIdx   .clear();
+  sim_shareFrac.clear();
   sim_parentVtxIdx.clear();
   sim_decayVtxIdx.clear();
-  sim_trkIdx   .clear();
   sim_hitIdx   .clear();
   sim_hitType  .clear();
   //pixels
@@ -1798,9 +1798,9 @@ void TrackingNtuple::fillTrackingParticles(const edm::Event& iEvent, const edm::
     sim_pt       .push_back(tp->pt());
     sim_eta      .push_back(tp->eta());
     sim_phi      .push_back(tp->phi());
-    sim_shareFrac.push_back(sharedFraction);
     sim_q        .push_back(tp->charge());
     sim_trkIdx   .push_back(tkIdx);
+    sim_shareFrac.push_back(sharedFraction);
     sim_parentVtxIdx.push_back( tvKeyToIndex.at(tp->parentVertex().key()) );
     std::vector<int> decayIdx;
     for(const auto& v: tp->decayVertices())
