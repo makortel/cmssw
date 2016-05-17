@@ -87,7 +87,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
                                            const edm::Event& ev, const edm::EventSetup& es,
                                            const HitDoublets& doublets,
                                            const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,
-                                           std::vector<unsigned int> *thirdLayerHitBeginIndices,
+                                           std::vector<int> *thirdLayerHitBeginIndices,
                                            LayerCacheType& layerCache) {
     if (theComparitor) theComparitor->init(ev, es);
 
@@ -120,7 +120,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
                                            const RecHitsSortedInPhi ** thirdHitMap,
                                            const std::vector<const DetLayer *> & thirdLayerDetLayer,
                                            const int nThirdLayers,
-                                           std::vector<unsigned int> *thirdLayerHitBeginIndices) {
+                                           std::vector<int> *thirdLayerHitBeginIndices) {
   auto outSeq =  doublets.detLayer(HitDoublets::outer)->seqNum();
 
   float regOffset = region.origin().perp(); //try to take account of non-centrality (?)
@@ -207,9 +207,6 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
     for (int il=0; il!=nThirdLayers; ++il) {
       const DetLayer * layer = thirdLayerDetLayer[il];
       auto barrelLayer = layer->isBarrel();
-
-      // to bookkeep the triplets and 3rd layers in triplet EDProducer
-      if(thirdLayerHitBeginIndices) thirdLayerHitBeginIndices->push_back(result.size());
 
       if ( (!barrelLayer) & (toPos != std::signbit(layer->position().z())) ) continue;
 
@@ -349,6 +346,8 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
 	    OrderedHitTriplet hittriplet( doublets.hit(ip,HitDoublets::inner), doublets.hit(ip,HitDoublets::outer), hits.theHits[KDdata].hit());
 	    if (!theComparitor  || theComparitor->compatible(hittriplet,region) ) {
 	      result.push_back( hittriplet );
+              // to bookkeep the triplets and 3rd layers in triplet EDProducer
+              if(thirdLayerHitBeginIndices) thirdLayerHitBeginIndices->push_back(il);
 	    } else {
 	      LogDebug("RejectedTriplet") << "rejected triplet from comparitor ";
 	    }
