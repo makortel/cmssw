@@ -89,7 +89,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
                                            const edm::EventSetup& es,
                                            const HitDoublets& doublets,
                                            const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,
-                                           std::vector<unsigned int> *thirdLayerHitBeginIndices,
+                                           std::vector<int> *tripletLastLayerIndex,
                                            LayerCacheType& layerCache)
 {
   if (theComparitor) theComparitor->init(ev, es);
@@ -187,9 +187,6 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
     for (int il=0; il!=size; ++il) {
       const DetLayer * layer = thirdLayers[il].detLayer();
       auto barrelLayer = layer->isBarrel();
-
-      // to bookkeep the triplets and 3rd layers in triplet EDProducer
-      if(thirdLayerHitBeginIndices) thirdLayerHitBeginIndices->push_back(result.size());
 
       if ( (!barrelLayer) & (toPos != std::signbit(layer->position().z())) ) continue;
 
@@ -325,6 +322,8 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region,
 	    OrderedHitTriplet hittriplet( doublets.hit(ip,HitDoublets::inner), doublets.hit(ip,HitDoublets::outer), hits.theHits[KDdata].hit());
 	    if (!theComparitor  || theComparitor->compatible(hittriplet,region) ) {
 	      result.push_back( hittriplet );
+              // to bookkeep the triplets and 3rd layers in triplet EDProducer
+              if(tripletLastLayerIndex) tripletLastLayerIndex->push_back(il);
 	    } else {
 	      LogDebug("RejectedTriplet") << "rejected triplet from comparitor ";
 	    }

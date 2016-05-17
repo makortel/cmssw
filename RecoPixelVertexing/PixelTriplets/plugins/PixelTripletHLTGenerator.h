@@ -39,7 +39,7 @@ public:
                    const edm::Event& ev, const edm::EventSetup& es,
                    const HitDoublets& doublets,
                    const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,
-                   std::vector<unsigned int> *thirdLayerHitBeginIndices,
+                   std::vector<int> *tripletLastLayerIndex,
                    LayerCacheType& layerCache);
 
 private:
