@@ -376,6 +376,21 @@ def _trackingSubFoldersFallbackSLHC(subfolder):
     if ret == subfolder:
         return None
     return ret
+def _trackingSubFoldersFallbackSLHC_phase2(subfolder):
+    ret = subfolder.replace("trackingParticleRecoAsssociation", "AssociatorByHitsRecoDenom")
+    for (old, new) in [("InitialStep",         "Zero"),
+                       ("HighPtTripletStep",   "First"),
+                       ("LowPtQuadStep",       "Second"),
+                       ("LowPtTripletStep",    "Third"),
+                       ("DetachedQuadStep",    "Fourth"),
+                       ("PixelPairStep",       "Fifth"),
+                       ("TobTecStep",          "Sixth"),
+                       ("MuonSeededStepInOut", "Ninth"),
+                       ("MuonSeededStepOutIn", "Tenth")]:
+        ret = ret.replace(old, new)
+    if ret == subfolder:
+        return None
+    return ret
 def _trackingRefFileFallbackSLHC(path):
     for (old, new) in [("initialStep",         "iter0"),
                        ("lowPtTripletStep",    "iter1"),
@@ -870,7 +885,7 @@ def _appendTrackingPlots(lastDirName, name, algoPlots, onlyForPileup=False, only
     # to keep backward compatibility, this set of plots has empty name
     limiters = dict(onlyForPileup=onlyForPileup, onlyForElectron=onlyForElectron, onlyForConversion=onlyForConversion)
     commonForTPF = dict(purpose=PlotPurpose.TrackingIteration, fallbackRefFiles=[_trackingRefFileFallbackSLHC], **limiters)
-    common = dict(fallbackDqmSubFolders=[_trackingSubFoldersFallbackSLHC, _trackingSubFoldersFallbackFromPV, _trackingSubFoldersFallbackConversion])
+    common = dict(fallbackDqmSubFolders=[_trackingSubFoldersFallbackSLHC, _trackingSubFoldersFallbackSLHC_phase2, _trackingSubFoldersFallbackFromPV, _trackingSubFoldersFallbackConversion])
     plotter.append(name, folders, TrackingPlotFolder(*algoPlots, **commonForTPF), **common)
     plotterExt.append(name, folders, TrackingPlotFolder(*_extendedPlots, **commonForTPF), **common)
 
