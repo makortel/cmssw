@@ -884,8 +884,8 @@ def _appendTrackingPlots(lastDirName, name, algoPlots, onlyForPileup=False, only
     folders = _trackingFolders(lastDirName)
     # to keep backward compatibility, this set of plots has empty name
     limiters = dict(onlyForPileup=onlyForPileup, onlyForElectron=onlyForElectron, onlyForConversion=onlyForConversion)
-    commonForTPF = dict(purpose=PlotPurpose.TrackingIteration, fallbackRefFiles=[_trackingRefFileFallbackSLHC], **limiters)
-    common = dict(fallbackDqmSubFolders=[_trackingSubFoldersFallbackSLHC, _trackingSubFoldersFallbackSLHC_phase2, _trackingSubFoldersFallbackFromPV, _trackingSubFoldersFallbackConversion])
+    commonForTPF = dict(purpose=PlotPurpose.TrackingIteration, **limiters)
+    common = dict(fallbackDqmSubFolders=[_trackingSubFoldersFallbackSLHC_phase2, _trackingSubFoldersFallbackFromPV, _trackingSubFoldersFallbackConversion])
     plotter.append(name, folders, TrackingPlotFolder(*algoPlots, **commonForTPF), **common)
     plotterExt.append(name, folders, TrackingPlotFolder(*_extendedPlots, **commonForTPF), **common)
 
