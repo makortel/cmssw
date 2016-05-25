@@ -2095,26 +2095,40 @@ class PlotterFolder:
         dqmSubFolders      -- List of lists of strings for list of subfolders per input file, or None if no subfolders
         plotFolder         -- PlotFolder object
         fallbackNames      -- List of names for backward compatibility (can be empty). These are used only by validation.Validation (class responsible of the release validation workflow) in case the reference file pointed by 'name' does not exist.
-        fallbackDqmSubFolders -- List of dicts of (string->string) for mapping the subfolder names found in the first file to another names. Use case is comparing files that have different iteration naming convention.
+        fallbackDqmSubFolders -- List of functions of (string->string) for mapping the subfolder names found in the first file to another names. Use case is comparing files that have different iteration naming convention.
         tableCreators      -- List of PlotterTableItem objects for tables to be created from this folder
         """
         self._name = name
         self._possibleDqmFolders = possibleDqmFolders
         self._plotFolder = plotFolder
-        #self._dqmSubFolders = [map(lambda sf: DQMSubFolder(sf, self._plotFolder.translateSubFolder(sf)), lst) for lst in dqmSubFolders]
         if dqmSubFolders is None:
             self._dqmSubFolders = None
         else:
             # Match the subfolders between files in case the lists differ
             # equality is by the 'translated' name
-            subfolders = {}
+            #
+            # Need to use the fallback here too to avoid "duplicate" cases
+            self._dqmSubFolders = []
+            subfolders_by_translated = set()
+            subfolders_by_fallback = set()
             for sf_list in dqmSubFolders:
                 for sf in sf_list:
-                    sf_translated = self._plotFolder.translateSubFolder(sf)
-                    if sf_translated is not None and not sf_translated in subfolders:
-                        subfolders[sf_translated] = DQMSubFolder(sf, sf_translated)
+                    # First check if this subfolder is a fallback of any previous
+                    if sf in subfolders_by_fallback:
+                        continue
 
-            self._dqmSubFolders = subfolders.values()
+                    # Then check by translated name
+                    sf_translated = self._plotFolder.translateSubFolder(sf)
+                    if sf_translated is None or sf_translated in subfolders_by_translated:
+                        continue
+
+                    # We have an uncovered subfolder
+                    subfolders_by_translated.add(sf_translated)
+                    for fallbackFunc in fallbackDqmSubFolders:
+                        sf_fallback = fallbackFunc(sf)
+                        subfolders_by_fallback.add(sf_fallback)
+                    self._dqmSubFolders.append(DQMSubFolder(sf, sf_translated))
+
             self._dqmSubFolders.sort(key=lambda sf: sf.subfolder)
 
         self._fallbackNames = fallbackNames
