@@ -55,6 +55,7 @@ def _getDirectoryDetailed(tfile, possibleDirs, subDir=None):
 #                            raise Exception("Foo")
                     return GetDirectoryCode.SubDirNotExist
             else:
+                if verbose: print "Found subdirectory '%s' from directory '%s' in file %s" % (subDir, pdf, tfile.GetName())
                 return d
     if verbose:
         print "Did not find any of directories '%s' from file %s" % (",".join(possibleDirs), tfile.GetName())
@@ -2190,6 +2191,7 @@ class PlotterFolder:
             if ret is GetDirectoryCode.SubDirNotExist:
                 for fallbackFunc in self._fallbackDqmSubFolders:
                     fallback = fallbackFunc(subfolder)
+                    if verbose: print "Trying fallback", fallback
                     if fallback is not None:
                         ret = _getDirectoryDetailed(tfile, self._possibleDqmFolders, fallback)
                         if ret is not GetDirectoryCode.SubDirNotExist:
