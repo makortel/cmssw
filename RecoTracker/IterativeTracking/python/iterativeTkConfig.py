@@ -4,7 +4,7 @@
 import FWCore.ParameterSet.Config as cms
 
 _defaultEra = ""
-_nonDefaultEras = ["trackingLowPU", "trackingPhase1", "trackingPhase1PU70"]
+_nonDefaultEras = ["trackingLowPU", "trackingPhase1", "trackingPhase1PU70", "trackingPhase2PU140"]
 _allEras = [_defaultEra] + _nonDefaultEras
 
 _iterations = [
@@ -48,6 +48,15 @@ _iterations_trackingPhase1PU70 = [
     "PixelPairStep",
     "TobTecStep",
 ]
+#FIXME::Phase2 : both muon Seed iter (not as it was in the 810pre8)
+_iterations_trackingPhase2PU140 = [
+    "InitialStep",
+    "HighPtTripletStep",
+    "DetachedQuadStep",
+    "LowPtQuadStep",
+    "LowPtTripletStep",
+    "PixelPairStep",
+]
 _iterations_muonSeeded = [
     "MuonSeededStepInOut",
     "MuonSeededStepOutIn",
@@ -61,6 +70,7 @@ _multipleSeedProducers_trackingLowPU = {
 }
 _multipleSeedProducers_trackingPhase1 = _multipleSeedProducers
 _multipleSeedProducers_trackingPhase1PU70 = _multipleSeedProducers_trackingLowPU
+_multipleSeedProducers_trackingPhase2PU140 = {}
 _oldStyleHasSelector = set([
     "InitialStep",
     "HighPtTripletStep",
