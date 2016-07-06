@@ -122,9 +122,9 @@ eras.trackingPhase2PU140.toModify(detachedQuadStepSeeds,
     SeedCreatorPSet = dict( magneticField = '', propagator = 'PropagatorWithMaterial'),
     SeedMergerPSet = cms.PSet(
         layerList = cms.PSet(refToPSet_ = cms.string("PixelSeedMergerQuadruplets")),
-	addRemainingTriplets = cms.bool(False),
-	mergeTriplets = cms.bool(True),
-	ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
+        addRemainingTriplets = cms.bool(False),
+        mergeTriplets = cms.bool(True),
+        ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
     )
 )
 
