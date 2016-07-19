@@ -1,4 +1,4 @@
-#include "LayerQuadruplets.h"
+#include "RecoPixelVertexing/PixelTriplets/interface/LayerQuadruplets.h"
 
 namespace LayerQuadruplets {
 std::vector<LayerSetAndLayers> layers(const SeedingLayerSetsHits& sets) {
