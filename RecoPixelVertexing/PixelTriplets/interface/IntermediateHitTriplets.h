@@ -51,6 +51,14 @@ public:
 
   ////////////////////
 
+  using RegionLayerHits = ihd::RegionLayerHits<LayerPairAndLayers>;
+
+  ////////////////////
+
+  using const_iterator = ihd::const_iterator<RegionLayerHits, IntermediateHitTriplets>;
+
+  ////////////////////
+
   IntermediateHitTriplets(): seedingLayers_(nullptr) {}
   explicit IntermediateHitTriplets(const SeedingLayerSetsHits *seedingLayers): seedingLayers_(seedingLayers) {}
   IntermediateHitTriplets(const IntermediateHitTriplets& rh); // only to make ROOT dictionary generation happy
@@ -109,6 +117,14 @@ public:
       hitTriplets_.emplace_back(triplets[realIndex]);
     }
   }
+
+  const SeedingLayerSetsHits& seedingLayerHits() const { return *seedingLayers_; }
+
+  // used internally
+  std::vector<RegionIndex>::const_iterator regionsBegin() const { return regions_.begin(); }
+  std::vector<RegionIndex>::const_iterator regionsEnd() const { return regions_.end(); }
+  std::vector<LayerPairAndLayers>::const_iterator layerSetsBegin() const { return layerPairAndLayers_.begin(); }
+  std::vector<LayerPairAndLayers>::const_iterator layerSetsEnd() const { return layerPairAndLayers_.begin(); }
 
 private:
   const SeedingLayerSetsHits *seedingLayers_;
