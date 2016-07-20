@@ -120,6 +120,11 @@ public:
 
   const SeedingLayerSetsHits& seedingLayerHits() const { return *seedingLayers_; }
 
+  const_iterator begin() const { return const_iterator(this, regions_.begin()); }
+  const_iterator cbegin() const { return begin(); }
+  const_iterator end() const { return const_iterator(this, regions_.end()); }
+  const_iterator cend() const { return end(); }
+
   // used internally
   std::vector<RegionIndex>::const_iterator regionsBegin() const { return regions_.begin(); }
   std::vector<RegionIndex>::const_iterator regionsEnd() const { return regions_.end(); }
