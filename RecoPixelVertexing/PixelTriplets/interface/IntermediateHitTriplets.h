@@ -27,6 +27,8 @@ public:
       thirdLayer_(thirdLayer.index()), hitsBegin_(hitsBegin)
     {}
 
+    SeedingLayerSetsHits::LayerIndex layerIndex() const { return thirdLayer_; }
+
   private:
     SeedingLayerSetsHits::LayerIndex thirdLayer_;
     size_t hitsBegin_;
@@ -36,22 +38,77 @@ public:
 
   class LayerPairAndLayers {
   public:
-    LayerPairAndLayers(const SeedingLayerSetsHits::SeedingLayerSet& layerPair,
+    LayerPairAndLayers(const LayerPair& layerPair,
                        size_t thirdLayersBegin, LayerHitMapCache&& cache):
-      layerPair_(layerPair[0].index(), layerPair[1].index()),
+      layerPair_(layerPair),
       thirdLayersBegin_(thirdLayersBegin),
       cache_(std::move(cache))
     {}
 
+    const LayerPair& layerPair() const { return layerPair_; }
+    LayerHitMapCache& cache() { return cache_; }
+    const LayerHitMapCache& cache() const { return cache_; }
+
   private:
     LayerPair layerPair_;
     size_t thirdLayersBegin_;
+    // The reason for not storing layer triplets + hit triplets
+    // directly is in this cache, and in my desire to try to keep
+    // results unchanged during this refactoring
     LayerHitMapCache cache_;
   };
 
   ////////////////////
 
-  using RegionLayerHits = ihd::RegionLayerHits<LayerPairAndLayers>;
+  class LayerTripletHits {
+  public:
+    LayerTripletHits(const LayerPairAndLayers *layerPairAndLayers,
+                     const ThirdLayer *thirdLayer):
+      layerPairAndLayers_(layerPairAndLayers),
+      thirdLayer_(thirdLayer)
+    {}
+
+    SeedingLayerSetsHits::LayerIndex innerLayerIndex() const { return std::get<0>(layerPairAndLayers_->layerPair()); }
+    SeedingLayerSetsHits::LayerIndex middleLayerIndex() const { return std::get<1>(layerPairAndLayers_->layerPair()); }
+    SeedingLayerSetsHits::LayerIndex outerLayerIndex() const { return thirdLayer_->layerIndex(); }
+
+    const LayerHitMapCache& cache() const { return layerPairAndLayers_->cache(); }
+  private:
+    const LayerPairAndLayers *layerPairAndLayers_;
+    const ThirdLayer *thirdLayer_;
+  };
+
+  ////////////////////
+
+  //using RegionLayerHits = ihd::RegionLayerHits<LayerPairAndLayers>;
+  class RegionLayerHits {
+  public:
+    using layerPairAndLayersConstIterator = std::vector<LayerPairAndLayers>::const_iterator;
+    using thirdLayerConstIterator = std::vector<ThirdLayer>::const_iterator;
+    using hitConstIterator = std::vector<OrderedHitTriplet>::const_iterator;
+
+    class const_iterator {
+    };
+
+    RegionLayerHits(const TrackingRegion* region,
+                    layerPairAndLayersConstIterator pairBegin, layerPairAndLayersConstIterator pairEnd,
+                    thirdLayerConstIterator thirdBegin, thirdLayerConstIterator thirdEnd):
+      region_(region), layerSetsBegin_(pairBegin), layerSetsEnd_(pairEnd) {}
+
+    const TrackingRegion& region() const { return *region_; }
+
+    /*
+    const_iterator begin() const { return layerSetsBegin_; }
+    const_iterator cbegin() const { return begin(); }
+    const_iterator end() const { return layerSetsEnd_; }
+    const_iterator cend() const { return end(); }
+    */
+
+  private:
+    const TrackingRegion *region_;
+    const layerPairAndLayersConstIterator layerSetsBegin_;
+    const layerPairAndLayersConstIterator layerSetsEnd_;
+  };
 
   ////////////////////
 
@@ -90,8 +147,9 @@ public:
     regions_.emplace_back(region, layerPairAndLayers_.size());
   }
 
-  void beginPair(const SeedingLayerSetsHits::SeedingLayerSet& layerPair, LayerHitMapCache&& cache) {
+  LayerHitMapCache *beginPair(const LayerPair& layerPair, LayerHitMapCache&& cache) {
     layerPairAndLayers_.emplace_back(layerPair, thirdLayers_.size(), std::move(cache));
+    return &(layerPairAndLayers_.back().cache());
   };
 
   void addTriplets(const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,

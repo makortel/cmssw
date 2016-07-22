@@ -122,9 +122,13 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
 
       LayerHitMapCache hitCache;
       hitCache.extend(layerPair.cache());
+      LayerHitMapCache *hitCachePtr = &hitCache;
+      if(produceIntermediateHitTriplets_) {
+        hitCachePtr = intermediateHitTriplets->beginPair(layerPair.layerPair(), std::move(hitCache));
+      }
 
       tripletLastLayerIndex.clear();
-      generator_.hitTriplets(region, triplets, iEvent, iSetup, layerPair.doublets(), thirdLayers, &tripletLastLayerIndex, hitCache);
+      generator_.hitTriplets(region, triplets, iEvent, iSetup, layerPair.doublets(), thirdLayers, &tripletLastLayerIndex, *hitCachePtr);
       if(triplets.empty())
         continue;
 
