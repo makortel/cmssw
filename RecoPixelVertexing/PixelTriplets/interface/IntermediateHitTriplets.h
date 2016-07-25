@@ -24,14 +24,17 @@ public:
   class ThirdLayer {
   public:
     ThirdLayer(const SeedingLayerSetsHits::SeedingLayer& thirdLayer, size_t hitsBegin):
-      thirdLayer_(thirdLayer.index()), hitsBegin_(hitsBegin)
+      thirdLayer_(thirdLayer.index()), hitsBegin_(hitsBegin), hitsEnd_(hitsBegin)
     {}
+
+    void setHitsEnd(size_t end) { hitsEnd_ = end; }
 
     SeedingLayerSetsHits::LayerIndex layerIndex() const { return thirdLayer_; }
 
   private:
     SeedingLayerSetsHits::LayerIndex thirdLayer_;
     size_t hitsBegin_;
+    size_t hitsEnd_;
   };
 
   ////////////////////
@@ -42,16 +45,23 @@ public:
                        size_t thirdLayersBegin, LayerHitMapCache&& cache):
       layerPair_(layerPair),
       thirdLayersBegin_(thirdLayersBegin),
+      thirdLayersEnd_(thirdLayersBegin),
       cache_(std::move(cache))
     {}
 
+    void setThirdLayersEnd(size_t end) { thirdLayersEnd_ = end; }
+
     const LayerPair& layerPair() const { return layerPair_; }
+    size_t thirdLayersBegin() const { return thirdLayersBegin_; }
+    size_t thirdLayersEnd() const { return thirdLayersEnd_; }
+
     LayerHitMapCache& cache() { return cache_; }
     const LayerHitMapCache& cache() const { return cache_; }
 
   private:
     LayerPair layerPair_;
     size_t thirdLayersBegin_;
+    size_t thirdLayersEnd_;
     // The reason for not storing layer triplets + hit triplets
     // directly is in this cache, and in my desire to try to keep
     // results unchanged during this refactoring
@@ -83,17 +93,60 @@ public:
   //using RegionLayerHits = ihd::RegionLayerHits<LayerPairAndLayers>;
   class RegionLayerHits {
   public:
-    using layerPairAndLayersConstIterator = std::vector<LayerPairAndLayers>::const_iterator;
-    using thirdLayerConstIterator = std::vector<ThirdLayer>::const_iterator;
-    using hitConstIterator = std::vector<OrderedHitTriplet>::const_iterator;
+    using LayerPairAndLayersConstIterator = std::vector<LayerPairAndLayers>::const_iterator;
+    using ThirdLayerConstIterator = std::vector<ThirdLayer>::const_iterator;
+    using HitConstIterator = std::vector<OrderedHitTriplet>::const_iterator;
 
     class const_iterator {
+    public:
+      using internal_iterator_type = LayerPairAndLayersConstIterator;
+      using value_type = LayerTripletHits;
+      using difference_type = internal_iterator_type::difference_type;
+
+      const_iterator(const RegionLayerHits *regionLayerHits):
+        regionLayerHits_(regionLayerHits),
+        iterPair_(regionLayerHits->layerSetsBegin()),
+        indThird_(iterPair_->thirdLayersBegin())
+      {}
+
+      value_type operator*() const {
+        return value_type(&(*iterPair_), &(*(regionLayerHits_->thirdLayerBegin() + indThird_)));
+      }
+
+      const_iterator& operator++() {
+        auto nextThird = ++indThird_;
+        if(nextThird == iterPair_->thirdLayersEnd()) {
+          ++iterPair_;
+          indThird_ = iterPair_->thirdLayersBegin();
+        }
+        else {
+          indThird_ = nextThird;
+        }
+        return *this;
+      }
+
+      const_iterator operator++(int) {
+        const_iterator clone(*this);
+        operator++();
+        return clone;
+      }
+
+      bool operator==(const const_iterator& other) const { return iterPair_ == other.iterPair_ && indThird_ == other.indThird_; }
+      bool operator!=(const const_iterator& other) const { return !operator==(other); }
+
+    private:
+      const RegionLayerHits *regionLayerHits_;
+      internal_iterator_type iterPair_;
+      size_t indThird_;
     };
 
     RegionLayerHits(const TrackingRegion* region,
-                    layerPairAndLayersConstIterator pairBegin, layerPairAndLayersConstIterator pairEnd,
-                    thirdLayerConstIterator thirdBegin, thirdLayerConstIterator thirdEnd):
-      region_(region), layerSetsBegin_(pairBegin), layerSetsEnd_(pairEnd) {}
+                    LayerPairAndLayersConstIterator pairBegin, LayerPairAndLayersConstIterator pairEnd,
+                    ThirdLayerConstIterator thirdBegin, ThirdLayerConstIterator thirdEnd):
+      region_(region),
+      layerSetsBegin_(pairBegin), layerSetsEnd_(pairEnd),
+      thirdBegin_(thirdBegin), thirdEnd_(thirdEnd)
+    {}
 
     const TrackingRegion& region() const { return *region_; }
 
@@ -104,10 +157,18 @@ public:
     const_iterator cend() const { return end(); }
     */
 
+    // used internally
+    LayerPairAndLayersConstIterator layerSetsBegin() const { return layerSetsBegin_; }
+    LayerPairAndLayersConstIterator layerSetsEnd() const { return layerSetsEnd_; }
+    ThirdLayerConstIterator thirdLayerBegin() const { return thirdBegin_; }
+    ThirdLayerConstIterator thirdLayerEnd() const { return thirdEnd_; }
+
   private:
     const TrackingRegion *region_;
-    const layerPairAndLayersConstIterator layerSetsBegin_;
-    const layerPairAndLayersConstIterator layerSetsEnd_;
+    const LayerPairAndLayersConstIterator layerSetsBegin_;
+    const LayerPairAndLayersConstIterator layerSetsEnd_;
+    const ThirdLayerConstIterator thirdBegin_;
+    const ThirdLayerConstIterator thirdEnd_;
   };
 
   ////////////////////
@@ -170,9 +231,11 @@ public:
       if(layer != prevLayer) {
         prevLayer = layer;
         thirdLayers_.emplace_back(thirdLayers[layer], hitTriplets_.size());
+        layerPairAndLayers_.back().setThirdLayersEnd(thirdLayers_.size());
       }
 
       hitTriplets_.emplace_back(triplets[realIndex]);
+      thirdLayers_.back().setHitsEnd(hitTriplets_.size());
     }
   }
 
