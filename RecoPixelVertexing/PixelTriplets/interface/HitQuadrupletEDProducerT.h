@@ -99,33 +99,15 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
       LayerHitMapCache hitCache;
       hitCache.extend(layerTriplet.cache());
 
-      generator_.hitQuadruplets(region, quadruplets, iEvent, iSetup, layerPair.doublets(), thirdLayers, &tripletLastLayerIndex, hitCache);
-      if(triplets.empty())
-        continue;
+      generator_.hitQuadruplets(region, quadruplets, iEvent, iSetup, layerTriplet.doublets(), thirdLayers, &tripletLastLayerIndex, hitCache);
 
-      triplets_total += triplets.size();
-      if(produceSeedingHitSets_) {
-        for(const auto& trpl: triplets) {
-          seedingHitSets->emplace_back(trpl.inner(), trpl.middle(), trpl.outer());
-        }
+      for(const auto& quad: quadruplets) {
+        seedingHitSets->emplace_back(quad[0], quad[1], quad[2], quad[3]);
       }
-      if(produceIntermediateHitTriplets_) {
-        if(tripletLastLayerIndex.size() != triplets.size()) {
-          throw cms::Exception("LogicError") << "tripletLastLayerIndex.size() " << tripletLastLayerIndex.size()
-                                             << " triplets.size() " << triplets.size();
-        }
-        tripletPermutation.resize(tripletLastLayerIndex.size());
-        std::iota(tripletPermutation.begin(), tripletPermutation.end(), 0); // assign 0,1,2,...,N
-        std::stable_sort(tripletPermutation.begin(), tripletPermutation.end(), [&](size_t i, size_t j) {
-            return tripletLastLayerIndex[i] < tripletLastLayerIndex[j];
-          });
-
-        intermediateHitTriplets->addTriplets(thirdLayers, triplets, tripletLastLayerIndex, tripletPermutation);
-        triplets.clear();
-      }
+      quadruplets.clear();
     }
   }
-  localRA_.update(quadruplets.size());
+  localRA_.update(seedingHitSets->size());
 
   iEvent.put(std::move(seedingHitSets));
 }

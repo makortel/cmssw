@@ -30,6 +30,13 @@ public:
                                const SeedingLayerSetsHits::SeedingLayerSet& tripletLayers,
                                const std::vector<SeedingLayerSetsHits::SeedingLayer>& fourthLayers) override;
 
+  void hitQuadruplets( const TrackingRegion& region, OrderedHitSeeds& result,
+                       const edm::Event& ev, const edm::EventSetup& es,
+                       OrderedHitTriplets::const_iterator tripletsBegin,
+                       OrderedHitTriplets::const_iterator tripletsEnd,
+                       const std::vector<SeedingLayerSetsHits::SeedingLayer>& fourthLayers,
+                       LayerCacheType& layerCache);
+
 private:
   std::unique_ptr<SeedComparitor> theComparitor;
 

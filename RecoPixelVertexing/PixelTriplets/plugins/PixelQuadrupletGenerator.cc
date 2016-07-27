@@ -57,13 +57,24 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
                                               const SeedingLayerSetsHits::SeedingLayerSet& tripletLayers,
                                               const std::vector<SeedingLayerSetsHits::SeedingLayer>& fourthLayers)
 {
-  if (theComparitor) theComparitor->init(ev, es);
-
   OrderedHitTriplets triplets;
   theTripletGenerator->hitTriplets(region, triplets, ev, es,
                                    tripletLayers, // pair generator picks the correct two layers from these
                                    std::vector<SeedingLayerSetsHits::SeedingLayer>{tripletLayers[2]});
   if(triplets.empty()) return;
+
+  assert(theLayerCache);
+  hitQuadruplets(region, result, ev, es, triplets.begin(), triplets.end(), fourthLayers, *theLayerCache);
+}
+
+void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, OrderedHitSeeds& result,
+                                              const edm::Event& ev, const edm::EventSetup& es,
+                                              OrderedHitTriplets::const_iterator tripletsBegin,
+                                              OrderedHitTriplets::const_iterator tripletsEnd,
+                                              const std::vector<SeedingLayerSetsHits::SeedingLayer>& fourthLayers,
+                                              LayerCacheType& layerCache)
+{
+  if (theComparitor) theComparitor->init(ev, es);
 
   const size_t size = fourthLayers.size();
 
@@ -81,7 +92,7 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
 
   // Build KDtrees
   for(size_t il=0; il!=size; ++il) {
-    fourthHitMap[il] = &(*theLayerCache)(fourthLayers[il], region, es);
+    fourthHitMap[il] = &(layerCache)(fourthLayers[il], region, es);
     auto const& hits = *fourthHitMap[il];
 
     ThirdHitRZPrediction<PixelRecoLineRZ> & pred = preds[il];
@@ -115,7 +126,8 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
   const QuantityDependsPtEval extraPhiToleranceEval = extraPhiTolerance.evaluator(es);
 
   // Loop over triplets
-  for(const auto& triplet: triplets) {
+  for(auto iTriplet = tripletsBegin; iTriplet != tripletsEnd; ++iTriplet) {
+    const auto& triplet = *iTriplet;
     GlobalPoint gp0 = triplet.inner()->globalPosition();
     GlobalPoint gp1 = triplet.middle()->globalPosition();
     GlobalPoint gp2 = triplet.outer()->globalPosition();
