@@ -150,8 +150,9 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
           });
 
         intermediateHitTriplets->addTriplets(thirdLayers, triplets, tripletLastLayerIndex, tripletPermutation);
-        triplets.clear();
       }
+
+      triplets.clear();
     }
   }
   localRA_.update(triplets_total);
