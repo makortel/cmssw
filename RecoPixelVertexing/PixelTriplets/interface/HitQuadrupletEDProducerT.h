@@ -11,8 +11,8 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/Utilities/interface/RunningAverage.h"
 
-/#include "RecoTracker/TkSeedingLayers/interface/SeedingHitSet.h"
-#include "RecoPixelVertexing/PixelTriplets/interface/OrderedHitQuadruplets.h"
+#include "RecoTracker/TkSeedingLayers/interface/SeedingHitSet.h"
+#include "RecoPixelVertexing/PixelTriplets/interface/OrderedHitSeeds.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/IntermediateHitTriplets.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/LayerQuadruplets.h"
 
@@ -69,7 +69,7 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
   // match-making of triplet and quadruplet layers
   std::vector<LayerQuadruplets::LayerSetAndLayers> quadlayers = LayerQuadruplets::layers(seedingLayerHits);
 
-  std::vector<OrderedHitSeeds> quadruplets;
+  OrderedHitSeeds quadruplets;
   quadruplets.reserve(localRA_.upper());
 
   for(const auto& regionLayerPairAndLayers: regionTriplets) {
@@ -85,7 +85,7 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
         auto exp = cms::Exception("LogicError") << "Did not find the layer triplet from vector<triplet+fourth layers>. This is a sign of some internal inconsistency\n";
         exp << "I was looking for layer triplet " << layerTriplet.innerLayerIndex() << "," << layerTriplet.middleLayerIndex() << "," << layerTriplet.outerLayerIndex()
             << ". Quadruplets have the following triplets:\n";
-        for(const auto& a: trilayers) {
+        for(const auto& a: quadlayers) {
           exp << " " << a.first[0].index() << "," << a.first[1].index() << "," << a.first[2].index() << ": 4th layers";
           for(const auto& b: a.second) {
             exp << " " << b.index();
@@ -99,7 +99,7 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
       LayerHitMapCache hitCache;
       hitCache.extend(layerTriplet.cache());
 
-      generator_.hitQuadruplets(region, quadruplets, iEvent, iSetup, layerTriplet.doublets(), thirdLayers, &tripletLastLayerIndex, hitCache);
+      generator_.hitQuadruplets(region, quadruplets, iEvent, iSetup, layerTriplet.tripletsBegin(), layerTriplet.tripletsEnd(), fourthLayers, hitCache);
 
       for(const auto& quad: quadruplets) {
         seedingHitSets->emplace_back(quad[0], quad[1], quad[2], quad[3]);

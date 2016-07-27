@@ -3,6 +3,7 @@
 #include "ThirdHitRZPrediction.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/ThirdHitPredictionFromCircle.h"
 #include "RecoTracker/TkMSParametrization/interface/PixelRecoLineRZ.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h"
 #include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerTools.h"
@@ -50,6 +51,31 @@ PixelQuadrupletGenerator::PixelQuadrupletGenerator(const edm::ParameterSet& cfg,
 }
 
 PixelQuadrupletGenerator::~PixelQuadrupletGenerator() {}
+
+void PixelQuadrupletGenerator::fillDescriptions(edm::ParameterSetDescription& desc) {
+  desc.add<double>("extraHitRZtolerance", 0.1);
+  desc.add<double>("extraHitRPhitolerance", 0.1);
+
+  edm::ParameterSetDescription descExtraPhi;
+  descExtraPhi.add<double>("pt1", 0.1);
+  descExtraPhi.add<double>("pt2", 0.1);
+  descExtraPhi.add<double>("value1", 999);
+  descExtraPhi.add<double>("value2", 0.15);
+  descExtraPhi.add<bool>("enabled", false);
+  desc.add<edm::ParameterSetDescription>("extraPhiTolerance", descExtraPhi);
+
+  edm::ParameterSetDescription descMaxChi2;
+  descMaxChi2.add<double>("pt1", 0.2);
+  descMaxChi2.add<double>("pt2", 1.5);
+  descMaxChi2.add<double>("value1", 500);
+  descMaxChi2.add<double>("value2", 50);
+  descMaxChi2.add<bool>("enabled", true);
+  desc.add<edm::ParameterSetDescription>("maxChi2", descMaxChi2);
+
+  desc.add<bool>("fitFastCircle", false);
+  desc.add<bool>("fitFastCircleChi2Cut", false);
+  desc.add<bool>("useBendingCorrection", false);
+}
 
 
 void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, OrderedHitSeeds& result,

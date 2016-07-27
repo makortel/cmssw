@@ -90,10 +90,8 @@ public:
     SeedingLayerSetsHits::LayerIndex middleLayerIndex() const { return std::get<1>(layerPairAndLayers_->layerPair()); }
     SeedingLayerSetsHits::LayerIndex outerLayerIndex() const { return thirdLayer_->layerIndex(); }
 
-    TripletRange triplets() const {
-      return std::make_pair(hitSets_->tripletsBegin() + thirdLayer_->tripletsBegin(),
-                            hitSets_->tripletsBegin() + thirdLayer_->tripletsEnd());
-    }
+    std::vector<OrderedHitTriplet>::const_iterator tripletsBegin() const { return hitSets_->tripletsBegin() + thirdLayer_->tripletsBegin(); }
+    std::vector<OrderedHitTriplet>::const_iterator tripletsEnd() const { return hitSets_->tripletsBegin() + thirdLayer_->tripletsEnd(); }
 
     const LayerHitMapCache& cache() const { return layerPairAndLayers_->cache(); }
   private:
@@ -170,10 +168,11 @@ public:
 
     RegionLayerHits(const TrackingRegion* region,
                     const IntermediateHitTriplets *hitSets,
-                    size_t pairBeginIndex, size_t pairEndIndex):
+                    LayerPairAndLayersConstIterator pairBegin,
+                    LayerPairAndLayersConstIterator pairEnd):
       region_(region),
       hitSets_(hitSets),
-      layerSetsBegin_(hitSets_->layerSetsBegin()+pairBeginIndex), layerSetsEnd_(hitSets_->layerSetsEnd()+pairEndIndex)
+      layerSetsBegin_(pairBegin), layerSetsEnd_(pairEnd)
     {}
 
     const TrackingRegion& region() const { return *region_; }

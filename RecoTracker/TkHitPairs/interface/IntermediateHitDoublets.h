@@ -22,7 +22,9 @@ namespace ihd {
   public:
     using const_iterator = typename std::vector<T>::const_iterator;
 
-    RegionLayerHits(const TrackingRegion* region, const_iterator begin, const_iterator end):
+    // Taking T* to have compatible interface with IntermediateHitTriplets::RegionLayerHits
+    template <typename TMP>
+    RegionLayerHits(const TrackingRegion* region, const TMP*, const_iterator begin, const_iterator end):
       region_(region), layerSetsBegin_(begin), layerSetsEnd_(end) {}
 
     const TrackingRegion& region() const { return *region_; }
@@ -56,6 +58,7 @@ namespace ihd {
         end = std::distance(hitSets_->layerSetsBegin(), hitSets_->layerSetsEnd());
 
       return value_type(&(iter_->region()),
+                        hitSets_,
                         hitSets_->layerSetsBegin() + iter_->layerSetIndex(),
                         hitSets_->layerSetsBegin() + end);
     }
