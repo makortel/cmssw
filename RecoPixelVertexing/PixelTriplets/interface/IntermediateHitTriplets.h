@@ -91,8 +91,8 @@ public:
     SeedingLayerSetsHits::LayerIndex outerLayerIndex() const { return thirdLayer_->layerIndex(); }
 
     TripletRange triplets() const {
-      return std::make_pair(std::advance(hitSets_->tripletsBegin(), thirdLayer_->tripletsBegin()),
-                            std::advance(hitSets_->tripletsBegin(), thirdLayer_->tripletsEnd()));
+      return std::make_pair(hitSets_->tripletsBegin() + thirdLayer_->tripletsBegin(),
+                            hitSets_->tripletsBegin() + thirdLayer_->tripletsEnd());
     }
 
     const LayerHitMapCache& cache() const { return layerPairAndLayers_->cache(); }
