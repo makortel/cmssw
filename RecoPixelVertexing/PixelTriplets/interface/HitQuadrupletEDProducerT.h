@@ -69,26 +69,24 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
   // match-making of triplet and quadruplet layers
   std::vector<LayerQuadruplets::LayerSetAndLayers> quadlayers = LayerQuadruplets::layers(seedingLayerHits);
 
-  OrderedHitTriplets triplets;
-  triplets.reserve(localRA_.upper());
-  size_t triplets_total = 0;
+  std::vector<OrderedHitSeeds> quadruplets;
+  quadruplets.reserve(localRA_.upper());
 
   for(const auto& regionLayerPairAndLayers: regionTriplets) {
     const TrackingRegion& region = regionLayerPairAndLayers.region();
 
-    for(const auto& layerPairAndLayers: regionLayerPairAndLayers) {
-      
-    }
-
-    for(const auto& layerTriplet: regionLayerTriplets) {
+    for(const auto& layerTriplet: regionLayerPairAndLayers) {
       auto found = std::find_if(quadlayers.begin(), quadlayers.end(), [&](const LayerQuadruplets::LayerSetAndLayers& a) {
-          return a.first[0].index() == layerTriplet.innerLayerIndex() && a.first[1].index() == layerPair.outerLayerIndex();
+          return a.first[0].index() == layerTriplet.innerLayerIndex() &&
+                 a.first[1].index() == layerTriplet.middleLayerIndex() &&
+                 a.first[2].index() == layerTriplet.outerLayerIndex();
         });
-      if(found == trilayers.end()) {
-        auto exp = cms::Exception("LogicError") << "Did not find the layer pair from vector<pair+third layers>. This is a sign of some internal inconsistency\n";
-        exp << "I was looking for layer pair " << layerPair.innerLayerIndex() << "," << layerPair.outerLayerIndex() << ". Triplets have the following pairs:\n";
+      if(found == quadlayers.end()) {
+        auto exp = cms::Exception("LogicError") << "Did not find the layer triplet from vector<triplet+fourth layers>. This is a sign of some internal inconsistency\n";
+        exp << "I was looking for layer triplet " << layerTriplet.innerLayerIndex() << "," << layerTriplet.middleLayerIndex() << "," << layerTriplet.outerLayerIndex()
+            << ". Quadruplets have the following triplets:\n";
         for(const auto& a: trilayers) {
-          exp << " " << a.first[0].index() << "," << a.first[1].index() << ": 3rd layers";
+          exp << " " << a.first[0].index() << "," << a.first[1].index() << "," << a.first[2].index() << ": 4th layers";
           for(const auto& b: a.second) {
             exp << " " << b.index();
           }
@@ -96,13 +94,12 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
         }
         throw exp;
       }
-      const auto& thirdLayers = found->second;
+      const auto& fourthLayers = found->second;
 
       LayerHitMapCache hitCache;
-      hitCache.extend(layerPair.cache());
+      hitCache.extend(layerTriplet.cache());
 
-      tripletLastLayerIndex.clear();
-      generator_.hitTriplets(region, triplets, iEvent, iSetup, layerPair.doublets(), thirdLayers, &tripletLastLayerIndex, hitCache);
+      generator_.hitQuadruplets(region, quadruplets, iEvent, iSetup, layerPair.doublets(), thirdLayers, &tripletLastLayerIndex, hitCache);
       if(triplets.empty())
         continue;
 
@@ -128,12 +125,9 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
       }
     }
   }
-  localRA_.update(triplets_total);
+  localRA_.update(quadruplets.size());
 
-  if(produceSeedingHitSets_)
-    iEvent.put(std::move(seedingHitSets));
-  if(produceIntermediateHitTriplets_)
-    iEvent.put(std::move(intermediateHitTriplets));
+  iEvent.put(std::move(seedingHitSets));
 }
 
 
