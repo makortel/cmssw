@@ -122,7 +122,9 @@ public:
         regionLayerHits_(regionLayerHits),
         iterPair_(regionLayerHits->layerSetsBegin()),
         indThird_(iterPair_->thirdLayersBegin())
-      {}
+      {
+        assert(regionLayerHits->layerSetsBegin() != regionLayerHits->layerSetsEnd());
+      }
 
       const_iterator(const IntermediateHitTriplets *hitSets, const RegionLayerHits *regionLayerHits, end_tag):
         iterPair_(regionLayerHits->layerSetsEnd()),
@@ -130,11 +132,12 @@ public:
       {}
 
       value_type operator*() const {
+        assert(static_cast<unsigned>(indThird_) < std::distance(hitSets_->thirdLayersBegin(), hitSets_->thirdLayersEnd()));
         return value_type(hitSets_, &(*iterPair_), &(*(hitSets_->thirdLayersBegin() + indThird_)));
       }
 
       const_iterator& operator++() {
-        auto nextThird = ++indThird_;
+        auto nextThird = indThird_+1;
         if(nextThird == iterPair_->thirdLayersEnd()) {
           ++iterPair_;
           if(iterPair_ != regionLayerHits_->layerSetsEnd()) {
@@ -177,7 +180,12 @@ public:
 
     const TrackingRegion& region() const { return *region_; }
 
-    const_iterator begin() const { return const_iterator(hitSets_, this); }
+    const_iterator begin() const {
+      if(layerSetsBegin_ != layerSetsEnd_)
+        return const_iterator(hitSets_, this);
+      else
+        return end();
+    }
     const_iterator cbegin() const { return begin(); }
     const_iterator end() const { return const_iterator(hitSets_, this, const_iterator::end_tag()); }
     const_iterator cend() const { return end(); }
