@@ -179,6 +179,7 @@ public:
     {}
 
     const TrackingRegion& region() const { return *region_; }
+    size_t layerPairAndLayersSize() const { return std::distance(layerSetsBegin_, layerSetsEnd_); }
 
     const_iterator begin() const {
       if(layerSetsBegin_ != layerSetsEnd_)
@@ -282,7 +283,7 @@ public:
   std::vector<RegionIndex>::const_iterator regionsBegin() const { return regions_.begin(); }
   std::vector<RegionIndex>::const_iterator regionsEnd() const { return regions_.end(); }
   std::vector<LayerPairAndLayers>::const_iterator layerSetsBegin() const { return layerPairAndLayers_.begin(); }
-  std::vector<LayerPairAndLayers>::const_iterator layerSetsEnd() const { return layerPairAndLayers_.begin(); }
+  std::vector<LayerPairAndLayers>::const_iterator layerSetsEnd() const { return layerPairAndLayers_.end(); }
   std::vector<ThirdLayer>::const_iterator thirdLayersBegin() const { return thirdLayers_.begin(); }
   std::vector<ThirdLayer>::const_iterator thirdLayersEnd() const { return thirdLayers_.end(); }
   std::vector<OrderedHitTriplet>::const_iterator tripletsBegin() const { return hitTriplets_.begin(); }
