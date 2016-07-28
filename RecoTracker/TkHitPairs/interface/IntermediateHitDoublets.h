@@ -161,7 +161,7 @@ public:
   std::vector<RegionIndex>::const_iterator regionsBegin() const { return regions_.begin(); }
   std::vector<RegionIndex>::const_iterator regionsEnd() const { return regions_.end(); }
   std::vector<LayerPairHitDoublets>::const_iterator layerSetsBegin() const { return layerPairs_.begin(); }
-  std::vector<LayerPairHitDoublets>::const_iterator layerSetsEnd() const { return layerPairs_.begin(); }
+  std::vector<LayerPairHitDoublets>::const_iterator layerSetsEnd() const { return layerPairs_.end(); }
 
 private:
   const SeedingLayerSetsHits *seedingLayers_;
