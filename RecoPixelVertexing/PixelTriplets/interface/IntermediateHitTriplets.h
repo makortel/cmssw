@@ -270,6 +270,8 @@ public:
   }
 
   const SeedingLayerSetsHits& seedingLayerHits() const { return *seedingLayers_; }
+  size_t regionSize() const { return regions_.size(); }
+  size_t tripletsSize() const { return hitTriplets_.size(); }
 
   const_iterator begin() const { return const_iterator(this, regions_.begin()); }
   const_iterator cbegin() const { return begin(); }
