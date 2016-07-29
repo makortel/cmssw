@@ -75,6 +75,11 @@ void PixelQuadrupletGenerator::fillDescriptions(edm::ParameterSetDescription& de
   desc.add<bool>("fitFastCircle", false);
   desc.add<bool>("fitFastCircleChi2Cut", false);
   desc.add<bool>("useBendingCorrection", false);
+
+  edm::ParameterSetDescription descComparitor;
+  descComparitor.add<std::string>("ComponentName", "none");
+  descComparitor.setAllowAnything(); // until we have moved SeedComparitor too to EDProducers
+  desc.add<edm::ParameterSetDescription>("SeedComparitorPSet", descComparitor);
 }
 
 
