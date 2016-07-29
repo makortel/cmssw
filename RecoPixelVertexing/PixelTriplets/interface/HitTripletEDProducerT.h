@@ -12,7 +12,7 @@
 #include "FWCore/Utilities/interface/RunningAverage.h"
 
 #include "RecoTracker/TkHitPairs/interface/IntermediateHitDoublets.h"
-//#include "RecoTracker/TkSeedingLayers/interface/SeedingHitSet.h"
+#include "RecoTracker/TkSeedingLayers/interface/SeedingHitSet.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/OrderedHitTriplets.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/IntermediateHitTriplets.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/LayerTriplets.h"
