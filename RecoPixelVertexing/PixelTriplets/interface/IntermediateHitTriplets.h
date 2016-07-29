@@ -251,6 +251,13 @@ public:
     assert(triplets.size() == thirdLayerIndex.size());
     assert(triplets.size() == permutations.size());
 
+    if(triplets.empty()) {
+      // In absence of triplets for a layer pair simplest is just
+      // remove the pair
+      popPair();
+      return;
+    }
+
     int prevLayer = -1;
     for(size_t i=0, size=permutations.size(); i<size; ++i) {
       // We go through the 'triplets' in the order defined by
@@ -268,6 +275,8 @@ public:
       hitTriplets_.emplace_back(triplets[realIndex]);
       thirdLayers_.back().setHitsEnd(hitTriplets_.size());
     }
+
+    regions_.back().setLayerSetsEnd(layerPairAndLayers_.size());
   }
 
   const SeedingLayerSetsHits& seedingLayerHits() const { return *seedingLayers_; }
@@ -290,6 +299,11 @@ public:
   std::vector<OrderedHitTriplet>::const_iterator tripletsEnd() const { return hitTriplets_.end(); }
 
 private:
+  // to be called if no triplets are added
+  void popPair() {
+    layerPairAndLayers_.pop_back();
+  }
+
   const SeedingLayerSetsHits *seedingLayers_;
 
   std::vector<RegionIndex> regions_;

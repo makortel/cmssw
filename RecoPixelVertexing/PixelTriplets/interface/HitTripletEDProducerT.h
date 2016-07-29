@@ -135,8 +135,6 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
 
       tripletLastLayerIndex.clear();
       generator_.hitTriplets(region, triplets, iEvent, iSetup, layerPair.doublets(), thirdLayers, &tripletLastLayerIndex, *hitCachePtr);
-      if(triplets.empty())
-        continue;
 
 #ifdef EDM_ML_DEBUG
       LogTrace("HitTripletEDProducer") << "  created " << triplets.size() << " triplets for layer pair " << layerPair.innerLayerIndex() << "," << layerPair.outerLayerIndex() << " and 3rd layers";
@@ -162,6 +160,7 @@ void HitTripletEDProducerT<T_HitTripletGenerator>::produce(edm::Event& iEvent, c
             return tripletLastLayerIndex[i] < tripletLastLayerIndex[j];
           });
 
+        // empty triplets need to propagate here
         intermediateHitTriplets->addTriplets(thirdLayers, triplets, tripletLastLayerIndex, tripletPermutation);
       }
 
