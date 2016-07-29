@@ -95,6 +95,8 @@ initialStepHitTriplets = _pixelTripletHLTEDProducer.clone(
 from RecoPixelVertexing.PixelTriplets.pixelQuadrupletEDProducer_cfi import pixelQuadrupletEDProducer as _pixelQuadrupletEDProducer
 initialStepHitQuadruplets = _pixelQuadrupletEDProducer.clone(
     triplets = "initialStepHitTriplets",
+    extraHitRZtolerance = initialStepHitTriplets.extraHitRZtolerance,
+    extraHitRPhitolerance = initialStepHitTriplets.extraHitRPhitolerance,
     maxChi2 = dict(
         pt1    = 0.8, pt2    = 2,
         value1 = 200, value2 = 100,
