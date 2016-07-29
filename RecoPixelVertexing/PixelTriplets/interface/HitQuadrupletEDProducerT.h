@@ -80,7 +80,7 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
     LogTrace("HitQuadrupletEDProducer") << " starting region, number of layerPair+3rd layers " << regionLayerPairAndLayers.layerPairAndLayersSize();
 
     for(const auto& layerTriplet: regionLayerPairAndLayers) {
-      edm::LogPrint("HitQuadrupletEDProducer") << "  starting layer triplet " << layerTriplet.innerLayerIndex() << "," << layerTriplet.middleLayerIndex() << "," << layerTriplet.outerLayerIndex();
+      LogTrace("HitQuadrupletEDProducer") << "  starting layer triplet " << layerTriplet.innerLayerIndex() << "," << layerTriplet.middleLayerIndex() << "," << layerTriplet.outerLayerIndex();
       auto found = std::find_if(quadlayers.begin(), quadlayers.end(), [&](const LayerQuadruplets::LayerSetAndLayers& a) {
           return a.first[0].index() == layerTriplet.innerLayerIndex() &&
                  a.first[1].index() == layerTriplet.middleLayerIndex() &&
