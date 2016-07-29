@@ -91,7 +91,7 @@ void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     intermediateHitDoublets->reserve(regions.size(), layers.size());
   }
 
-  LogDebug("Foo") << "Creating doublets for " << regions.size() << " and " << layers.size() << " layer sets";
+  LogDebug("HitPairEDProducer") << "Creating doublets for " << regions.size() << " and " << layers.size() << " layer sets";
 
   // This is the easiest way to extract the layer pairs from the full
   // set of seeding layers. It feels a bit stupid to do it for each
@@ -119,7 +119,7 @@ void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     for(SeedingLayerSetsHits::SeedingLayerSet layerSet: layerPairs) {
       LayerHitMapCache hitCache;
       auto doublets = generator_.doublets(region, iEvent, iSetup, layerSet, hitCache);
-      LogTrace("Foo") << " created " << doublets.size() << " doublets for layers " << layerSet[0].index() << "," << layerSet[1].index();
+      LogTrace("HitPairEDProducer") << " created " << doublets.size() << " doublets for layers " << layerSet[0].index() << "," << layerSet[1].index();
       if(doublets.empty()) continue; // don't bother if no pairs from these layers
       if(produceSeedingHitSets_) {
         for(size_t i=0, size=doublets.size(); i<size; ++i) {
