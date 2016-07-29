@@ -10,6 +10,29 @@ class RegionsSeedingHitSets {
 public:
   using RegionIndex = ihd::RegionIndex;
 
+  // helper class to enforce correct usage
+  class RegionFiller {
+  public:
+    RegionFiller(): obj_(nullptr) {}
+    explicit RegionFiller(RegionsSeedingHitSets* obj): obj_(obj) {}
+
+    ~RegionFiller() {
+      if(obj_) obj_->regions_.back().setLayerSetsEnd(obj_->hitSets_.size());
+    }
+
+    bool valid() const { return obj_ != nullptr; }
+
+    template <typename... Args>
+    void emplace_back(Args&&... args) {
+      obj_->hitSets_.emplace_back(std::forward<Args>(args)...);
+    }
+  private:
+    RegionsSeedingHitSets *obj_;
+  };
+
+  static RegionFiller dummyFiller() { return RegionFiller(); }
+
+  // constructors
   RegionsSeedingHitSets() = default;
   ~RegionsSeedingHitSets() = default;
 
@@ -28,14 +51,9 @@ public:
     hitSets_.shrink_to_fit();
   }
 
-  void beginRegion(const TrackingRegion *region) {
+  RegionFiller beginRegion(const TrackingRegion *region) {
     regions_.emplace_back(region, hitSets_.size());
-  }
-
-  template <typename... Args>
-  void emplace_back(Args&&... args) {
-    hitSets_.emplace_back(std::forward<Args>(args)...);
-    regions_.back().setLayerSetsEnd(hitSets_.size());
+    return RegionFiller(this);
   }
 
   size_t regionSize() const { return regions_.size(); }

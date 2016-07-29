@@ -112,8 +112,9 @@ void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   }
 
   for(const TrackingRegion& region: regions) {
+    auto seedingHitSetsFiller = seedingHitSets->dummyFiller();
     if(produceSeedingHitSets_) {
-      seedingHitSets->beginRegion(&region);
+      seedingHitSetsFiller = seedingHitSets->beginRegion(&region);
     }
     if(produceIntermediateHitDoublets_) {
       intermediateHitDoublets->beginRegion(&region);
@@ -124,10 +125,10 @@ void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
       auto doublets = generator_.doublets(region, iEvent, iSetup, layerSet, hitCache);
       LogTrace("HitPairEDProducer") << " created " << doublets.size() << " doublets for layers " << layerSet[0].index() << "," << layerSet[1].index();
       if(doublets.empty()) continue; // don't bother if no pairs from these layers
-      if(produceSeedingHitSets_) {
+      if(seedingHitSetsFiller.valid()) {
         for(size_t i=0, size=doublets.size(); i<size; ++i) {
-          seedingHitSets->emplace_back(doublets.hit(i, HitDoublets::inner),
-                                       doublets.hit(i, HitDoublets::outer));
+          seedingHitSetsFiller.emplace_back(doublets.hit(i, HitDoublets::inner),
+                                            doublets.hit(i, HitDoublets::outer));
         }
       }
       if(produceIntermediateHitDoublets_) {
