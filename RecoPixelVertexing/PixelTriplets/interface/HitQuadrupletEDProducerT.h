@@ -11,7 +11,7 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/Utilities/interface/RunningAverage.h"
 
-#include "RecoTracker/TkSeedingLayers/interface/SeedingHitSet.h"
+#include "RecoTracker/TkHitPairs/interface/RegionsSeedingHitSets.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/OrderedHitSeeds.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/IntermediateHitTriplets.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/LayerQuadruplets.h"
@@ -39,7 +39,7 @@ HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::HitQuadrupletEDProducerT(con
   tripletToken_(consumes<IntermediateHitTriplets>(iConfig.getParameter<edm::InputTag>("triplets"))),
   generator_(iConfig, consumesCollector())
 {
-  produces<std::vector<SeedingHitSet> >();
+  produces<RegionsSeedingHitSets>();
 }
 
 template <typename T_HitQuadrupletGenerator>
@@ -63,8 +63,8 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
     throw cms::Exception("Configuration") << "HitQuadrupletEDProducerT expects SeedingLayerSetsHits::numberOfLayersInSet() to be >= 4, got " << seedingLayerHits.numberOfLayersInSet();
   }
 
-  auto seedingHitSets = std::make_unique<std::vector<SeedingHitSet> >();
-  seedingHitSets->reserve(localRA_.upper());
+  auto seedingHitSets = std::make_unique<RegionsSeedingHitSets>();
+  seedingHitSets->reserve(regionTriplets.regionSize(), localRA_.upper());
 
   // match-making of triplet and quadruplet layers
   std::vector<LayerQuadruplets::LayerSetAndLayers> quadlayers = LayerQuadruplets::layers(seedingLayerHits);
@@ -76,6 +76,7 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
 
   for(const auto& regionLayerPairAndLayers: regionTriplets) {
     const TrackingRegion& region = regionLayerPairAndLayers.region();
+    auto seedingHitSetsFiller = seedingHitSets->beginRegion(&region);
 
     LogTrace("HitQuadrupletEDProducer") << " starting region, number of layerPair+3rd layers " << regionLayerPairAndLayers.layerPairAndLayersSize();
 
@@ -114,7 +115,7 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
 #endif
 
       for(const auto& quad: quadruplets) {
-        seedingHitSets->emplace_back(quad[0], quad[1], quad[2], quad[3]);
+        seedingHitSetsFiller.emplace_back(quad[0], quad[1], quad[2], quad[3]);
       }
       quadruplets.clear();
     }
