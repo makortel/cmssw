@@ -24,18 +24,6 @@ initialStepTrackingRegions = _globalTrackingRegionFromBeamSpot.clone(
         nSigmaZ = 4.0
     )
 )
-from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
-initialStepHitDoublets = _hitPairEDProducer.clone(
-    seedingLayers = "initialStepSeedLayers",
-    trackingRegions = "initialStepTrackingRegions",
-    produceIntermediateHitDoublets = True,
-)
-from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
-initialStepHitTriplets = _pixelTripletHLTEDProducer.clone(
-    doublets = "initialStepHitDoublets",
-    maxElement = 1000000,
-    produceIntermediateHitTriplets = True,
-)
 
 # seeding
 from RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff import *
@@ -85,6 +73,37 @@ eras.trackingPhase1.toModify(initialStepSeeds,
 eras.trackingPhase1PU70.toModify(initialStepSeeds,
     RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.7)),
     SeedMergerPSet = _SeedMergerPSet
+)
+
+# seeding v2
+from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+initialStepHitDoublets = _hitPairEDProducer.clone(
+    seedingLayers = "initialStepSeedLayers",
+    trackingRegions = "initialStepTrackingRegions",
+    produceIntermediateHitDoublets = True,
+)
+from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
+initialStepHitTriplets = _pixelTripletHLTEDProducer.clone(
+    doublets = "initialStepHitDoublets",
+    maxElement = 1000000,
+    produceIntermediateHitTriplets = True,
+)
+from RecoPixelVertexing.PixelTriplets.pixelQuadrupletEDProducer_cfi import pixelQuadrupletEDProducer as _pixelQuadrupletEDProducer
+initialStepHitQuadruplets = _pixelQuadrupletEDProducer.clone(
+    triplets = "initialStepHitTriplets",
+    maxChi2 = dict(
+        pt1    = 0.8, pt2    = 2,
+        value1 = 200, value2 = 100,
+        enabled = True,
+    ),
+    extraPhiTolerance = dict(
+        pt1    = 0.6, pt2    = 1,
+        value1 = 0.15, value2 = 0.1,
+        enabled = True,
+    ),
+    useBendingCorrection = True,
+    fitFastCircle = True,
+    fitFastCircleChi2Cut = True,
 )
 
 
@@ -253,6 +272,7 @@ _InitialStep_Phase1.replace(initialStepSeeds,
                             initialStepTrackingRegions +
                             initialStepHitDoublets +
                             initialStepHitTriplets +
+                            initialStepHitQuadruplets +
                             initialStepSeeds
 )
 eras.trackingPhase1.toReplaceWith(InitialStep, _InitialStep_Phase1)
