@@ -7,14 +7,22 @@
 namespace ihd {
   class RegionIndex {
   public:
-    RegionIndex(const TrackingRegion *reg, unsigned int ind): region_(reg), layerSetIndex_(ind) {}
+    RegionIndex(const TrackingRegion *reg, unsigned int ind):
+      region_(reg),
+      layerSetBeginIndex_(ind),
+      layerSetEndIndex_(ind)
+    {}
+
+    void setLayerSetsEnd(unsigned int end) { layerSetEndIndex_ = end; }
 
     const TrackingRegion& region() const { return *region_; }
-    unsigned int layerSetIndex() const { return layerSetIndex_; }
+    unsigned int layerSetBeginIndex() const { return layerSetBeginIndex_; }
+    unsigned int layerSetEndIndex() const { return layerSetEndIndex_; }
 
   private:
     const TrackingRegion *region_;
-    unsigned int layerSetIndex_;  /// index to doublets_, pointing to the beginning of the layer pairs of this region
+    unsigned int layerSetBeginIndex_; /// index to doublets_, pointing to the beginning of the layer pairs of this region
+    unsigned int layerSetEndIndex_;   /// index to doublets_, pointing to the end of the layer pairs of this region
   };
 
   template <typename T>
@@ -50,17 +58,10 @@ namespace ihd {
     const_iterator(const HitSetType *hst, internal_iterator_type iter): hitSets_(hst), iter_(iter) {}
 
     value_type operator*() const {
-      auto next = iter_+1;
-      unsigned int end;
-      if(next != hitSets_->regionsEnd())
-        end = next->layerSetIndex();
-      else
-        end = std::distance(hitSets_->layerSetsBegin(), hitSets_->layerSetsEnd());
-
       return value_type(&(iter_->region()),
                         hitSets_,
-                        hitSets_->layerSetsBegin() + iter_->layerSetIndex(),
-                        hitSets_->layerSetsBegin() + end);
+                        hitSets_->layerSetsBegin() + iter_->layerSetBeginIndex(),
+                        hitSets_->layerSetsBegin() + iter_->layerSetEndIndex());
     }
 
     const_iterator& operator++() { ++iter_; return *this; }
@@ -146,6 +147,7 @@ public:
 
   void addDoublets(const SeedingLayerSetsHits::SeedingLayerSet& layerSet, HitDoublets&& doublets, LayerHitMapCache&& cache) {
     layerPairs_.emplace_back(layerSet, std::move(doublets), std::move(cache));
+    regions_.back().setLayerSetsEnd(layerPairs_.size());
   }
 
   const SeedingLayerSetsHits& seedingLayerHits() const { return *seedingLayers_; }
