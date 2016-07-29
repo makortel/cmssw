@@ -53,6 +53,11 @@ void SeedCreatorFromRegionHitsEDProducerT<T_SeedCreator>::fillDescriptions(edm::
   desc.add<edm::InputTag>("seedingHitSets", edm::InputTag("hitPairEDProducer"));
   T_SeedCreator::fillDescriptions(desc);
 
+  edm::ParameterSetDescription descComparitor;
+  descComparitor.add<std::string>("ComponentName", "none");
+  descComparitor.setAllowAnything(); // until we have moved SeedComparitor too to EDProducers
+  desc.add<edm::ParameterSetDescription>("SeedComparitorPSet", descComparitor);
+
   auto label = std::string("seedCreatorFromRegion") + T_SeedCreator::fillDescriptionsLabel() + "EDProducer";
   descriptions.add(label, desc);
 }
