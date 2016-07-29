@@ -69,13 +69,18 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
   // match-making of triplet and quadruplet layers
   std::vector<LayerQuadruplets::LayerSetAndLayers> quadlayers = LayerQuadruplets::layers(seedingLayerHits);
 
+  LogDebug("HitQuadrupletEDProducer") << "Creating quadruplets for " << regionTriplets.regionSize() << " regions, and " << quadlayers.size() << " triplet+4th layers from " << regionTriplets.tripletsSize() << " triplets";
+
   OrderedHitSeeds quadruplets;
   quadruplets.reserve(localRA_.upper());
 
   for(const auto& regionLayerPairAndLayers: regionTriplets) {
     const TrackingRegion& region = regionLayerPairAndLayers.region();
 
+    LogTrace("HitQuadrupletEDProducer") << " starting region, number of layerPair+3rd layers " << regionLayerPairAndLayers.layerPairAndLayersSize();
+
     for(const auto& layerTriplet: regionLayerPairAndLayers) {
+      edm::LogPrint("HitQuadrupletEDProducer") << "  starting layer triplet " << layerTriplet.innerLayerIndex() << "," << layerTriplet.middleLayerIndex() << "," << layerTriplet.outerLayerIndex();
       auto found = std::find_if(quadlayers.begin(), quadlayers.end(), [&](const LayerQuadruplets::LayerSetAndLayers& a) {
           return a.first[0].index() == layerTriplet.innerLayerIndex() &&
                  a.first[1].index() == layerTriplet.middleLayerIndex() &&
@@ -100,6 +105,13 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
       hitCache.extend(layerTriplet.cache());
 
       generator_.hitQuadruplets(region, quadruplets, iEvent, iSetup, layerTriplet.tripletsBegin(), layerTriplet.tripletsEnd(), fourthLayers, hitCache);
+
+#ifdef EDM_ML_DEBUG
+      LogTrace("HitQuadrupletEDProducer") << "  created " << quadruplets.size() << " quadruplets for layer triplet " << layerTriplet.innerLayerIndex() << "," << layerTriplet.middleLayerIndex() << "," << layerTriplet.outerLayerIndex() << " and 4th layers";
+      for(const auto& l: fourthLayers) {
+        LogTrace("HitQuadrupletEDProducer") << "   " << l.index();
+      }
+#endif
 
       for(const auto& quad: quadruplets) {
         seedingHitSets->emplace_back(quad[0], quad[1], quad[2], quad[3]);
