@@ -56,8 +56,8 @@ PixelTripletHLTGenerator::~PixelTripletHLTGenerator() {}
 
 void PixelTripletHLTGenerator::fillDescriptions(edm::ParameterSetDescription& desc) {
   HitTripletGeneratorFromPairAndLayers::fillDescriptions(desc);
-  desc.add<double>("extraHitRZtolerance", 0.032);
-  desc.add<double>("extraHitRPhitolerance", 0.037);
+  desc.add<double>("extraHitRPhitolerance", 0.032);
+  desc.add<double>("extraHitRZtolerance", 0.037);
   desc.add<bool>("useMultScattering", true);
   desc.add<bool>("useBending", true);
   desc.add<bool>("useFixedPreFiltering", false);
