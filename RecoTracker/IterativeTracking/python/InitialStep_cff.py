@@ -80,10 +80,14 @@ import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cf
 initialStepSeeds2.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
 
 # seeding v2
+from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cfi import clusterCheckerEDProducer as _clusterCheckerEDProducer
+initialStepClusterCheck = _clusterCheckerEDProducer.clone()
+
 from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
 initialStepHitDoublets = _hitPairEDProducer.clone(
     seedingLayers = "initialStepSeedLayers",
     trackingRegions = "initialStepTrackingRegions",
+    clusterCheck = "initialStepClusterCheck",
     produceIntermediateHitDoublets = True,
 )
 from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
@@ -276,6 +280,7 @@ InitialStep = cms.Sequence(initialStepSeedLayers*
 _InitialStep_Phase1 = InitialStep.copy()
 _InitialStep_Phase1.replace(initialStepSeeds,
                             initialStepTrackingRegions +
+                            initialStepClusterCheck +
                             initialStepHitDoublets +
                             initialStepHitTriplets +
                             initialStepHitQuadruplets +
