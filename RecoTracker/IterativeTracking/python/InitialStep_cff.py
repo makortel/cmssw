@@ -80,7 +80,7 @@ import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cf
 initialStepSeeds2.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
 
 # seeding v2
-from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cfi import clusterCheckerEDProducer as _clusterCheckerEDProducer
+from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cff import clusterCheckerEDProducer as _clusterCheckerEDProducer
 initialStepClusterCheck = _clusterCheckerEDProducer.clone()
 
 from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
