@@ -79,6 +79,9 @@ void SeedCreatorFromRegionHitsEDProducerT<T_SeedCreator>::produce(edm::Event& iE
     seedCreator_.init(region, iSetup, comparitor_.get());
 
     for(const SeedingHitSet& hits: regionSeedingHitSets) {
+      // TODO: do we really need a comparitor at this point? It is
+      // used in triplet and quadruplet generators, as well as inside
+      // seedCreator.
       if(!comparitor_ || comparitor_->compatible(hits, region)) {
         seedCreator_.makeSeed(*seeds, hits);
       }
