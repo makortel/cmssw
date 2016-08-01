@@ -1,6 +1,3 @@
-#ifndef RecoPixelVertexing_PixelTriplets_HitQuadrupletEDProducerT_H
-#define RecoPixelVertexing_PixelTriplets_HitQuadrupletEDProducerT_H
-
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -16,11 +13,12 @@
 #include "RecoPixelVertexing/PixelTriplets/interface/IntermediateHitTriplets.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/LayerQuadruplets.h"
 
-template <typename T_HitQuadrupletGenerator>
-class HitQuadrupletEDProducerT: public edm::stream::EDProducer<> {
+#include "PixelQuadrupletGenerator.h"
+
+class PixelQuadrupletEDProducer: public edm::stream::EDProducer<> {
 public:
-  HitQuadrupletEDProducerT(const edm::ParameterSet& iConfig);
-  ~HitQuadrupletEDProducerT() = default;
+  PixelQuadrupletEDProducer(const edm::ParameterSet& iConfig);
+  ~PixelQuadrupletEDProducer() = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -31,36 +29,33 @@ private:
 
   edm::RunningAverage localRA_;
 
-  T_HitQuadrupletGenerator generator_;
+  PixelQuadrupletGenerator generator_;
 };
 
-template <typename T_HitQuadrupletGenerator>
-HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::HitQuadrupletEDProducerT(const edm::ParameterSet& iConfig):
+PixelQuadrupletEDProducer::PixelQuadrupletEDProducer(const edm::ParameterSet& iConfig):
   tripletToken_(consumes<IntermediateHitTriplets>(iConfig.getParameter<edm::InputTag>("triplets"))),
   generator_(iConfig, consumesCollector())
 {
   produces<RegionsSeedingHitSets>();
 }
 
-template <typename T_HitQuadrupletGenerator>
-void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void PixelQuadrupletEDProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
 
   desc.add<edm::InputTag>("triplets", edm::InputTag("hitTripletEDProducer"));
-  T_HitQuadrupletGenerator::fillDescriptions(desc);
+  PixelQuadrupletGenerator::fillDescriptions(desc);
 
-  descriptions.add(T_HitQuadrupletGenerator::fillDescriptionsLabel(), desc);
+  descriptions.add("pixelQuadrupletEDProducer", desc);
 }
 
-template <typename T_HitQuadrupletGenerator>
-void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void PixelQuadrupletEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::Handle<IntermediateHitTriplets> htriplets;
   iEvent.getByToken(tripletToken_, htriplets);
   const auto& regionTriplets = *htriplets;
 
   const SeedingLayerSetsHits& seedingLayerHits = regionTriplets.seedingLayerHits();
   if(seedingLayerHits.numberOfLayersInSet() < 4) {
-    throw cms::Exception("Configuration") << "HitQuadrupletEDProducerT expects SeedingLayerSetsHits::numberOfLayersInSet() to be >= 4, got " << seedingLayerHits.numberOfLayersInSet();
+    throw cms::Exception("Configuration") << "PixelQuadrupletEDProducer expects SeedingLayerSetsHits::numberOfLayersInSet() to be >= 4, got " << seedingLayerHits.numberOfLayersInSet();
   }
 
   auto seedingHitSets = std::make_unique<RegionsSeedingHitSets>();
@@ -125,5 +120,5 @@ void HitQuadrupletEDProducerT<T_HitQuadrupletGenerator>::produce(edm::Event& iEv
   iEvent.put(std::move(seedingHitSets));
 }
 
-
-#endif
+#include "FWCore/Framework/interface/MakerMacros.h"
+DEFINE_FWK_MODULE(PixelQuadrupletEDProducer);

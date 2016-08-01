@@ -29,7 +29,3 @@ DEFINE_EDM_PLUGIN(HitQuadrupletGeneratorFromTripletAndLayersFactory, PixelQuadru
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletEDProducerT.h"
 using PixelTripletHLTEDProducer = HitTripletEDProducerT<PixelTripletHLTGenerator>;
 DEFINE_FWK_MODULE(PixelTripletHLTEDProducer);
-
-#include "RecoPixelVertexing/PixelTriplets/interface/HitQuadrupletEDProducerT.h"
-using PixelQuadrupletEDProducer = HitQuadrupletEDProducerT<PixelQuadrupletGenerator>;
-DEFINE_FWK_MODULE(PixelQuadrupletEDProducer);

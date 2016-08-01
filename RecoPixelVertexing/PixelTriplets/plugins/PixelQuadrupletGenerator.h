@@ -27,7 +27,6 @@ public:
   virtual ~PixelQuadrupletGenerator();
 
   static void fillDescriptions(edm::ParameterSetDescription& desc);
-  static const char *fillDescriptionsLabel() { return "pixelQuadrupletEDProducer"; }
 
   virtual void hitQuadruplets( const TrackingRegion& region, OrderedHitSeeds& result,
                                const edm::Event & ev, const edm::EventSetup& es,
