@@ -47,6 +47,107 @@ def customiseFor14833(process):
                 producer.includeME0 = cms.bool(False)
     return process
 
+def customiseForXXXXX(process):
+    from RecoTracker.TkTrackingRegions.globalTrackingRegionFromBeamSpot_cfi import globalTrackingRegionFromBeamSpot as _globalTrackingRegionFromBeamSpot
+    from RecoTracker.TkSeedGenerator.trackerClusterCheck_cff import trackerClusterCheck as _trackerClusterCheck
+    from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+    from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
+    from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsEDProducer_cfi import seedCreatorFromRegionConsecutiveHitsEDProducer as _seedCreatorFromRegionConsecutiveHitsEDProducer
+    def _copy(old, new, skip=[]):
+        skipSet = set(skip)
+        for key in old.parameterNames_():
+            if key not in skipSet:
+                setattr(new, key, getattr(old, key))
+
+    # Bit of a hack to replace a module with another, but works
+    modifier = cms.Modifier()
+    modifier._setChosen()
+
+    for producer in producers_by_type(process, "SeedGeneratorFromRegionHitsEDProducer"):
+        if producer.OrderedHitsFactoryPSet.ComponentName.value() != "StandardHitTripletGenerator":
+            continue
+        if producer.OrderedHitsFactoryPSet.GeneratorPSet.ComponentName.value() != "PixelTripletHLTGenerator":
+            continue
+        if producer.RegionFactoryPSet.ComponentName.value() != "GlobalRegionProducerFromBeamSpot":
+            continue
+        if producer.SeedCreatorPSet.ComponentName.value() != "SeedFromConsecutiveHitsCreator":
+            continue
+
+        label = producer.label()
+        if "Seeds" in label:
+            regionLabel = label.replace("Seeds", "TrackingRegions")
+            clusterCheckLabel = label.replace("Seeds", "ClusterCheck")
+            doubletLabel = label.replace("Seeds", "HitDoublets")
+            tripletLabel = label.replace("Seeds", "HitTriplets")
+        else:
+            regionLabel = label + "TrackingRegions"
+            clusterCheckLabel = label + "ClusterCheck"
+            doubletLabel = label + "HitPairs"
+            tripletLabel = label + "HitTriplets"
+
+        # Construct new producers
+        regionProducer = _globalTrackingRegionFromBeamSpot.clone()
+        regionProducer.RegionPSet = producer.RegionFactoryPSet.RegionPSet
+
+        clusterCheckProducer = _trackerClusterCheck.clone()
+        _copy(producer.ClusterCheckPSet, clusterCheckProducer)
+
+        doubletProducer = _hitPairEDProducer.clone(
+            seedingLayers = producer.OrderedHitsFactoryPSet.SeedingLayers.value(),
+            trackingRegions = regionLabel,
+            clusterCheck = clusterCheckLabel,
+            produceIntermediateHitDoublets = True,
+        )
+
+        tripletProducer = _pixelTripletHLTEDProducer.clone(
+            doublets = doubletLabel,
+            produceSeedingHitSets = True,
+        )
+        _copy(producer.OrderedHitsFactoryPSet.GeneratorPSet, tripletProducer, skip=["ComponentName"])
+
+        seedCreatorPSet = producer.SeedCreatorPSet
+        if hasattr(seedCreatorPSet, "refToPSet_"):
+            seedCreatorPSet = getattr(process, seedCreatorPSet.refToPSet_.value())
+
+        seedProducer = _seedCreatorFromRegionConsecutiveHitsEDProducer.clone(
+            seedingHitSets = tripletLabel,
+        )
+        _copy(seedCreatorPSet, seedProducer, skip=["ComponentName"])
+
+        # Set new producers to process
+        setattr(process, regionLabel, regionProducer)
+        setattr(process, clusterCheckLabel, clusterCheckProducer)
+        setattr(process, doubletLabel, doubletProducer)
+        setattr(process, tripletLabel, tripletProducer)
+        modifier.toReplaceWith(producer, seedProducer)
+
+        # Modify sequences (also paths to be sure, altough in practice
+        # the seeding modules should be only in sequences in HLT?)
+        for seqs in [process.sequences_(), process.paths_()]:
+            for seqName, seq in seqs.iteritems():
+                # Is there really no simpler way to add
+                # regionProducer+doubletProducer+tripletProducer
+                # before producer in the sequence?
+                #
+                # cms.Sequence.replace() would look much simpler, but
+                # it traverses the contained sequences too, leading to
+                # multiple replaces as we already loop over all
+                # sequences of a cms.Process, and also expands the
+                # contained sequences if a replacement occurs there.
+                try:
+                    index = seq.index(producer)
+                except:
+                    continue
+
+                # Inserted on reverse order, succeeding module will be
+                # inserted before preceding one
+                seq.insert(index, tripletProducer)
+                seq.insert(index, doubletProducer)
+                seq.insert(index, clusterCheckProducer)
+                seq.insert(index, regionProducer)
+
+    return process
+
 #
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
@@ -58,6 +159,7 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
         process = customiseFor14356(process)
         process = customiseFor13753(process)
         process = customiseFor14833(process)
+        process = customiseForXXXXX(process)
 #       process = customiseFor12718(process)
         pass
 
