@@ -70,6 +70,8 @@ def customiseForXXXXX(process):
             continue
         if producer.RegionFactoryPSet.ComponentName.value() != "GlobalRegionProducerFromBeamSpot":
             continue
+        if producer.SeedCreatorPSet.ComponentName.value() != "SeedFromConsecutiveHitsCreator":
+            continue
 
         label = producer.label()
         if "Seeds" in label:
