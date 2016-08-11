@@ -62,10 +62,24 @@ from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsEDProducer_
 initialStepSeeds = _seedCreatorFromRegionConsecutiveHitsEDProducer.clone(
     seedingHitSets = "initialStepHitTriplets",
 )
+# temporary...
+initialStepHitQuadruplets.SeedCreatorPSet = cms.PSet(
+    ComponentName = cms.string("SeedFromConsecutiveHitsCreator"),
+    MinOneOverPtError = initialStepSeeds.MinOneOverPtError,
+    OriginTransverseErrorMultiplier = initialStepSeeds.OriginTransverseErrorMultiplier,
+    SeedMomentumForBOFF = initialStepSeeds.SeedMomentumForBOFF,
+    TTRHBuilder = initialStepSeeds.TTRHBuilder,
+    forceKinematicWithRegionDirection = initialStepSeeds.forceKinematicWithRegionDirection,
+    magneticField = initialStepSeeds.magneticField,
+    propagator = initialStepSeeds.propagator,
+
+)
+initialStepHitQuadruplets.SeedComparitorPSet = initialStepSeeds.SeedComparitorPSet
+
 eras.trackingLowPU.toModify(initialStepHitTriplets, maxElement=100000)
-eras.trackingPhase1PU70.toModify(initialStepHitTriplets, maxElement=0, produceSeedingHitSets=False, produceIntermediateHitTriplets=True)
+eras.trackingPhase1PU70.toModify(initialStepHitTriplets, maxElement=0)
 eras.trackingPhase1PU70.toModify(initialStepSeeds, seedingHitSets="initialStepHitQuadruplets")
-eras.trackingPhase2PU140.toModify(initialStepHitTriplets, maxElement=0, produceSeedingHitSets=False, produceIntermediateHitTriplets=True)
+eras.trackingPhase2PU140.toModify(initialStepHitTriplets, maxElement=0)
 eras.trackingPhase2PU140.toModify(initialStepSeeds, seedingHitSets="initialStepHitQuadruplets")
 
 
