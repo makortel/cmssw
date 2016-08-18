@@ -38,41 +38,64 @@ tobTecStepSeedLayersTripl = cms.EDProducer("SeedingLayersEDProducer",
         maxRing = cms.int32(7)
     )
 )
-# TRIPLET SEEDS
-import RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff
-tobTecStepSeedsTripl = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.globalSeedsFromTriplets.clone()
-#OrderedHitsFactory
-tobTecStepSeedsTripl.OrderedHitsFactoryPSet.SeedingLayers = 'tobTecStepSeedLayersTripl'
-tobTecStepSeedsTripl.OrderedHitsFactoryPSet.ComponentName = 'StandardMultiHitGenerator'
-import RecoTracker.TkSeedGenerator.MultiHitGeneratorFromChi2_cfi
-tobTecStepSeedsTripl.OrderedHitsFactoryPSet.GeneratorPSet = RecoTracker.TkSeedGenerator.MultiHitGeneratorFromChi2_cfi.MultiHitGeneratorFromChi2.clone(
-    extraPhiKDBox = 0.01
-    )
-#RegionFactory
-tobTecStepSeedsTripl.RegionFactoryPSet.RegionPSet.ptMin = 0.55
-tobTecStepSeedsTripl.RegionFactoryPSet.RegionPSet.originHalfLength = 20.0
-tobTecStepSeedsTripl.RegionFactoryPSet.RegionPSet.originRadius = 3.5
-#SeedCreator
-tobTecStepSeedsTripl.SeedCreatorPSet.ComponentName = 'SeedFromConsecutiveHitsCreator' #empirically better than 'SeedFromConsecutiveHitsTripletOnlyCreator'
-tobTecStepSeedsTripl.SeedCreatorPSet.OriginTransverseErrorMultiplier = 1.0
-#SeedComparitor
-import RecoPixelVertexing.PixelLowPtUtilities.StripSubClusterShapeSeedFilter_cfi
 
-tobTecStepSeedsTripl.SeedComparitorPSet = cms.PSet(
-   ComponentName = cms.string('CombinedSeedComparitor'),
-   mode = cms.string("and"),
-   comparitors = cms.VPSet(
-     cms.PSet(
-        ComponentName = cms.string('PixelClusterShapeSeedComparitor'),
-        FilterAtHelixStage = cms.bool(True),
-        FilterPixelHits = cms.bool(False),
-        FilterStripHits = cms.bool(True),
-        ClusterShapeHitFilterName = cms.string('tobTecStepClusterShapeHitFilter'),
-        ClusterShapeCacheSrc = cms.InputTag("siPixelClusterShapeCache") # not really needed here since FilterPixelHits=False
-    ),
-    RecoPixelVertexing.PixelLowPtUtilities.StripSubClusterShapeSeedFilter_cfi.StripSubClusterShapeSeedFilter.clone()
-  )
+# Triplet TrackingRegion
+from RecoTracker.TkTrackingRegions.globalTrackingRegionFromBeamSpotFixedZ_cfi import globalTrackingRegionFromBeamSpotFixedZ as _globalTrackingRegionFromBeamSpotFixedZ
+tobTecStepTrackingRegionsTripl = _globalTrackingRegionFromBeamSpotFixedZ.clone(RegionPSet = dict(
+    ptMin = 0.55,
+    originHalfLength = 20.0,
+    originRadius = 3.5
+))
+
+# Triplet seeding
+from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import ClusterShapeHitFilterESProducer as _ClusterShapeHitFilterESProducer
+tobTecStepClusterShapeHitFilter = _ClusterShapeHitFilterESProducer.clone(
+    ComponentName = 'tobTecStepClusterShapeHitFilter',
+    PixelShapeFile= 'RecoPixelVertexing/PixelLowPtUtilities/data/pixelShape.par', # FIXME: this is an incorrect override for phase1/phase2 (and anyway unnecessary). To be fixed later to preserve old result during the refactoring.
+    doStripShapeCut = cms.bool(False),
+    clusterChargeCut = dict(refToPSet_ = 'SiStripClusterChargeCutTight')
 )
+
+from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cff import clusterCheckerEDProducer as _clusterCheckerEDProducer
+tobTecStepClusterCheckTripl = _clusterCheckerEDProducer.clone(
+    PixelClusterCollectionLabel = 'siPixelClusters'
+)
+from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+tobTecStepHitDoubletsTripl = _hitPairEDProducer.clone(
+    seedingLayers = "tobTecStepSeedLayersTripl",
+    trackingRegions = "tobTecStepTrackingRegionsTripl",
+    clusterCheck = "tobTecStepClusterCheckTripl",
+    produceIntermediateHitDoublets = True,
+)
+from RecoTracker.TkSeedGenerator.multiHitFromChi2EDProducer_cfi import multiHitFromChi2EDProducer as _multiHitFromChi2EDProducer
+tobTecStepHitTripletsTripl = _multiHitFromChi2EDProducer.clone(
+    doublets = "tobTecStepHitDoubletsTripl",
+    maxElement = 1000000,
+    extraPhiKDBox = 0.01,
+)
+from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsEDProducer_cff import seedCreatorFromRegionConsecutiveHitsEDProducer as _seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer
+from RecoPixelVertexing.PixelLowPtUtilities.StripSubClusterShapeSeedFilter_cfi import StripSubClusterShapeSeedFilter as _StripSubClusterShapeSeedFilter
+_tobTecStepSeedComparitorPSet = dict(
+    ComponentName = 'CombinedSeedComparitor',
+    mode = cms.string("and"),
+    comparitors = cms.VPSet(
+        cms.PSet(# FIXME: is this defined in any cfi that could be imported instead of copy-paste?
+            ComponentName = cms.string('PixelClusterShapeSeedComparitor'),
+            FilterAtHelixStage = cms.bool(True),
+            FilterPixelHits = cms.bool(False),
+            FilterStripHits = cms.bool(True),
+            ClusterShapeHitFilterName = cms.string('tobTecStepClusterShapeHitFilter'),
+            ClusterShapeCacheSrc = cms.InputTag("siPixelClusterShapeCache") # not really needed here since FilterPixelHits=False
+        ),
+        _StripSubClusterShapeSeedFilter.clone()
+    )
+)
+tobTecStepSeedsTripl = _seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer.clone(#empirically better than 'SeedFromConsecutiveHitsTripletOnlyCreator'
+    seedingHitSets = "tobTecStepHitTripletsTripl",
+    SeedComparitorPSet = _tobTecStepSeedComparitorPSet,
+)
+
+
 # PAIR SEEDING LAYERS
 tobTecStepSeedLayersPair = cms.EDProducer("SeedingLayersEDProducer",
     layerList = cms.vstring('TOB1+TEC1_pos','TOB1+TEC1_neg', 
@@ -96,67 +119,52 @@ tobTecStepSeedLayersPair = cms.EDProducer("SeedingLayersEDProducer",
         maxRing = cms.int32(5)
     )
 )
-# PAIR SEEDS
-import RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi
-tobTecStepClusterShapeHitFilter  = RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi.ClusterShapeHitFilterESProducer.clone(
-	ComponentName = cms.string('tobTecStepClusterShapeHitFilter'),
-        PixelShapeFile= cms.string('RecoPixelVertexing/PixelLowPtUtilities/data/pixelShape.par'),
-	clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
-	doStripShapeCut  = cms.bool(False)
-	)
+# Pair TrackingRegion
+tobTecStepTrackingRegionsPair = _globalTrackingRegionFromBeamSpotFixedZ.clone(RegionPSet = dict(
+    ptMin = 0.6,
+    originHalfLength = 30.0,
+    originRadius = 6.0,
+))
 
-import RecoTracker.TkSeedGenerator.GlobalMixedSeeds_cff
-tobTecStepSeedsPair = RecoTracker.TkSeedGenerator.GlobalMixedSeeds_cff.globalMixedSeeds.clone()
-#OrderedHitsFactory
-tobTecStepSeedsPair.OrderedHitsFactoryPSet.ComponentName = cms.string('StandardHitPairGenerator')
-tobTecStepSeedsPair.OrderedHitsFactoryPSet.SeedingLayers = 'tobTecStepSeedLayersPair'
-#RegionFactory
-tobTecStepSeedsPair.RegionFactoryPSet.RegionPSet.ptMin = 0.6
-tobTecStepSeedsPair.RegionFactoryPSet.RegionPSet.originHalfLength = 30.0
-tobTecStepSeedsPair.RegionFactoryPSet.RegionPSet.originRadius = 6.0
-#SeedCreator
-tobTecStepSeedsPair.SeedCreatorPSet.OriginTransverseErrorMultiplier = 1.0
-#SeedComparitor
-tobTecStepSeedsPair.SeedComparitorPSet = cms.PSet(
-   ComponentName = cms.string('CombinedSeedComparitor'),
-   mode = cms.string("and"),
-   comparitors = cms.VPSet(
-     cms.PSet(
-        ComponentName = cms.string('PixelClusterShapeSeedComparitor'),
-        FilterAtHelixStage = cms.bool(True),
-        FilterPixelHits = cms.bool(False),
-        FilterStripHits = cms.bool(True),
-        ClusterShapeHitFilterName = cms.string('tobTecStepClusterShapeHitFilter'),
-        ClusterShapeCacheSrc = cms.InputTag("siPixelClusterShapeCache") # not really needed here since FilterPixelHits=False
-    ),
-    RecoPixelVertexing.PixelLowPtUtilities.StripSubClusterShapeSeedFilter_cfi.StripSubClusterShapeSeedFilter.clone()
-  )
+# Pair seeds
+from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cff import clusterCheckerEDProducer as _clusterCheckerEDProducer
+tobTecStepClusterCheckPair = _clusterCheckerEDProducer.clone(
+    PixelClusterCollectionLabel = 'siPixelClusters'
 )
+from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+tobTecStepHitDoubletsPair = _hitPairEDProducer.clone(
+    seedingLayers = "tobTecStepSeedLayersPair",
+    trackingRegions = "tobTecStepTrackingRegionsPair",
+    clusterCheck = "tobTecStepClusterCheckPair",
+    maxElement = 1000000,
+    produceSeedingHitSets = True,
+)
+from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsEDProducer_cff import seedCreatorFromRegionConsecutiveHitsEDProducer as _seedCreatorFromRegionConsecutiveHitsEDProducer
+tobTecStepSeedsPair = _seedCreatorFromRegionConsecutiveHitsEDProducer.clone(
+    seedingHitSets = "tobTecStepHitDoubletsPair",
+    SeedComparitorPSet = _tobTecStepSeedComparitorPSet,
+)
+
+# Combined seeds
 import RecoTracker.TkSeedGenerator.GlobalCombinedSeeds_cfi
 tobTecStepSeeds = RecoTracker.TkSeedGenerator.GlobalCombinedSeeds_cfi.globalCombinedSeeds.clone()
 tobTecStepSeeds.seedCollections = cms.VInputTag(cms.InputTag('tobTecStepSeedsTripl'),cms.InputTag('tobTecStepSeedsPair'))
+
 # LowPU
-import RecoTracker.TkSeedGenerator.GlobalMixedSeeds_cff
-eras.trackingLowPU.toReplaceWith(tobTecStepSeeds, RecoTracker.TkSeedGenerator.GlobalMixedSeeds_cff.globalMixedSeeds.clone(
-    OrderedHitsFactoryPSet = dict(SeedingLayers = 'tobTecStepSeedLayers'),
-    RegionFactoryPSet = dict(RegionPSet = dict(
-        ptMin = 0.6,
-        originHalfLength = 30.0,
-        originRadius = 6.0,
-    ))
+eras.trackingLowPU.toModify(tobTecStepHitDoubletsPair, seedingLayers = 'tobTecStepSeedLayers')
+eras.trackingLowPU.toReplaceWith(tobTecStepSeeds, _seedCreatorFromRegionConsecutiveHitsEDProducer.clone(
+    seedingHitSets = "tobTecStepHitDoubletsPair",
 ))
 # Phase1PU70
-eras.trackingPhase1PU70.toReplaceWith(tobTecStepSeeds, RecoTracker.TkSeedGenerator.GlobalMixedSeeds_cff.globalMixedSeeds.clone(
-    OrderedHitsFactoryPSet = dict(SeedingLayers = 'tobTecStepSeedLayers'),
-    RegionFactoryPSet = dict(
-        RegionPSet = dict(
-            ptMin = 1.0,
-            originHalfLength = 15.0,
-            originRadius = 2.0
-        )
-    ),
-    SeedCreatorPSet = dict(OriginTransverseErrorMultiplier = 3.0),
-    SeedComparitorPSet = cms.PSet(
+eras.trackingPhase1PU70.toModify(tobTecStepTrackingRegionsPair, RegionPSet = dict(
+    ptMin = 1.0,
+    originHalfLength = 15.0,
+    originRadius = 2.0
+))
+eras.trackingPhase1PU70.toModify(tobTecStepHitDoubletsPair, seedingLayers = 'tobTecStepSeedLayers')
+eras.trackingPhase1PU70.toReplaceWith(tobTecStepSeeds, tobTecStepSeedsPair.clone(
+    OriginTransverseErrorMultiplier = 3.0,
+    SeedComparitorPSet = cms.PSet(# FIXME: is this defined in any cfi that could be imported instead of copy-paste?
         ComponentName = cms.string('PixelClusterShapeSeedComparitor'),
         FilterAtHelixStage = cms.bool(True),
         FilterPixelHits = cms.bool(False),
@@ -386,8 +394,15 @@ eras.trackingLowPU.toReplaceWith(tobTecStep, RecoTracker.FinalTrackSelectors.mul
 
 TobTecStep = cms.Sequence(tobTecStepClusters*
                           tobTecStepSeedLayersTripl*
+                          tobTecStepTrackingRegionsTripl*
+                          tobTecStepClusterCheckTripl*
+                          tobTecStepHitDoubletsTripl*
+                          tobTecStepHitTripletsTripl*
                           tobTecStepSeedsTripl*
                           tobTecStepSeedLayersPair*
+                          tobTecStepTrackingRegionsPair*
+                          tobTecStepClusterCheckPair*
+                          tobTecStepHitDoubletsPair*
                           tobTecStepSeedsPair*
                           tobTecStepSeeds*
                           tobTecStepTrackCandidates*
@@ -498,6 +513,9 @@ tobTecStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.mult
 eras.trackingLowPU.toReplaceWith(TobTecStep, cms.Sequence(
     tobTecStepClusters*
     tobTecStepSeedLayers*
+    tobTecStepTrackingRegionsPair*
+    tobTecStepClusterCheckPair*
+    tobTecStepHitDoubletsPair*
     tobTecStepSeeds*
     tobTecStepTrackCandidates*
     tobTecStepTracks*
@@ -507,6 +525,9 @@ eras.trackingPhase1PU70.toReplaceWith(TobTecStep, cms.Sequence(
     tobTecStepClusters*
     tobTecStepSeedClusters*
     tobTecStepSeedLayers*
+    tobTecStepTrackingRegionsPair*
+    tobTecStepClusterCheckPair*
+    tobTecStepHitDoubletsPair*
     tobTecStepSeeds*
     tobTecStepTrackCandidates*
     tobTecStepTracks*
