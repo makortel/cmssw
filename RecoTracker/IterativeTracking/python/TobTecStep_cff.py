@@ -55,15 +55,10 @@ tobTecStepClusterShapeHitFilter = _ClusterShapeHitFilterESProducer.clone(
     clusterChargeCut = dict(refToPSet_ = 'SiStripClusterChargeCutTight')
 )
 
-from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cff import clusterCheckerEDProducer as _clusterCheckerEDProducer
-tobTecStepClusterCheckTripl = _clusterCheckerEDProducer.clone(
-    PixelClusterCollectionLabel = 'siPixelClusters'
-)
 from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
 tobTecStepHitDoubletsTripl = _hitPairEDProducer.clone(
     seedingLayers = "tobTecStepSeedLayersTripl",
     trackingRegions = "tobTecStepTrackingRegionsTripl",
-    clusterCheck = "tobTecStepClusterCheckTripl",
     produceIntermediateHitDoublets = True,
 )
 from RecoTracker.TkSeedGenerator.multiHitFromChi2EDProducer_cfi import multiHitFromChi2EDProducer as _multiHitFromChi2EDProducer
@@ -126,15 +121,10 @@ tobTecStepTrackingRegionsPair = _globalTrackingRegionFromBeamSpotFixedZ.clone(Re
 ))
 
 # Pair seeds
-from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cff import clusterCheckerEDProducer as _clusterCheckerEDProducer
-tobTecStepClusterCheckPair = _clusterCheckerEDProducer.clone(
-    PixelClusterCollectionLabel = 'siPixelClusters'
-)
 from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
 tobTecStepHitDoubletsPair = _hitPairEDProducer.clone(
     seedingLayers = "tobTecStepSeedLayersPair",
     trackingRegions = "tobTecStepTrackingRegionsPair",
-    clusterCheck = "tobTecStepClusterCheckPair",
     maxElement = 1000000,
     produceSeedingHitSets = True,
 )
@@ -394,13 +384,11 @@ eras.trackingLowPU.toReplaceWith(tobTecStep, RecoTracker.FinalTrackSelectors.mul
 TobTecStep = cms.Sequence(tobTecStepClusters*
                           tobTecStepSeedLayersTripl*
                           tobTecStepTrackingRegionsTripl*
-                          tobTecStepClusterCheckTripl*
                           tobTecStepHitDoubletsTripl*
                           tobTecStepHitTripletsTripl*
                           tobTecStepSeedsTripl*
                           tobTecStepSeedLayersPair*
                           tobTecStepTrackingRegionsPair*
-                          tobTecStepClusterCheckPair*
                           tobTecStepHitDoubletsPair*
                           tobTecStepSeedsPair*
                           tobTecStepSeeds*
@@ -513,7 +501,6 @@ eras.trackingLowPU.toReplaceWith(TobTecStep, cms.Sequence(
     tobTecStepClusters*
     tobTecStepSeedLayers*
     tobTecStepTrackingRegionsPair*
-    tobTecStepClusterCheckPair*
     tobTecStepHitDoubletsPair*
     tobTecStepSeeds*
     tobTecStepTrackCandidates*
@@ -525,7 +512,6 @@ eras.trackingPhase1PU70.toReplaceWith(TobTecStep, cms.Sequence(
     tobTecStepSeedClusters*
     tobTecStepSeedLayers*
     tobTecStepTrackingRegionsPair*
-    tobTecStepClusterCheckPair*
     tobTecStepHitDoubletsPair*
     tobTecStepSeeds*
     tobTecStepTrackCandidates*

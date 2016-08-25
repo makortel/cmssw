@@ -30,15 +30,10 @@ eras.trackingPhase2PU140.toModify(lowPtQuadStepTrackingRegions, RegionPSet = dic
 
 
 # seeding
-from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cff import clusterCheckerEDProducer as _clusterCheckerEDProducer
-lowPtQuadStepClusterCheck = _clusterCheckerEDProducer.clone(
-    PixelClusterCollectionLabel = 'siPixelClusters'
-)
 from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
 lowPtQuadStepHitDoublets = _hitPairEDProducer.clone(
     seedingLayers = "lowPtQuadStepSeedLayers",
     trackingRegions = "lowPtQuadStepTrackingRegions",
-    clusterCheck = "lowPtQuadStepClusterCheck",
     produceIntermediateHitDoublets = True,
 )
 from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
@@ -291,7 +286,6 @@ eras.trackingPhase2PU140.toModify(lowPtQuadStepSelector,
 LowPtQuadStep = cms.Sequence(lowPtQuadStepClusters*
                              lowPtQuadStepSeedLayers*
                              lowPtQuadStepTrackingRegions*
-                             lowPtQuadStepClusterCheck*
                              lowPtQuadStepHitDoublets*
                              lowPtQuadStepHitTriplets*
                              lowPtQuadStepHitQuadruplets*
