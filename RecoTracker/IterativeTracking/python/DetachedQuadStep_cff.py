@@ -59,17 +59,17 @@ eras.trackingPhase2PU140.toReplaceWith(detachedQuadStepTrackingRegions, _globalT
 )))
 
 # seeding
-from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+from RecoTracker.TkHitPairs.hitPairEDProducer_cff import hitPairEDProducer as _hitPairEDProducer
 detachedQuadStepHitDoublets = _hitPairEDProducer.clone(
     seedingLayers = "detachedQuadStepSeedLayers",
     trackingRegions = "detachedQuadStepTrackingRegions",
+    maxElement = 0,
     produceIntermediateHitDoublets = True,
 )
-from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cfi import pixelTripletLargeTipEDProducer as _pixelTripletLargeTipEDProducer
+from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cff import pixelTripletLargeTipEDProducer as _pixelTripletLargeTipEDProducer
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
 detachedQuadStepHitTriplets = _pixelTripletLargeTipEDProducer.clone(
     doublets = "detachedQuadStepHitDoublets",
-    maxElement = 1000000,
     produceIntermediateHitTriplets = True,
 )
 from RecoPixelVertexing.PixelTriplets.pixelQuadrupletEDProducer_cfi import pixelQuadrupletEDProducer as _pixelQuadrupletEDProducer
@@ -122,10 +122,10 @@ _detachedQuadStepHitQuadrupletsMerging.SeedCreatorPSet = cms.PSet(
 )
 _detachedQuadStepHitQuadrupletsMerging.SeedComparitorPSet = detachedQuadStepSeeds.SeedComparitorPSet
 
-eras.trackingPhase1PU70.toModify(detachedQuadStepHitTriplets, maxElement=0, produceIntermediateHitTriplets=False, produceSeedingHitSets=True)
+eras.trackingPhase1PU70.toModify(detachedQuadStepHitTriplets, produceIntermediateHitTriplets=False, produceSeedingHitSets=True)
 eras.trackingPhase1PU70.toReplaceWith(detachedQuadStepHitQuadruplets, _detachedQuadStepHitQuadrupletsMerging)
 eras.trackingPhase1PU70.toModify(detachedQuadStepSeeds, SeedComparitorPSet=cms.PSet(ComponentName=cms.string("none")))
-eras.trackingPhase2PU140.toModify(detachedQuadStepHitTriplets, maxElement=0, produceIntermediateHitTriplets=False, produceSeedingHitSets=True)
+eras.trackingPhase2PU140.toModify(detachedQuadStepHitTriplets, produceIntermediateHitTriplets=False, produceSeedingHitSets=True)
 eras.trackingPhase2PU140.toReplaceWith(detachedQuadStepHitQuadruplets, _detachedQuadStepHitQuadrupletsMerging)
 eras.trackingPhase2PU140.toModify(detachedQuadStepSeeds, SeedComparitorPSet=cms.PSet(ComponentName=cms.string("none")))
 

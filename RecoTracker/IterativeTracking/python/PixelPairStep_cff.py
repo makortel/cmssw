@@ -76,11 +76,10 @@ eras.trackingPhase1PU70.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(p
 eras.trackingPhase2PU140.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(ptMin = 1.3, useMultipleScattering=False))
 
 # SEEDS
-from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+from RecoTracker.TkHitPairs.hitPairEDProducer_cff import hitPairEDProducer as _hitPairEDProducer
 pixelPairStepHitDoublets = _hitPairEDProducer.clone(
     seedingLayers = "pixelPairStepSeedLayers",
     trackingRegions = "pixelPairStepTrackingRegions",
-    maxElement = 1000000,
     produceSeedingHitSets = True,
 )
 from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsEDProducer_cff import seedCreatorFromRegionConsecutiveHitsEDProducer as _seedCreatorFromRegionConsecutiveHitsEDProducer
@@ -95,8 +94,6 @@ pixelPairStepSeeds = _seedCreatorFromRegionConsecutiveHitsEDProducer.clone(
         ClusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCache'),
     )
 )
-eras.trackingPhase1PU70.toModify(pixelPairStepHitDoublets, maxElement=0)
-eras.trackingPhase2PU140.toModify(pixelPairStepHitDoublets, maxElement=0)
 
 # QUALITY CUTS DURING TRACK BUILDING
 import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff

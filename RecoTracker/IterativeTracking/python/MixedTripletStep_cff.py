@@ -93,17 +93,17 @@ mixedTripletStepClusterShapeHitFilter  = _ClusterShapeHitFilterESProducer.clone(
     PixelShapeFile= 'RecoPixelVertexing/PixelLowPtUtilities/data/pixelShape.par', # FIXME: this is an incorrect override for phase1/phase2 (and anyway unnecessary). To be fixed later to preserve old result during the refactoring.
     clusterChargeCut = dict(refToPSet_ = 'SiStripClusterChargeCutTight')
 )
-from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+from RecoTracker.TkHitPairs.hitPairEDProducer_cff import hitPairEDProducer as _hitPairEDProducer
 mixedTripletStepHitDoubletsA = _hitPairEDProducer.clone(
     seedingLayers = "mixedTripletStepSeedLayersA",
     trackingRegions = "mixedTripletStepTrackingRegionsA",
+    maxElement = 0,
     produceIntermediateHitDoublets = True,
 )
-from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cfi import pixelTripletLargeTipEDProducer as _pixelTripletLargeTipEDProducer
+from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cff import pixelTripletLargeTipEDProducer as _pixelTripletLargeTipEDProducer
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
 mixedTripletStepHitTripletsA = _pixelTripletLargeTipEDProducer.clone(
     doublets = "mixedTripletStepHitDoubletsA",
-    maxElement = 1000000,
     produceSeedingHitSets = True,
 )
 from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer_cff import seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer as _seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer

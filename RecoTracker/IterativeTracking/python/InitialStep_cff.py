@@ -31,18 +31,18 @@ eras.trackingPhase1PU70.toModify(initialStepTrackingRegions, RegionPSet = dict(p
 eras.trackingPhase2PU140.toModify(initialStepTrackingRegions, RegionPSet = dict(ptMin = 0.8))
 
 # seeding
-from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
+from RecoTracker.TkHitPairs.hitPairEDProducer_cff import hitPairEDProducer as _hitPairEDProducer
 initialStepHitDoublets = _hitPairEDProducer.clone(
     seedingLayers = "initialStepSeedLayers",
     trackingRegions = "initialStepTrackingRegions",
+    maxElement = 0,
     produceIntermediateHitDoublets = True,
 )
-from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
+from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cff import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
 import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi
 initialStepHitTriplets = _pixelTripletHLTEDProducer.clone(
     doublets = "initialStepHitDoublets",
-    maxElement = 1000000,
     produceSeedingHitSets = True,
     SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
 )
@@ -70,10 +70,7 @@ initialStepHitQuadruplets.SeedCreatorPSet = cms.PSet(
 )
 initialStepHitQuadruplets.SeedComparitorPSet = initialStepSeeds.SeedComparitorPSet
 
-eras.trackingLowPU.toModify(initialStepHitTriplets, maxElement=100000)
-eras.trackingPhase1PU70.toModify(initialStepHitTriplets, maxElement=0)
 eras.trackingPhase1PU70.toModify(initialStepSeeds, seedingHitSets="initialStepHitQuadruplets")
-eras.trackingPhase2PU140.toModify(initialStepHitTriplets, maxElement=0)
 eras.trackingPhase2PU140.toModify(initialStepSeeds, seedingHitSets="initialStepHitQuadruplets")
 
 
