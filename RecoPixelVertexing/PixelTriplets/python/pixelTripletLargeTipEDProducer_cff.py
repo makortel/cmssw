@@ -1,0 +1,5 @@
+from Configuration.StandardSequences.Eras import eras
+from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cfi import *
+eras.trackingLowPU.toModify(pixelTripletLargeTipEDProducer, maxElement=100000)
+eras.trackingPhase1PU70.toModify(pixelTripletLargeTipEDProducer, maxElement=0)
+eras.trackingPhase2PU140.toModify(pixelTripletLargeTipEDProducer, maxElement=0)
