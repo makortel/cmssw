@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 from Configuration.StandardSequences.Eras import eras
 
+from RecoTracker.TkSeedGenerator.trackerClusterCheck_cff import *
 
 from RecoTracker.IterativeTracking.InitialStepPreSplitting_cff import *
 from RecoTracker.IterativeTracking.InitialStep_cff import *
@@ -30,6 +31,7 @@ for _era in _cfg.nonDefaultEras():
     getattr(eras, _era).toReplaceWith(iterTrackingEarly, _cfg.createEarlySequence(_era, globals()))
 
 iterTracking = cms.Sequence(InitialStepPreSplitting*
+                            trackerClusterCheck*
                             iterTrackingEarly*
                             earlyGeneralTracks*
                             muonSeededStep*

@@ -59,15 +59,10 @@ eras.trackingPhase2PU140.toReplaceWith(detachedQuadStepTrackingRegions, _globalT
 )))
 
 # seeding
-from RecoTracker.TkSeedGenerator.clusterCheckerEDProducer_cff import clusterCheckerEDProducer as _clusterCheckerEDProducer
-detachedQuadStepClusterCheck = _clusterCheckerEDProducer.clone(
-    PixelClusterCollectionLabel = 'siPixelClusters'
-)
 from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
 detachedQuadStepHitDoublets = _hitPairEDProducer.clone(
     seedingLayers = "detachedQuadStepSeedLayers",
     trackingRegions = "detachedQuadStepTrackingRegions",
-    clusterCheck = "detachedQuadStepClusterCheck",
     produceIntermediateHitDoublets = True,
 )
 from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cfi import pixelTripletLargeTipEDProducer as _pixelTripletLargeTipEDProducer
@@ -453,7 +448,6 @@ eras.trackingPhase2PU140.toReplaceWith(detachedQuadStep, RecoTracker.FinalTrackS
 DetachedQuadStep = cms.Sequence(detachedQuadStepClusters*
                                 detachedQuadStepSeedLayers*
                                 detachedQuadStepTrackingRegions*
-                                detachedQuadStepClusterCheck*
                                 detachedQuadStepHitDoublets*
                                 detachedQuadStepHitTriplets*
                                 detachedQuadStepHitQuadruplets*
