@@ -22,9 +22,8 @@ class SeedingLayerSetsHits;
 
 namespace edm {
     class Event;
-}
-namespace edm {
     class EventSetup;
+    class ParameterSetDescription;
 }
 
 class CAHitQuadrupletGenerator : public HitQuadrupletGenerator {
@@ -33,18 +32,34 @@ public:
 
 public:
 
-    CAHitQuadrupletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
+    CAHitQuadrupletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector&& iC, bool needSeedingLayerSetsHits=true): CAHitQuadrupletGenerator(cfg, iC, needSeedingLayerSetsHits) {}
+    CAHitQuadrupletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC, bool needSeedingLayerSetsHits=true);
 
     virtual ~CAHitQuadrupletGenerator();
+
+    static void fillDescriptions(edm::ParameterSetDescription& desc);
+
+    void initEvent(const edm::Event& ev, const edm::EventSetup& es);
 
     /// from base class
     virtual void hitQuadruplets(const TrackingRegion& reg, OrderedHitSeeds & triplets,
             const edm::Event & ev, const edm::EventSetup& es);
 
+    void hitQuadruplets(const TrackingRegion& reg, OrderedHitSeeds& result,
+                        const edm::EventSetup& es,
+                        std::vector<const HitDoublets *>& layersDoublets,
+                        const SeedingLayerSetsHits::SeedingLayerSet& fourLayers) {
+      findQuadruplets(reg, result, es, layersDoublets, fourLayers);
+    }
+
     void findQuadruplets(const TrackingRegion& region, OrderedHitSeeds& result,
             const edm::Event& ev, const edm::EventSetup& es,
             const SeedingLayerSetsHits::SeedingLayerSet& fourLayers);
-    
+
+    void findQuadruplets(const TrackingRegion& region, OrderedHitSeeds& result,
+                         const edm::EventSetup& es,
+                         std::vector<const HitDoublets *>& layersDoublets,
+                         const SeedingLayerSetsHits::SeedingLayerSet& fourLayers);
     
 private:
     edm::EDGetTokenT<SeedingLayerSetsHits> theSeedingLayerToken;
