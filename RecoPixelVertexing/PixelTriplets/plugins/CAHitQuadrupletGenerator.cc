@@ -7,6 +7,7 @@
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 
 #include "TrackingTools/DetLayers/interface/BarrelDetLayer.h"
@@ -34,8 +35,7 @@ namespace
 using namespace std;
 using namespace ctfseeding;
 
-CAHitQuadrupletGenerator::CAHitQuadrupletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC) :
-theSeedingLayerToken(iC.consumes<SeedingLayerSetsHits>(cfg.getParameter<edm::InputTag>("SeedingLayers"))),
+CAHitQuadrupletGenerator::CAHitQuadrupletGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC, bool needSeedingLayerSetsHits) :
 extraHitRPhitolerance(cfg.getParameter<double>("extraHitRPhitolerance")), //extra window in ThirdHitPredictionFromCircle range (divide by R to get phi)
 maxChi2(cfg.getParameter<edm::ParameterSet>("maxChi2")),
 fitFastCircle(cfg.getParameter<bool>("fitFastCircle")),
@@ -44,6 +44,9 @@ useBendingCorrection(cfg.getParameter<bool>("useBendingCorrection")),
 CAThetaCut(cfg.getParameter<double>("CAThetaCut")),
 CAPhiCut(cfg.getParameter<double>("CAPhiCut"))
 {
+  if(needSeedingLayerSetsHits)
+    theSeedingLayerToken = iC.consumes<SeedingLayerSetsHits>(cfg.getParameter<edm::InputTag>("SeedingLayers"));
+
   if (cfg.exists("SeedComparitorPSet"))
   {
     edm::ParameterSet comparitorPSet =
@@ -60,6 +63,32 @@ CAHitQuadrupletGenerator::~CAHitQuadrupletGenerator()
 {
 }
 
+void CAHitQuadrupletGenerator::fillDescriptions(edm::ParameterSetDescription& desc) {
+  desc.add<double>("extraHitRPhitolerance", 0.1);
+  desc.add<bool>("fitFastCircle", false);
+  desc.add<bool>("fitFastCircleChi2Cut", false);
+  desc.add<bool>("useBendingCorrection", false);
+  desc.add<double>("CAThetaCut", 0.00125);
+  desc.add<double>("CAPhiCut", 10);
+
+  edm::ParameterSetDescription descMaxChi2;
+  descMaxChi2.add<double>("pt1", 0.2);
+  descMaxChi2.add<double>("pt2", 1.5);
+  descMaxChi2.add<double>("value1", 500);
+  descMaxChi2.add<double>("value2", 50);
+  descMaxChi2.add<bool>("enabled", true);
+  desc.add<edm::ParameterSetDescription>("maxChi2", descMaxChi2);
+
+  edm::ParameterSetDescription descComparitor;
+  descComparitor.add<std::string>("ComponentName", "none");
+  descComparitor.setAllowAnything(); // until we have moved SeedComparitor too to EDProducers
+  desc.add<edm::ParameterSetDescription>("SeedComparitorPSet", descComparitor);
+}
+
+void CAHitQuadrupletGenerator::initEvent(const edm::Event& ev, const edm::EventSetup& es) {
+  if (theComparitor) theComparitor->init(ev, es);
+}
+
 void CAHitQuadrupletGenerator::hitQuadruplets(
                                               const TrackingRegion& region, OrderedHitSeeds & result,
                                               const edm::Event& ev, const edm::EventSetup& es)
@@ -69,6 +98,8 @@ void CAHitQuadrupletGenerator::hitQuadruplets(
   const SeedingLayerSetsHits& layers = *hlayers;
   if (layers.numberOfLayersInSet() != 4)
     throw cms::Exception("Configuration") << "CAHitQuadrupletsGenerator expects SeedingLayerSetsHits::numberOfLayersInSet() to be 4, got " << layers.numberOfLayersInSet();
+
+  initEvent(ev, es);
   for (unsigned int j=0; j < layers.size(); j++)
   {
     findQuadruplets(region, result, ev, es, layers[j]);
@@ -82,10 +113,7 @@ CAHitQuadrupletGenerator::findQuadruplets (const TrackingRegion& region, Ordered
                                            const edm::Event& ev, const edm::EventSetup& es,
                                            const SeedingLayerSetsHits::SeedingLayerSet& fourLayers)
 {
-  if (theComparitor) theComparitor->init (ev, es);
   HitPairGeneratorFromLayerPair thePairGenerator(0, 1, &theLayerCache);
-
-  std::vector<CACell::CAntuplet> foundQuadruplets;
 
   std::vector<const HitDoublets*> layersDoublets(3);
 
@@ -97,6 +125,14 @@ CAHitQuadrupletGenerator::findQuadruplets (const TrackingRegion& region, Ordered
   layersDoublets[1] = &(doublets1);
   layersDoublets[2] = &(doublets2);
 
+  findQuadruplets(region, result, es, layersDoublets, fourLayers);
+}
+
+void CAHitQuadrupletGenerator::findQuadruplets (const TrackingRegion& region, OrderedHitSeeds& result,
+                                                const edm::EventSetup& es,
+                                                std::vector<const HitDoublets *>& layersDoublets,
+                                                const SeedingLayerSetsHits::SeedingLayerSet& fourLayers) {
+  std::vector<CACell::CAntuplet> foundQuadruplets;
 
   CellularAutomaton<4> ca;
 
