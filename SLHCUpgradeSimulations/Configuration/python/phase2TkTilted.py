@@ -74,16 +74,17 @@ def customise_condOverRides(process):
 
 def customise_Validation(process,pileup):
 
-    process.pixelDigisValid.src = cms.InputTag('simSiPixelDigis', "Pixel")
-    if hasattr(process,'tpClusterProducer'):
+    if not eras.trackingPhase2PU140.isChosen():
+      process.pixelDigisValid.src = cms.InputTag('simSiPixelDigis', "Pixel")
+      if hasattr(process,'tpClusterProducer'):
         process.tpClusterProducer.pixelSimLinkSrc = cms.InputTag("simSiPixelDigis", "Pixel")
         process.tpClusterProducer.phase2OTSimLinkSrc  = cms.InputTag("simSiPixelDigis","Tracker")
 
-    if hasattr(process,'simHitTPAssocProducer'):
+      if hasattr(process,'simHitTPAssocProducer'):
         process.simHitTPAssocProducer.simHitSrc=cms.VInputTag(cms.InputTag("g4SimHits","TrackerHitsPixelBarrelLowTof"),
                                                               cms.InputTag("g4SimHits","TrackerHitsPixelEndcapLowTof"))
 
-    if hasattr(process,'trackingParticleNumberOfLayersProducer'):
+      if hasattr(process,'trackingParticleNumberOfLayersProducer'):
         process.trackingParticleNumberOfLayersProducer.simHits=cms.VInputTag(cms.InputTag("g4SimHits","TrackerHitsPixelBarrelLowTof"),
                                                                cms.InputTag("g4SimHits","TrackerHitsPixelEndcapLowTof"))
 
