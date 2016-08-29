@@ -85,6 +85,8 @@ eras.phase2_hcal.toReplaceWith(RawToDigi, RawToDigi.copyAndExclude([hcalDigis]))
 
 # Remove siPixelDigis until we have phase1 pixel digis
 eras.phase1Pixel.toReplaceWith(RawToDigi, RawToDigi.copyAndExclude([siPixelDigis])) # FIXME
+# same for phase2 tracker
+eras.phase2_tracker.toReplaceWith(RawToDigi, RawToDigi.copyAndExclude([siPixelDigis])) # FIXME
 
 
 # add CTPPS 2016 raw-to-digi modules
