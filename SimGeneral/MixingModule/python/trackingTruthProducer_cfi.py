@@ -57,3 +57,5 @@ eras.run3_GEM.toModify(trackingParticles, simHitCollections = dict(
 
 eras.phase2_muon.toModify( trackingParticles, simHitCollections = dict(
         muon = trackingParticles.simHitCollections.muon+[cms.InputTag("g4SimHits","MuonME0Hits")]))
+
+eras.phase2_tracker.toModify( trackingParticles, simHitCollections = dict( tracker = []) )

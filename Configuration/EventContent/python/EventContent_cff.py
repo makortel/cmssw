@@ -798,3 +798,6 @@ if eras.fastSim.isChosen():
     for _entry in [FEVTDEBUGHLTEventContent,FEVTDEBUGEventContent,RECOSIMEventContent,AODSIMEventContent,RAWAODSIMEventContent]:
         fastSimEC.dropSimDigis(_entry.outputCommands)
     
+if eras.phase2_tracker.isChosen():
+    for _entry in [FEVTDEBUGEventContent,FEVTDEBUGHLTEventContent,FEVTEventContent]:
+        eras.phase2_tracker.toModify(_entry, outputCommands = _entry.outputCommands + ['keep Phase2TrackerDigiedmDetSetVector_*_*_*'])
