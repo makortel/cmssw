@@ -45,6 +45,7 @@ eras.trackingPhase1.toModify(initialStepSeedsPreSplitting,
         GeneratorPSet = _PixelQuadrupletGenerator.clone(
             extraHitRZtolerance = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRZtolerance,
             extraHitRPhitolerance = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+            SeedComparitorPSet = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
             maxChi2 = dict(
                 pt1    = 0.8, pt2    = 2,
                 value1 = 200, value2 = 100,
@@ -59,11 +60,7 @@ eras.trackingPhase1.toModify(initialStepSeedsPreSplitting,
             fitFastCircle = True,
             fitFastCircleChi2Cut = True,
         ),
-        TripletGeneratorPSet = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.clone(
-          SeedComparitorPSet = cms.PSet(
-              ComponentName = cms.string('none')
-            )
-        ),
+        TripletGeneratorPSet = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet,
         SeedingLayers = cms.InputTag('initialStepSeedLayersPreSplitting'),
     )
 )
