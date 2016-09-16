@@ -248,7 +248,7 @@ void MultiTrackValidatorGenPs::analyze(const edm::Event& event, const edm::Event
         }
 	*/
 
-	histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,*tp,momentumTP,vertexTP,dxyGen,dzGen,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU);
+	//histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,*tp,momentumTP,vertexTP,dxyGen,dzGen,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU);
 
 	sts++;
 	if (matchedTrackPointer) asts++;

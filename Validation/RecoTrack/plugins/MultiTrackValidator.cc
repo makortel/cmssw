@@ -205,7 +205,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
   event.getByLabel(vertexTag_, vertexH);
 
   const reco::Vertex::Point *thePVposition = nullptr;
-  //const TrackingVertex::LorentzVector *theSimPVPosition = nullptr;
+  const TrackingVertex::LorentzVector *theSimPVPosition = nullptr;
 
   //bool isPVmatched = false;
 
@@ -219,7 +219,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 
         if(std::abs(thePV.z() - simV.position().z()) < 0.1 &&
            std::abs(thePV.z() - simV.position().z())/thePV.zError() < 3) {
-          //theSimPVPosition = &(simV.position());
+          theSimPVPosition = &(simV.position());
           thePVposition = &(thePV.position());
         }
         break; // check only the hard scatter sim PV
@@ -438,7 +438,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
             }
         }
 
-        histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU, thePVposition);
+        histoProducerAlgo_->fill_recoAssociated_simTrack_histos(w,tp,momentumTP,vertexTP,dxySim,dzSim,nSimHits,matchedTrackPointer,puinfo.getPU_NumInteractions(), vtx_z_PU, thePVposition, theSimPVPosition);
           sts++;
           if (matchedTrackPointer) asts++;
 
@@ -527,7 +527,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	}
 	
 
-	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), thePVposition, isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
+	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), thePVposition, theSimPVPosition, isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
 
 	// dE/dx
 	//	reco::TrackRef track2  = reco::TrackRef( trackCollection, i );

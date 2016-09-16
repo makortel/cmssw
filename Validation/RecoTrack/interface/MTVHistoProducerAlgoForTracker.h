@@ -43,7 +43,8 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
 					   double dxy, double dz, int nSimHits,
 					   const reco::Track* track,
 					   int numVertices, double vertz,
-                                           const math::XYZPoint *pvPosition);
+                                           const math::XYZPoint *pvPosition,
+                                           const TrackingVertex::LorentzVector *simPVPosition);
 
   void fill_recoAssociated_simTrack_histos(int count,
 					   const reco::GenParticle& tp,
@@ -57,6 +58,7 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
 				     const reco::Track& track,
 				     const math::XYZPoint& bsPosition,
                                      const math::XYZPoint *pvPosition,
+                                     const TrackingVertex::LorentzVector *simPVPosition,
 				     bool isMatched,
 				     bool isSigMatched,
 				     bool isChargeMatched,
@@ -139,6 +141,7 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   double minZpos, maxZpos;  int nintZpos;
   double minDeDx, maxDeDx;  int nintDeDx;
   double minVertcount, maxVertcount;  int nintVertcount;
+  double minPVz, maxPVz; int nintPVz;
 
   //
   double ptRes_rangeMin,ptRes_rangeMax; int ptRes_nbin;
@@ -191,6 +194,7 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
 
   std::vector<MonitorElement*> h_reco_dzpvcut_pt, h_assoc_dzpvcut_pt, h_assoc2_dzpvcut_pt, h_simul_dzpvcut_pt, h_simul2_dzpvcut_pt, h_pileup_dzpvcut_pt;
   std::vector<MonitorElement*> h_reco_dzpvsigcut_pt, h_assoc_dzpvsigcut_pt, h_assoc2_dzpvsigcut_pt, h_simul_dzpvsigcut_pt, h_simul2_dzpvsigcut_pt, h_pileup_dzpvsigcut_pt;
+  std::vector<MonitorElement*> h_reco_pvz, h_assoc_pvz, h_assoc2_pvz, h_simul_pvz, h_pileup_pvz;
 
 
   // dE/dx

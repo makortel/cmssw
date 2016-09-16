@@ -45,7 +45,8 @@ class MTVHistoProducerAlgo{
 						   double dxy, double dz, int nSimHits,
 						   const reco::Track* track,
 						   int numVertices, double vertz,
-                                                   const math::XYZPoint *pvPosition)=0;
+                                                   const math::XYZPoint *pvPosition,
+                                                   const TrackingVertex::LorentzVector *simPVPosition)=0;
 
   virtual void fill_recoAssociated_simTrack_histos(int count,
 						   const reco::GenParticle& tp,
@@ -58,6 +59,7 @@ class MTVHistoProducerAlgo{
 				     	     const reco::Track& track,
 				     	     const math::XYZPoint& bsPosition,
                                              const math::XYZPoint *pvPosition,
+                                             const TrackingVertex::LorentzVector *simPVPosition,
 				     	     bool isMatched,
 				     	     bool isSigMatched,
 				     	     bool isChargeMatched,
