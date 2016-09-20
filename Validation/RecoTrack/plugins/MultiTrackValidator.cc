@@ -216,7 +216,7 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
     for(size_t i=0; i<tv.size(); ++i) {
       const TrackingVertex& simV = tv[i];
       if(simV.eventId().bunchCrossing() != 0) continue; // remove OOTPU
-      if(simV.eventId().event() != current_event) continue; // pick the PV of this in-time event
+      if(simV.eventId().event() == current_event) continue; // pick the PV of this in-time event
       current_event = simV.eventId().event();
 
       theSimPVs.push_back(simV.position());
