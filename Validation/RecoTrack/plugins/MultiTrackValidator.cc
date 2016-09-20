@@ -45,7 +45,8 @@ typedef edm::Ref<edm::HepMCProduct, HepMC::GenParticle > GenParticleRef;
 MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset):
   MultiTrackValidatorBase(pset),
   parametersDefinerIsCosmic_(parametersDefiner == "CosmicParametersDefinerForTP"),
-  doPlotsOnlyForTruePV_(pset.getUntrackedParameter<bool>("doPlotsOnlyForTruePV"))
+  doPlotsOnlyForTruePV_(pset.getUntrackedParameter<bool>("doPlotsOnlyForTruePV")),
+  simPVMaxZ_(pset.getUntrackedParameter<double>("simPVMaxZ"))
 {
   //theExtractor = IsoDepositExtractorFactory::get()->create( extractorName, extractorPSet);
 
@@ -209,20 +210,32 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 
   //bool isPVmatched = false;
 
-  if(!vertexH->empty()) {
+  std::vector<TrackingVertex::LorentzVector> theSimPVs;
+  {
+    int current_event = -1;
+    for(size_t i=0; i<tv.size(); ++i) {
+      const TrackingVertex& simV = tv[i];
+      if(simV.eventId().bunchCrossing() != 0) continue; // remove OOTPU
+      if(simV.eventId().event() != current_event) continue; // pick the PV of this in-time event
+      current_event = simV.eventId().event();
+
+      theSimPVs.push_back(simV.position());
+    }
+    if(!theSimPVs.empty())
+      theSimPVPosition = &(theSimPVs[0]); // hard-scatter sim PV
+  }
+  if(simPVMaxZ_ >= 0) {
+    if(!theSimPVPosition) return;
+    if(std::abs(theSimPVPosition->z()) > simPVMaxZ_) return;
+  }
+
+
+  if(!vertexH->empty() && theSimPVPosition) {
     const reco::Vertex& thePV = (*vertexH)[0];
     if(!(thePV.isFake() || thePV.ndof() < 0.)) { // skip junk
-      for(size_t i=0; i<tv.size(); ++i) {
-        const TrackingVertex& simV = tv[i];
-        if(simV.eventId().bunchCrossing() != 0) continue; // remove OOTPU
-        if(simV.eventId().event() != 0) continue; // remove ITPU
-
-        if(std::abs(thePV.z() - simV.position().z()) < 0.1 &&
-           std::abs(thePV.z() - simV.position().z())/thePV.zError() < 3) {
-          theSimPVPosition = &(simV.position());
-          thePVposition = &(thePV.position());
-        }
-        break; // check only the hard scatter sim PV
+      if(std::abs(thePV.z() - theSimPVPosition->z()) < 0.1 &&
+         std::abs(thePV.z() - theSimPVPosition->z())/thePV.zError() < 3) {
+        thePVposition = &(thePV.position());
       }
     }
   }

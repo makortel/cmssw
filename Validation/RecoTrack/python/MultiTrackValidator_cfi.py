@@ -60,4 +60,5 @@ multiTrackValidator = cms.EDAnalyzer(
     outputFile = cms.string(''),
 
     doPlotsOnlyForTruePV = cms.untracked.bool(False),
+    simPVMaxZ = cms.untracked.double(-1),
 )

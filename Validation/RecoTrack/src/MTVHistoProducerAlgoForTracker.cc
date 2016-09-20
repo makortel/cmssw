@@ -1039,8 +1039,6 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
       h_simul_dzpvcut_pt[count]->Fill(0, tp.pt());
       h_simul_dzpvsigcut_pt[count]->Fill(0, tp.pt());
 
-      const auto pvz = simPVPosition->z();
-      h_simul_pvz[count]->Fill(pvz);
       if(isMatched) {
         h_simul2_dzpvcut[count]->Fill(0);
         h_simul2_dzpvsigcut[count]->Fill(0);
@@ -1049,11 +1047,17 @@ void MTVHistoProducerAlgoForTracker::fill_recoAssociated_simTrack_histos(int cou
         const double dzpv = std::abs(track->dz(*pvPosition));
         h_assoc_dzpvcut[count]->Fill(dzpv);
         h_assoc_dzpvcut_pt[count]->Fill(dzpv, tp.pt());
-        h_assoc_pvz[count]->Fill(pvz);
         if(acceptForDzPVSignificance(dzpv)) {
           h_assoc_dzpvsigcut[count]->Fill(dzpv/track->dzError());
           h_assoc_dzpvsigcut_pt[count]->Fill(dzpv/track->dzError(), tp.pt());
         }
+      }
+    }
+    if(simPVPosition) {
+      const auto pvz = simPVPosition->z();
+      h_simul_pvz[count]->Fill(pvz);
+      if(isMatched) {
+        h_assoc_pvz[count]->Fill(pvz);
       }
     }
 
@@ -1282,11 +1286,13 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
   if(pvPosition) {
     h_reco_dzpvcut[count]->Fill(std::abs(dzpv));
     h_reco_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
-    h_reco_pvz[count]->Fill(pvz);
     if(acceptForDzPVSignificance(std::abs(dzpv))) {
       h_reco_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
       h_reco_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), track.pt());
     }
+  }
+  if(simPVPosition) {
+    h_reco_pvz[count]->Fill(pvz);
   }
   if (isMatched) {
     const auto eta = getEta(track.momentum().eta());
@@ -1301,11 +1307,13 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
     if(pvPosition) {
       h_assoc2_dzpvcut[count]->Fill(std::abs(dzpv));
       h_assoc2_dzpvcut_pt[count]->Fill(std::abs(dzpv), track.pt());
-      h_assoc2_pvz[count]->Fill(pvz);
       if(acceptForDzPVSignificance(std::abs(dzpv))) {
         h_assoc2_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
         h_assoc2_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), track.pt());
       }
+    }
+    if(simPVPosition) {
+      h_assoc2_pvz[count]->Fill(pvz);
     }
     if (numAssocRecoTracks>1) {
       fillPlotNoFlow(h_looper_zpos[count], zpos);
@@ -1321,11 +1329,13 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
       if(pvPosition) {
         h_pileup_dzpvcut[count]->Fill(std::abs(dzpv));
         h_pileup_dzpvcut_pt[count]->Fill(std::abs(dzpv), pt);
-        h_pileup_pvz[count]->Fill(pvz);
         if(acceptForDzPVSignificance(std::abs(dzpv))) {
           h_pileup_dzpvsigcut[count]->Fill(std::abs(dzpvsig));
           h_pileup_dzpvsigcut_pt[count]->Fill(std::abs(dzpvsig), pt);
         }
+      }
+      if(simPVPosition) {
+        h_pileup_pvz[count]->Fill(pvz);
       }
     }
   }
