@@ -538,9 +538,20 @@ void MultiTrackValidator::analyze(const edm::Event& event, const edm::EventSetup
 	  LogTrace("TrackValidator") << "reco::Track #" << rT << " with pt=" << track->pt()
 					     << " NOT associated to any TrackingParticle" << "\n";		  
 	}
-	
 
-	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), thePVposition, theSimPVPosition, isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
+
+        // find the sim PV being "closest" to a track
+        const TrackingVertex::LorentzVector *closestSimPVPosition = nullptr;
+        double closestSimPVDz = 1e100;
+        for(const auto& pos: theSimPVs) {
+          auto dz = std::abs(track->dz(TrackBase::Point(pos.x(), pos.y(), pos.z())));
+          if(dz < closestSimPVDz) {
+            closestSimPVDz = dz;
+            closestSimPVPosition = &pos;
+          }
+        }
+
+	histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), thePVposition, theSimPVPosition, closestSimPVPosition, isSimMatched,isSigSimMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), tpbx, nSimHits, sharedFraction);
 
 	// dE/dx
 	//	reco::TrackRef track2  = reco::TrackRef( trackCollection, i );

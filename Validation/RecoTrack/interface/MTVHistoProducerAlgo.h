@@ -60,6 +60,7 @@ class MTVHistoProducerAlgo{
 				     	     const math::XYZPoint& bsPosition,
                                              const math::XYZPoint *pvPosition,
                                              const TrackingVertex::LorentzVector *simPVPosition,
+                                             const TrackingVertex::LorentzVector *closestSimPVPosition,
 				     	     bool isMatched,
 				     	     bool isSigMatched,
 				     	     bool isChargeMatched,

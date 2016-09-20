@@ -742,6 +742,10 @@ void MTVHistoProducerAlgoForTracker::bookRecoHistos(){
   h_simul_pvz.push_back( dbe_->book1D("num_simul_pvz", "N of simulated tracks vs. sim PV z", nintPVz, minPVz, maxPVz) );
   h_pileup_pvz.push_back( dbe_->book1D("num_pileup_pvz", "N of associated (recoToSim) pileup tracks vs. sim PV z", nintPVz, minPVz, maxPVz) );
 
+  h_reco_cpvz.push_back( dbe_->book1D("num_reco_cpvz", "N of reco track vs. closest sim vertex z", nintPVz, minPVz, maxPVz) );
+  h_assoc2_cpvz.push_back( dbe_->book1D("num_assoc(recoToSim)_cpvz", "N of associated tracks (recoToSim) vs. closest sim vertex z", nintPVz, minPVz, maxPVz) );
+  h_pileup_cpvz.push_back( dbe_->book1D("num_pileup_cpvz", "N of associated (recoToSim) pileup tracks vs. closest sim vertex z", nintPVz, minPVz, maxPVz) );
+
   if(useLogPt){
     BinLogX(dzres_vs_pt.back()->getTH2F());
     BinLogX(dxyres_vs_pt.back()->getTH2F());
@@ -1144,6 +1148,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
 								   const math::XYZPoint& bsPosition,
                                                                    const math::XYZPoint *pvPosition,
                                                                    const TrackingVertex::LorentzVector *simPVPosition,
+                                                                   const TrackingVertex::LorentzVector *closestSimPVPosition,
 								   bool isMatched,
 								   bool isSigMatched,
 								   bool isChargeMatched,
@@ -1282,6 +1287,7 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
   const auto dzpv = pvPosition ? track.dz(*pvPosition) : 0.0;
   const auto dzpvsig = pvPosition ? dzpv / track.dzError() : 0.0;
   const auto pvz = simPVPosition ? simPVPosition->z() : 0.0;
+  const auto cpvz = closestSimPVPosition ? closestSimPVPosition->z() : 0.0;
   fillPlotNoFlow(h_reco_zpos[count], zpos);
   if(pvPosition) {
     h_reco_dzpvcut[count]->Fill(std::abs(dzpv));
@@ -1293,6 +1299,9 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
   }
   if(simPVPosition) {
     h_reco_pvz[count]->Fill(pvz);
+  }
+  if(closestSimPVPosition) {
+    h_reco_cpvz[count]->Fill(cpvz);
   }
   if (isMatched) {
     const auto eta = getEta(track.momentum().eta());
@@ -1315,6 +1324,9 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
     if(simPVPosition) {
       h_assoc2_pvz[count]->Fill(pvz);
     }
+    if(closestSimPVPosition) {
+      h_assoc2_cpvz[count]->Fill(cpvz);
+    }
     if (numAssocRecoTracks>1) {
       fillPlotNoFlow(h_looper_zpos[count], zpos);
     }
@@ -1336,6 +1348,9 @@ void MTVHistoProducerAlgoForTracker::fill_generic_recoTrack_histos(int count,
       }
       if(simPVPosition) {
         h_pileup_pvz[count]->Fill(pvz);
+      }
+      if(closestSimPVPosition) {
+        h_pileup_cpvz[count]->Fill(cpvz);
       }
     }
   }

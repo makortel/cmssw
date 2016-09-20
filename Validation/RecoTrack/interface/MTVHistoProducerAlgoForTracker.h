@@ -59,6 +59,7 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
 				     const math::XYZPoint& bsPosition,
                                      const math::XYZPoint *pvPosition,
                                      const TrackingVertex::LorentzVector *simPVPosition,
+                                     const TrackingVertex::LorentzVector *closestSimPVPosition,
 				     bool isMatched,
 				     bool isSigMatched,
 				     bool isChargeMatched,
@@ -195,6 +196,7 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   std::vector<MonitorElement*> h_reco_dzpvcut_pt, h_assoc_dzpvcut_pt, h_assoc2_dzpvcut_pt, h_simul_dzpvcut_pt, h_simul2_dzpvcut_pt, h_pileup_dzpvcut_pt;
   std::vector<MonitorElement*> h_reco_dzpvsigcut_pt, h_assoc_dzpvsigcut_pt, h_assoc2_dzpvsigcut_pt, h_simul_dzpvsigcut_pt, h_simul2_dzpvsigcut_pt, h_pileup_dzpvsigcut_pt;
   std::vector<MonitorElement*> h_reco_pvz, h_assoc_pvz, h_assoc2_pvz, h_simul_pvz, h_pileup_pvz;
+  std::vector<MonitorElement*> h_reco_cpvz, h_assoc2_cpvz, h_pileup_cpvz;
 
 
   // dE/dx
