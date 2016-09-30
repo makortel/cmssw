@@ -99,9 +99,6 @@ def customiseForXXXXX(process):
     modifier._setChosen()
 
     for producer in producers_by_type(process, "SeedGeneratorFromRegionHitsEDProducer"):
-        if producer.OrderedHitsFactoryPSet.ComponentName.value() not in ["StandardHitTripletGenerator", "StandardMultiHitGenerator"]:
-            continue
-
         label = producer.label()
         if "Seeds" in label:
             regionLabel = label.replace("Seeds", "TrackingRegions")
@@ -122,9 +119,15 @@ def customiseForXXXXX(process):
             "TauRegionalPixelSeedGenerator": _tauRegionalPixelSeedTrackingRegions,
         }.get(producer.RegionFactoryPSet.ComponentName.value(), None)
         if regionProducer is None: # got a region not migrated yet
+            #print "skipping", label, producer.RegionFactoryPSet.ComponentName.value()
             continue
         regionProducer = regionProducer.clone()
         regionProducer.RegionPSet = producer.RegionFactoryPSet.RegionPSet
+        # some (all?) instances of TauRegionalPixelSeedGenerator have
+        # "precise" parameter, while the region producer itself does not have the parameter
+        if producer.RegionFactoryPSet.ComponentName.value() == "TauRegionalPixelSeedGenerator":
+            if hasattr(regionProducer.RegionPSet, "precise"):
+                del regionProducer.RegionPSet.precise
 
         # cluster check
         clusterCheckProducer = _trackerClusterCheck.clone()
@@ -135,29 +138,38 @@ def customiseForXXXXX(process):
             seedingLayers = producer.OrderedHitsFactoryPSet.SeedingLayers.value(),
             trackingRegions = regionLabel,
             clusterCheck = clusterCheckLabel,
-            produceIntermediateHitDoublets = True,
         )
 
-        if producer.OrderedHitsFactoryPSet.ComponentName.value() == "StandardHitTripletGenerator":
+        tripletProducer = None
+        if producer.OrderedHitsFactoryPSet.ComponentName.value() == "StandardHitPairGenerator":
+            doubletProducer.produceSeedingHitSets = True
+            doubletProducer.maxElement = producer.OrderedHitsFactoryPSet.maxElement.value()
+        elif producer.OrderedHitsFactoryPSet.ComponentName.value() == "StandardHitTripletGenerator":
+            doubletProducer.produceIntermediateHitDoublets = True
+
             tripletProducer = {
                 "PixelTripletHLTGenerator": _pixelTripletHLTEDProducer,
                 "PixelTripletLargeTipGenerator": _pixelTripletLargeTipEDProducer,
             }.get(producer.OrderedHitsFactoryPSet.GeneratorPSet.ComponentName.value(), None)
             if tripletProducer is None: # got a triplet generator not migrated yet
+                #print "skipping", label, producer.OrderedHitsFactoryPSet.GeneratorPSet.ComponentName.value()
                 continue
             tripletProducer = tripletProducer.clone(
                 doublets = doubletLabel,
                 produceSeedingHitSets = True,
             )
         elif producer.OrderedHitsFactoryPSet.ComponentName.value() == "StandardMultiHitGenerator":
+            doubletProducer.produceIntermediateHitDoublets = True
             if producer.OrderedHitsFactoryPSet.GeneratorPSet.ComponentName.value() != "MultiHitGeneratorFromChi2":
                 raise Exception("In %s, StandardMultiHitGenerator without MultiHitGeneratorFromChi2, but with %s" % label, producer.OrderedHitsFactoryPSet.GeneratorPSet.ComponentName.value())
             tripletProducer = _multiHitFromChi2EDProducer.clone(
                 doublets = doubletLabel,
             )
         else: # got a hit generator not migrated yet
+            #print "skipping", label, producer.OrderedHitsFactoryPSet.ComponentName.value()
             continue
-        _copy(producer.OrderedHitsFactoryPSet.GeneratorPSet, tripletProducer, skip=["ComponentName"])
+        if tripletProducer:
+            _copy(producer.OrderedHitsFactoryPSet.GeneratorPSet, tripletProducer, skip=["ComponentName"])
 
         # seed creator
         seedCreatorPSet = producer.SeedCreatorPSet
@@ -169,17 +181,22 @@ def customiseForXXXXX(process):
             "SeedFromConsecutiveHitsTripletOnlyCreator": _seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer,
         }.get(producer.SeedCreatorPSet.ComponentName.value(), None)
         if seedProducer is None: # got a seed creator not migrated yet
+            #print "skipping", label, producer.SeedCreatorPSet.ComponentName.value()
             continue
         seedProducer = seedProducer.clone(
-            seedingHitSets = tripletLabel,
+            seedingHitSets = tripletLabel if tripletProducer else doubletLabel
         )
-        _copy(seedCreatorPSet, seedProducer, skip=["ComponentName"])
+        _copy(seedCreatorPSet, seedProducer, skip=[
+            "ComponentName",
+            "maxseeds", # some HLT seed creators include maxseeds parameter which does nothing except with CosmicSeedCreator
+        ])
 
         # Set new producers to process
         setattr(process, regionLabel, regionProducer)
         setattr(process, clusterCheckLabel, clusterCheckProducer)
         setattr(process, doubletLabel, doubletProducer)
-        setattr(process, tripletLabel, tripletProducer)
+        if tripletProducer:
+            setattr(process, tripletLabel, tripletProducer)
         modifier.toReplaceWith(producer, seedProducer)
 
         print "Migrated", label
@@ -204,7 +221,8 @@ def customiseForXXXXX(process):
 
                 # Inserted on reverse order, succeeding module will be
                 # inserted before preceding one
-                seq.insert(index, tripletProducer)
+                if tripletProducer:
+                    seq.insert(index, tripletProducer)
                 seq.insert(index, doubletProducer)
                 seq.insert(index, clusterCheckProducer)
                 seq.insert(index, regionProducer)
