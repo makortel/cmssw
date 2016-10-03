@@ -21,7 +21,7 @@
 #include "RecoTracker/TkTrackingRegions/interface/TrackingRegionProducerFactory.h"
 #include "RecoMuon/TrackerSeedGenerator/interface/L1MuonRegionProducer.h"
 
-#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackFilter.h"
+#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackFilterBase.h"
 #include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackFilterFactory.h"
 
 #include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackCleaner.h"
