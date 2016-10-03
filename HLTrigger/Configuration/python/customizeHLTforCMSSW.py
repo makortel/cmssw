@@ -70,6 +70,39 @@ def customiseFor15499(process):
             producer.noiseSiPM = cms.double(2.)
     return process
 
+def customiseForYYYYY(process):
+    def _copy(old, new, skip=[]):
+        skipSet = set(skip)
+        for key in old.parameterNames_():
+            if key not in skipSet:
+                setattr(new, key, getattr(old, key))
+
+    for producer in producers_by_type(process, "PixelTrackProducer"):
+        label = producer.label()
+        filterName = producer.FilterPSet.ComponentName.value()
+
+        filterProducerLabel = label+"Filter"
+        filterProducerName = filterName+"Producer"
+        filterProducer = cms.EDProducer(filterProducerName)
+        _copy(producer.FilterPSet, filterProducer, skip=["ComponentName"])
+        setattr(process, filterProducerLabel, filterProducer)
+
+        del producer.FilterPSet
+        producer.Filter = cms.InputTag(filterProducerLabel)
+        # Modify sequences (also paths to be sure, altough in practice
+        # the seeding modules should be only in sequences in HLT?)
+        for seqs in [process.sequences_(), process.paths_()]:
+            for seqName, seq in seqs.iteritems():
+                # cms.Sequence.replace() would look simpler, but it expands
+                # the contained sequences if a replacement occurs there.
+                try:
+                    index = seq.index(producer)
+                except:
+                    continue
+                seq.insert(index, filterProducer)
+
+    return process
+
 def customiseForXXXXX(process):
     from RecoTracker.TkTrackingRegions.globalTrackingRegionFromBeamSpot_cfi import globalTrackingRegionFromBeamSpot as _globalTrackingRegionFromBeamSpot
     from RecoTracker.TkTrackingRegions.globalTrackingRegionWithVertices_cfi import globalTrackingRegionWithVertices as _globalTrackingRegionWithVertices
@@ -190,6 +223,7 @@ def customiseForXXXXX(process):
             "ComponentName",
             "maxseeds", # some HLT seed creators include maxseeds parameter which does nothing except with CosmicSeedCreator
         ])
+        seedProducer.SeedComparitorPSet = producer.SeedComparitorPSet.clone()
 
         # Set new producers to process
         setattr(process, regionLabel, regionProducer)
@@ -242,6 +276,7 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
         process = customiseFor14833(process)
         process = customiseFor15440(process)
         process = customiseFor15499(process)
+        process = customiseForYYYYY(process)
         process = customiseForXXXXX(process)
 #       process = customiseFor12718(process)
         pass
