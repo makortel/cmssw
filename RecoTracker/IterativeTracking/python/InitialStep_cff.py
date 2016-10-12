@@ -10,21 +10,17 @@ from RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff import *
 
 # SEEDING LAYERS
 import RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi
+import RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff
 initialStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi.PixelLayerTriplets.clone()
 eras.trackingPhase1.toModify(initialStepSeedLayers,
-    layerList = [
-        'BPix1+BPix2+BPix3',
-        'BPix1+BPix2+FPix1_pos',
-        'BPix1+BPix2+FPix1_neg',
-        'BPix1+FPix1_pos+FPix2_pos',
-        'BPix1+FPix1_neg+FPix2_neg'
-    ]
+    layerList = RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff.PixelSeedMergerQuadruplets.layerList.value()
 )
 
 
 # seeding
 from RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff import *
 from RecoTracker.TkTrackingRegions.GlobalTrackingRegionFromBeamSpot_cfi import RegionPsetFomBeamSpotBlock
+from RecoPixelVertexing.PixelTriplets.PixelQuadrupletGenerator_cfi import PixelQuadrupletGenerator as _PixelQuadrupletGenerator
 initialStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.globalSeedsFromTriplets.clone(
     RegionFactoryPSet = RegionPsetFomBeamSpotBlock.clone(
     ComponentName = cms.string('GlobalRegionProducerFromBeamSpot'),
@@ -45,6 +41,31 @@ _SeedMergerPSet = cms.PSet(
     addRemainingTriplets = cms.bool(False),
     mergeTriplets = cms.bool(True),
     ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
+)
+eras.trackingPhase1.toModify(initialStepSeeds,
+    OrderedHitsFactoryPSet = cms.PSet(
+        ComponentName = cms.string("CombinedHitQuadrupletGenerator"),
+        GeneratorPSet = _PixelQuadrupletGenerator.clone(
+            extraHitRZtolerance = initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRZtolerance,
+            extraHitRPhitolerance = initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+            SeedComparitorPSet = initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
+            maxChi2 = dict(
+                pt1    = 0.8, pt2    = 2,
+                value1 = 200, value2 = 100,
+                enabled = True,
+            ),
+            extraPhiTolerance = dict(
+                pt1    = 0.6, pt2    = 1,
+                value1 = 0.15, value2 = 0.1,
+                enabled = True,
+            ),
+            useBendingCorrection = True,
+            fitFastCircle = True,
+            fitFastCircleChi2Cut = True,
+        ),
+        TripletGeneratorPSet = initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet,
+        SeedingLayers = cms.InputTag('initialStepSeedLayers'),
+    )
 )
 eras.trackingPhase1PU70.toModify(initialStepSeeds,
     RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.7)),
@@ -71,13 +92,7 @@ initialStepTrajectoryFilterBase = _initialStepTrajectoryFilterBase.clone(
     maxCCCLostHits = 0,
     minGoodStripCharge = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutLoose'))
 )
-_tracker_apv_vfp30_2016.toModify(initialStepTrajectoryFilterBase, maxCCCLostHits = 2)
-initialStepTrajectoryFilterInOut = initialStepTrajectoryFilterBase.clone(
-    minimumNumberOfHits = 4,
-    seedExtension = 1,
-    strictSeedExtension = True, # don't allow inactive
-    pixelSeedExtension = True,
-)
+
 eras.trackingLowPU.toReplaceWith(initialStepTrajectoryFilterBase, _initialStepTrajectoryFilterBase)
 eras.trackingPhase1PU70.toReplaceWith(initialStepTrajectoryFilterBase, _initialStepTrajectoryFilterBase)
 
@@ -125,10 +140,6 @@ initialStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilde
     maxPtForLooperReconstruction = cms.double(0.7)
     )
 eras.trackingLowPU.toModify(initialStepTrajectoryBuilder, maxCand = 5)
-eras.trackingPhase1.toModify(initialStepTrajectoryBuilder,
-    inOutTrajectoryFilter = dict(refToPSet_ = "initialStepTrajectoryFilterInOut"),
-    useSameTrajFilter = False
-)
 eras.trackingPhase1PU70.toModify(initialStepTrajectoryBuilder, maxCand = 6)
 eras.trackingPhase2PU140.toModify(initialStepTrajectoryBuilder, maxCand = 7, minNrOfHitsForRebuild = 1)
 
