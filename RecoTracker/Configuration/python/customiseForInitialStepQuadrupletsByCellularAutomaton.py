@@ -33,5 +33,5 @@ def customiseForInitialStepQuadrupletsByCellularAutomaton(process, regionPtMin, 
                 module.RegionFactoryPSet.RegionPSet.ptMin = cms.double(regionPtMin)
     
                 if hasattr(quadruplets.GeneratorPSet, "SeedComparitorPSet"):
-                    module.SeedComparitorPSet = quadruplets.GeneratorPSet.SeedComparitorPSet
+                    module.OrderedHitsFactoryPSet.SeedComparitorPSet = quadruplets.GeneratorPSet.SeedComparitorPSet
     return process
