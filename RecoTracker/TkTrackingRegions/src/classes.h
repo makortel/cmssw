@@ -1,10 +1,11 @@
 #include "RecoTracker/TkTrackingRegions/interface/TrackingRegion.h"
-#include "DataFormats/Common/interface/OwnVector.h"
+#include "RecoTracker/TkTrackingRegions/interface/TrackingRegionFwd.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 
 namespace RecoTracker_TkTrackingRegions {
   struct dictionary {
-    edm::OwnVector<TrackingRegion> ovtr;
-    edm::Wrapper<edm::OwnVector<TrackingRegion> > wovtr;
+    std::unique_ptr<TrackingRegion> utr;
+    std::vector<std::unique_ptr<TrackingRegion> > vutr;
+    edm::Wrapper<std::vector<std::unique_ptr<TrackingRegion> > > wvutr;
   };
 }

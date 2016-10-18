@@ -8,6 +8,7 @@
 #include "FWCore/Utilities/interface/RunningAverage.h"
 
 #include "RecoTracker/TkTrackingRegions/interface/TrackingRegion.h"
+#include "RecoTracker/TkTrackingRegions/interface/TrackingRegionFwd.h"
 #include "DataFormats/Common/interface/OwnVector.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
@@ -26,7 +27,7 @@ public:
 
 private:
   edm::EDGetTokenT<SeedingLayerSetsHits> seedingLayerToken_;
-  edm::EDGetTokenT<edm::OwnVector<TrackingRegion> > regionToken_;
+  edm::EDGetTokenT<TrackingRegionCollection> regionToken_;
   edm::EDGetTokenT<bool> clusterCheckToken_;
 
   edm::RunningAverage localRA_;
@@ -43,7 +44,7 @@ private:
 
 HitPairEDProducer::HitPairEDProducer(const edm::ParameterSet& iConfig):
   seedingLayerToken_(consumes<SeedingLayerSetsHits>(iConfig.getParameter<edm::InputTag>("seedingLayers"))),
-  regionToken_(consumes<edm::OwnVector<TrackingRegion> >(iConfig.getParameter<edm::InputTag>("trackingRegions"))),
+  regionToken_(consumes<TrackingRegionCollection>(iConfig.getParameter<edm::InputTag>("trackingRegions"))),
   clusterCheckToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("clusterCheck"))),
   maxElement_(iConfig.getParameter<unsigned int>("maxElement")),
   generator_(0, 1, nullptr, maxElement_), // these indices are dummy, TODO: cleanup HitPairGeneratorFromLayerPair
@@ -88,7 +89,7 @@ void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   if(layers.numberOfLayersInSet() < 2)
     throw cms::Exception("Configuration") << "HitPairEDProducer expects SeedingLayerSetsHits::numberOfLayersInSet() to be >= 2, got " << layers.numberOfLayersInSet();
 
-  edm::Handle<edm::OwnVector<TrackingRegion> > hregions;
+  edm::Handle<TrackingRegionCollection> hregions;
   iEvent.getByToken(regionToken_, hregions);
   const auto& regions = *hregions;
 
@@ -153,7 +154,8 @@ void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   }
 
   LayerHitMapCache hitCacheTmp; // used if !produceIntermediateHitDoublets_
-  for(const TrackingRegion& region: regions) {
+  for(const auto& regionPtr: regions) {
+    const TrackingRegion &region = *regionPtr;
     auto seedingHitSetsFiller = RegionsSeedingHitSets::dummyFiller();
     auto intermediateHitDoubletsFiller = IntermediateHitDoublets::dummyFiller();
     auto hitCachePtr = &hitCacheTmp;
