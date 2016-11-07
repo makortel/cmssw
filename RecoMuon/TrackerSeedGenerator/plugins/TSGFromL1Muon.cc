@@ -11,7 +11,7 @@
 #include "RecoTracker/TkTrackingRegions/interface/OrderedHitsGeneratorFactory.h"
 #include "RecoTracker/TkTrackingRegions/interface/OrderedHitsGenerator.h"
 
-#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelFitter.h"
+#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelFitterBase.h"
 #include "RecoPixelVertexing/PixelTrackFitting/interface/PixelFitterFactory.h"
 #include "RecoMuon/TrackerSeedGenerator/interface/L1MuonPixelTrackFitter.h"
 #include "RecoMuon/TrackerSeedGenerator/interface/L1MuonSeedsMerger.h"
@@ -79,7 +79,7 @@ void TSGFromL1Muon::beginRun(const edm::Run & run, const edm::EventSetup&es)
 
   edm::ParameterSet fitterPSet = theConfig.getParameter<edm::ParameterSet>("FitterPSet");
   std::string fitterName = fitterPSet.getParameter<std::string>("ComponentName");
-  PixelFitter * f = PixelFitterFactory::get()->create( fitterName, fitterPSet);
+  PixelFitterBase * f = PixelFitterFactory::get()->create( fitterName, fitterPSet);
   theFitter = dynamic_cast<L1MuonPixelTrackFitter* >(f);
 
   edm::ParameterSet cleanerPSet = theConfig.getParameter<edm::ParameterSet>("CleanerPSet");

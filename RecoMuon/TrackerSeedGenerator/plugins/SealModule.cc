@@ -19,7 +19,7 @@ DEFINE_EDM_PLUGIN(TrackerSeedGeneratorFactory, DualByEtaTSG, "DualByEtaTSG");
 DEFINE_EDM_PLUGIN(TrackerSeedGeneratorFactory, DualByL2TSG, "DualByL2TSG");
 DEFINE_EDM_PLUGIN(TrackerSeedGeneratorFactory, CombinedTSG, "CombinedTSG");
 
-#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelFitter.h"
+#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelFitterBase.h"
 #include "RecoPixelVertexing/PixelTrackFitting/interface/PixelFitterFactory.h"
 #include "RecoMuon/TrackerSeedGenerator/interface/L1MuonPixelTrackFitter.h"
 DEFINE_EDM_PLUGIN(PixelFitterFactory, L1MuonPixelTrackFitter, "L1MuonPixelTrackFitter");
