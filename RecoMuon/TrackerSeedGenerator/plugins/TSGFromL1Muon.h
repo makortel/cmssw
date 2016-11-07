@@ -37,7 +37,7 @@ private:
 
   L1MuonRegionProducer * theRegionProducer;
   OrderedHitsGenerator * theHitGenerator;
-  L1MuonPixelTrackFitter * theFitter;
+  std::unique_ptr<L1MuonPixelTrackFitter> theFitter;
   L1MuonSeedsMerger * theMerger;
 
 };

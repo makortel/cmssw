@@ -1,7 +1,6 @@
 #ifndef RecoMuon_TrackerSeedGenerator_L1MuonPixelTrackFitter_H
 #define RecoMuon_TrackerSeedGenerator_L1MuonPixelTrackFitter_H
 
-#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelFitterBase.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/GeometryVector/interface/GlobalTag.h"
@@ -21,7 +20,7 @@ class L1MuGMTCand;
 class PixelRecoLineRZ;
 class SeedingHitSet;
 
-class L1MuonPixelTrackFitter : public PixelFitterBase {
+class L1MuonPixelTrackFitter {
 
 public:
   class Circle {
