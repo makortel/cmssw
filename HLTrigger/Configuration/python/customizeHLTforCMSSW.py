@@ -79,7 +79,19 @@ def customiseForYYYYY(process):
 
     for producer in producers_by_type(process, "PixelTrackProducer"):
         label = producer.label()
+        fitterName = producer.FitterPSet.ComponentName.value()
         filterName = producer.FilterPSet.ComponentName.value()
+
+        fitterProducerLabel = label+"Fitter"
+        fitterProducerName = fitterName+"Producer"
+        fitterProducer = cms.EDProducer(fitterProducerName)
+        skip = ["ComponentName"]
+        if fitterName == "PixelFitterByHelixProjections":
+            skip.extend(["TTRHBuilder", "fixImpactParameter"]) # some HLT producers use these parameters even if they have no effect
+        _copy(producer.FitterPSet, fitterProducer, skip=skip)
+        setattr(process, fitterProducerLabel, fitterProducer)
+        del producer.FitterPSet
+        producer.Fitter = cms.InputTag(fitterProducerLabel)
 
         filterProducerLabel = label+"Filter"
         filterProducerName = filterName+"Producer"
@@ -99,6 +111,7 @@ def customiseForYYYYY(process):
                     index = seq.index(producer)
                 except:
                     continue
+                seq.insert(index, fitterProducer)
                 seq.insert(index, filterProducer)
 
     return process
