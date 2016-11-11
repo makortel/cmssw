@@ -84,28 +84,20 @@ trackingPhase1.toModify(detachedQuadStepSeeds,
         SeedingLayers = detachedQuadStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
     ),
 )
+from RecoPixelVertexing.PixelTriplets.CAHitQuadrupletGenerator_cfi import CAHitQuadrupletGenerator as _CAHitQuadrupletGenerator
 trackingPhase1CA.toModify(detachedQuadStepSeeds,
-    OrderedHitsFactoryPSet = cms.PSet(
-        ComponentName = cms.string("CombinedHitQuadrupletGenerator"),
-        GeneratorPSet = _PixelQuadrupletGenerator.clone(
-            extraHitRZtolerance = detachedQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRZtolerance,
-            extraHitRPhitolerance = detachedQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
-            maxChi2 = dict(
-                pt1    = 0.8, pt2    = 2,
-                value1 = 500, value2 = 100,
-                enabled = True,
-            ),
-            extraPhiTolerance = dict(
-                pt1    = 0.4, pt2    = 1,
-                value1 = 0.2, value2 = 0.05,
-                enabled = True,
-            ),
-            useBendingCorrection = True,
-            fitFastCircle = True,
-            fitFastCircleChi2Cut = True,
+    OrderedHitsFactoryPSet = _CAHitQuadrupletGenerator.clone(
+        extraHitRPhitolerance = detachedQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+        maxChi2 = dict(
+            pt1    = 0.8, pt2    = 2,
+            value1 = 500, value2 = 100,
         ),
-        TripletGeneratorPSet = detachedQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet,
+        useBendingCorrection = True,
+        fitFastCircle = True,
+        fitFastCircleChi2Cut = True,
         SeedingLayers = detachedQuadStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
+        CAThetaCut = 0.0011,
+        CAPhiCut = 0,
     ),
 )
 from Configuration.Eras.Modifier_trackingPhase1PU70_cff import trackingPhase1PU70
