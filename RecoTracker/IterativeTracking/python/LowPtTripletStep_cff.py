@@ -62,11 +62,28 @@ lowPtTripletStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.
     )
     )
 lowPtTripletStepSeeds.OrderedHitsFactoryPSet.SeedingLayers = 'lowPtTripletStepSeedLayers'
+from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
+import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi
+lowPtTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
+
 trackingPhase1.toModify(lowPtTripletStepSeeds, # FIXME: Phase1PU70 value, let's see if we can lower it to Run2 value (0.2)
     RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.35)),
 )
-trackingPhase1CA.toModify(lowPtTripletStepSeeds, # FIXME: Phase1PU70 value, let's see if we can lower it to Run2 value (0.2)
-    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.35)),
+from RecoPixelVertexing.PixelTriplets.CAHitTripletGenerator_cfi import CAHitTripletGenerator as _CAHitTripletGenerator
+trackingPhase1CA.toModify(lowPtTripletStepSeeds,
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.2)),
+    OrderedHitsFactoryPSet = _CAHitTripletGenerator.clone(
+        extraHitRPhitolerance = lowPtTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+        SeedComparitorPSet = lowPtTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
+        maxChi2 = dict(
+            pt1    = 0.8, pt2    = 2,
+            value1 = 70 , value2 = 8,
+        ),
+        useBendingCorrection = True,
+        SeedingLayers = lowPtTripletStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
+        CAThetaCut = 0.002,
+        CAPhiCut = 0.05,
+    ),
 )
 trackingPhase1PU70.toModify(lowPtTripletStepSeeds,
     RegionFactoryPSet = dict(
@@ -83,9 +100,6 @@ trackingPhase2PU140.toModify(lowPtTripletStepSeeds,
      SeedCreatorPSet = dict( magneticField = '', propagator = 'PropagatorWithMaterial'),
 )
 
-from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
-import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi
-lowPtTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
 
 
 # QUALITY CUTS DURING TRACK BUILDING
