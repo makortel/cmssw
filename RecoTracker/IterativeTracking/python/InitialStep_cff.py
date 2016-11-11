@@ -9,6 +9,7 @@ from RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff import *
 
 # SEEDING LAYERS
 import RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi
+import RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff
 initialStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi.PixelLayerTriplets.clone()
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
@@ -22,13 +23,7 @@ trackingPhase1.toModify(initialStepSeedLayers,
     ]
 )
 trackingPhase1CA.toModify(initialStepSeedLayers,
-    layerList = [
-        'BPix1+BPix2+BPix3',
-        'BPix1+BPix2+FPix1_pos',
-        'BPix1+BPix2+FPix1_neg',
-        'BPix1+FPix1_pos+FPix2_pos',
-        'BPix1+FPix1_neg+FPix2_neg'
-    ]
+    layerList = RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff.PixelSeedMergerQuadruplets.layerList.value()
 )
 
 
@@ -50,6 +45,24 @@ from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi 
 import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi
 initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
 
+from RecoPixelVertexing.PixelTriplets.CAHitQuadrupletGenerator_cfi import CAHitQuadrupletGenerator as _CAHitQuadrupletGenerator
+trackingPhase1CA.toModify(initialStepSeeds,
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.5)),
+    OrderedHitsFactoryPSet = _CAHitQuadrupletGenerator.clone(
+        extraHitRPhitolerance = initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+        SeedComparitorPSet = initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
+        maxChi2 = dict(
+            pt1    = 0.7, pt2    = 2,
+            value1 = 200, value2 = 50,
+        ),
+        useBendingCorrection = True,
+        fitFastCircle = True,
+        fitFastCircleChi2Cut = True,
+        SeedingLayers = initialStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
+        CAThetaCut = 0.0012,
+        CAPhiCut = 0.2,
+    )
+)
 _SeedMergerPSet = cms.PSet(
     layerList = cms.PSet(refToPSet_ = cms.string("PixelSeedMergerQuadruplets")),
     addRemainingTriplets = cms.bool(False),
@@ -140,10 +153,6 @@ initialStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilde
     )
 trackingLowPU.toModify(initialStepTrajectoryBuilder, maxCand = 5)
 trackingPhase1.toModify(initialStepTrajectoryBuilder,
-    inOutTrajectoryFilter = dict(refToPSet_ = "initialStepTrajectoryFilterInOut"),
-    useSameTrajFilter = False
-)
-trackingPhase1CA.toModify(initialStepTrajectoryBuilder,
     inOutTrajectoryFilter = dict(refToPSet_ = "initialStepTrajectoryFilterInOut"),
     useSameTrajFilter = False
 )
