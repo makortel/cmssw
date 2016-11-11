@@ -71,29 +71,22 @@ trackingPhase1.toModify(lowPtQuadStepSeeds,
         SeedingLayers = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
     ),
 )
+from RecoPixelVertexing.PixelTriplets.CAHitQuadrupletGenerator_cfi import CAHitQuadrupletGenerator as _CAHitQuadrupletGenerator
 trackingPhase1CA.toModify(lowPtQuadStepSeeds,
-    OrderedHitsFactoryPSet = cms.PSet(
-        ComponentName = cms.string("CombinedHitQuadrupletGenerator"),
-        GeneratorPSet = _PixelQuadrupletGenerator.clone(
-            extraHitRZtolerance = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRZtolerance,
-            extraHitRPhitolerance = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
-            SeedComparitorPSet = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
-            maxChi2 = dict(
-                pt1    = 0.8  , pt2    = 2,
-                value1 = 2000, value2 = 100,
-                enabled = True,
-            ),
-            extraPhiTolerance = dict(
-                pt1    = 0.3, pt2    = 1,
-                value1 = 0.4, value2 = 0.05,
-                enabled = True,
-            ),
-            useBendingCorrection = True,
-            fitFastCircle = True,
-            fitFastCircleChi2Cut = True,
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.15)),
+    OrderedHitsFactoryPSet = _CAHitQuadrupletGenerator.clone(
+        extraHitRPhitolerance = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+        SeedComparitorPSet = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
+        maxChi2 = dict(
+            pt1    = 0.7 , pt2    = 2,
+            value1 = 1000, value2 = 150,
         ),
-        TripletGeneratorPSet = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet,
+        useBendingCorrection = True,
+        fitFastCircle = True,
+        fitFastCircleChi2Cut = True,
         SeedingLayers = lowPtQuadStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
+        CAThetaCut = 0.0017,
+        CAPhiCut = 0.3,
     ),
 )
 from Configuration.Eras.Modifier_trackingPhase1PU70_cff import trackingPhase1PU70
