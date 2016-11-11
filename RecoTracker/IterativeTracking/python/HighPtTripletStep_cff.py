@@ -72,6 +72,24 @@ highPtTripletStepSeeds = globalSeedsFromTriplets.clone(
         )
     )
 )
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
+from RecoPixelVertexing.PixelTriplets.CAHitTripletGenerator_cfi import CAHitTripletGenerator as _CAHitTripletGenerator
+trackingPhase1CA.toModify(highPtTripletStepSeeds,
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.55)),
+    OrderedHitsFactoryPSet = _CAHitTripletGenerator.clone(
+        extraHitRPhitolerance = highPtTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+        SeedComparitorPSet = highPtTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
+        maxChi2 = dict(
+            pt1    = 0.8, pt2    = 8,
+            value1 = 100, value2 = 6,
+        ),
+        useBendingCorrection = True,
+        SeedingLayers = highPtTripletStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
+        CAThetaCut = 0.004,
+        CAPhiCut = 0.07,
+        CAHardPtCut = 0.3,
+    ),
+)
 from Configuration.Eras.Modifier_trackingPhase1PU70_cff import trackingPhase1PU70
 trackingPhase1PU70.toModify(highPtTripletStepSeeds, RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.7)))
 trackingPhase2PU140.toModify(highPtTripletStepSeeds,
