@@ -60,6 +60,23 @@ detachedTripletStepSeeds.SeedComparitorPSet = cms.PSet(
         ClusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCache')
     )
 
+from RecoPixelVertexing.PixelTriplets.CAHitTripletGenerator_cfi import CAHitTripletGenerator as _CAHitTripletGenerator
+trackingPhase1CA.toModify(detachedTripletStepSeeds,
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.25)),
+    OrderedHitsFactoryPSet = _CAHitTripletGenerator.clone(
+        extraHitRPhitolerance = detachedTripletStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+        maxChi2 = dict(
+            pt1    = 0.8, pt2    = 2,
+            value1 = 300, value2 = 10,
+        ),
+        useBendingCorrection = True,
+        SeedingLayers = detachedTripletStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
+        CAThetaCut = 0.001,
+        CAPhiCut = 0,
+        CAHardPtCut = 0.2,
+    ),
+)
+
 # QUALITY CUTS DURING TRACK BUILDING
 import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
 _detachedTripletStepTrajectoryFilterBase = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
