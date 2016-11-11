@@ -48,7 +48,8 @@ jetCoreRegionalStepSeedLayers = cms.EDProducer("SeedingLayersEDProducer",
     )
 )
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
-trackingPhase1.toModify(jetCoreRegionalStepSeedLayers,
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
+_layers_trackingPhase1 = dict(
     layerList = [
         'BPix1+BPix2', 'BPix1+BPix3', 'BPix1+BPix4',
         'BPix2+BPix3', 'BPix2+BPix4',
@@ -62,6 +63,8 @@ trackingPhase1.toModify(jetCoreRegionalStepSeedLayers,
         'BPix4+TIB1','BPix4+TIB2'
     ]
 )
+trackingPhase1.toModify(jetCoreRegionalStepSeedLayers, **_layers_trackingPhase1)
+trackingPhase1CA.toModify(jetCoreRegionalStepSeedLayers, **_layers_trackingPhase1)
 
 # SEEDS
 import RecoTracker.TkSeedGenerator.GlobalSeedsFromPairsWithVertices_cff

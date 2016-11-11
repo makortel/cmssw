@@ -18,7 +18,11 @@ detachedQuadStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi.
     FPix = dict(skipClusters = cms.InputTag('detachedQuadStepClusters'))
 )
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
 trackingPhase1.toModify(detachedQuadStepSeedLayers,
+    layerList = RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff.PixelSeedMergerQuadruplets.layerList.value()
+)
+trackingPhase1CA.toModify(detachedQuadStepSeedLayers,
     layerList = RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff.PixelSeedMergerQuadruplets.layerList.value()
 )
 from Configuration.Eras.Modifier_trackingPhase2PU140_cff import trackingPhase2PU140
@@ -57,6 +61,30 @@ detachedQuadStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.
     ),
 )
 trackingPhase1.toModify(detachedQuadStepSeeds,
+    OrderedHitsFactoryPSet = cms.PSet(
+        ComponentName = cms.string("CombinedHitQuadrupletGenerator"),
+        GeneratorPSet = _PixelQuadrupletGenerator.clone(
+            extraHitRZtolerance = detachedQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRZtolerance,
+            extraHitRPhitolerance = detachedQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+            maxChi2 = dict(
+                pt1    = 0.8, pt2    = 2,
+                value1 = 500, value2 = 100,
+                enabled = True,
+            ),
+            extraPhiTolerance = dict(
+                pt1    = 0.4, pt2    = 1,
+                value1 = 0.2, value2 = 0.05,
+                enabled = True,
+            ),
+            useBendingCorrection = True,
+            fitFastCircle = True,
+            fitFastCircleChi2Cut = True,
+        ),
+        TripletGeneratorPSet = detachedQuadStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet,
+        SeedingLayers = detachedQuadStepSeeds.OrderedHitsFactoryPSet.SeedingLayers,
+    ),
+)
+trackingPhase1CA.toModify(detachedQuadStepSeeds,
     OrderedHitsFactoryPSet = cms.PSet(
         ComponentName = cms.string("CombinedHitQuadrupletGenerator"),
         GeneratorPSet = _PixelQuadrupletGenerator.clone(

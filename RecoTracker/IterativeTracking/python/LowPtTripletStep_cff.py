@@ -26,7 +26,9 @@ _layerListForPhase1 = [
     'BPix1+FPix1_pos+FPix3_pos', 'BPix1+FPix1_neg+FPix3_neg'
 ]
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
 trackingPhase1.toModify(lowPtTripletStepSeedLayers, layerList = _layerListForPhase1)
+trackingPhase1CA.toModify(lowPtTripletStepSeedLayers, layerList = _layerListForPhase1)
 from Configuration.Eras.Modifier_trackingPhase1PU70_cff import trackingPhase1PU70
 trackingPhase1PU70.toModify(lowPtTripletStepSeedLayers, layerList = _layerListForPhase1)
 
@@ -61,6 +63,9 @@ lowPtTripletStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.
     )
 lowPtTripletStepSeeds.OrderedHitsFactoryPSet.SeedingLayers = 'lowPtTripletStepSeedLayers'
 trackingPhase1.toModify(lowPtTripletStepSeeds, # FIXME: Phase1PU70 value, let's see if we can lower it to Run2 value (0.2)
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.35)),
+)
+trackingPhase1CA.toModify(lowPtTripletStepSeeds, # FIXME: Phase1PU70 value, let's see if we can lower it to Run2 value (0.2)
     RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.35)),
 )
 trackingPhase1PU70.toModify(lowPtTripletStepSeeds,
@@ -193,7 +198,7 @@ lowPtTripletStep.qualityCuts = [-0.6,-0.3,-0.1]
 # For Phase1
 # MVA selection to be enabled after re-training, for time being we go with cut-based selector
 from RecoTracker.FinalTrackSelectors.TrackCutClassifier_cfi import TrackCutClassifier as _TrackCutClassifier
-trackingPhase1.toReplaceWith(lowPtTripletStep, _TrackCutClassifier.clone(
+_lowPtTripletStep_trackingPhase1 = _TrackCutClassifier.clone(
     src = "lowPtTripletStepTracks",
     vertices = "firstStepPrimaryVertices",
     mva = dict (
@@ -215,7 +220,9 @@ trackingPhase1.toReplaceWith(lowPtTripletStep, _TrackCutClassifier.clone(
             d0err_par = [0.002,0.002,0.001],
         ),
     )
-))
+)
+trackingPhase1.toReplaceWith(lowPtTripletStep, _lowPtTripletStep_trackingPhase1)
+trackingPhase1CA.toReplaceWith(lowPtTripletStep, _lowPtTripletStep_trackingPhase1)
 
 # For LowPU and Phase1PU70
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi

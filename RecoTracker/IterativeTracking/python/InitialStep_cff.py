@@ -11,7 +11,17 @@ from RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff import *
 import RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi
 initialStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi.PixelLayerTriplets.clone()
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
 trackingPhase1.toModify(initialStepSeedLayers,
+    layerList = [
+        'BPix1+BPix2+BPix3',
+        'BPix1+BPix2+FPix1_pos',
+        'BPix1+BPix2+FPix1_neg',
+        'BPix1+FPix1_pos+FPix2_pos',
+        'BPix1+FPix1_neg+FPix2_neg'
+    ]
+)
+trackingPhase1CA.toModify(initialStepSeedLayers,
     layerList = [
         'BPix1+BPix2+BPix3',
         'BPix1+BPix2+FPix1_pos',
@@ -130,6 +140,10 @@ initialStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilde
     )
 trackingLowPU.toModify(initialStepTrajectoryBuilder, maxCand = 5)
 trackingPhase1.toModify(initialStepTrajectoryBuilder,
+    inOutTrajectoryFilter = dict(refToPSet_ = "initialStepTrajectoryFilterInOut"),
+    useSameTrajFilter = False
+)
+trackingPhase1CA.toModify(initialStepTrajectoryBuilder,
     inOutTrajectoryFilter = dict(refToPSet_ = "initialStepTrajectoryFilterInOut"),
     useSameTrajFilter = False
 )

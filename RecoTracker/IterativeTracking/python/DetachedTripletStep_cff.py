@@ -17,7 +17,8 @@ detachedTripletStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_c
 detachedTripletStepSeedLayers.BPix.skipClusters = cms.InputTag('detachedTripletStepClusters')
 detachedTripletStepSeedLayers.FPix.skipClusters = cms.InputTag('detachedTripletStepClusters')
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
-trackingPhase1.toModify(detachedTripletStepSeedLayers,
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
+_layers_trackingPhase1 = dict(
     layerList = [
         'BPix1+BPix2+BPix3',
         'BPix2+BPix3+BPix4',
@@ -34,6 +35,8 @@ trackingPhase1.toModify(detachedTripletStepSeedLayers,
 #        'BPix1+FPix1_pos+FPix3_pos', 'BPix1+FPix1_neg+FPix3_neg'  # has "hole", not tested
     ]
 )
+trackingPhase1.toModify(detachedTripletStepSeedLayers, **_layers_trackingPhase1)
+trackingPhase1CA.toModify(detachedTripletStepSeedLayers, **_layers_trackingPhase1)
 
 # SEEDS
 from RecoPixelVertexing.PixelTriplets.PixelTripletLargeTipGenerator_cfi import *

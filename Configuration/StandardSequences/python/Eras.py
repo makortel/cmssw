@@ -22,6 +22,7 @@ class Eras (object):
                  'Run2_2017',
                  'Run2_2017_trackingRun2',
                  'Run2_2017_trackingPhase1PU70',
+                 'Run2_2017_trackingPhase1CA',
                  'Run3',
                  'Phase2C1',
                  'Phase2C2',
@@ -39,7 +40,7 @@ class Eras (object):
                            'phase2_common', 'phase2_tracker',
                            'phase2_hgcal', 'phase2_muon', 'phase2_timing',
                            'phase2_hcal',
-                           'trackingLowPU', 'trackingPhase1', 'trackingPhase1PU70', 'ctpps_2016', 'trackingPhase2PU140',
+                           'trackingLowPU', 'trackingPhase1', 'trackingPhase1PU70', 'trackingPhase1CA', 'ctpps_2016', 'trackingPhase2PU140',
                            'tracker_apv_vfp30_2016']
         internalUseModChains = ['run2_2017_core']
 

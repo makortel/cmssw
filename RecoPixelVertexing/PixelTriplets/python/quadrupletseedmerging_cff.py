@@ -58,7 +58,9 @@ _forPhase1 = dict(
     FPix = dict(HitProducer = "siPixelRecHitsPreSplitting"),
 )
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
 trackingPhase1.toModify(PixelSeedMergerQuadruplets, **_forPhase1)
+trackingPhase1CA.toModify(PixelSeedMergerQuadruplets, **_forPhase1)
 from Configuration.Eras.Modifier_trackingPhase1PU70_cff import trackingPhase1PU70
 trackingPhase1PU70.toModify(PixelSeedMergerQuadruplets, **_forPhase1)
 from Configuration.Eras.Modifier_trackingPhase2PU140_cff import trackingPhase2PU140

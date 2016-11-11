@@ -55,6 +55,19 @@ def _trackingRun2(stepList):
             continue
         res.append(s)
     return res
+def _trackingPhase1CA(stepList):
+    res = []
+    for step in stepList:
+        s = step
+        if 'RecoFull' in step:
+            if 'trackingOnly' in step:
+                s = s.replace('Only', 'OnlyPhase1CA')
+            else:
+                s = s.replace('Full', 'Full_trackingPhase1CA')
+        if 'ALCA' in s:
+            continue
+        res.append(s)
+    return res
 def _trackingPhase1PU70(stepList):
     res = []
     for step in stepList:
@@ -77,3 +90,5 @@ workflows[10024.2] = [ workflows[10024.0][0], _trackingRun2(workflows[10024.0][1
 workflows[10024.3] = [ workflows[10024.1][0], _trackingRun2(workflows[10024.1][1]) ]
 workflows[10024.4] = [ workflows[10024.0][0], _trackingPhase1PU70(workflows[10024.0][1]) ]
 workflows[10024.5] = [ workflows[10024.1][0], _trackingPhase1PU70(workflows[10024.1][1]) ]
+workflows[10024.6] = [ workflows[10024.0][0], _trackingPhase1CA(workflows[10024.0][1]) ]
+workflows[10024.7] = [ workflows[10024.1][0], _trackingPhase1CA(workflows[10024.1][1]) ]

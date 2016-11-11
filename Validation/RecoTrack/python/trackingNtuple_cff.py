@@ -54,15 +54,19 @@ def _filterForNtuple(lst):
     return ret
 _seedProducers = _filterForNtuple(_TrackValidation_cff._seedProducers)
 _seedProducers_trackingPhase1 = _filterForNtuple(_TrackValidation_cff._seedProducers_trackingPhase1)
+_seedProducers_trackingPhase1CA = _filterForNtuple(_TrackValidation_cff._seedProducers_trackingPhase1CA)
 
 (_seedSelectors, trackingNtupleSeedSelectors) = _TrackValidation_cff._addSeedToTrackProducers(_seedProducers, globals())
 (_seedSelectors_trackingPhase1, _trackingNtupleSeedSelectors_trackingPhase1) = _TrackValidation_cff._addSeedToTrackProducers(_seedProducers_trackingPhase1, globals())
-from Configuration.Eras.Modifier_phase1Pixel_cff import phase1Pixel
-phase1Pixel.toReplaceWith(trackingNtupleSeedSelectors, _trackingNtupleSeedSelectors_trackingPhase1)
+(_seedSelectors_trackingPhase1CA, _trackingNtupleSeedSelectors_trackingPhase1CA) = _TrackValidation_cff._addSeedToTrackProducers(_seedProducers_trackingPhase1CA, globals())
+from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from Configuration.Eras.Modifier_trackingPhase1CA_cff import trackingPhase1CA
+trackingPhase1.toReplaceWith(trackingNtupleSeedSelectors, _trackingNtupleSeedSelectors_trackingPhase1)
+trackingPhase1CA.toReplaceWith(trackingNtupleSeedSelectors, _trackingNtupleSeedSelectors_trackingPhase1CA)
 
 trackingNtuple.seedTracks = _seedSelectors
-from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 trackingPhase1.toModify(trackingNtuple, seedTracks = _seedSelectors_trackingPhase1)
+trackingPhase1CA.toModify(trackingNtuple, seedTracks = _seedSelectors_trackingPhase1CA)
 
 trackingNtupleSequence = cms.Sequence()
 # reproduce hits because they're not stored in RECO
