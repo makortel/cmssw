@@ -49,8 +49,12 @@ def addL3ToHLT(process):
 	#Making Pixel Vertices:
         from RecoPixelVertexing.PixelTrackFitting.pixelTrackFilterByKinematics_cfi import pixelTrackFilterByKinematics as _pixelTrackFilterByKinematics
         from RecoPixelVertexing.PixelTrackFitting.pixelFitterByHelixProjections_cfi import pixelFitterByHelixProjections as _pixelFitterByHelixProjections
+        from RecoPixelVertexing.PixelTrackFitting.pixelTrackCleanerBySharedHits_cfi import pixelTrackCleanerBySharedHits as _pixelTrackCleanerBySharedHits
         process.hltPixelTracksFitter = _pixelFitterByHelixProjections.clone()
         process.hltPixelTrackFilterByKinematics = _pixelTrackFilterByKinematics.clone()
+        process.hltPixelTracksCleaner = _pixelTrackCleanerBySharedHits.clone(
+            ComponentName = "hltPixelTracksCleaner",
+        )
 	process.hltPixelTracks = cms.EDProducer( "PixelTrackProducer",
 	    Filter = cms.InputTag("hltPixelTrackFilterByKinematics"),
 	    useFilterWithES = cms.bool( False ),
@@ -66,10 +70,7 @@ def addL3ToHLT(process):
 	        beamSpot = cms.InputTag( "hltOnlineBeamSpot" )
 	      )
 	    ),
-	    CleanerPSet = cms.PSet(
-              ComponentName = cms.string( "PixelTrackCleanerBySharedHits" ),
-              useQuadrupletAlgo = cms.bool(False)
-            ),
+	    Cleaner = cms.string("hltPixelTracksCleaner"),
 	    OrderedHitsFactoryPSet = cms.PSet(
 	      ComponentName = cms.string( "StandardHitTripletGenerator" ),
 	      GeneratorPSet = cms.PSet(
@@ -444,10 +445,7 @@ def addL3ToHLT(process):
 	        beamSpot = cms.InputTag( "hltOnlineBeamSpot" )
 	      )
 	    ),
-	    CleanerPSet = cms.PSet(
-              ComponentName = cms.string( "PixelTrackCleanerBySharedHits" ),
-              useQuadrupletAlgo = cms.bool(False)
-            ),
+	    CleanerPSet = cms.string("hltPixelTracksCleaner"),
 	    OrderedHitsFactoryPSet = cms.PSet(
 	      ComponentName = cms.string( "StandardHitTripletGenerator" ),
 	      GeneratorPSet = cms.PSet(
@@ -491,10 +489,7 @@ def addL3ToHLT(process):
 	    passLabel = cms.string( "Pixel triplet primary tracks with vertex constraint" ),
 	    Fitter = cms.InputTag("hltPixelTracksFitter"),
 	    RegionFactoryPSet = IterMasterMuonTrackingRegionBuilder,
-	    CleanerPSet = cms.PSet(
-              ComponentName = cms.string( "PixelTrackCleanerBySharedHits" ),
-              useQuadrupletAlgo = cms.bool(False)
-            ),
+	    CleanerPSet = cms.string("hltPixelTracksCleaner"),
 	    OrderedHitsFactoryPSet = cms.PSet(
 	      ComponentName = cms.string( "StandardHitTripletGenerator" ),
 	      GeneratorPSet = cms.PSet(
