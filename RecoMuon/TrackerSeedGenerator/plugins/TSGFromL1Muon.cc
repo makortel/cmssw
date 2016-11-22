@@ -21,9 +21,6 @@
 
 #include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackFilter.h"
 
-#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackCleaner.h"
-#include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackCleanerFactory.h"
-
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
@@ -77,8 +74,6 @@ void TSGFromL1Muon::beginRun(const edm::Run & run, const edm::EventSetup&es)
   theRegionProducer = dynamic_cast<L1MuonRegionProducer* >(p);
 
   edm::ParameterSet cleanerPSet = theConfig.getParameter<edm::ParameterSet>("CleanerPSet");
-  std::string  cleanerName = cleanerPSet.getParameter<std::string>("ComponentName");
-//  theMerger = PixelTrackCleanerFactory::get()->create( cleanerName, cleanerPSet);
   theMerger = new L1MuonSeedsMerger(cleanerPSet);
 }
 
