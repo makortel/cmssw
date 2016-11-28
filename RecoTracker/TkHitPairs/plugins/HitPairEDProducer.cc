@@ -44,7 +44,6 @@ private:
 HitPairEDProducer::HitPairEDProducer(const edm::ParameterSet& iConfig):
   seedingLayerToken_(consumes<SeedingLayerSetsHits>(iConfig.getParameter<edm::InputTag>("seedingLayers"))),
   regionToken_(consumes<edm::OwnVector<TrackingRegion> >(iConfig.getParameter<edm::InputTag>("trackingRegions"))),
-  clusterCheckToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("clusterCheck"))),
   maxElement_(iConfig.getParameter<unsigned int>("maxElement")),
   generator_(0, 1, nullptr, maxElement_), // these indices are dummy, TODO: cleanup HitPairGeneratorFromLayerPair
   layerPairBegins_(iConfig.getParameter<std::vector<unsigned> >("layerPairs")),
@@ -56,6 +55,11 @@ HitPairEDProducer::HitPairEDProducer(const edm::ParameterSet& iConfig):
 
   if(layerPairBegins_.empty())
     throw cms::Exception("Configuration") << "HitPairEDProducer requires at least index for layer pairs (layerPairs parameter), none was given";
+
+  auto clusterCheckTag = iConfig.getParameter<edm::InputTag>("clusterCheck");
+  if(clusterCheckTag.label() != "")
+    clusterCheckToken_ = consumes<bool>(clusterCheckTag);
+
 
   if(produceSeedingHitSets_)
     produces<RegionsSeedingHitSets>();
@@ -78,9 +82,12 @@ void HitPairEDProducer::fillDescriptions(edm::ConfigurationDescriptions& descrip
 }
 
 void HitPairEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  edm::Handle<bool> hclusterCheck;
-  iEvent.getByToken(clusterCheckToken_, hclusterCheck);
-  const bool clusterCheckOk = *hclusterCheck;
+  bool clusterCheckOk = true;
+  if(!clusterCheckToken_.isUninitialized()) {
+    edm::Handle<bool> hclusterCheck;
+    iEvent.getByToken(clusterCheckToken_, hclusterCheck);
+    clusterCheckOk = *hclusterCheck;
+  }
 
   edm::Handle<SeedingLayerSetsHits> hlayers;
   iEvent.getByToken(seedingLayerToken_, hlayers);
