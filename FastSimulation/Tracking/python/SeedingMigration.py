@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 def _regionProducerToFactoryPSet(producer):
     _map = {
-        "GlobalTrackinRegionFromBeamSpotEDProducer": "GlobalRegionProducerFromBeamSpot",
+        "GlobalTrackingRegionFromBeamSpotEDProducer": "GlobalRegionProducerFromBeamSpot",
         "GlobalTrackingRegionWithVerticesEDProducer": "GlobalTrackingRegionWithVerticesProducer",
     }
     return cms.PSet(
