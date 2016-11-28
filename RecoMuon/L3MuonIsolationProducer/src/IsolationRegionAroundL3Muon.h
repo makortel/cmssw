@@ -39,6 +39,27 @@ public:
 
   virtual ~IsolationRegionAroundL3Muon(){}
 
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+    edm::ParameterSetDescription desc;
+
+    desc.add<double>("deltaPhiRegion", 0.24);
+    desc.add<edm::InputTag>("TrkSrc", edm::InputTag("L3Muons"));
+    desc.add<double>("originHalfLength", 15.0);
+    desc.add<double>("deltaEtaRegion", 0.24);
+    desc.add<double>("vertexZDefault", 0.0);
+    desc.add<edm::InputTag>("vertexSrc", edm::InputTag(""));
+    desc.add<double>("originRadius", 0.2);
+    desc.add<bool>("vertexZConstrained", false);
+    desc.add<double>("ptMin", 1.0);
+    desc.add<std::string>("measurementTrackerName", "");
+
+    // Only for backwards-compatibility
+    edm::ParameterSetDescription descRegion;
+    descRegion.add<edm::ParameterSetDescription>("RegionPSet", desc);
+
+    descriptions.add("isolationRegionAroundL3Muon", descRegion);
+  }
+
   virtual std::vector<std::unique_ptr<TrackingRegion> > regions(const edm::Event& ev,
       const edm::EventSetup& es) const override {
 
