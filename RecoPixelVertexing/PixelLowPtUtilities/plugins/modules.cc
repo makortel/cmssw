@@ -18,12 +18,6 @@ DEFINE_FWK_MODULE(PixelVertexProducerClusters);
 #include "TrackListCombiner.h"
 DEFINE_FWK_MODULE(TrackListCombiner);
 
-// Generator
-#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayers.h"
-#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayersFactory.h"
-#include "RecoPixelVertexing/PixelLowPtUtilities/interface/PixelTripletLowPtGenerator.h"
-DEFINE_EDM_PLUGIN(HitTripletGeneratorFromPairAndLayersFactory, PixelTripletLowPtGenerator,"PixelTripletLowPtGenerator");
-
 // Seed
 //#include "RecoPixelVertexing/PixelLowPtUtilities/interface/SeedProducer.h"
 //DEFINE_FWK_MODULE(SeedProducer);
