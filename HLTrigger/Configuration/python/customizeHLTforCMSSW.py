@@ -151,6 +151,7 @@ def customiseForXXXXX(process):
     from RecoTracker.TkTrackingRegions.globalTrackingRegionFromBeamSpot_cfi import globalTrackingRegionFromBeamSpot as _globalTrackingRegionFromBeamSpot
     from RecoTracker.TkTrackingRegions.globalTrackingRegionWithVertices_cfi import globalTrackingRegionWithVertices as _globalTrackingRegionWithVertices
     from RecoTauTag.HLTProducers.tauRegionalPixelSeedTrackingRegions_cfi import tauRegionalPixelSeedTrackingRegions as _tauRegionalPixelSeedTrackingRegions
+    from RecoTauTag.HLTProducers.seededTrackingRegionsFromBeamSpotFixedZLength_cfi import seededTrackingRegionsFromBeamSpotFixedZLength as _seededTrackingRegionsFromBeamSpotFixedZLength
 
     from RecoTracker.TkSeedGenerator.trackerClusterCheck_cff import trackerClusterCheck as _trackerClusterCheck
 
@@ -194,6 +195,7 @@ def customiseForXXXXX(process):
             "GlobalRegionProducerFromBeamSpot": _globalTrackingRegionFromBeamSpot,
             "GlobalTrackingRegionWithVerticesProducer": _globalTrackingRegionWithVertices,
             "TauRegionalPixelSeedGenerator": _tauRegionalPixelSeedTrackingRegions,
+            "CandidateSeededTrackingRegionsProducer": _seededTrackingRegionsFromBeamSpotFixedZLength,
         }.get(producer.RegionFactoryPSet.ComponentName.value(), None)
         if regionProducer is None: # got a region not migrated yet
             #print "skipping", label, producer.RegionFactoryPSet.ComponentName.value()
