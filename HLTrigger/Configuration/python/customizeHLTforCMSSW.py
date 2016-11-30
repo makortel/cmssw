@@ -104,7 +104,8 @@ def customiseForYYYYY(process):
 
         del producer.FilterPSet
         producer.Filter = cms.InputTag(filterProducerLabel)
-
+        if hasattr(producer, "useFilterWithES"): # useFilterWithES has no effect anymore
+            del producer.useFilterWithES
 
         cleanerPSet = producer.CleanerPSet
         del producer.CleanerPSet
