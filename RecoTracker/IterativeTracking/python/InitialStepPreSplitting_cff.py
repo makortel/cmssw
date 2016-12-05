@@ -68,29 +68,22 @@ trackingPhase1.toModify(initialStepSeedsPreSplitting,
         SeedingLayers = cms.InputTag('initialStepSeedLayersPreSplitting'),
     )
 )
+from RecoPixelVertexing.PixelTriplets.CAHitQuadrupletGenerator_cfi import CAHitQuadrupletGenerator as _CAHitQuadrupletGenerator
 trackingPhase1CA.toModify(initialStepSeedsPreSplitting,
-    OrderedHitsFactoryPSet = cms.PSet(
-        ComponentName = cms.string("CombinedHitQuadrupletGenerator"),
-        GeneratorPSet = _PixelQuadrupletGenerator.clone(
-            extraHitRZtolerance = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRZtolerance,
-            extraHitRPhitolerance = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
-            SeedComparitorPSet = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
-            maxChi2 = dict(
-                pt1    = 0.8, pt2    = 2,
-                value1 = 200, value2 = 100,
-                enabled = True,
-            ),
-            extraPhiTolerance = dict(
-                pt1    = 0.6, pt2    = 1,
-                value1 = 0.15, value2 = 0.1,
-                enabled = True,
-            ),
-            useBendingCorrection = True,
-            fitFastCircle = True,
-            fitFastCircleChi2Cut = True,
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.5)),
+    OrderedHitsFactoryPSet = _CAHitQuadrupletGenerator.clone(
+        extraHitRPhitolerance = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.extraHitRPhitolerance,
+        SeedComparitorPSet = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet,
+        maxChi2 = dict(
+            pt1    = 0.7, pt2    = 2,
+            value1 = 200, value2 = 50,
         ),
-        TripletGeneratorPSet = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.GeneratorPSet,
-        SeedingLayers = cms.InputTag('initialStepSeedLayersPreSplitting'),
+        useBendingCorrection = True,
+        fitFastCircle = True,
+        fitFastCircleChi2Cut = True,
+        SeedingLayers = initialStepSeedsPreSplitting.OrderedHitsFactoryPSet.SeedingLayers,
+        CAThetaCut = 0.0012,
+        CAPhiCut = 0.2,
     )
 )
 
