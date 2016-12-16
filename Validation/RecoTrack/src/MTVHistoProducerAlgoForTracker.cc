@@ -651,7 +651,7 @@ void MTVHistoProducerAlgoForTracker::bookRecoPVAssociationHistos(DQMStore::IBook
   h_pileupdxypvzoomed.push_back( ibook.book1D("num_pileup_dxypv_zoomed","N of associated (recoToSim) pileup tracks vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
 
   h_recodzpvzoomed.push_back( ibook.book1D("num_reco_dzpv_zoomed","N of reco track vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
-  h_assoc2dzpvzoomed.push_back( ibook.book1D("num_assoc(recoToSim)_dzpv_zoomed","N of associated (recoToSim) tracks vs dz(PV)",nintDz,minDz,maxDz/10.) );
+  h_assoc2dzpvzoomed.push_back( ibook.book1D("num_assoc(recoToSim)_dzpv_zoomed","N of associated (recoToSim) tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
   h_looperdzpvzoomed.push_back( ibook.book1D("num_duplicate_dzpv_zoomed","N of associated (recoToSim) looper tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
   if(!doSeedPlots_) h_misiddzpvzoomed.push_back( ibook.book1D("num_chargemisid_versus_dzpv_zoomed","N of associated (recoToSim) charge misIDed tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
   h_pileupdzpvzoomed.push_back( ibook.book1D("num_pileup_dzpv_zoomed","N of associated (recoToSim) pileup tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
