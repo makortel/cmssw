@@ -107,6 +107,8 @@ MTVHistoProducerAlgoForTracker::MTVHistoProducerAlgoForTracker(const edm::Parame
   maxDz  = pset.getParameter<double>("maxDz");
   nintDz = pset.getParameter<int>("nintDz");
 
+  dxyDzZoom = pset.getParameter<double>("dxyDzZoom");
+
   //parameters for _vs_ProductionVertexTransvPosition plots
   minVertpos  = pset.getParameter<double>("minVertpos");
   maxVertpos  = pset.getParameter<double>("maxVertpos");
@@ -345,11 +347,11 @@ void MTVHistoProducerAlgoForTracker::bookSimTrackPVAssociationHistos(DQMStore::I
   h_assocdzpv.push_back( ibook.book1D("num_assoc(simToReco)_dzpv","N of associated tracks (simToReco) vs dz(PV)",nintDz,minDz,maxDz) );
   h_simuldzpv.push_back( ibook.book1D("num_simul_dzpv","N of simulated tracks vs dz(PV)",nintDz,minDz,maxDz) );
 
-  h_assocdxypvzoomed.push_back( ibook.book1D("num_assoc(simToReco)_dxypv_zoomed","N of associated tracks (simToReco) vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
-  h_simuldxypvzoomed.push_back( ibook.book1D("num_simul_dxypv_zoomed","N of simulated tracks vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
+  h_assocdxypvzoomed.push_back( ibook.book1D("num_assoc(simToReco)_dxypv_zoomed","N of associated tracks (simToReco) vs dxy(PV)",nintDxy,minDxy/dxyDzZoom,maxDxy/dxyDzZoom) );
+  h_simuldxypvzoomed.push_back( ibook.book1D("num_simul_dxypv_zoomed","N of simulated tracks vs dxy(PV)",nintDxy,minDxy/dxyDzZoom,maxDxy/dxyDzZoom) );
 
-  h_assocdzpvzoomed.push_back( ibook.book1D("num_assoc(simToReco)_dzpv_zoomed","N of associated tracks (simToReco) vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
-  h_simuldzpvzoomed.push_back( ibook.book1D("num_simul_dzpv_zoomed","N of simulated tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
+  h_assocdzpvzoomed.push_back( ibook.book1D("num_assoc(simToReco)_dzpv_zoomed","N of associated tracks (simToReco) vs dz(PV)",nintDz,minDz/dxyDzZoom,maxDz/dxyDzZoom) );
+  h_simuldzpvzoomed.push_back( ibook.book1D("num_simul_dzpv_zoomed","N of simulated tracks vs dz(PV)",nintDz,minDz/dxyDzZoom,maxDz/dxyDzZoom) );
 
   h_assoc_dzpvcut.push_back( ibook.book1D("num_assoc(simToReco)_dzpvcut","N of associated tracks (simToReco) vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
   h_simul_dzpvcut.push_back( ibook.book1D("num_simul_dzpvcut","N of simulated tracks from sim PV",nintDzpvCum,0,maxDzpvCum) );
@@ -644,17 +646,17 @@ void MTVHistoProducerAlgoForTracker::bookRecoPVAssociationHistos(DQMStore::IBook
   if(!doSeedPlots_) h_misiddzpv.push_back( ibook.book1D("num_chargemisid_versus_dzpv","N of associated (recoToSim) charge misIDed tracks vs dz(PV)",nintDz,minDz,maxDz) );
   h_pileupdzpv.push_back( ibook.book1D("num_pileup_dzpv","N of associated (recoToSim) pileup tracks vs dz(PV)",nintDz,minDz,maxDz) );
 
-  h_recodxypvzoomed.push_back( ibook.book1D("num_reco_dxypv_zoomed","N of reco track vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
-  h_assoc2dxypvzoomed.push_back( ibook.book1D("num_assoc(recoToSim)_dxypv_zoomed","N of associated (recoToSim) tracks vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
-  h_looperdxypvzoomed.push_back( ibook.book1D("num_duplicate_dxypv_zoomed","N of associated (recoToSim) looper tracks vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
-  if(!doSeedPlots_) h_misiddxypvzoomed.push_back( ibook.book1D("num_chargemisid_dxypv_zoomed","N of associated (recoToSim) charge misIDed tracks vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
-  h_pileupdxypvzoomed.push_back( ibook.book1D("num_pileup_dxypv_zoomed","N of associated (recoToSim) pileup tracks vs dxy(PV)",nintDxy,minDxy/10.,maxDxy/10.) );
+  h_recodxypvzoomed.push_back( ibook.book1D("num_reco_dxypv_zoomed","N of reco track vs dxy(PV)",nintDxy,minDxy/dxyDzZoom,maxDxy/dxyDzZoom) );
+  h_assoc2dxypvzoomed.push_back( ibook.book1D("num_assoc(recoToSim)_dxypv_zoomed","N of associated (recoToSim) tracks vs dxy(PV)",nintDxy,minDxy/dxyDzZoom,maxDxy/dxyDzZoom) );
+  h_looperdxypvzoomed.push_back( ibook.book1D("num_duplicate_dxypv_zoomed","N of associated (recoToSim) looper tracks vs dxy(PV)",nintDxy,minDxy/dxyDzZoom,maxDxy/dxyDzZoom) );
+  if(!doSeedPlots_) h_misiddxypvzoomed.push_back( ibook.book1D("num_chargemisid_dxypv_zoomed","N of associated (recoToSim) charge misIDed tracks vs dxy(PV)",nintDxy,minDxy/dxyDzZoom,maxDxy/dxyDzZoom) );
+  h_pileupdxypvzoomed.push_back( ibook.book1D("num_pileup_dxypv_zoomed","N of associated (recoToSim) pileup tracks vs dxy(PV)",nintDxy,minDxy/dxyDzZoom,maxDxy/dxyDzZoom) );
 
-  h_recodzpvzoomed.push_back( ibook.book1D("num_reco_dzpv_zoomed","N of reco track vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
-  h_assoc2dzpvzoomed.push_back( ibook.book1D("num_assoc(recoToSim)_dzpv_zoomed","N of associated (recoToSim) tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
-  h_looperdzpvzoomed.push_back( ibook.book1D("num_duplicate_dzpv_zoomed","N of associated (recoToSim) looper tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
-  if(!doSeedPlots_) h_misiddzpvzoomed.push_back( ibook.book1D("num_chargemisid_versus_dzpv_zoomed","N of associated (recoToSim) charge misIDed tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
-  h_pileupdzpvzoomed.push_back( ibook.book1D("num_pileup_dzpv_zoomed","N of associated (recoToSim) pileup tracks vs dz(PV)",nintDz,minDz/10.,maxDz/10.) );
+  h_recodzpvzoomed.push_back( ibook.book1D("num_reco_dzpv_zoomed","N of reco track vs dz(PV)",nintDz,minDz/dxyDzZoom,maxDz/dxyDzZoom) );
+  h_assoc2dzpvzoomed.push_back( ibook.book1D("num_assoc(recoToSim)_dzpv_zoomed","N of associated (recoToSim) tracks vs dz(PV)",nintDz,minDz/dxyDzZoom,maxDz/dxyDzZoom) );
+  h_looperdzpvzoomed.push_back( ibook.book1D("num_duplicate_dzpv_zoomed","N of associated (recoToSim) looper tracks vs dz(PV)",nintDz,minDz/dxyDzZoom,maxDz/dxyDzZoom) );
+  if(!doSeedPlots_) h_misiddzpvzoomed.push_back( ibook.book1D("num_chargemisid_versus_dzpv_zoomed","N of associated (recoToSim) charge misIDed tracks vs dz(PV)",nintDz,minDz/dxyDzZoom,maxDz/dxyDzZoom) );
+  h_pileupdzpvzoomed.push_back( ibook.book1D("num_pileup_dzpv_zoomed","N of associated (recoToSim) pileup tracks vs dz(PV)",nintDz,minDz/dxyDzZoom,maxDz/dxyDzZoom) );
 
   h_reco_dzpvcut.push_back( ibook.book1D("num_reco_dzpvcut","N of reco track vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );
   h_assoc2_dzpvcut.push_back( ibook.book1D("num_assoc(recoToSim)_dzpvcut","N of associated (recoToSim) tracks vs dz(PV)",nintDzpvCum,0,maxDzpvCum) );

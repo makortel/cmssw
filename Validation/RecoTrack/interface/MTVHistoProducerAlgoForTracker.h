@@ -146,6 +146,7 @@ class MTVHistoProducerAlgoForTracker {
   double minPhi, maxPhi;  int nintPhi;
   double minDxy, maxDxy;  int nintDxy;
   double minDz, maxDz;  int nintDz;
+  double dxyDzZoom;
   double minVertpos, maxVertpos;  int nintVertpos;
   double minZpos, maxZpos;  int nintZpos;
   double mindr, maxdr;  int nintdr;
