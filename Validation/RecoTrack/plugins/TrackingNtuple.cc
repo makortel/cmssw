@@ -78,6 +78,9 @@
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertex.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
+#include "SimTracker/TrackHistory/interface/HistoryBase.h"
+#include "HepPDT/ParticleID.hh"
+
 #include "Validation/RecoTrack/interface/trackFromSeedFitFailed.h"
 
 #include <set>
@@ -423,6 +426,8 @@ private:
   const bool includeSeeds_;
   const bool includeAllHits_;
 
+  HistoryBase tracer_;
+
   TTree* t;
   // event
   edm::RunNumber_t ev_run;
@@ -488,6 +493,7 @@ private:
   std::vector<int>   sim_bunchCrossing;
   std::vector<int>   sim_pdgId    ;
   std::vector<std::vector<int> >sim_genPdgIds;
+  std::vector<int>  sim_isFromBHadron;
   std::vector<float> sim_px       ;
   std::vector<float> sim_py       ;
   std::vector<float> sim_pz       ;
@@ -713,6 +719,8 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     trackingParticleToken_ = consumes<TrackingParticleCollection>(tpTag);
   }
 
+  tracer_.depth(-2); // as in SimTracker/TrackHistory/src/TrackClassifier.cc
+
   usesResource(TFileService::kSharedResource);
   edm::Service<TFileService> fs;
   t = fs->make<TTree>("tree","tree");
@@ -780,6 +788,7 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("sim_bunchCrossing", &sim_bunchCrossing);
   t->Branch("sim_pdgId"    , &sim_pdgId    );
   t->Branch("sim_genPdgIds", &sim_genPdgIds);
+  t->Branch("sim_isFromBHadron", &sim_isFromBHadron);
   t->Branch("sim_px"       , &sim_px       );
   t->Branch("sim_py"       , &sim_py       );
   t->Branch("sim_pz"       , &sim_pz       );
@@ -1039,6 +1048,7 @@ void TrackingNtuple::clearVariables() {
   sim_bunchCrossing.clear();
   sim_pdgId    .clear();
   sim_genPdgIds.clear();
+  sim_isFromBHadron.clear();
   sim_px       .clear();
   sim_py       .clear();
   sim_pz       .clear();
@@ -2219,10 +2229,25 @@ void TrackingNtuple::fillTrackingParticles(const edm::Event& iEvent, const edm::
         sim_genPdgIds.back().push_back(genRef->pdgId());
     }
 
+    bool isFromBHadron = false;
+    // Logic is similar to SimTracker/TrackHistory
+    if(tracer_.evaluate(tp)) { // ignore TP if history can not be traced
+      // following is from TrackClassifier::processesAtGenerator()
+      HistoryBase::RecoGenParticleTrail const & recoGenParticleTrail = tracer_.recoGenParticleTrail();
+      for(const auto& particle: recoGenParticleTrail) {
+        HepPDT::ParticleID particleID(particle->pdgId());
+        if(particleID.hasBottom()) {
+          isFromBHadron = true;
+          break;
+        }
+      }
+    }
+
     LogTrace("TrackingNtuple") << "matched to tracks = " << make_VectorPrinter(tkIdx) << " isRecoMatched=" << isRecoMatched;
     sim_event    .push_back(tp->eventId().event());
     sim_bunchCrossing.push_back(tp->eventId().bunchCrossing());
     sim_pdgId    .push_back(tp->pdgId());
+    sim_isFromBHadron.push_back(isFromBHadron);
     sim_px       .push_back(tp->px());
     sim_py       .push_back(tp->py());
     sim_pz       .push_back(tp->pz());
