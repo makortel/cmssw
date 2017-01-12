@@ -9,6 +9,8 @@
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 
+#include "DuplicateTrackType.h"
+
 class dso_hidden TrackMerger {
     public:
         TrackMerger(const edm::ParameterSet &iConfig) ;
@@ -16,7 +18,7 @@ class dso_hidden TrackMerger {
 
         void init(const edm::EventSetup &iSetup) ;
 
-        TrackCandidate merge(const reco::Track &inner, const reco::Track &outer) const;
+        TrackCandidate merge(const reco::Track &inner, const reco::Track &outer, DuplicateTrackType duplicateType) const;
     private:
         edm::ESHandle<TrackerGeometry> theGeometry;
         edm::ESHandle<MagneticField>   theMagField;

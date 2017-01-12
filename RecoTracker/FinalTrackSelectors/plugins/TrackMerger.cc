@@ -46,7 +46,7 @@ void TrackMerger::init(const edm::EventSetup &iSetup)
     iSetup.get<TrackerTopologyRcd>().get(theTrkTopo);
 }
 
-TrackCandidate TrackMerger::merge(const reco::Track &inner, const reco::Track &outer) const 
+TrackCandidate TrackMerger::merge(const reco::Track &inner, const reco::Track &outer, DuplicateTrackType duplicateType) const 
 {
   DPRINT("TrackMerger") << std::abs(inner.eta()) << " merging " << inner.algo() << '/' << outer.algo() << ' ' << inner.eta() << '/' << outer.eta()<< std::endl;
 

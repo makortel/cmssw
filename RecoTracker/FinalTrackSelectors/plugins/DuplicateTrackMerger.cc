@@ -30,6 +30,10 @@
 
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
 
+#define EDM_ML_DEBUG
+#undef LogTrace
+#define LogTrace edm::LogPrint
+
 // Having this macro reduces the need to pollute the code with
 // #ifdefs. The idea is that the condition is checked only if
 // debugging is enabled. That way the condition expression may use
@@ -60,7 +64,8 @@ namespace {
       /// produce one event
       void produce( edm::Event &, const edm::EventSetup &) override;
       
-      bool checkForSubsequentTracks(const reco::Track *t1, const reco::Track *t2, TSCPBuilderNoMaterial& tscpBuilder) const;
+      bool checkForDisjointTracks(const reco::Track *t1, const reco::Track *t2, TSCPBuilderNoMaterial& tscpBuilder) const;
+      bool checkForOverlappingTracks(const reco::Track *t1, const reco::Track *t2, const float cosT) const;
 
     private:
       /// MVA discriminator
@@ -95,9 +100,14 @@ namespace {
       float maxDdsz_;
       ///max difference in q/p between two tracks
       float maxDQoP_;
-      
-      edm::ESHandle<MagneticField> magfield_;
-      
+      /// max number of hits for shorter track for the overlap check
+      unsigned int overlapCheckMaxHits_;
+      /// min cosT for the overlap check
+      float overlapCheckMinCosT_;
+
+      const MagneticField *magfield_;
+      const TrackerTopology *ttopo_;
+
       ///Merger
       TrackMerger merger_;
 
@@ -115,6 +125,10 @@ namespace {
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESHandle.h" 
 #include "TFile.h"
+
+#include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
+
+#include "DuplicateTrackType.h"
 
 namespace {
 
@@ -134,6 +148,8 @@ DuplicateTrackMerger::fillDescriptions(edm::ConfigurationDescriptions& descripti
      desc.add<double>("maxDdsz",10.0);
      desc.add<double>("maxDdxy",10.0);
      desc.add<double>("maxDQoP",0.25);
+     desc.add<unsigned>("overlapCheckMaxHits", 4);
+     desc.add<double>("overlapCheckMinCosT", 0.99);
      desc.add<std::string>("forestLabel","MVADuplicate");
      desc.add<std::string>("GBRForestFileName","");
      desc.add<bool>("useInnermostState",true);
@@ -156,6 +172,8 @@ DuplicateTrackMerger::DuplicateTrackMerger(const edm::ParameterSet& iPara) : for
   maxDdsz_ = iPara.getParameter<double>("maxDdsz");
   maxDdxy_ = iPara.getParameter<double>("maxDdxy");
   maxDQoP_ = iPara.getParameter<double>("maxDQoP");
+  overlapCheckMaxHits_ = iPara.getParameter<unsigned>("overlapCheckMaxHits");
+  overlapCheckMinCosT_ = iPara.getParameter<double>("overlapCheckMinCosT");
 
   produces<std::vector<TrackCandidate> >("candidates");
   produces<CandidateToDuplicate>("candidateMap");
@@ -242,7 +260,14 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
   iEvent.getByToken(trackSource_,handle);
   auto const & tracks = *handle;
   
-  iSetup.get<IdealMagneticFieldRecord>().get(magfield_);
+  edm::ESHandle<MagneticField> hmagfield;
+  iSetup.get<IdealMagneticFieldRecord>().get(hmagfield);
+  magfield_ = hmagfield.product();
+
+  edm::ESHandle<TrackerTopology> httopo;
+  setup.get<TrackerTopologyRcd>().get(httopo);
+  ttopo_ = httopo.product();
+
   TSCPBuilderNoMaterial tscpBuilder;
   auto out_duplicateCandidates = std::make_unique<std::vector<TrackCandidate>>();
 
@@ -309,13 +334,21 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
       if(t1->outerPosition().perp2() > t2->innerPosition().perp2()) deltaR3d2 *= -1.0;
       IfLogTrace(debug_, "DuplicateTrackMerger") << " deltaR3d2 " << deltaR3d2 << " t1.outerPos2 " << t1->outerPosition().perp2() << " t2.innerPos2 " << t2->innerPosition().perp2();
 
-      if(deltaR3d2 < minDeltaR3d2_)continue;
-      bool compatible = checkForSubsequentTracks(t1, t2, tscpBuilder);
+      bool compatible = false;
+      DuplicateTrackType duplType;
+      if(deltaR3d2 >= minDeltaR3d2_) {
+        compatible = checkForDisjointTracks(t1, t2, tscpBuilder);
+        duplType = DuplicateTrackType::Disjoint;
+      }
+      else {
+        compatible = checkForOverlappingTracks(t1, t2, cosT);
+        duplType = DuplicateTrackType::Overlapping;
+      }
       if(!compatible) continue;
       
       
       IfLogTrace(debug_, "DuplicateTrackMerger") << " marking as duplicates";
-      out_duplicateCandidates->push_back(merger_.merge(*t1,*t2));
+      out_duplicateCandidates->push_back(merger_.merge(*t1,*t2, duplType));
       out_candidateMap->emplace_back(i,j);
 
 #ifdef VI_STAT
@@ -334,7 +367,9 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
 }
 
 
-  bool DuplicateTrackMerger::checkForSubsequentTracks(const reco::Track *t1, const reco::Track *t2, TSCPBuilderNoMaterial& tscpBuilder) const {
+  bool DuplicateTrackMerger::checkForDisjointTracks(const reco::Track *t1, const reco::Track *t2, TSCPBuilderNoMaterial& tscpBuilder) const {
+    IfLogTrace(debug_, "DuplicateTrackMerger") << " Checking for disjoint duplicates";
+
     FreeTrajectoryState fts1 = trajectoryStateTransform::outerFreeState(*t1, &*magfield_,false);
     FreeTrajectoryState fts2 = trajectoryStateTransform::innerFreeState(*t2, &*magfield_,false);
     GlobalPoint avgPoint((t1->outerPosition().x()+t2->innerPosition().x())*0.5,(t1->outerPosition().y()+t2->innerPosition().y())*0.5,(t1->outerPosition().z()+t2->innerPosition().z())*0.5);
@@ -411,6 +446,47 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
     return true;
   }
 
+  bool DuplicateTrackMerger::checkForOverlappingTracks(const reco::Track *t1, const reco::Track *t2, float cosT) const {
+    IfLogTrace(debug_, "DuplicateTrackMerger") << " Checking for overlapping duplicates, cosT " << cosT << " t2 hits " << t2->numberOfValidHits();
+    if(cosT < overlapCheckMinCosT_) return false;
+    if(t2->numberOfValidHits() > overlapCheckMaxHits_) return false;
+
+    // identify last layer of the shorter track
+    const TrackingRecHit *lastHit = t2->recHit(t2->recHitsSize()-1).get();
+    assert(lastHit->isValid());
+
+
+    const auto lastHitDet = lastHit->geographicalId().det();
+    const auto lastHitSubdet = lastHit->geographicalId().subdetId();
+    IfLogTrace(debug_, "DuplicateTrackMerger") << " lastHitDet " << lastHitDet << " lastHitSubdet " << lastHitSubdet;
+    // concentrate only in pixel
+    if(lastHitDet != DetId::Tracker ||
+       lastHitSubdet != PixelSubDetector::PixelBarrel || lastHitSubdet != PixelSubDetector::PixelForward)
+      return false;
+
+    const auto lastHitLayer = ttopo_->layer(lastHit->geographicalId());
+
+    // then find a hit on the same layer from the longer track
+    auto found = std::find_if(t1->recHitsBegin(), t1->recHitsEnd(), [&](const TrackingRecHit *hit) {
+        const auto& detId = hit->geographicalId();
+        return (detId.det() == lastHitDet && detId().subdetId() == lastHitSubdet &&
+                ttopo_->layer(detId) == lastHitLayer);
+      });
+    if(found == t1->recHitsEnd()) return false;
+    const auto t1LastHitIndex = std::distance(t1->recHitsBegin(), found);
+    IfLogTrace(debug, "DuplicateTrackMerger") << " Found corresponding hit from t1, index " << t1LastHitIndex;
+
+    // start going backwards, continue only if the pair of hits are on the same layer but different detId
+    
+
+    for(auto t1Index = t1LastHitIndex-1, t2Index=t2->recHitsSize()-2; t1Index >= 0 && t2Index >= 0; --t1Index, --t2Index) {
+      const TrackingRecHit *t1Hit = t1->recHit(t1Index).get();
+      const TrackingRecHit *t2Hit = t2->recHit(t2Index).get();
+    }
+    
+
+    return false;
+  }
 }
 
 #include "FWCore/PluginManager/interface/ModuleDef.h"
