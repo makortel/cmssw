@@ -64,6 +64,25 @@ more information see
 If the "playback mode" is not enabled, an exception will be thrown in
 the C++ code for a missing SimHit.
 
+### Using tracks from a single iteration as an input
+
+The ntuple can be used to study the tracks produced by a single
+iteration (without going throught generalTracks) as well. Below is an
+example (for highPtTripletStep) what modifications need to be done in
+the job configuration file (after the `customiseTrackingNtuple()` call)
+```
+process.trackingNtuple.tracks = "highPtTripletStepTracks"
+
+# following is needed only if _includeSeeds is True
+process.trackingNtuple.seedTracks = ["seedTrackshighPtTripletStepSeeds"]
+
+# following is needed only if _includeMVA is True
+# it also shows how to add MVA output of multiple classifiers
+process.trackingNtuple.trackMVAs = ["highPtTripletStepClassifier1",
+                                    "highPtTripletStepClassifier2"]
+
+```
+
 ### Applications
 
 Use `--help` to check out the parameters.
@@ -76,6 +95,7 @@ Use `--help` to check out the parameters.
 * [`trackingNtupleExample.py`](test/trackingNtupleExample.py) examples of various links
 * [`analyseDuplicateFake.py`](test/analyseDuplicateFake.py) examples of printouts
 * [`fakeAnalysis/main.py`](test/fakeAnalysis/main.py) complete analysis code for fake tracks
+
 
 ### Caveats
 
