@@ -265,7 +265,7 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
   magfield_ = hmagfield.product();
 
   edm::ESHandle<TrackerTopology> httopo;
-  setup.get<TrackerTopologyRcd>().get(httopo);
+  iSetup.get<TrackerTopologyRcd>().get(httopo);
   ttopo_ = httopo.product();
 
   TSCPBuilderNoMaterial tscpBuilder;
@@ -281,20 +281,23 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
     const auto bOriAlgo = b->originalAlgo();
     const auto aSeed = a->seedRef().key();
     const auto bSeed = b->seedRef().key();
-    return ((ev == 2003 && ((aOriAlgo == 4 && aSeed == 366 && bOriAlgo == 22 && bSeed == 207) ||
-                            (aOriAlgo == 23 && aSeed == 113 && bOriAlgo == 5 && bSeed == 276) ||
-                            (aOriAlgo == 23 && aSeed == 712 && bOriAlgo == 23 && bSeed == 705) ||
-                            (aOriAlgo == 4 && aSeed == 454 && bOriAlgo == 23 && bSeed == 476) ||
-                            (aOriAlgo == 5 && aSeed == 523 && bOriAlgo == 5 && bSeed == 524))) ||
-            (ev == 2002 && ((aOriAlgo == 4 && aSeed == 22 && bOriAlgo == 8 && bSeed == 2) ||
-                            (aOriAlgo == 4 && aSeed == 626 && bOriAlgo == 5 && bSeed == 552) ||
-                            (aOriAlgo == 4 && aSeed == 973 && bOriAlgo == 5 && bSeed == 679) ||
-                            (aOriAlgo == 4 && aSeed == 532 && bOriAlgo == 5 && bSeed == 507) ||
-                            (aOriAlgo == 4 && aSeed == 1015 && bOriAlgo == 22 && bSeed == 456) ||
-                            (aOriAlgo == 4 && aSeed == 709 && bOriAlgo == 23 && bSeed == 636) ||
-                            (aOriAlgo == 4 && aSeed == 617 && bOriAlgo == 5 && bSeed == 571) ||
-                            (aOriAlgo == 4 && aSeed == 807 && bOriAlgo == 23 && bSeed == 23) ||
-                            (aOriAlgo == 4 && aSeed == 908 && bOriAlgo == 5 && bSeed == 707))));
+    return ((ev == 6903 && ((aOriAlgo == 23 && aSeed == 695 && bOriAlgo == 5 && bSeed == 652) ||
+                            (aOriAlgo == 23 && aSeed == 400 && bOriAlgo == 7 && bSeed == 156) ||
+                            (aOriAlgo == 4 && aSeed == 914 && bOriAlgo == 22 && bSeed == 503) ||
+                            (aOriAlgo == 5 && aSeed == 809 && bOriAlgo ==  4 && bSeed == 1030) ||
+                            (aOriAlgo == 23 && aSeed == 749 && bOriAlgo == 5 && bSeed == 659) ||
+                            (aOriAlgo == 4 && aSeed == 1053 && bOriAlgo == 23 && bSeed == 1035) ||
+                            (aOriAlgo == 4 && aSeed ==  810 && bOriAlgo == 5 && bSeed == 666) ||
+                            (aOriAlgo == 4 && aSeed ==  974 && bOriAlgo == 5 && bSeed == 778))) ||
+            (ev == 6904 && ((aOriAlgo == 23 && aSeed == 526 && bOriAlgo == 5 && bSeed == 307) ||
+                            (aOriAlgo == 4 && aSeed == 559 && bOriAlgo == 22 && bSeed == 472))) ||
+            (ev == 6902 && ((aOriAlgo == 4 && aSeed == 750 && bOriAlgo == 22 && bSeed == 340) ||
+                            (aOriAlgo == 4 && aSeed == 906 && bOriAlgo == 5 && bSeed == 609) ||
+                            (aOriAlgo == 4 && aSeed == 724 && bOriAlgo == 5 && bSeed == 528) ||
+                            (aOriAlgo == 4 && aSeed == 943 && bOriAlgo == 23 && bSeed == 739) ||
+                            (aOriAlgo == 8 && aSeed == 2 && bOriAlgo == 9 && bSeed == 2282) ||
+                            (aOriAlgo == 23 && aSeed == 827 && bOriAlgo == 5 && bSeed == 656) ||
+                            (aOriAlgo == 22 && aSeed == 667 && bOriAlgo == 7 && bSeed == 516))));
   };
 #endif
 
@@ -447,45 +450,76 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
   }
 
   bool DuplicateTrackMerger::checkForOverlappingTracks(const reco::Track *t1, const reco::Track *t2, float cosT) const {
-    IfLogTrace(debug_, "DuplicateTrackMerger") << " Checking for overlapping duplicates, cosT " << cosT << " t2 hits " << t2->numberOfValidHits();
+    // ensure t1 is the shorter track
+    if(t2->numberOfValidHits() < t1->numberOfValidHits())
+      std::swap(t1, t2);
+
+    IfLogTrace(debug_, "DuplicateTrackMerger") << " Checking for overlapping duplicates, cosT " << cosT << " t1 hits " << t1->numberOfValidHits();
     if(cosT < overlapCheckMinCosT_) return false;
-    if(t2->numberOfValidHits() > overlapCheckMaxHits_) return false;
+    if(t1->numberOfValidHits() > overlapCheckMaxHits_) return false;
 
     // identify last layer of the shorter track
-    const TrackingRecHit *lastHit = t2->recHit(t2->recHitsSize()-1).get();
+    const TrackingRecHit *lastHit = t1->recHit(t1->recHitsSize()-1).get();
     assert(lastHit->isValid());
-
 
     const auto lastHitDet = lastHit->geographicalId().det();
     const auto lastHitSubdet = lastHit->geographicalId().subdetId();
     IfLogTrace(debug_, "DuplicateTrackMerger") << " lastHitDet " << lastHitDet << " lastHitSubdet " << lastHitSubdet;
     // concentrate only in pixel
     if(lastHitDet != DetId::Tracker ||
-       lastHitSubdet != PixelSubDetector::PixelBarrel || lastHitSubdet != PixelSubDetector::PixelForward)
+       (lastHitSubdet != PixelSubdetector::PixelBarrel && lastHitSubdet != PixelSubdetector::PixelEndcap))
       return false;
 
-    const auto lastHitLayer = ttopo_->layer(lastHit->geographicalId());
+    // find the hit on the longer track on layer of the first hit of the shorter track
+    auto t1HitIter = t1->recHitsBegin();
+    const TrackingRecHit *firstHit = *t1HitIter;
+    assert(firstHit->isValid());
 
-    // then find a hit on the same layer from the longer track
-    auto found = std::find_if(t1->recHitsBegin(), t1->recHitsEnd(), [&](const TrackingRecHit *hit) {
+    const auto firstHitDet = firstHit->geographicalId().det();
+    const auto firstHitSubdet = firstHit->geographicalId().subdetId();
+    const auto firstHitLayer = ttopo_->layer(firstHit->geographicalId());
+    auto t2HitIter = std::find_if(t2->recHitsBegin(), t2->recHitsEnd(), [&](const TrackingRecHit *hit) {
         const auto& detId = hit->geographicalId();
-        return (detId.det() == lastHitDet && detId().subdetId() == lastHitSubdet &&
-                ttopo_->layer(detId) == lastHitLayer);
+        return (detId.det() == firstHitDet && detId.subdetId() == firstHitSubdet &&
+                ttopo_->layer(detId) == firstHitLayer);
       });
-    if(found == t1->recHitsEnd()) return false;
-    const auto t1LastHitIndex = std::distance(t1->recHitsBegin(), found);
-    IfLogTrace(debug, "DuplicateTrackMerger") << " Found corresponding hit from t1, index " << t1LastHitIndex;
+    if(t2HitIter == t2->recHitsEnd()) return false;
+    IfLogTrace(debug_, "DuplicateTrackMerger") << " found corresponding hit from t2, index " << std::distance(t2->recHitsBegin(), t2HitIter);
 
-    // start going backwards, continue only if the pair of hits are on the same layer but different detId
-    
+    ++t1HitIter; ++t2HitIter;
+    while(t1HitIter != t1->recHitsEnd() && t2HitIter != t2->recHitsEnd()) {
+      const auto& t1DetId = (*t1HitIter)->geographicalId();
+      const auto& t2DetId = (*t2HitIter)->geographicalId();
 
-    for(auto t1Index = t1LastHitIndex-1, t2Index=t2->recHitsSize()-2; t1Index >= 0 && t2Index >= 0; --t1Index, --t2Index) {
-      const TrackingRecHit *t1Hit = t1->recHit(t1Index).get();
-      const TrackingRecHit *t2Hit = t2->recHit(t2Index).get();
+      // reject if hits have the same DetId but are different
+      if(t1DetId == t2DetId) {
+        if(!(*t1HitIter)->sharesInput(*t2HitIter, TrackingRecHit::all)) {
+          IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                                     << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
+                                                     << " same DetId (" << t1DetId.rawId() << ") but do not share all input";
+          return false;
+        }
+      }
+      // reject if hits are on different layers
+      else if(t1DetId.det() != t2DetId.det() ||
+              t1DetId.subdetId() != t2DetId.subdetId() ||
+              ttopo_->layer(t1DetId) != ttopo_->layer(t2DetId)) {
+        IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                                   << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
+                                                   << " are on different layers (det, subdet, layer) t1 " << t1DetId.det() << "," << t1DetId.subdetId() << "," << ttopo_->layer(t1DetId)
+                                                   << " t2 " << t2DetId.det() << "," << t2DetId.subdetId() << "," << ttopo_->layer(t2DetId);
+        return false;
+      }
+
+      ++t1HitIter; ++t2HitIter;
     }
-    
+    if(t1HitIter != t1->recHitsEnd()) {
+      IfLogTrace(debug_, "DuplicateTrackMerger") << " hits on t2 ended before hits on t1";
+      return false;
+    }
 
-    return false;
+    IfLogTrace(debug_, "DuplicateTrackMerger") << " all hits on t2 are on layers whre t1 has also a hit";
+    return true;
   }
 }
 

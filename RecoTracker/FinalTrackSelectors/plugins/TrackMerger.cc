@@ -116,20 +116,21 @@ TrackCandidate TrackMerger::merge(const reco::Track &inner, const reco::Track &o
     unsigned int nhits = hits.size();
     ownHits.reserve(nhits);
 
+    if(duplicateType == DuplicateTrackType::Disjoint) {
 #if TRACK_SORT
-    if (!useInnermostState_) std::reverse(hits.begin(), hits.end());
-    for(auto hit : hits) ownHits.push_back(*hit);
+      if (!useInnermostState_) std::reverse(hits.begin(), hits.end());
+      for(auto hit : hits) ownHits.push_back(*hit);
 #elif DET_SORT
-    // OLD METHOD, sometimes fails
-    std::sort(hits.begin(), hits.end(), MomentumSort(v, &*theGeometry));
-    for(auto hit : hits) ownHits.push_back(*hit);
+      // OLD METHOD, sometimes fails
+      std::sort(hits.begin(), hits.end(), MomentumSort(v, &*theGeometry));
+      for(auto hit : hits) ownHits.push_back(*hit);
 #else
-    // NEW sort, more accurate
-    std::vector<TransientTrackingRecHit::RecHitPointer> ttrh(nhits);
-    for (unsigned int i = 0; i < nhits; ++i) ttrh[i] = theBuilder->build(hits[i]);
-    std::sort(ttrh.begin(), ttrh.end(), GlobalMomentumSort(v));
-    for(auto hit : ttrh) ownHits.push_back(*hit);
+      sortByHitPosition(v, hits, ownHits);
 #endif
+    }
+    else if(duplicateType == DuplicateTrackType::Overlapping) {
+      sortByHitPosition(v, hits, ownHits);
+    }
 
     PTrajectoryStateOnDet state;
     PropagationDirection pdir;
@@ -163,6 +164,17 @@ TrackCandidate TrackMerger::merge(const reco::Track &inner, const reco::Track &o
      return ret;
 }
 
+
+void TrackMerger::sortByHitPosition(const GlobalVector& v,
+                                    const std::vector<const TrackingRecHit *>& hits,
+                                    TrackCandidate::RecHitContainer& ownHits) const {
+  // NEW sort, more accurate
+  unsigned int nhits = hits.size();
+  std::vector<TransientTrackingRecHit::RecHitPointer> ttrh(nhits);
+  for (unsigned int i = 0; i < nhits; ++i) ttrh[i] = theBuilder->build(hits[i]);
+  std::sort(ttrh.begin(), ttrh.end(), GlobalMomentumSort(v));
+  for(auto hit : ttrh) ownHits.push_back(*hit);
+}
 
 bool TrackMerger::MomentumSort::operator()(const TrackingRecHit *hit1, const TrackingRecHit *hit2) const 
 {
