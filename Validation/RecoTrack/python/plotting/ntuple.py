@@ -190,7 +190,7 @@ class TECDetId(_Side, _ModuleType, DetId):
         self.order = (detid >> 12) & 0x3
         self.petal = (detid >> 8) & 0xF
         self.ring = (detid >> 5) & 0x7
-        self.module (detid >> 2) & 0x7
+        self.module = (detid >> 2) & 0x7
     def __str__(self):
         return "side %d wheel %d order %d petal %d ring %d module %d" % (self.side, self.wheel, self.order, self.petal, self.ring, self.module)
 
