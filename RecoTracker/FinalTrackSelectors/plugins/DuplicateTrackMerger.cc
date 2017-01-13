@@ -458,18 +458,6 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
     if(cosT < overlapCheckMinCosT_) return false;
     if(t1->numberOfValidHits() > overlapCheckMaxHits_) return false;
 
-    // identify last layer of the shorter track
-    const TrackingRecHit *lastHit = t1->recHit(t1->recHitsSize()-1).get();
-    assert(lastHit->isValid());
-
-    const auto lastHitDet = lastHit->geographicalId().det();
-    const auto lastHitSubdet = lastHit->geographicalId().subdetId();
-    IfLogTrace(debug_, "DuplicateTrackMerger") << " lastHitDet " << lastHitDet << " lastHitSubdet " << lastHitSubdet;
-    // concentrate only in pixel
-    if(lastHitDet != DetId::Tracker ||
-       (lastHitSubdet != PixelSubdetector::PixelBarrel && lastHitSubdet != PixelSubdetector::PixelEndcap))
-      return false;
-
     // find the hit on the longer track on layer of the first hit of the shorter track
     auto t1HitIter = t1->recHitsBegin();
     const TrackingRecHit *firstHit = *t1HitIter;
@@ -500,16 +488,31 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
           return false;
         }
       }
-      // reject if hits are on different layers
-      else if(t1DetId.det() != t2DetId.det() ||
-              t1DetId.subdetId() != t2DetId.subdetId() ||
-              ttopo_->layer(t1DetId) != ttopo_->layer(t2DetId)) {
-        IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
-                                                   << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
-                                                   << " are on different layers (det, subdet, layer) t1 " << t1DetId.det() << "," << t1DetId.subdetId() << "," << ttopo_->layer(t1DetId)
-                                                   << " t2 " << t2DetId.det() << "," << t2DetId.subdetId() << "," << ttopo_->layer(t2DetId);
-        return false;
+      else {
+        const auto t1Det = t1DetId.det();
+        const auto t1Subdet = t1DetId.subdetId();
+        const auto t1Layer = ttopo_->layer(t1DetId);
+
+        // reject if hits are on different layers
+        if(t1Det != t2DetId.det() ||
+           t1Subdet != t2DetId.subdetId() ||
+           t1Layer != ttopo_->layer(t2DetId)) {
+          IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                                     << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
+                                                     << " are on different layers (det, subdet, layer) t1 " << t1Det << "," << t1Subdet << "," << t1Layer
+                                                     << " t2 " << t2DetId.det() << "," << t2DetId.subdetId() << "," << ttopo_->layer(t2DetId);
+          return false;
+        }
+        // reject if same layer in non-pixel detector
+        else if(t1Det != DetId::Tracker ||
+                (t1Subdet != PixelSubdetector::PixelBarrel && t1Subdet != PixelSubdetector::PixelEndcap)) {
+          IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                                     << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
+                                                     << " are on same layer, but in non-pixel detector (det " << t1Det << " subdet " << t1Subdet << " layer " << t1Layer << ")";
+          return false;
+        }
       }
+
 
       ++t1HitIter; ++t2HitIter;
     }
