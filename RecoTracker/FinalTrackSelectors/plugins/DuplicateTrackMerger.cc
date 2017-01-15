@@ -102,6 +102,8 @@ namespace {
       float maxDQoP_;
       /// max number of hits for shorter track for the overlap check
       unsigned int overlapCheckMaxHits_;
+      /// max number of missing layers for the overlap check
+      unsigned int overlapCheckMaxMissingLayers_;
       /// min cosT for the overlap check
       float overlapCheckMinCosT_;
 
@@ -149,6 +151,7 @@ DuplicateTrackMerger::fillDescriptions(edm::ConfigurationDescriptions& descripti
      desc.add<double>("maxDdxy",10.0);
      desc.add<double>("maxDQoP",0.25);
      desc.add<unsigned>("overlapCheckMaxHits", 4);
+     desc.add<unsigned>("overlapCheckMaxMissingLayers", 1);
      desc.add<double>("overlapCheckMinCosT", 0.99);
      desc.add<std::string>("forestLabel","MVADuplicate");
      desc.add<std::string>("GBRForestFileName","");
@@ -173,6 +176,7 @@ DuplicateTrackMerger::DuplicateTrackMerger(const edm::ParameterSet& iPara) : for
   maxDdxy_ = iPara.getParameter<double>("maxDdxy");
   maxDQoP_ = iPara.getParameter<double>("maxDQoP");
   overlapCheckMaxHits_ = iPara.getParameter<unsigned>("overlapCheckMaxHits");
+  overlapCheckMaxMissingLayers_ = iPara.getParameter<unsigned>("overlapCheckMaxMissingLayers");
   overlapCheckMinCosT_ = iPara.getParameter<double>("overlapCheckMinCosT");
 
   produces<std::vector<TrackCandidate> >("candidates");
@@ -459,25 +463,58 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
     if(t1->numberOfValidHits() > overlapCheckMaxHits_) return false;
 
     // find the hit on the longer track on layer of the first hit of the shorter track
-    auto t1HitIter = t1->recHitsBegin();
-    const TrackingRecHit *firstHit = *t1HitIter;
-    assert(firstHit->isValid());
+    auto findHitOnT2 = [&](const TrackingRecHit *hit1) {
+      const auto hitDet = hit1->geographicalId().det();
+      const auto hitSubdet = hit1->geographicalId().subdetId();
+      const auto hitLayer = ttopo_->layer(hit1->geographicalId());
+      return std::find_if(t2->recHitsBegin(), t2->recHitsEnd(), [&](const TrackingRecHit *hit2) {
+          const auto& detId = hit2->geographicalId();
+          return (detId.det() == hitDet && detId.subdetId() == hitSubdet &&
+                  ttopo_->layer(detId) == hitLayer);
+        });
+    };
 
-    const auto firstHitDet = firstHit->geographicalId().det();
-    const auto firstHitSubdet = firstHit->geographicalId().subdetId();
-    const auto firstHitLayer = ttopo_->layer(firstHit->geographicalId());
-    auto t2HitIter = std::find_if(t2->recHitsBegin(), t2->recHitsEnd(), [&](const TrackingRecHit *hit) {
-        const auto& detId = hit->geographicalId();
-        return (detId.det() == firstHitDet && detId.subdetId() == firstHitSubdet &&
-                ttopo_->layer(detId) == firstHitLayer);
-      });
-    if(t2HitIter == t2->recHitsEnd()) return false;
-    IfLogTrace(debug_, "DuplicateTrackMerger") << " found corresponding hit from t2, index " << std::distance(t2->recHitsBegin(), t2HitIter);
+    auto t1HitIter = t1->recHitsBegin();
+    if(!(*t1HitIter)->isValid()) {
+      IfLogTrace(debug_, "DuplicateTrackMerger") << " first t1 hit invalid";
+      return false;
+    }
+    auto t2HitIter = findHitOnT2(*t1HitIter);
+    if(t2HitIter == t2->recHitsEnd()) {
+      // if first hit not found, try with second
+      // if that fails, then reject
+      ++t1HitIter;
+      assert(t1HitIter != t1->recHitsEnd());
+
+      if(!(*t1HitIter)->isValid()) {
+        IfLogTrace(debug_, "DuplicateTrackMerger") << " second t1 hit invalid";
+        return false;
+      }
+      t2HitIter = findHitOnT2(*t1HitIter);
+      if(t2HitIter == t2->recHitsEnd()) return false;
+    }
+    IfLogTrace(debug_, "DuplicateTrackMerger") << " starting overlap check from t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                               << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter);
+
+    auto prevSubdet = (*t1HitIter)->geographicalId().subdetId();
 
     ++t1HitIter; ++t2HitIter;
+    unsigned int missedLayers = 0;
     while(t1HitIter != t1->recHitsEnd() && t2HitIter != t2->recHitsEnd()) {
       const auto& t1DetId = (*t1HitIter)->geographicalId();
       const auto& t2DetId = (*t2HitIter)->geographicalId();
+
+      const auto t1Det = t1DetId.det();
+      const auto t2Det = t2DetId.det();
+      if(t1Det != DetId::Tracker || t2Det != DetId::Tracker) {
+          IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                                     << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
+                                                     << " either not from Tracker, dets t1 " << t1Det << " t2 " << t2Det;
+        return false;
+      }
+
+      const auto t1Subdet = t1DetId.subdetId();
+      const auto t1Layer = ttopo_->layer(t1DetId);
 
       // reject if hits have the same DetId but are different
       if(t1DetId == t2DetId) {
@@ -489,23 +526,54 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
         }
       }
       else {
-        const auto t1Det = t1DetId.det();
-        const auto t1Subdet = t1DetId.subdetId();
-        const auto t1Layer = ttopo_->layer(t1DetId);
+        const auto t2Subdet = t2DetId.subdetId();
+        const auto t2Layer = ttopo_->layer(t2DetId);
 
         // reject if hits are on different layers
-        if(t1Det != t2DetId.det() ||
-           t1Subdet != t2DetId.subdetId() ||
-           t1Layer != ttopo_->layer(t2DetId)) {
+        if(t1Subdet != t2Subdet || t1Layer != t2Layer) {
+          bool recovered = false;
+          // but try to recover first by checking if either one has skipped over a layer
+          if(t1Subdet == prevSubdet && t2Subdet != prevSubdet) {
+            // t1 has a layer t2 doesn't
+            ++t1HitIter;
+            recovered = true;
+          }
+          else if(t1Subdet != prevSubdet && t2Subdet == prevSubdet) {
+            // t2 has a layer t1 doesn't
+            ++t2HitIter;
+            recovered = true;
+          }
+          else if(t1Subdet == t2Subdet) {
+            prevSubdet = t1Subdet;
+            // same subdet, so layer must be different
+            if(t2Layer > t1Layer) {
+              // t1 has a layer t2 doesn't
+              ++t1HitIter;
+              recovered = true;
+            }
+            else if(t1Layer > t2Layer) {
+              // t2 has a layer t1 doesn't
+              ++t2HitIter;
+              recovered = true;
+            }
+          }
+          if(recovered) {
+            ++missedLayers;
+            if(missedLayers > overlapCheckMaxMissingLayers_) {
+              IfLogTrace(debug_, "DuplicateTrackMerger") << " max number of missed layers exceeded";
+              return false;
+            }
+            continue;
+          }
+
           IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
                                                      << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
-                                                     << " are on different layers (det, subdet, layer) t1 " << t1Det << "," << t1Subdet << "," << t1Layer
-                                                     << " t2 " << t2DetId.det() << "," << t2DetId.subdetId() << "," << ttopo_->layer(t2DetId);
+                                                     << " are on different layers (subdet, layer) t1 " << t1Subdet << "," << t1Layer
+                                                     << " t2 " << t2Subdet << "," << t2Layer;
           return false;
         }
-        // reject if same layer in non-pixel detector
-        else if(t1Det != DetId::Tracker ||
-                (t1Subdet != PixelSubdetector::PixelBarrel && t1Subdet != PixelSubdetector::PixelEndcap)) {
+        // reject if same layer (but not same hit) in non-pixel detector
+        else if(t1Subdet != PixelSubdetector::PixelBarrel && t1Subdet != PixelSubdetector::PixelEndcap) {
           IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
                                                      << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
                                                      << " are on same layer, but in non-pixel detector (det " << t1Det << " subdet " << t1Subdet << " layer " << t1Layer << ")";
@@ -513,7 +581,7 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
         }
       }
 
-
+      prevSubdet = t1Subdet;
       ++t1HitIter; ++t2HitIter;
     }
     if(t1HitIter != t1->recHitsEnd()) {
