@@ -587,7 +587,7 @@ class _LayerStrAdaptor(object):
         subdet = getattr(self._tree, self._prefix+"_det")[self._index]
         side = ""
         if subdet in [SubDet.FPix, SubDet.TID, SubDet.TEC]:
-            detid = parseDetId(getattr(self,_tree, self._prefix+"_detid")[self._index])
+            detid = parseDetId(getattr(self._tree, self._prefix+"_detId")[self._index])
             if detid.side == 1:
                 side = "-"
             elif detid.side == 2:
