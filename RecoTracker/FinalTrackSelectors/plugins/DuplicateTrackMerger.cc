@@ -620,12 +620,16 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
       TrajectoryStateOnSurface tsosInner = trajectoryStateTransform::innerStateOnSurface(*t2, *geom_, magfield_);
       TrajectoryStateOnSurface tsosPropagated = propagator_->propagate(tsosInner, (*t1HitIter)->det()->surface());
       if(!tsosPropagated.isValid()) { // reject immediately if TSOS is not valid
-        IfLogTrace(debug_, "DuplicateTrackMErger") << " TSOS not valid";
+        IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                                   << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
+                                                   << " TSOS not valid";
         return false;
       }
-      auto passChi2Pair = chi2Estimator_->estimate(tsosPropagated, **t2HitIter);
+      auto passChi2Pair = chi2Estimator_->estimate(tsosPropagated, **t1HitIter);
       if(!passChi2Pair.first) {
-        IfLogTrace(debug_, "DuplicateTrackMerger") << " hit chi2 compatibility failed with chi2 " << passChi2Pair.second;
+        IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
+                                                   << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter)
+                                                   << " hit chi2 compatibility failed with chi2 " << passChi2Pair.second;
         return false;
       }
 
