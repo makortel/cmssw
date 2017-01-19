@@ -618,7 +618,7 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
 
       // Propagate longer track to the shorter track hit surface, check compatibility
       TrajectoryStateOnSurface tsosInner = trajectoryStateTransform::innerStateOnSurface(*t2, *geom_, magfield_);
-      TrajectoryStateOnSurface tsosPropagated = propagator_->propagate(tsosInner, (*t2HitIter)->det()->surface());
+      TrajectoryStateOnSurface tsosPropagated = propagator_->propagate(tsosInner, (*t1HitIter)->det()->surface());
       auto passChi2Pair = chi2Estimator_->estimate(tsosPropagated, **t2HitIter);
       if(!passChi2Pair.first) {
         IfLogTrace(debug_, "DuplicateTrackMerger") << " hit chi2 compatibility failed with chi2 " << passChi2Pair.second;
