@@ -623,13 +623,11 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
         IfLogTrace(debug_, "DuplicateTrackMErger") << " TSOS not valid";
         return false;
       }
-      /*
       auto passChi2Pair = chi2Estimator_->estimate(tsosPropagated, **t2HitIter);
       if(!passChi2Pair.first) {
         IfLogTrace(debug_, "DuplicateTrackMerger") << " hit chi2 compatibility failed with chi2 " << passChi2Pair.second;
         return false;
       }
-      */
 
       prevSubdet = t1Subdet;
       ++t1HitIter; ++t2HitIter;
