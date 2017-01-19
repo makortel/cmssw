@@ -46,6 +46,8 @@ public:
     static void fillDescriptions(edm::ParameterSetDescription& desc);
     static const char *fillDescriptionsLabel() { return "caHitQuadruplet"; }
 
+    bool produceTriplets() const { return produceTriplets_; }
+
     void initEvent(const edm::Event& ev, const edm::EventSetup& es);
 
 
@@ -55,7 +57,8 @@ public:
 
     // new-style
     void hitNtuplets(const IntermediateHitDoublets::RegionLayerSets& regionLayerPairs,
-                     OrderedHitSeeds& result,
+                     OrderedHitSeeds& resultQuadruplets,
+                     OrderedHitSeeds& resultTriplets,
                      const edm::EventSetup& es,
                      const SeedingLayerSetsHits& layers);
 
@@ -142,10 +145,10 @@ private:
     const bool fitFastCircle;
     const bool fitFastCircleChi2Cut;
     const bool useBendingCorrection;
+    const bool produceTriplets_; // to be generalized later
 
     const float caThetaCut = 0.00125f;
     const float caPhiCut = 0.1f;
     const float caHardPtCut = 0.f;
-
 };
 #endif

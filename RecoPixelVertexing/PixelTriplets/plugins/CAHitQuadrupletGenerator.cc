@@ -45,6 +45,7 @@ maxChi2(cfg.getParameter<edm::ParameterSet>("maxChi2")),
 fitFastCircle(cfg.getParameter<bool>("fitFastCircle")),
 fitFastCircleChi2Cut(cfg.getParameter<bool>("fitFastCircleChi2Cut")),
 useBendingCorrection(cfg.getParameter<bool>("useBendingCorrection")),
+produceTriplets_(cfg.exists("produceTriplets") ? cfg.getParameter<bool>("produceTriplets") : false), // support old-style usage until #17170 gets merged
 caThetaCut(cfg.getParameter<double>("CAThetaCut")),
 caPhiCut(cfg.getParameter<double>("CAPhiCut")),
 caHardPtCut(cfg.getParameter<double>("CAHardPtCut"))
@@ -73,6 +74,7 @@ void CAHitQuadrupletGenerator::fillDescriptions(edm::ParameterSetDescription& de
   desc.add<bool>("fitFastCircle", false);
   desc.add<bool>("fitFastCircleChi2Cut", false);
   desc.add<bool>("useBendingCorrection", false);
+  desc.add<bool>("produceTriplets", false);
   desc.add<double>("CAThetaCut", 0.00125);
   desc.add<double>("CAPhiCut", 10);
   desc.add<double>("CAHardPtCut", 0);
@@ -199,7 +201,8 @@ void CAHitQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,
 }
 
 void CAHitQuadrupletGenerator::hitNtuplets(const IntermediateHitDoublets::RegionLayerSets& regionLayerPairs,
-                                              OrderedHitSeeds& result,
+                                              OrderedHitSeeds& resultQuadruplets,
+                                              OrderedHitSeeds& resultTriplets,
                                               const edm::EventSetup& es,
                                               const SeedingLayerSetsHits& layers) {
   CAGraph g;
@@ -225,7 +228,7 @@ void CAHitQuadrupletGenerator::hitNtuplets(const IntermediateHitDoublets::Region
       return false;
     });
 
-  hitQuadruplets(regionLayerPairs.region(), result, hitDoublets, g, es);
+  hitQuadruplets(regionLayerPairs.region(), resultQuadruplets, hitDoublets, g, es);
 }
 
 void CAHitQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region,

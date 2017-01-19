@@ -109,9 +109,6 @@ void CAHitNtupletEDProducerT<T_Generator>::produce(edm::Event& iEvent, const edm
 
 #include "FWCore/PluginManager/interface/ModuleDef.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "CAHitQuadrupletGenerator.h"
-using CAHitQuadrupletEDProducer = CAHitNtupletEDProducerT<CAHitQuadrupletGenerator>;
-DEFINE_FWK_MODULE(CAHitQuadrupletEDProducer);
 
 #include "CAHitTripletGenerator.h"
 using CAHitTripletEDProducer = CAHitNtupletEDProducerT<CAHitTripletGenerator>;
