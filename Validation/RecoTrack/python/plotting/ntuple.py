@@ -565,13 +565,7 @@ class TrackingParticlePrinter:
         ntrk1 = tp1.nMatchedTracks()
         ntrk2 = tp2.nMatchedTracks()
 
-        if ntrk1 == 0 or ntrk2 == 0:
-            if ntrk1 == 0 and ntrk2 == 0:
-                return _makediff(self._printMatchedTracks0(), self._printMatchedTracks0())
-            else:
-                return _makediff(self.printMatchedTracks(tp1), self.printMatchedTracks(tp2))
-
-        if self._trackPrinter is None:
+        if ntrk1 == 0 or ntrk2 == 0 or self._trackPrinter is None:
             return _makediff(self.printMatchedTracks(tp1), self.printMatchedTracks(tp2))
 
         self._trackPrinter.indent(2)
@@ -594,18 +588,54 @@ class TrackingParticlePrinter:
         self._trackPrinter.restoreIndent()
         return diff
 
+    def _printMatchedSeeds0(self):
+        return [self._prefix+ " not matched to any seed"]
+
+    def _printMatchedSeedsHeader(self):
+        return [self._prefix+" matched to seeds"]
+
     def printMatchedSeeds(self, tp):
         lst = []
         if self._seedPrinter:
             if tp.nMatchedSeeds() == 0:
-                lst.append(self._prefix+ " not matched to any seed")
+                lst.extend(self._printMatchedSeeds0())
             else:
-                lst.append(self._prefix+" matched to seeds")
+                lst.extend(self._printMatchedSeedsHeader())
                 self._seedPrinter.setIndentFrom(self, adjust=2)
                 for seedInfo in tp.matchedSeedInfos():
-                    self._seedPrinter(seedInfo.seed(), lst)
+                    lst.extend(self._seedPrinter(seedInfo.seed()))
                 self._seedPrinter.restoreIndent()
         return lst
+
+    def diffMatchedSeeds(self, tp1, tp2):
+        if not self._seedPrinter:
+            return []
+
+        nseed1 = tp1.nMatchedSeeds()
+        nseed2 = tp2.nMatchedSeeds()
+        if nseed1 == 0 or nseed2 == 0:
+            return _makediff(self.printMatchedSeeds(tp1), self._printMatchedSeeds(tp2))
+
+        self._seedPrinter.setIndentFrom(self, adjust=2)
+
+        diff = _makediff(self._printMatchedSeedsHeader(), self._printMatchedSeedsHeader())
+        seeds2 = [seedInfo2.seed() for seedInfo2 in tp2.matchedSeedInfos()]
+        for seedInfo1 in tp1.matchedSeedInfos():
+            seed1 = seedInfo1.seed()
+            matchedSeed2 = _matchTracksByHits(seed1, seeds2)
+
+            if matchedSeed2 is None: # no more seeds in tp2
+                diff.extend(_makediff(self._seedPrinter.printSeed(seed1), []))
+            else: # diff seed1 to best-matching seed from tp2
+                seeds2.remove(matchedSeed2)
+                diff.extend(_makediff(self._seedPrinter.printSeed(seed1), self._seedPrinter.printSeed(matchedSeed2)))
+
+        for seed2 in seeds2: # remiaining seeds in tp2
+            diff.extend(_makediff([], self._seedPrinter.printSeed(seed2)))
+
+        self._seedPrinter.restoreIndent()
+
+        return diff
 
     def __call__(self, tp, out=sys.stdout):
         if isinstance(out, list):
@@ -627,7 +657,7 @@ class TrackingParticlePrinter:
         ret.extend(_mapdiff(self.printTrackingParticle, tp1, tp2))
         ret.extend(_mapdiff(self.printHits, tp1, tp2))
         ret.extend(self.diffMatchedTracks(tp1, tp2))
-        ret.extend(_mapdiff(self.printMatchedSeeds, tp1, tp2))
+        ret.extend(self.diffMatchedSeeds(tp1, tp2))
         return ret
 
 # to be kept is synch with enum HitSimType in TrackingNtuple.py
