@@ -491,7 +491,10 @@ class TrackingParticlePrinter:
         fromB = ""
         if tp.isFromBHadron():
             fromB = " from B hadron"
-        return [self._prefix+"TP %d pdgId %d%s%s pT %f eta %f phi %f" % (tp.index(), tp.pdgId(), genIds, fromB, tp.pt(), tp.eta(), tp.phi())]
+        return [
+            self._prefix+"TP %d pdgId %d%s%s pT %f eta %f phi %f" % (tp.index(), tp.pdgId(), genIds, fromB, tp.pt(), tp.eta(), tp.phi()),
+            self._prefix+" pixel hits %d strip hits %d dxy %f dz %f" % (tp.nPixel(), tp.nStrip(), tp.pca_dxy(), tp.pca_dz())
+        ]
         
 
     def _parentageChain(self, tp):
@@ -526,7 +529,8 @@ class TrackingParticlePrinter:
             lst.append(self._prefix+" sim hits")
             for simhit in tp.simHits():
                 detId = parseDetId(simhit.detId())
-                lst.append(self._prefix+"  %d: pdgId %d process %d %s detId %d %s x,y,z %f,%f,%f" % (simhit.index(), simhit.particle(), simhit.process(), simhit.layerStr(), detId.detid, str(detId), simhit.x(), simhit.y(), simhit.z()))
+                matched = "matched to RecHits "+",".join(str(h.index()) for h in simhit.hits())
+                lst.append(self._prefix+"  %s %d pdgId %d process %d detId %d %s x,y,z %f,%f,%f %s" % (simhit.layerStr(), simhit.index(), simhit.particle(), simhit.process(), detId.detid, str(detId), simhit.x(), simhit.y(), simhit.z(), matched))
         return lst
 
     def _printMatchedTracks0(self):
@@ -929,6 +933,15 @@ class TrackingNtuple(object):
             if nb <= 0: continue
 
             yield Event(self._tree, jentry)
+
+    def getEvent(self, index):
+        """Returns Event for a given index"""
+        ientry = self._tree.LoadTree(index)
+        if ientry < 0: return None
+        nb = self._tree.GetEntry(ientry) # ientry or jentry?
+        if nb <= 0: None
+
+        return Event(self._tree, ientry) # ientry of jentry?
 
 ##########
 class Event(object):
