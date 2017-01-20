@@ -3,10 +3,17 @@ import FWCore.ParameterSet.Config as cms
 from RecoTracker.FinalTrackSelectors.DuplicateTrackMerger_cfi import *
 from RecoTracker.FinalTrackSelectors.DuplicateListMerger_cfi import *
 
+import TrackingTools.KalmanUpdators.Chi2MeasurementEstimator_cfi
+duplicateTrackCandidatesChi2Est = Chi2MeasurementEstimator.clone(
+    ComponentName = "duplicateTrackCandidatesChi2Est",
+    MaxChi2 = 100,
+)
+
 duplicateTrackCandidates = DuplicateTrackMerger.clone()
 duplicateTrackCandidates.source = cms.InputTag("preDuplicateMergingGeneralTracks")
 duplicateTrackCandidates.useInnermostState  = True
 duplicateTrackCandidates.ttrhBuilderName   = "WithAngleAndTemplate"
+duplicateTrackCandidates.chi2EstimatorName = "duplicateTrackCandidatesChi2Est"
                                      
 import RecoTracker.TrackProducer.TrackProducer_cfi
 mergedDuplicateTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.clone()

@@ -167,7 +167,7 @@ DuplicateTrackMerger::fillDescriptions(edm::ConfigurationDescriptions& descripti
      desc.add<bool>("useInnermostState",true);
      desc.add<std::string>("ttrhBuilderName","WithAngleAndTemplate");
      desc.add<std::string>("propagatorName", "PropagatorWithMaterial");
-     desc.add<std::string>("chi2EstimatorName", "initialStepChi2Est");
+     desc.add<std::string>("chi2EstimatorName", "DuplicateTrackMergerChi2Est");
      descriptions.add("DuplicateTrackMerger", desc);
 }
 
