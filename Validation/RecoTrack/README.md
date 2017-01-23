@@ -36,6 +36,7 @@ links between the objects:
 * track <-> seed
 * track <-> hit
 * seed <-> hit
+* seed <-> TrackingParticle
 * glued strip hits -> mono and stereo strip hits
 * vertex <-> track
 * hit <-> SimHit
@@ -62,6 +63,11 @@ more information see
 If the "playback mode" is not enabled, an exception will be thrown in
 the C++ code for a missing SimHit.
 
+### Example scripts
+
+* [`trackingNtupleExample.py`](test/trackingNtupleExample.py) examples of various links
+* [`analyseDuplicateFake.py`](test/analyseDuplicateFake.py) examples of printouts
+* [`fakeAnalysis/main.py`](test/fakeAnalysis/main.py) complete analysis code for fake tracks
 
 ### Caveats
 

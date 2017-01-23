@@ -78,6 +78,9 @@
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertex.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
+#include "SimTracker/TrackHistory/interface/HistoryBase.h"
+#include "HepPDT/ParticleID.hh"
+
 #include "Validation/RecoTrack/interface/trackFromSeedFitFailed.h"
 
 #include <set>
@@ -369,6 +372,12 @@ private:
                              const std::vector<TPHitIndex>& tpHitList
                              );
 
+  void fillTrackingParticlesForSeeds(const TrackingParticleRefVector& tpCollection,
+                                     const reco::SimToRecoCollection& simRecColl,
+                                     const TrackingParticleRefKeyToIndex& tpKeyToIndex,
+                                     const unsigned int seedOffset
+                                     );
+
   void fillVertices(const reco::VertexCollection& vertices,
                     const edm::RefToBaseVector<reco::Track>& tracks);
 
@@ -422,6 +431,8 @@ private:
   std::string parametersDefinerName_;
   const bool includeSeeds_;
   const bool includeAllHits_;
+
+  HistoryBase tracer_;
 
   TTree* t;
   // event
@@ -487,6 +498,8 @@ private:
   std::vector<int>   sim_event    ;
   std::vector<int>   sim_bunchCrossing;
   std::vector<int>   sim_pdgId    ;
+  std::vector<std::vector<int> >sim_genPdgIds;
+  std::vector<int>  sim_isFromBHadron;
   std::vector<float> sim_px       ;
   std::vector<float> sim_py       ;
   std::vector<float> sim_pz       ;
@@ -509,6 +522,7 @@ private:
   std::vector<unsigned int> sim_n3DLay  ;
   std::vector<std::vector<int> > sim_trkIdx;      // second index runs through matched tracks
   std::vector<std::vector<float> > sim_shareFrac; // second index runs through matched tracks
+  std::vector<std::vector<int> > sim_seedIdx;      // second index runs through matched seeds
   std::vector<int> sim_parentVtxIdx;
   std::vector<std::vector<int> > sim_decayVtxIdx; // second index runs through decay vertices
   std::vector<std::vector<int> > sim_simHitIdx;   // second index runs through SimHits
@@ -631,6 +645,12 @@ private:
   std::vector<float> see_dxyErr   ;
   std::vector<float> see_dzErr    ;
   std::vector<float> see_chi2     ;
+  std::vector<float> see_statePt;
+  std::vector<float> see_stateTrajX;
+  std::vector<float> see_stateTrajY;
+  std::vector<float> see_stateTrajPx;
+  std::vector<float> see_stateTrajPy;
+  std::vector<float> see_stateTrajPz;
   std::vector<int> see_q       ;
   std::vector<unsigned int> see_nValid  ;
   std::vector<unsigned int> see_nPixel  ;
@@ -712,6 +732,8 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     trackingParticleToken_ = consumes<TrackingParticleCollection>(tpTag);
   }
 
+  tracer_.depth(-2); // as in SimTracker/TrackHistory/src/TrackClassifier.cc
+
   usesResource(TFileService::kSharedResource);
   edm::Service<TFileService> fs;
   t = fs->make<TTree>("tree","tree");
@@ -778,6 +800,8 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("sim_event"    , &sim_event    );
   t->Branch("sim_bunchCrossing", &sim_bunchCrossing);
   t->Branch("sim_pdgId"    , &sim_pdgId    );
+  t->Branch("sim_genPdgIds", &sim_genPdgIds);
+  t->Branch("sim_isFromBHadron", &sim_isFromBHadron);
   t->Branch("sim_px"       , &sim_px       );
   t->Branch("sim_py"       , &sim_py       );
   t->Branch("sim_pz"       , &sim_pz       );
@@ -800,6 +824,9 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("sim_n3DLay"   , &sim_n3DLay   );
   t->Branch("sim_trkIdx"   , &sim_trkIdx   );
   t->Branch("sim_shareFrac", &sim_shareFrac);
+  if(includeSeeds_) {
+    t->Branch("sim_seedIdx"   , &sim_seedIdx   );
+  }
   t->Branch("sim_parentVtxIdx", &sim_parentVtxIdx);
   t->Branch("sim_decayVtxIdx", &sim_decayVtxIdx);
   if(includeAllHits_) {
@@ -921,6 +948,12 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("see_dxyErr"   , &see_dxyErr  );
     t->Branch("see_dzErr"    , &see_dzErr   );
     t->Branch("see_chi2"     , &see_chi2    );
+    t->Branch("see_statePt"  , &see_statePt );
+    t->Branch("see_stateTrajX", &see_stateTrajX);
+    t->Branch("see_stateTrajY", &see_stateTrajY);
+    t->Branch("see_stateTrajPx", &see_stateTrajPx);
+    t->Branch("see_stateTrajPy", &see_stateTrajPy);
+    t->Branch("see_stateTrajPz", &see_stateTrajPz);
     t->Branch("see_q"        , &see_q       );
     t->Branch("see_nValid"   , &see_nValid  );
     t->Branch("see_nPixel"   , &see_nPixel  );
@@ -1036,6 +1069,8 @@ void TrackingNtuple::clearVariables() {
   sim_event    .clear();
   sim_bunchCrossing.clear();
   sim_pdgId    .clear();
+  sim_genPdgIds.clear();
+  sim_isFromBHadron.clear();
   sim_px       .clear();
   sim_py       .clear();
   sim_pz       .clear();
@@ -1057,6 +1092,7 @@ void TrackingNtuple::clearVariables() {
   sim_nPixelLay.clear();
   sim_n3DLay   .clear();
   sim_trkIdx   .clear();
+  sim_seedIdx   .clear();
   sim_shareFrac.clear();
   sim_parentVtxIdx.clear();
   sim_decayVtxIdx.clear();
@@ -1167,6 +1203,12 @@ void TrackingNtuple::clearVariables() {
   see_dxyErr  .clear();
   see_dzErr   .clear();
   see_chi2    .clear();
+  see_statePt.clear();
+  see_stateTrajX.clear();
+  see_stateTrajY.clear();
+  see_stateTrajPx.clear();
+  see_stateTrajPy.clear();
+  see_stateTrajPz.clear();
   see_q       .clear();
   see_nValid  .clear();
   see_nPixel  .clear();
@@ -1813,6 +1855,7 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
       seedTrackRefs.push_back(seedTracks.refAt(i));
     }
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(seedTrackRefs, tpCollection);
+    reco::SimToRecoCollection simRecColl = associatorByHits.associateSimToReco(seedTrackRefs, tpCollection);
 
     edm::EDConsumerBase::Labels labels;
     labelsForToken(seedToken, labels);
@@ -1824,10 +1867,11 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
     int algo = reco::TrackBase::algoByName(label.Data());
 
     edm::ProductID id = seedTracks[0].seedRef().id();
-    auto inserted = seedCollToOffset.emplace(id, see_fitok.size());
+    const auto offset = see_fitok.size();
+    auto inserted = seedCollToOffset.emplace(id, offset);
     if(!inserted.second)
       throw cms::Exception("Configuration") << "Trying to add seeds with ProductID " << id << " for a second time from collection " << labels.module << ", seed algo " << label << ". Typically this is caused by a configuration problem.";
-    see_offset.push_back(see_fitok.size());
+    see_offset.push_back(offset);
 
     LogTrace("TrackingNtuple") << "NEW SEED LABEL: " << label << " size: " << seedTracks.size() << " algo=" << algo
                                << " ProductID " << id;
@@ -1879,6 +1923,16 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
       see_dxyErr  .push_back( seedFitOk ? seedTrack.dxyError() : 0);
       see_dzErr   .push_back( seedFitOk ? seedTrack.dzError() : 0);
       see_algo    .push_back( algo );
+
+      const auto& state = seedTrack.seedRef()->startingState();
+      const auto& pos = state.parameters().position();
+      const auto& mom = state.parameters().momentum();
+      see_statePt.push_back(state.pt());
+      see_stateTrajX.push_back(pos.x());
+      see_stateTrajY.push_back(pos.y());
+      see_stateTrajPx.push_back(mom.x());
+      see_stateTrajPy.push_back(mom.y());
+      see_stateTrajPz.push_back(mom.z());
 
       see_trkIdx  .push_back(-1); // to be set correctly in fillTracks
       see_shareFrac.push_back( sharedFraction );
@@ -2006,6 +2060,8 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
       }
       see_chi2   .push_back( chi2 );
     }
+
+    fillTrackingParticlesForSeeds(tpCollection, simRecColl, tpKeyToIndex, offset);
   }
 }
 
@@ -2209,10 +2265,32 @@ void TrackingNtuple::fillTrackingParticles(const edm::Event& iEvent, const edm::
         tkIdx.push_back(trackQuality.first.key());
       }
     }
+
+    sim_genPdgIds.emplace_back();
+    for(const auto& genRef: tp->genParticles()) {
+      if(genRef.isNonnull())
+        sim_genPdgIds.back().push_back(genRef->pdgId());
+    }
+
+    bool isFromBHadron = false;
+    // Logic is similar to SimTracker/TrackHistory
+    if(tracer_.evaluate(tp)) { // ignore TP if history can not be traced
+      // following is from TrackClassifier::processesAtGenerator()
+      HistoryBase::RecoGenParticleTrail const & recoGenParticleTrail = tracer_.recoGenParticleTrail();
+      for(const auto& particle: recoGenParticleTrail) {
+        HepPDT::ParticleID particleID(particle->pdgId());
+        if(particleID.hasBottom()) {
+          isFromBHadron = true;
+          break;
+        }
+      }
+    }
+
     LogTrace("TrackingNtuple") << "matched to tracks = " << make_VectorPrinter(tkIdx) << " isRecoMatched=" << isRecoMatched;
     sim_event    .push_back(tp->eventId().event());
     sim_bunchCrossing.push_back(tp->eventId().bunchCrossing());
     sim_pdgId    .push_back(tp->pdgId());
+    sim_isFromBHadron.push_back(isFromBHadron);
     sim_px       .push_back(tp->px());
     sim_py       .push_back(tp->py());
     sim_pz       .push_back(tp->pz());
@@ -2287,6 +2365,28 @@ void TrackingNtuple::fillTrackingParticles(const edm::Event& iEvent, const edm::
   }
 }
 
+// called from fillSeeds
+void TrackingNtuple::fillTrackingParticlesForSeeds(const TrackingParticleRefVector& tpCollection,
+                                                   const reco::SimToRecoCollection& simRecColl,
+                                                   const TrackingParticleRefKeyToIndex& tpKeyToIndex,
+                                                   const unsigned int seedOffset) {
+  if(sim_seedIdx.empty()) // first call
+    sim_seedIdx.resize(tpCollection.size());
+
+  for(const auto& keyVal: simRecColl) {
+    const auto& tpRef = keyVal.key;
+    auto found = tpKeyToIndex.find(tpRef.key());
+    if(found == tpKeyToIndex.end())
+      throw cms::Exception("Assert") << __FILE__ << ":" << __LINE__ << " fillTrackingParticlesForSeeds: tpRef.key() " << tpRef.key() << " not found from tpKeyToIndex. tpKeyToIndex size " << tpKeyToIndex.size();
+    const auto tpIndex = found->second;
+    for(const auto& pair: keyVal.val) {
+      const auto& seedRef = pair.first->seedRef();
+      sim_seedIdx[tpIndex].push_back(seedOffset + seedRef.key());
+    }
+  }
+}
+
+
 void TrackingNtuple::fillVertices(const reco::VertexCollection& vertices,
                                   const edm::RefToBaseVector<reco::Track>& tracks) {
   for(size_t iVertex=0, size=vertices.size(); iVertex<size; ++iVertex) {
@@ -2348,7 +2448,7 @@ void TrackingNtuple::fillTrackingVertices(const TrackingVertexRefVector& trackin
       for(const auto& tpRef: tps) {
         auto found = tpKeyToIndex.find(tpRef.key());
         if(found != tpKeyToIndex.end()) {
-          idx.push_back(tpRef.key());
+          idx.push_back(found->second);
         }
       }
     };
