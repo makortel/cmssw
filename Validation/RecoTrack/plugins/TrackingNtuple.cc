@@ -948,7 +948,6 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("pix_bbxi"  , &pix_bbxi );
     //strips
     if(includeStripHits_){
-      LogDebug("TrackingNtuple") << "including strips";
       t->Branch("str_isBarrel"  , &str_isBarrel );
       t->Branch("str_isStereo"  , &str_isStereo );
       t->Branch("str_det"       , &str_det      );
@@ -996,7 +995,6 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     }
     //phase2 OT
     if(includePhase2OTHits_){
-      LogDebug("TrackingNtuple") << "including phase2 ot";
       t->Branch("ph2_isBarrel"  , &ph2_isBarrel );
       t->Branch("ph2_det"       , &ph2_det      );
       t->Branch("ph2_lay"       , &ph2_lay      );
@@ -2238,7 +2236,6 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
           LogTrace("TrackingNtuple") << " not pixel and not Strip detector";
         }
       }
-      LogTrace("TrackingNtuple") << " after running on hits";
       see_hitIdx   .push_back( hitIdx  );
       see_hitType  .push_back( hitType );
       see_nPixel   .push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Pixel)) );
@@ -2468,9 +2465,9 @@ void TrackingNtuple::fillTracks(const edm::RefToBaseVector<reco::Track>& tracks,
         if(clusterRef.isPixel()){
           hitType.push_back( static_cast<int>(HitType::Pixel));
         } else if(clusterRef.isPhase2()){
-          hitType.push_back( static_cast<int>(HitType::Strip));
-        } else {
           hitType.push_back( static_cast<int>(HitType::Phase2OT));
+        } else {
+          hitType.push_back( static_cast<int>(HitType::Strip));
         }
       } else  {
         LogTrace("TrackingNtuple") << " - invalid hit";
