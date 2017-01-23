@@ -603,7 +603,7 @@ class TrackingParticlePrinter:
                 lst.extend(self._printMatchedSeedsHeader())
                 self._seedPrinter.setIndentFrom(self, adjust=2)
                 for seedInfo in tp.matchedSeedInfos():
-                    lst.extend(self._seedPrinter(seedInfo.seed()))
+                    lst.extend(self._seedPrinter.printSeed(seedInfo.seed()))
                 self._seedPrinter.restoreIndent()
         return lst
 
