@@ -58,6 +58,7 @@
 #include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
 #include "DataFormats/TrackerRecHit2D/interface/SiStripRecHit2DCollection.h"
 #include "DataFormats/TrackerRecHit2D/interface/SiStripMatchedRecHit2DCollection.h"
+#include "DataFormats/TrackerRecHit2D/interface/Phase2TrackerRecHit1D.h"
 
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
@@ -77,6 +78,9 @@
 
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertex.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
+
+#include "SimTracker/TrackHistory/interface/HistoryBase.h"
+#include "HepPDT/ParticleID.hh"
 
 #include "Validation/RecoTrack/interface/trackFromSeedFitFailed.h"
 
@@ -222,6 +226,7 @@ namespace {
 
     double adcSum = 0;
     StripDigiSimLink found;
+
     int first  = cluster.firstStrip();
     for(size_t i=0; i<cluster.amplitudes().size(); ++i) {
       adcSum += cluster.amplitudes()[i];
@@ -237,6 +242,49 @@ namespace {
     }
     return simTrackIdToAdc;
   }
+
+
+  std::map<unsigned int, double> chargeFraction(const Phase2TrackerCluster1D& cluster, const DetId& detId,
+                                                const edm::DetSetVector<StripDigiSimLink>& digiSimLink) {
+    std::map<unsigned int, double> simTrackIdToAdc;
+    auto ex = cms::Exception("LogicError") << "Not possible to use StripDigiSimLink with Phase2TrackerCluster1D! ";
+    return simTrackIdToAdc;
+  }
+
+  std::map<unsigned int, double> chargeFraction(const Phase2TrackerCluster1D& cluster, const DetId& detId,
+                                                const edm::DetSetVector<PixelDigiSimLink>& digiSimLink) {
+    std::map<unsigned int, double> simTrackIdToAdc;
+
+    auto idetset = digiSimLink.find(detId);
+    if(idetset == digiSimLink.end())
+      return simTrackIdToAdc;
+
+    double adcSum = 0;
+    PixelDigiSimLink found;
+
+    for (unsigned int istr(0); istr < cluster.size(); ++istr) {
+      //In the OT, there is no measurement of the charge, so no ADC value.
+      //Only in the SSA chip (so in PSs) you have one "threshold" flag that tells you if the charge of at least one strip in the cluster exceeded 1.2 MIPs.
+
+      //const SiPixelCluster::Pixel& pixel = cluster.pixel(iPix);
+      //adcSum += pixel.adc;
+      uint32_t channel = Phase2TrackerDigi::pixelToChannel(cluster.firstRow() + istr, cluster.column());
+      forEachMatchedSimLink(*idetset, channel, [&](const PixelDigiSimLink& simLink){
+          //double& adc = simTrackIdToAdc[simLink.SimTrackId()];
+          //adc += pixel.adc*simLink.fraction();
+        });
+    }
+
+    for(auto& pair: simTrackIdToAdc) {
+      if(adcSum == 0.)
+        pair.second = 0.;
+      else
+        pair.second /= adcSum;
+    }
+
+    return simTrackIdToAdc;
+  }
+
 }
 
 //
@@ -269,6 +317,7 @@ private:
     Strip = 1,
     Glued = 2,
     Invalid = 3,
+    Phase2OT = 4,
     Unknown = 99
   };
 
@@ -331,6 +380,17 @@ private:
                             std::vector<std::pair<int, int> >& monoStereoClusterList
                             );
 
+  void fillPhase2OTHits(const edm::Event& iEvent,
+                        const ClusterTPAssociation& clusterToTPMap,
+                        const TrackingParticleRefKeyToIndex& tpKeyToIndex,
+                        const SimHitTPAssociationProducer::SimHitTPAssociationList& simHitsTPAssoc,
+                        const edm::DetSetVector<PixelDigiSimLink>& digiSimLink,
+                        const TransientTrackingRecHitBuilder& theTTRHBuilder,
+                        const TrackerTopology& tTopo,
+                        const SimHitRefKeyToIndex& simHitRefKeyToIndex,
+                        std::set<edm::ProductID>& hitProductIds
+                        );
+
   void fillSeeds(const edm::Event& iEvent,
                  const TrackingParticleRefVector& tpCollection,
                  const TrackingParticleRefKeyToIndex& tpKeyToIndex,
@@ -368,6 +428,12 @@ private:
                              const reco::TrackToTrackingParticleAssociator& associatorByHits,
                              const std::vector<TPHitIndex>& tpHitList
                              );
+
+  void fillTrackingParticlesForSeeds(const TrackingParticleRefVector& tpCollection,
+                                     const reco::SimToRecoCollection& simRecColl,
+                                     const TrackingParticleRefKeyToIndex& tpKeyToIndex,
+                                     const unsigned int seedOffset
+                                     );
 
   void fillVertices(const reco::VertexCollection& vertices,
                     const edm::RefToBaseVector<reco::Track>& tracks);
@@ -408,11 +474,14 @@ private:
   edm::EDGetTokenT<reco::TrackToTrackingParticleAssociator> trackAssociatorToken_;
   edm::EDGetTokenT<edm::DetSetVector<PixelDigiSimLink> > pixelSimLinkToken_;
   edm::EDGetTokenT<edm::DetSetVector<StripDigiSimLink> > stripSimLinkToken_;
+  edm::EDGetTokenT<edm::DetSetVector<PixelDigiSimLink> > siphase2OTSimLinksToken_;
+  bool includeStripHits_, includePhase2OTHits_;
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::EDGetTokenT<SiPixelRecHitCollection> pixelRecHitToken_;
   edm::EDGetTokenT<SiStripRecHit2DCollection> stripRphiRecHitToken_;
   edm::EDGetTokenT<SiStripRecHit2DCollection> stripStereoRecHitToken_;
   edm::EDGetTokenT<SiStripMatchedRecHit2DCollection> stripMatchedRecHitToken_;
+  edm::EDGetTokenT<Phase2TrackerRecHit1DCollectionNew> phase2OTRecHitToken_;
   edm::EDGetTokenT<reco::VertexCollection> vertexToken_;
   edm::EDGetTokenT<TrackingVertexCollection> trackingVertexToken_;
   edm::EDGetTokenT<edm::ValueMap<unsigned int> > tpNLayersToken_;
@@ -422,6 +491,8 @@ private:
   std::string parametersDefinerName_;
   const bool includeSeeds_;
   const bool includeAllHits_;
+
+  HistoryBase tracer_;
 
   TTree* t;
   // event
@@ -487,6 +558,8 @@ private:
   std::vector<int>   sim_event    ;
   std::vector<int>   sim_bunchCrossing;
   std::vector<int>   sim_pdgId    ;
+  std::vector<std::vector<int> >sim_genPdgIds;
+  std::vector<int>  sim_isFromBHadron;
   std::vector<float> sim_px       ;
   std::vector<float> sim_py       ;
   std::vector<float> sim_pz       ;
@@ -509,6 +582,7 @@ private:
   std::vector<unsigned int> sim_n3DLay  ;
   std::vector<std::vector<int> > sim_trkIdx;      // second index runs through matched tracks
   std::vector<std::vector<float> > sim_shareFrac; // second index runs through matched tracks
+  std::vector<std::vector<int> > sim_seedIdx;      // second index runs through matched seeds
   std::vector<int> sim_parentVtxIdx;
   std::vector<std::vector<int> > sim_decayVtxIdx; // second index runs through decay vertices
   std::vector<std::vector<int> > sim_simHitIdx;   // second index runs through SimHits
@@ -581,6 +655,30 @@ private:
   std::vector<float> glu_radL ;  //http://cmslxr.fnal.gov/lxr/source/DataFormats/GeometrySurface/interface/MediumProperties.h
   std::vector<float> glu_bbxi ;
   ////////////////////
+  // phase2 Outer Tracker hits
+  // (first) index runs through hits
+  std::vector<short> ph2_isBarrel ;
+  std::vector<unsigned short> ph2_det    ;
+  std::vector<unsigned short> ph2_lay    ;
+  std::vector<unsigned int> ph2_detId    ;
+  std::vector<std::vector<int> > ph2_trkIdx;    // second index runs through tracks containing this hit
+  std::vector<std::vector<int> > ph2_seeIdx;    // second index runs through seeds containing this hit
+  std::vector<std::vector<int> > ph2_simHitIdx; // second index runs through SimHits inducing this hit
+  std::vector<std::vector<float> > ph2_chargeFraction; // second index runs through SimHits inducing this hit
+  std::vector<unsigned short> ph2_simType;
+  std::vector<float> ph2_x    ;
+  std::vector<float> ph2_y    ;
+  std::vector<float> ph2_z    ;
+  std::vector<float> ph2_xx   ;
+  std::vector<float> ph2_xy   ;
+  std::vector<float> ph2_yy   ;
+  std::vector<float> ph2_yz   ;
+  std::vector<float> ph2_zz   ;
+  std::vector<float> ph2_zx   ;
+  std::vector<float> ph2_radL ;  //http://cmslxr.fnal.gov/lxr/source/DataFormats/GeometrySurface/interface/MediumProperties.h
+  std::vector<float> ph2_bbxi ;
+
+  ////////////////////
   // invalid (missing/inactive/etc) hits
   // (first) index runs through hits
   std::vector<short> inv_isBarrel;
@@ -631,11 +729,18 @@ private:
   std::vector<float> see_dxyErr   ;
   std::vector<float> see_dzErr    ;
   std::vector<float> see_chi2     ;
+  std::vector<float> see_statePt;
+  std::vector<float> see_stateTrajX;
+  std::vector<float> see_stateTrajY;
+  std::vector<float> see_stateTrajPx;
+  std::vector<float> see_stateTrajPy;
+  std::vector<float> see_stateTrajPz;
   std::vector<int> see_q       ;
   std::vector<unsigned int> see_nValid  ;
   std::vector<unsigned int> see_nPixel  ;
   std::vector<unsigned int> see_nGlued  ;
   std::vector<unsigned int> see_nStrip  ;
+  std::vector<unsigned int> see_nPhase2OT;
   std::vector<unsigned int> see_algo    ;
   std::vector<int> see_trkIdx;
   std::vector<std::vector<float> > see_shareFrac; // second index runs through matched TrackingParticles
@@ -688,11 +793,15 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   trackAssociatorToken_(consumes<reco::TrackToTrackingParticleAssociator>(iConfig.getUntrackedParameter<edm::InputTag>("trackAssociator"))),
   pixelSimLinkToken_(consumes<edm::DetSetVector<PixelDigiSimLink> >(iConfig.getUntrackedParameter<edm::InputTag>("pixelDigiSimLink"))),
   stripSimLinkToken_(consumes<edm::DetSetVector<StripDigiSimLink> >(iConfig.getUntrackedParameter<edm::InputTag>("stripDigiSimLink"))),
+  siphase2OTSimLinksToken_(consumes<edm::DetSetVector<PixelDigiSimLink> >(iConfig.getUntrackedParameter<edm::InputTag>("phase2OTSimLink"))),
+  includeStripHits_(iConfig.getUntrackedParameter<edm::InputTag>("stripDigiSimLink").label() != ""),
+  includePhase2OTHits_(iConfig.getUntrackedParameter<edm::InputTag>("phase2OTSimLink").label() != ""),
   beamSpotToken_(consumes<reco::BeamSpot>(iConfig.getUntrackedParameter<edm::InputTag>("beamSpot"))),
   pixelRecHitToken_(consumes<SiPixelRecHitCollection>(iConfig.getUntrackedParameter<edm::InputTag>("pixelRecHits"))),
   stripRphiRecHitToken_(consumes<SiStripRecHit2DCollection>(iConfig.getUntrackedParameter<edm::InputTag>("stripRphiRecHits"))),
   stripStereoRecHitToken_(consumes<SiStripRecHit2DCollection>(iConfig.getUntrackedParameter<edm::InputTag>("stripStereoRecHits"))),
   stripMatchedRecHitToken_(consumes<SiStripMatchedRecHit2DCollection>(iConfig.getUntrackedParameter<edm::InputTag>("stripMatchedRecHits"))),
+  phase2OTRecHitToken_(consumes<Phase2TrackerRecHit1DCollectionNew>(iConfig.getUntrackedParameter<edm::InputTag>("phase2OTRecHits"))),
   vertexToken_(consumes<reco::VertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("vertices"))),
   trackingVertexToken_(consumes<TrackingVertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("trackingVertices"))),
   tpNLayersToken_(consumes<edm::ValueMap<unsigned int> >(iConfig.getUntrackedParameter<edm::InputTag>("trackingParticleNlayers"))),
@@ -711,6 +820,8 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   else {
     trackingParticleToken_ = consumes<TrackingParticleCollection>(tpTag);
   }
+
+  tracer_.depth(-2); // as in SimTracker/TrackHistory/src/TrackClassifier.cc
 
   usesResource(TFileService::kSharedResource);
   edm::Service<TFileService> fs;
@@ -778,6 +889,8 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("sim_event"    , &sim_event    );
   t->Branch("sim_bunchCrossing", &sim_bunchCrossing);
   t->Branch("sim_pdgId"    , &sim_pdgId    );
+  t->Branch("sim_genPdgIds", &sim_genPdgIds);
+  t->Branch("sim_isFromBHadron", &sim_isFromBHadron);
   t->Branch("sim_px"       , &sim_px       );
   t->Branch("sim_py"       , &sim_py       );
   t->Branch("sim_pz"       , &sim_pz       );
@@ -800,6 +913,9 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
   t->Branch("sim_n3DLay"   , &sim_n3DLay   );
   t->Branch("sim_trkIdx"   , &sim_trkIdx   );
   t->Branch("sim_shareFrac", &sim_shareFrac);
+  if(includeSeeds_) {
+    t->Branch("sim_seedIdx"   , &sim_seedIdx   );
+  }
   t->Branch("sim_parentVtxIdx", &sim_parentVtxIdx);
   t->Branch("sim_decayVtxIdx", &sim_decayVtxIdx);
   if(includeAllHits_) {
@@ -831,50 +947,78 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("pix_bbxi"  , &pix_bbxi );
     t->Branch("pix_bbxi"  , &pix_bbxi );
     //strips
-    t->Branch("str_isBarrel"  , &str_isBarrel );
-    t->Branch("str_isStereo"  , &str_isStereo );
-    t->Branch("str_det"       , &str_det      );
-    t->Branch("str_lay"       , &str_lay      );
-    t->Branch("str_detId"     , &str_detId    );
-    t->Branch("str_trkIdx"    , &str_trkIdx   );
-    if(includeSeeds_) {
-      t->Branch("str_seeIdx"    , &str_seeIdx   );
+    if(includeStripHits_){
+      t->Branch("str_isBarrel"  , &str_isBarrel );
+      t->Branch("str_isStereo"  , &str_isStereo );
+      t->Branch("str_det"       , &str_det      );
+      t->Branch("str_lay"       , &str_lay      );
+      t->Branch("str_detId"     , &str_detId    );
+      t->Branch("str_trkIdx"    , &str_trkIdx   );
+      if(includeSeeds_) {
+        t->Branch("str_seeIdx"    , &str_seeIdx   );
+      }
+      t->Branch("str_simHitIdx" , &str_simHitIdx);
+      t->Branch("str_chargeFraction", &str_chargeFraction);
+      t->Branch("str_simType", &str_simType);
+      t->Branch("str_x"     , &str_x    );
+      t->Branch("str_y"     , &str_y    );
+      t->Branch("str_z"     , &str_z    );
+      t->Branch("str_xx"    , &str_xx   );
+      t->Branch("str_xy"    , &str_xy   );
+      t->Branch("str_yy"    , &str_yy   );
+      t->Branch("str_yz"    , &str_yz   );
+      t->Branch("str_zz"    , &str_zz   );
+      t->Branch("str_zx"    , &str_zx   );
+      t->Branch("str_radL"  , &str_radL );
+      t->Branch("str_bbxi"  , &str_bbxi );
+      //matched hits
+      t->Branch("glu_isBarrel"  , &glu_isBarrel );
+      t->Branch("glu_det"       , &glu_det      );
+      t->Branch("glu_lay"       , &glu_lay      );
+      t->Branch("glu_detId"     , &glu_detId    );
+      t->Branch("glu_monoIdx"   , &glu_monoIdx  );
+      t->Branch("glu_stereoIdx" , &glu_stereoIdx);
+      if(includeSeeds_) {
+        t->Branch("glu_seeIdx"    , &glu_seeIdx   );
+      }
+      t->Branch("glu_x"         , &glu_x        );
+      t->Branch("glu_y"         , &glu_y        );
+      t->Branch("glu_z"         , &glu_z        );
+      t->Branch("glu_xx"        , &glu_xx       );
+      t->Branch("glu_xy"        , &glu_xy       );
+      t->Branch("glu_yy"        , &glu_yy       );
+      t->Branch("glu_yz"        , &glu_yz       );
+      t->Branch("glu_zz"        , &glu_zz       );
+      t->Branch("glu_zx"        , &glu_zx       );
+      t->Branch("glu_radL"      , &glu_radL     );
+      t->Branch("glu_bbxi"      , &glu_bbxi     );
     }
-    t->Branch("str_simHitIdx" , &str_simHitIdx);
-    t->Branch("str_chargeFraction", &str_chargeFraction);
-    t->Branch("str_simType", &str_simType);
-    t->Branch("str_x"     , &str_x    );
-    t->Branch("str_y"     , &str_y    );
-    t->Branch("str_z"     , &str_z    );
-    t->Branch("str_xx"    , &str_xx   );
-    t->Branch("str_xy"    , &str_xy   );
-    t->Branch("str_yy"    , &str_yy   );
-    t->Branch("str_yz"    , &str_yz   );
-    t->Branch("str_zz"    , &str_zz   );
-    t->Branch("str_zx"    , &str_zx   );
-    t->Branch("str_radL"  , &str_radL );
-    t->Branch("str_bbxi"  , &str_bbxi );
-    //matched hits
-    t->Branch("glu_isBarrel"  , &glu_isBarrel );
-    t->Branch("glu_det"       , &glu_det      );
-    t->Branch("glu_lay"       , &glu_lay      );
-    t->Branch("glu_detId"     , &glu_detId    );
-    t->Branch("glu_monoIdx"   , &glu_monoIdx  );
-    t->Branch("glu_stereoIdx" , &glu_stereoIdx);
-    if(includeSeeds_) {
-      t->Branch("glu_seeIdx"    , &glu_seeIdx   );
+    //phase2 OT
+    if(includePhase2OTHits_){
+      t->Branch("ph2_isBarrel"  , &ph2_isBarrel );
+      t->Branch("ph2_det"       , &ph2_det      );
+      t->Branch("ph2_lay"       , &ph2_lay      );
+      t->Branch("ph2_detId"     , &ph2_detId    );
+      t->Branch("ph2_trkIdx"    , &ph2_trkIdx   );
+      if(includeSeeds_) {
+        t->Branch("ph2_seeIdx"    , &ph2_seeIdx   );
+      }
+      t->Branch("ph2_simHitIdx" , &ph2_simHitIdx);
+      t->Branch("ph2_chargeFraction", &ph2_chargeFraction);
+      t->Branch("ph2_simType", &ph2_simType);
+      t->Branch("ph2_x"     , &ph2_x    );
+      t->Branch("ph2_y"     , &ph2_y    );
+      t->Branch("ph2_z"     , &ph2_z    );
+      t->Branch("ph2_xx"    , &ph2_xx   );
+      t->Branch("ph2_xy"    , &ph2_xy   );
+      t->Branch("ph2_yy"    , &ph2_yy   );
+      t->Branch("ph2_yz"    , &ph2_yz   );
+      t->Branch("ph2_zz"    , &ph2_zz   );
+      t->Branch("ph2_zx"    , &ph2_zx   );
+      t->Branch("ph2_radL"  , &ph2_radL );
+      t->Branch("ph2_bbxi"  , &ph2_bbxi );
+      t->Branch("ph2_bbxi"  , &ph2_bbxi );
     }
-    t->Branch("glu_x"         , &glu_x        );
-    t->Branch("glu_y"         , &glu_y        );
-    t->Branch("glu_z"         , &glu_z        );
-    t->Branch("glu_xx"        , &glu_xx       );
-    t->Branch("glu_xy"        , &glu_xy       );
-    t->Branch("glu_yy"        , &glu_yy       );
-    t->Branch("glu_yz"        , &glu_yz       );
-    t->Branch("glu_zz"        , &glu_zz       );
-    t->Branch("glu_zx"        , &glu_zx       );
-    t->Branch("glu_radL"      , &glu_radL     );
-    t->Branch("glu_bbxi"      , &glu_bbxi     );
     //invalid hits
     t->Branch("inv_isBarrel"  , &inv_isBarrel );
     t->Branch("inv_det"       , &inv_det      );
@@ -921,11 +1065,18 @@ TrackingNtuple::TrackingNtuple(const edm::ParameterSet& iConfig):
     t->Branch("see_dxyErr"   , &see_dxyErr  );
     t->Branch("see_dzErr"    , &see_dzErr   );
     t->Branch("see_chi2"     , &see_chi2    );
+    t->Branch("see_statePt"  , &see_statePt );
+    t->Branch("see_stateTrajX", &see_stateTrajX);
+    t->Branch("see_stateTrajY", &see_stateTrajY);
+    t->Branch("see_stateTrajPx", &see_stateTrajPx);
+    t->Branch("see_stateTrajPy", &see_stateTrajPy);
+    t->Branch("see_stateTrajPz", &see_stateTrajPz);
     t->Branch("see_q"        , &see_q       );
     t->Branch("see_nValid"   , &see_nValid  );
     t->Branch("see_nPixel"   , &see_nPixel  );
     t->Branch("see_nGlued"   , &see_nGlued  );
     t->Branch("see_nStrip"   , &see_nStrip  );
+    t->Branch("see_nPhase2OT", &see_nPhase2OT);
     t->Branch("see_algo"     , &see_algo    );
     t->Branch("see_trkIdx"   , &see_trkIdx  );
     t->Branch("see_shareFrac", &see_shareFrac);
@@ -1036,6 +1187,8 @@ void TrackingNtuple::clearVariables() {
   sim_event    .clear();
   sim_bunchCrossing.clear();
   sim_pdgId    .clear();
+  sim_genPdgIds.clear();
+  sim_isFromBHadron.clear();
   sim_px       .clear();
   sim_py       .clear();
   sim_pz       .clear();
@@ -1057,6 +1210,7 @@ void TrackingNtuple::clearVariables() {
   sim_nPixelLay.clear();
   sim_n3DLay   .clear();
   sim_trkIdx   .clear();
+  sim_seedIdx   .clear();
   sim_shareFrac.clear();
   sim_parentVtxIdx.clear();
   sim_decayVtxIdx.clear();
@@ -1123,6 +1277,27 @@ void TrackingNtuple::clearVariables() {
   glu_zx       .clear();
   glu_radL     .clear();
   glu_bbxi     .clear();
+  //phase2 OT
+  ph2_isBarrel .clear();
+  ph2_det      .clear();
+  ph2_lay      .clear();
+  ph2_detId    .clear();
+  ph2_trkIdx   .clear();
+  ph2_seeIdx   .clear();
+  ph2_simHitIdx.clear();
+  ph2_chargeFraction.clear();
+  ph2_simType.clear();
+  ph2_x    .clear();
+  ph2_y    .clear();
+  ph2_z    .clear();
+  ph2_xx   .clear();
+  ph2_xy   .clear();
+  ph2_yy   .clear();
+  ph2_yz   .clear();
+  ph2_zz   .clear();
+  ph2_zx   .clear();
+  ph2_radL .clear();
+  ph2_bbxi .clear();
   //invalid hits
   inv_isBarrel .clear();
   inv_det      .clear();
@@ -1167,11 +1342,18 @@ void TrackingNtuple::clearVariables() {
   see_dxyErr  .clear();
   see_dzErr   .clear();
   see_chi2    .clear();
+  see_statePt.clear();
+  see_stateTrajX.clear();
+  see_stateTrajY.clear();
+  see_stateTrajPx.clear();
+  see_stateTrajPy.clear();
+  see_stateTrajPz.clear();
   see_q       .clear();
   see_nValid  .clear();
   see_nPixel  .clear();
   see_nGlued  .clear();
   see_nStrip  .clear();
+  see_nPhase2OT.clear();
   see_algo    .clear();
   see_trkIdx  .clear();
   see_shareFrac.clear();
@@ -1310,13 +1492,17 @@ void TrackingNtuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
   edm::Handle<edm::DetSetVector<StripDigiSimLink> > stripDigiSimLinksHandle;
   iEvent.getByToken(stripSimLinkToken_, stripDigiSimLinksHandle);
-  const auto& stripDigiSimLinks = *stripDigiSimLinksHandle;
+
+  // Phase2 OT DigiSimLink
+  edm::Handle<edm::DetSetVector<PixelDigiSimLink> > siphase2OTSimLinksHandle;
+  iEvent.getByToken(siphase2OTSimLinksToken_, siphase2OTSimLinksHandle);
 
   //beamspot
   Handle<reco::BeamSpot> recoBeamSpotHandle;
   iEvent.getByToken(beamSpotToken_, recoBeamSpotHandle);
   BeamSpot const & bs = *recoBeamSpotHandle;
   fillBeamSpot(bs);
+
 
   //prapare list to link matched hits to collection
   vector<pair<int,int> > monoStereoClusterList;
@@ -1328,10 +1514,20 @@ void TrackingNtuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     fillPixelHits(iEvent, clusterToTPMap, tpKeyToIndex, *simHitsTPAssoc, pixelDigiSimLinks, *theTTRHBuilder, tTopo, simHitRefKeyToIndex, hitProductIds);
 
     //strip hits
-    fillStripRphiStereoHits(iEvent, clusterToTPMap, tpKeyToIndex, *simHitsTPAssoc, stripDigiSimLinks, *theTTRHBuilder, tTopo, simHitRefKeyToIndex, hitProductIds);
+    if(includeStripHits_){
+      LogDebug("TrackingNtuple") << "foundStripSimLink" ;
+      const auto& stripDigiSimLinks = *stripDigiSimLinksHandle;
+      fillStripRphiStereoHits(iEvent, clusterToTPMap, tpKeyToIndex, *simHitsTPAssoc, stripDigiSimLinks, *theTTRHBuilder, tTopo, simHitRefKeyToIndex, hitProductIds);
 
-    //matched hits
-    fillStripMatchedHits(iEvent, *theTTRHBuilder, tTopo, monoStereoClusterList);
+      //matched hits
+      fillStripMatchedHits(iEvent, *theTTRHBuilder, tTopo, monoStereoClusterList);
+    }
+
+    if(includePhase2OTHits_){
+      LogDebug("TrackingNtuple") << "foundPhase2OTSimLinks" ;
+      const auto& phase2OTSimLinks = *siphase2OTSimLinksHandle;
+      fillPhase2OTHits(iEvent, clusterToTPMap, tpKeyToIndex, *simHitsTPAssoc, phase2OTSimLinks, *theTTRHBuilder, tTopo, simHitRefKeyToIndex, hitProductIds);
+    }
   }
 
   //seeds
@@ -1401,7 +1597,9 @@ TrackingNtuple::SimHitData TrackingNtuple::matchCluster(const OmniClusterRef& cl
                                                         ) {
   SimHitData ret;
 
-  auto simTrackIdToChargeFraction = chargeFraction(GetCluster<SimLink>::call(cluster), hitId, digiSimLinks);
+  std::map<unsigned int, double> simTrackIdToChargeFraction;
+  if(hitType == HitType::Phase2OT) simTrackIdToChargeFraction = chargeFraction(cluster.phase2OTCluster(), hitId, digiSimLinks);
+  else simTrackIdToChargeFraction = chargeFraction(GetCluster<SimLink>::call(cluster), hitId, digiSimLinks);
 
   ret.type = HitSimType::Noise;
   auto range = clusterToTPMap.equal_range( cluster );
@@ -1787,6 +1985,73 @@ void TrackingNtuple::fillStripMatchedHits(const edm::Event& iEvent,
   }
 }
 
+void TrackingNtuple::fillPhase2OTHits(const edm::Event& iEvent,
+                                   const ClusterTPAssociation& clusterToTPMap,
+                                   const TrackingParticleRefKeyToIndex& tpKeyToIndex,
+                                   const SimHitTPAssociationProducer::SimHitTPAssociationList& simHitsTPAssoc,
+                                   const edm::DetSetVector<PixelDigiSimLink>& digiSimLink,
+                                   const TransientTrackingRecHitBuilder& theTTRHBuilder,
+                                   const TrackerTopology& tTopo,
+                                   const SimHitRefKeyToIndex& simHitRefKeyToIndex,
+                                   std::set<edm::ProductID>& hitProductIds
+                                   ) {
+  edm::Handle<Phase2TrackerRecHit1DCollectionNew> phase2OTHits;
+  iEvent.getByToken(phase2OTRecHitToken_, phase2OTHits);
+  for (auto it = phase2OTHits->begin(); it!=phase2OTHits->end(); it++ ) {
+    const DetId hitId = it->detId();
+    for (auto hit = it->begin(); hit!=it->end(); hit++ ) {
+      TransientTrackingRecHit::RecHitPointer ttrh = theTTRHBuilder.build(&*hit);
+
+      hitProductIds.insert(hit->cluster().id());
+
+      const int key = hit->cluster().key();
+      const int lay = tTopo.layer(hitId);
+      SimHitData simHitData = matchCluster(hit->firstClusterRef(), hitId, key, ttrh,
+                                           clusterToTPMap, tpKeyToIndex, simHitsTPAssoc, digiSimLink, simHitRefKeyToIndex, HitType::Phase2OT);
+
+      ph2_isBarrel .push_back( hitId.subdetId()==1 );
+      ph2_det      .push_back( hitId.subdetId() );
+      ph2_lay      .push_back( lay );
+      ph2_detId    .push_back( hitId.rawId() );
+      ph2_trkIdx   .emplace_back(); // filled in fillTracks
+      ph2_seeIdx   .emplace_back(); // filled in fillSeeds
+      ph2_simHitIdx.push_back( simHitData.matchingSimHit );
+      ph2_simType.push_back( static_cast<int>(simHitData.type) );
+      ph2_x    .push_back( ttrh->globalPosition().x() );
+      ph2_y    .push_back( ttrh->globalPosition().y() );
+      ph2_z    .push_back( ttrh->globalPosition().z() );
+      ph2_xx   .push_back( ttrh->globalPositionError().cxx() );
+      ph2_xy   .push_back( ttrh->globalPositionError().cyx() );
+      ph2_yy   .push_back( ttrh->globalPositionError().cyy() );
+      ph2_yz   .push_back( ttrh->globalPositionError().czy() );
+      ph2_zz   .push_back( ttrh->globalPositionError().czz() );
+      ph2_zx   .push_back( ttrh->globalPositionError().czx() );
+      ph2_chargeFraction.push_back( simHitData.chargeFraction );
+      ph2_radL .push_back( ttrh->surface()->mediumProperties().radLen() );
+      ph2_bbxi .push_back( ttrh->surface()->mediumProperties().xi() );
+
+      LogTrace("TrackingNtuple") << "phase2 OT cluster=" << key
+                                 << " subdId=" << hitId.subdetId()
+                                 << " lay=" << lay
+                                 << " rawId=" << hitId.rawId()
+                                 << " pos =" << ttrh->globalPosition()
+                                 << " nMatchingSimHit=" << simHitData.matchingSimHit.size();
+
+      if(!simHitData.matchingSimHit.empty()) {
+        const auto simHitIdx = simHitData.matchingSimHit[0];
+        LogTrace("TrackingNtuple") << " firstMatchingSimHit=" << simHitIdx
+                                   << " simHitPos=" << GlobalPoint(simhit_x[simHitIdx], simhit_y[simHitIdx], simhit_z[simHitIdx])
+                                   << " energyLoss=" << simhit_eloss[simHitIdx]
+                                   << " particleType=" << simhit_particle[simHitIdx]
+                                   << " processType=" << simhit_process[simHitIdx]
+                                   << " bunchCrossing=" << simHitData.bunchCrossing[0]
+                                   << " event=" << simHitData.event[0];
+      }
+    }
+  }
+}
+
+
 void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
                                const TrackingParticleRefVector& tpCollection,
                                const TrackingParticleRefKeyToIndex& tpKeyToIndex,
@@ -1813,6 +2078,7 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
       seedTrackRefs.push_back(seedTracks.refAt(i));
     }
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(seedTrackRefs, tpCollection);
+    reco::SimToRecoCollection simRecColl = associatorByHits.associateSimToReco(seedTrackRefs, tpCollection);
 
     edm::EDConsumerBase::Labels labels;
     labelsForToken(seedToken, labels);
@@ -1824,15 +2090,17 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
     int algo = reco::TrackBase::algoByName(label.Data());
 
     edm::ProductID id = seedTracks[0].seedRef().id();
-    auto inserted = seedCollToOffset.emplace(id, see_fitok.size());
+    const auto offset = see_fitok.size();
+    auto inserted = seedCollToOffset.emplace(id, offset);
     if(!inserted.second)
       throw cms::Exception("Configuration") << "Trying to add seeds with ProductID " << id << " for a second time from collection " << labels.module << ", seed algo " << label << ". Typically this is caused by a configuration problem.";
-    see_offset.push_back(see_fitok.size());
+    see_offset.push_back(offset);
 
     LogTrace("TrackingNtuple") << "NEW SEED LABEL: " << label << " size: " << seedTracks.size() << " algo=" << algo
                                << " ProductID " << id;
 
     for(const auto& seedTrackRef: seedTrackRefs) {
+
       const auto& seedTrack = *seedTrackRef;
       const auto& seedRef = seedTrack.seedRef();
       const auto& seed = *seedRef;
@@ -1880,6 +2148,16 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
       see_dzErr   .push_back( seedFitOk ? seedTrack.dzError() : 0);
       see_algo    .push_back( algo );
 
+      const auto& state = seedTrack.seedRef()->startingState();
+      const auto& pos = state.parameters().position();
+      const auto& mom = state.parameters().momentum();
+      see_statePt.push_back(state.pt());
+      see_stateTrajX.push_back(pos.x());
+      see_stateTrajY.push_back(pos.y());
+      see_stateTrajPx.push_back(mom.x());
+      see_stateTrajPy.push_back(mom.y());
+      see_stateTrajPz.push_back(mom.z());
+
       see_trkIdx  .push_back(-1); // to be set correctly in fillTracks
       see_shareFrac.push_back( sharedFraction );
       see_simTrkIdx.push_back( tpIdx );
@@ -1912,7 +2190,8 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
           }
           hitIdx.push_back( clusterKey );
           hitType.push_back( static_cast<int>(HitType::Pixel) );
-	} else {
+	} else if (subid == (int) StripSubdetector::TOB || subid == (int) StripSubdetector::TID ||
+	           subid == (int) StripSubdetector::TIB || subid == (int) StripSubdetector::TEC) {
 	  if (trackerHitRTTI::isMatched(*recHit)) {
 	    const SiStripMatchedRecHit2D * matchedHit = dynamic_cast<const SiStripMatchedRecHit2D *>(&*recHit);
             if(includeAllHits_) {
@@ -1930,21 +2209,39 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
 	  } else {
 	    const BaseTrackerRecHit* bhit = dynamic_cast<const BaseTrackerRecHit*>(&*recHit);
             const auto& clusterRef = bhit->firstClusterRef();
-            const auto clusterKey = clusterRef.cluster_strip().key();
+            unsigned int clusterKey;
+            if(clusterRef.isPhase2()){
+              clusterKey = clusterRef.cluster_phase2OT().key();
+            } else {
+              clusterKey = clusterRef.cluster_strip().key();
+            }
+
             if(includeAllHits_) {
               checkProductID(hitProductIds, clusterRef.id(), "seed");
-              str_seeIdx[clusterKey].push_back(seedIndex);
+              if(clusterRef.isPhase2()){
+                ph2_seeIdx[clusterKey].push_back(seedIndex);
+              } else {
+                str_seeIdx[clusterKey].push_back(seedIndex);
+              }
             }
+
             hitIdx.push_back( clusterKey );
-            hitType.push_back( static_cast<int>(HitType::Strip) );
+            if(clusterRef.isPhase2()){
+              hitType.push_back( static_cast<int>(HitType::Phase2OT) );
+            } else {
+              hitType.push_back( static_cast<int>(HitType::Strip) );
+            }
 	  }
-	}
+	} else {
+          LogTrace("TrackingNtuple") << " not pixel and not Strip detector";
+        }
       }
-      see_hitIdx  .push_back( hitIdx  );
-      see_hitType .push_back( hitType );
-      see_nPixel  .push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Pixel)) );
-      see_nGlued  .push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Glued)) );
-      see_nStrip  .push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Strip)) );
+      see_hitIdx   .push_back( hitIdx  );
+      see_hitType  .push_back( hitType );
+      see_nPixel   .push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Pixel)) );
+      see_nGlued   .push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Glued)) );
+      see_nStrip   .push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Strip)) );
+      see_nPhase2OT.push_back( std::count(hitType.begin(), hitType.end(), static_cast<int>(HitType::Phase2OT)) );
       //the part below is not strictly needed
       float chi2 = -1;
       if (nHits==2) {
@@ -2006,6 +2303,8 @@ void TrackingNtuple::fillSeeds(const edm::Event& iEvent,
       }
       see_chi2   .push_back( chi2 );
     }
+
+    fillTrackingParticlesForSeeds(tpCollection, simRecColl, tpKeyToIndex, offset);
   }
 }
 
@@ -2132,25 +2431,44 @@ void TrackingNtuple::fillTracks(const edm::RefToBaseVector<reco::Track>& tracks,
         continue;
 
       LogTrace("TrackingNtuple") << " " << subdetstring(hitId.subdetId()) << " " << tTopo.layer(hitId);
-      bool isPixel = (hitId.subdetId() == (int) PixelSubdetector::PixelBarrel || hitId.subdetId() == (int) PixelSubdetector::PixelEndcap );
 
       if (hit->isValid()) {
         //ugly... but works
         const BaseTrackerRecHit* bhit = dynamic_cast<const BaseTrackerRecHit*>(&*hit);
         const auto& clusterRef = bhit->firstClusterRef();
-        const auto clusterKey = clusterRef.isPixel() ? clusterRef.cluster_pixel().key() :  clusterRef.cluster_strip().key();
+        unsigned int clusterKey;
+        if(clusterRef.isPixel()){
+          clusterKey = clusterRef.cluster_pixel().key();
+        } else if(clusterRef.isPhase2()){
+          clusterKey = clusterRef.cluster_phase2OT().key();
+        } else {
+          clusterKey = clusterRef.cluster_strip().key();
+        }
 
         LogTrace("TrackingNtuple") << " id: " << hitId.rawId() << " - globalPos =" << hit->globalPosition()
                                    << " cluster=" << clusterKey
+                                   << " clusterRef ID=" << clusterRef.id()
                                    << " eta,phi: " << hit->globalPosition().eta() << "," << hit->globalPosition().phi();
         if(includeAllHits_) {
           checkProductID(hitProductIds, clusterRef.id(), "track");
-          if(isPixel) pix_trkIdx[clusterKey].push_back(iTrack);
-          else        str_trkIdx[clusterKey].push_back(iTrack);
+          if(clusterRef.isPixel()){
+            pix_trkIdx[clusterKey].push_back(iTrack);
+          } else if(clusterRef.isPhase2()){
+            ph2_trkIdx[clusterKey].push_back(iTrack);
+          } else {
+            str_trkIdx[clusterKey].push_back(iTrack);
+          }
+
         }
 
         hitIdx.push_back(clusterKey);
-        hitType.push_back( static_cast<int>( isPixel ? HitType::Pixel : HitType::Strip ) );
+        if(clusterRef.isPixel()){
+          hitType.push_back( static_cast<int>(HitType::Pixel));
+        } else if(clusterRef.isPhase2()){
+          hitType.push_back( static_cast<int>(HitType::Phase2OT));
+        } else {
+          hitType.push_back( static_cast<int>(HitType::Strip));
+        }
       } else  {
         LogTrace("TrackingNtuple") << " - invalid hit";
 
@@ -2209,10 +2527,32 @@ void TrackingNtuple::fillTrackingParticles(const edm::Event& iEvent, const edm::
         tkIdx.push_back(trackQuality.first.key());
       }
     }
+
+    sim_genPdgIds.emplace_back();
+    for(const auto& genRef: tp->genParticles()) {
+      if(genRef.isNonnull())
+        sim_genPdgIds.back().push_back(genRef->pdgId());
+    }
+
+    bool isFromBHadron = false;
+    // Logic is similar to SimTracker/TrackHistory
+    if(tracer_.evaluate(tp)) { // ignore TP if history can not be traced
+      // following is from TrackClassifier::processesAtGenerator()
+      HistoryBase::RecoGenParticleTrail const & recoGenParticleTrail = tracer_.recoGenParticleTrail();
+      for(const auto& particle: recoGenParticleTrail) {
+        HepPDT::ParticleID particleID(particle->pdgId());
+        if(particleID.hasBottom()) {
+          isFromBHadron = true;
+          break;
+        }
+      }
+    }
+
     LogTrace("TrackingNtuple") << "matched to tracks = " << make_VectorPrinter(tkIdx) << " isRecoMatched=" << isRecoMatched;
     sim_event    .push_back(tp->eventId().event());
     sim_bunchCrossing.push_back(tp->eventId().bunchCrossing());
     sim_pdgId    .push_back(tp->pdgId());
+    sim_isFromBHadron.push_back(isFromBHadron);
     sim_px       .push_back(tp->px());
     sim_py       .push_back(tp->py());
     sim_pz       .push_back(tp->pz());
@@ -2287,6 +2627,28 @@ void TrackingNtuple::fillTrackingParticles(const edm::Event& iEvent, const edm::
   }
 }
 
+// called from fillSeeds
+void TrackingNtuple::fillTrackingParticlesForSeeds(const TrackingParticleRefVector& tpCollection,
+                                                   const reco::SimToRecoCollection& simRecColl,
+                                                   const TrackingParticleRefKeyToIndex& tpKeyToIndex,
+                                                   const unsigned int seedOffset) {
+  if(sim_seedIdx.empty()) // first call
+    sim_seedIdx.resize(tpCollection.size());
+
+  for(const auto& keyVal: simRecColl) {
+    const auto& tpRef = keyVal.key;
+    auto found = tpKeyToIndex.find(tpRef.key());
+    if(found == tpKeyToIndex.end())
+      throw cms::Exception("Assert") << __FILE__ << ":" << __LINE__ << " fillTrackingParticlesForSeeds: tpRef.key() " << tpRef.key() << " not found from tpKeyToIndex. tpKeyToIndex size " << tpKeyToIndex.size();
+    const auto tpIndex = found->second;
+    for(const auto& pair: keyVal.val) {
+      const auto& seedRef = pair.first->seedRef();
+      sim_seedIdx[tpIndex].push_back(seedOffset + seedRef.key());
+    }
+  }
+}
+
+
 void TrackingNtuple::fillVertices(const reco::VertexCollection& vertices,
                                   const edm::RefToBaseVector<reco::Track>& tracks) {
   for(size_t iVertex=0, size=vertices.size(); iVertex<size; ++iVertex) {
@@ -2348,7 +2710,7 @@ void TrackingNtuple::fillTrackingVertices(const TrackingVertexRefVector& trackin
       for(const auto& tpRef: tps) {
         auto found = tpKeyToIndex.find(tpRef.key());
         if(found != tpKeyToIndex.end()) {
-          idx.push_back(tpRef.key());
+          idx.push_back(found->second);
         }
       }
     };
@@ -2388,11 +2750,13 @@ void TrackingNtuple::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   desc.addUntracked<edm::InputTag>("trackAssociator", edm::InputTag("quickTrackAssociatorByHits"));
   desc.addUntracked<edm::InputTag>("pixelDigiSimLink", edm::InputTag("simSiPixelDigis"));
   desc.addUntracked<edm::InputTag>("stripDigiSimLink", edm::InputTag("simSiStripDigis"));
+  desc.addUntracked<edm::InputTag>("phase2OTSimLink", edm::InputTag(""));
   desc.addUntracked<edm::InputTag>("beamSpot", edm::InputTag("offlineBeamSpot"));
   desc.addUntracked<edm::InputTag>("pixelRecHits", edm::InputTag("siPixelRecHits"));
   desc.addUntracked<edm::InputTag>("stripRphiRecHits", edm::InputTag("siStripMatchedRecHits", "rphiRecHit"));
   desc.addUntracked<edm::InputTag>("stripStereoRecHits", edm::InputTag("siStripMatchedRecHits", "stereoRecHit"));
   desc.addUntracked<edm::InputTag>("stripMatchedRecHits", edm::InputTag("siStripMatchedRecHits", "matchedRecHit"));
+  desc.addUntracked<edm::InputTag>("phase2OTRecHits", edm::InputTag("siPhase2RecHits"));
   desc.addUntracked<edm::InputTag>("vertices", edm::InputTag("offlinePrimaryVertices"));
   desc.addUntracked<edm::InputTag>("trackingVertices", edm::InputTag("mix", "MergedTrackTruth"));
   desc.addUntracked<edm::InputTag>("trackingParticleNlayers", edm::InputTag("trackingParticleNumberOfLayersProducer", "trackerLayers"));
