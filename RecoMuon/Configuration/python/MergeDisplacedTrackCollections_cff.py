@@ -8,7 +8,7 @@ from  RecoTracker.FinalTrackSelectors.MergeTrackCollections_cff import *
 
 from TrackingTools.KalmanUpdators.Chi2MeasurementEstimator_cfi import Chi2MeasurementEstimator as _Chi2MeasurementEstimator
 displaceDuplicateTrackCandidatesChi2Est = _Chi2MeasurementEstimator.clone(
-    ComponentName = "duplicateTrackCandidatesChi2Est",
+    ComponentName = "displaceDuplicateTrackCandidatesChi2Est",
     MaxChi2 = 100,
 )
 
