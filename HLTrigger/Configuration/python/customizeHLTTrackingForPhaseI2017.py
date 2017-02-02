@@ -294,18 +294,26 @@ def customizeHLTForPFTrackingPhaseI2017(process):
     # Need to operate on Paths as well...
     for seqs in [process.sequences_(), process.paths_()]:
         for seqName, seq in seqs.iteritems():
-            from FWCore.ParameterSet.SequenceTypes import ModuleNodeVisitor
-            l = list()
-            v = ModuleNodeVisitor(l)
-            seq.visit(v)
+            # Update all sequences/paths containing hltPixelTracks
+            try:
+                index = seq.index(process.hltPixelTracks)
+            except:
+                continue
+            # except if hltPixelLayerQuadruplets is already in the
+            # sequence, the sequence has already been migrated and
+            # should be skipped here
+            try:
+                index = seq.index(process.hltPixelLayerQuadruplets)
+                continue
+            except:
+                pass
 
-            if process.hltPixelTracks in l and not process.hltPixelLayerQuadruplets in l:
-                seq.remove(process.hltPixelLayerTriplets) # note that this module does not necessarily exist in sequence 'seq', if it doesn't, it does not get removed
-                index = seq.index(process.hltPixelTracksHitDoublets)
-                seq.insert(index,process.hltPixelLayerQuadruplets)
-                index = seq.index(process.hltPixelTracksHitTriplets)
-                seq.remove(process.hltPixelTracksHitTriplets)
-                seq.insert(index, process.hltPixelTracksHitQuadruplets)
+            seq.remove(process.hltPixelLayerTriplets) # note that this module does not necessarily exist in sequence 'seq', if it doesn't, it does not get removed
+            index = seq.index(process.hltPixelTracksHitDoublets)
+            seq.insert(index,process.hltPixelLayerQuadruplets)
+            index = seq.index(process.hltPixelTracksHitTriplets)
+            seq.remove(process.hltPixelTracksHitTriplets)
+            seq.insert(index, process.hltPixelTracksHitQuadruplets)
 
     # Remove entirely to avoid warning from the early deleter
     del process.hltPixelTracksHitTriplets
