@@ -180,6 +180,11 @@ trackingPhase1.toReplaceWith(jetCoreRegionalStep, TrackMVAClassifierPrompt.clone
      GBRForestLabel = 'TMVAWeights_JetCoreRegionalStep',
      qualityCuts = [-0.2,0.0,0.4],
 ))
+trackingPhase1QuadProp.toReplaceWith(jetCoreRegionalStep, TrackMVAClassifierPrompt.clone(
+     src = 'jetCoreRegionalStepTracks',
+     GBRForestLabel = 'TMVAWeights_JetCoreRegionalStep',
+     qualityCuts = [-0.2,0.0,0.4],
+))
 
 # Final sequence
 JetCoreRegionalStep = cms.Sequence(initialStepTrackRefsForJets*caloJetsForTrk*jetsForCoreTracking*

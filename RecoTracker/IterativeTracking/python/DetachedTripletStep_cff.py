@@ -197,6 +197,10 @@ trackingPhase1.toReplaceWith(detachedTripletStep, detachedTripletStepClassifier1
      GBRForestLabel = 'TMVAWeights_DetachedTripletStep',
      qualityCuts = [-0.2,0.3,0.8],
 ))
+trackingPhase1QuadProp.toReplaceWith(detachedTripletStep, detachedTripletStepClassifier1.clone(
+     GBRForestLabel = 'TMVAWeights_DetachedTripletStep',
+     qualityCuts = [-0.2,0.3,0.8],
+))
 
 # For LowPU
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi

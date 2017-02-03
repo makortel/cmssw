@@ -223,6 +223,11 @@ trackingPhase1.toReplaceWith(lowPtQuadStep, lowPtQuadStep.clone(
     GBRForestLabel = 'TMVAWeights_LowPtQuadStep',
     qualityCuts = [-0.65,-0.35,-0.15],
 ))
+trackingPhase1QuadProp.toReplaceWith(lowPtQuadStep, lowPtQuadStep.clone(
+    GBRForestLabel = 'TMVAWeights_LowPtQuadStep',
+    qualityCuts = [-0.65,-0.35,-0.15],
+))
+
 # For Phase1PU70
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
 lowPtQuadStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(
