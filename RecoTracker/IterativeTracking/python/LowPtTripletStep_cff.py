@@ -213,6 +213,10 @@ trackingPhase1.toReplaceWith(lowPtTripletStep, lowPtTripletStep.clone(
      GBRForestLabel = 'MVASelectorLowPtTripletStep_Phase1',
      qualityCuts = [0.0,0.2,0.4],
 ))
+trackingPhase1QuadProp.toReplaceWith(lowPtTripletStep, lowPtTripletStep.clone(
+     GBRForestLabel = 'MVASelectorLowPtTripletStep_Phase1',
+     qualityCuts = [0.0,0.2,0.4],
+))
 
 
 # Cut based selector for Phase1

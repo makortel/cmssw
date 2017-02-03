@@ -247,6 +247,12 @@ trackingPhase1.toReplaceWith(highPtTripletStep,	TrackMVAClassifierPrompt.clone(
     GBRForestLabel = 'MVASelectorHighPtTripletStep_Phase1',
     qualityCuts	= [0.2,0.3,0.4],
 ))
+from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase1QuadProp
+trackingPhase1QuadProp.toReplaceWith(highPtTripletStep,	TrackMVAClassifierPrompt.clone(
+    src	= 'highPtTripletStepTracks',
+    GBRForestLabel = 'MVASelectorHighPtTripletStep_Phase1',
+    qualityCuts	= [0.2,0.3,0.4],
+))
 
 
 # For Phase1PU70

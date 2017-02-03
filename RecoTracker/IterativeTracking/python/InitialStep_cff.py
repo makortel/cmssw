@@ -264,6 +264,10 @@ trackingPhase1.toReplaceWith(initialStep, initialStepClassifier1.clone(
         GBRForestLabel = 'MVASelectorInitialStep_Phase1',
         qualityCuts = [-0.95,-0.85,-0.75],
 ))
+trackingPhase1QuadProp.toReplaceWith(initialStep, initialStepClassifier1.clone(
+        GBRForestLabel = 'MVASelectorInitialStep_Phase1',
+        qualityCuts = [-0.95,-0.85,-0.75],
+))
 
 # For LowPU and Phase1PU70
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
