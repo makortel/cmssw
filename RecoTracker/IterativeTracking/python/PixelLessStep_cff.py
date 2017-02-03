@@ -253,7 +253,7 @@ pixelLessStep = ClassifierMerger.clone()
 pixelLessStep.inputClassifiers=['pixelLessStepClassifier1','pixelLessStepClassifier2']
 
 trackingPhase1.toReplaceWith(pixelLessStep, pixelLessStepClassifier1.clone(
-     GBRForestLabel = 'TMVAWeights_PixelLess',
+     GBRForestLabel = 'TMVAWeights_PixelLessStep',
      qualityCuts = [-0.4,0.0,0.4],
 ))
 
@@ -305,12 +305,6 @@ pixelLessStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.m
     ),
     vertices = cms.InputTag("pixelVertices")#end of vpset
 ) #end of clone
-
-#Retrained MVA weights for Phase1
-trackingPhase1.toReplaceWith(pixelLessStep, pixelLessStepClassifier1.clone(
-     GBRForestLabel = 'TMVAWeights_PixelLessStep',
-     qualityCuts = [-0.4,0.0,0.4],
-))
 
 PixelLessStep = cms.Sequence(pixelLessStepClusters*
                              pixelLessStepSeedLayers*
