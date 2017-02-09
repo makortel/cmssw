@@ -27,6 +27,8 @@ TpSelectorForEfficiencyVsVTXZBlock = generalTpSelectorBlock.clone()
 def _modifyForPhase1(pset):
     pset.minRapidity = -3
     pset.maxRapidity = 3
+_modifyForPhase1(generalTpSelectorBlock)
+_modifyForPhase1(TpSelectorForEfficiencyVsEtaBlock)
 from Configuration.Eras.Modifier_phase1Pixel_cff import phase1Pixel
 phase1Pixel.toModify(generalTpSelectorBlock, _modifyForPhase1)
 phase1Pixel.toModify(TpSelectorForEfficiencyVsEtaBlock, _modifyForPhase1)

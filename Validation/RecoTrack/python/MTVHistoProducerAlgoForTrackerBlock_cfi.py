@@ -137,6 +137,7 @@ def _modifyForPhase1(pset):
     pset.minEta = -3
     pset.maxEta = 3
     pset.nintEta = 60
+_modifyForPhase1(MTVHistoProducerAlgoForTrackerBlock)
 from Configuration.Eras.Modifier_phase1Pixel_cff import phase1Pixel
 phase1Pixel.toModify(MTVHistoProducerAlgoForTrackerBlock, _modifyForPhase1)
 from Configuration.Eras.Modifier_phase2_tracker_cff import phase2_tracker
