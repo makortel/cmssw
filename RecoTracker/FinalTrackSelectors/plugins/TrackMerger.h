@@ -28,6 +28,7 @@ class dso_hidden TrackMerger {
         edm::ESHandle<TransientTrackingRecHitBuilder> theBuilder;
 	edm::ESHandle<TrackerTopology> theTrkTopo;
 
+        void addSecondTrackHits(std::vector<const TrackingRecHit *>& hits, const reco::Track& outer) const;
         void sortByHitPosition(const GlobalVector& v, const std::vector<const TrackingRecHit *>& hits, TrackCandidate::RecHitContainer& ownHits) const;
 
         class GlobalMomentumSort {
