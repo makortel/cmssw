@@ -32,9 +32,11 @@
 
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
 
+/*
 #define EDM_ML_DEBUG
 #undef LogTrace
 #define LogTrace edm::LogPrint
+*/
 
 // Having this macro reduces the need to pollute the code with
 // #ifdefs. The idea is that the condition is checked only if
