@@ -525,6 +525,7 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
                                                << " t2 hit " << std::distance(t2->recHitsBegin(), t2HitIter);
 
     auto prevSubdet = (*t1HitIter)->geographicalId().subdetId();
+    const TrajectoryStateOnSurface tsosInner = trajectoryStateTransform::innerStateOnSurface(*t2, *geom_, magfield_);
 
     ++t1HitIter; ++t2HitIter;
     unsigned int missedLayers = 0;
@@ -619,7 +620,6 @@ void DuplicateTrackMerger::produce(edm::Event& iEvent, const edm::EventSetup& iS
       }
 
       // Propagate longer track to the shorter track hit surface, check compatibility
-      TrajectoryStateOnSurface tsosInner = trajectoryStateTransform::innerStateOnSurface(*t2, *geom_, magfield_);
       TrajectoryStateOnSurface tsosPropagated = propagator_->propagate(tsosInner, (*t1HitIter)->det()->surface());
       if(!tsosPropagated.isValid()) { // reject immediately if TSOS is not valid
         IfLogTrace(debug_, "DuplicateTrackMerger") << " t1 hit " << std::distance(t1->recHitsBegin(), t1HitIter)
