@@ -38,10 +38,12 @@ public:
 
   /* Associate TrackingVertex to RecoVertex By Hits */
   virtual reco::VertexRecoToSimCollection associateRecoToSim(const edm::Handle<edm::View<reco::Vertex> >& vCH, 
-                                                             const edm::Handle<TrackingVertexCollection>& tVCH) const;
+                                                             const edm::Handle<TrackingVertexCollection>& tVCH) const override;
 
   virtual reco::VertexSimToRecoCollection associateSimToReco(const edm::Handle<edm::View<reco::Vertex> >& vCH, 
-                                                             const edm::Handle<TrackingVertexCollection>& tVCH) const;
+                                                             const edm::Handle<TrackingVertexCollection>& tVCH) const override;
+
+  virtual bool checkTrackRefProductID(const edm::ProductID& id) const override;
 
 private:
   // ----- member data

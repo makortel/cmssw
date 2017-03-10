@@ -1348,12 +1348,13 @@ void PrimaryVertexAnalyzer4PUSlimmed::analyze(const edm::Event& iEvent,
       }
       continue;
     }
-    // check upfront that refs to track are (likely) to be valid
     {
       bool ok = true;
       for(const auto& v: *recVtxs) {
         if(v.tracksSize() > 0) {
           const auto& ref = v.trackRefAt(0);
+
+          // check upfront that refs to track are (likely) to be valid
           if(ref.isNull() || !ref.isAvailable()) {
             if(!errorPrintedForColl_[iToken]) {
               edm::LogWarning("PrimaryVertexAnalyzer4PUSlimmed")
@@ -1361,6 +1362,25 @@ void PrimaryVertexAnalyzer4PUSlimmed::analyze(const edm::Event& iEvent,
               errorPrintedForColl_[iToken] = true;
             }
             ok = false;
+          }
+
+          // check upfront that the track refs point to the same collection than the track<->TP association map
+          if(!errorPrintedForColl_[iToken] && ref.id() != r2s_->refProd().key.id()) {
+            edm::LogWarning("PrimaryVertexAnalyzer4PUSlimmed")
+              << "Vertex collection " << label << " has track refs with ProductID " << ref.id() << ", while the track<->TrackingParticle association map is for track collection " << r2s_->refProd().key.id() << ".\n"
+              << "Continuing to fill the histograms, but histograms relying on the track<->TP association will be incorrect. Usually this problem can be fixed by creating\n"
+              << "the track<->TP association for tracks " << ref.id() << " and giving it as a parameter to this module (or possibly on a clone of it in case multiple vertex collections\n"
+              << "with different input track collections are needed), and possibly also to the sim<->reco vertex associator if it uses the track<->TP association.";
+            errorPrintedForColl_[iToken] = true;
+          }
+
+          // check upfront that the track refs point to same collection as possible track refs inside the vertex associator
+          if(!errorPrintedForColl_[iToken] && !vertexAssociator.checkTrackRefProductID(ref.id())) {
+            edm::LogWarning("PrimaryVertexAnalyzer4PUSlimmed")
+              << "Vertex collection " << label << " has track refs with ProductID " << ref.id() << ", which is different from the track refs hold internally by the vertex associator.\n"
+              << "Usually this problem can be fixed by creating a track<->TP association for tracks " << ref.id() << " and giving it as a parameter to the sim<->reco vertex associator\n"
+              << "as well as to this module.";
+            errorPrintedForColl_[iToken] = true;
           }
         }
       }

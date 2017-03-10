@@ -28,6 +28,10 @@ namespace reco {
       return m_impl->associateSimToReco(vCH,tVCH);
     }
 
+    bool checkTrackRefProductID(const edm::ProductID& id) const {
+      return m_impl->checkTrackRefProductID(id);
+    }
+
     void swap(VertexToTrackingVertexAssociator& iOther) {
       std::swap(m_impl, iOther.m_impl);
     }

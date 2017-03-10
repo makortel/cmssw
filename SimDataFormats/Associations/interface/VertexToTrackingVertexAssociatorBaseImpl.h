@@ -20,6 +20,11 @@ namespace reco {
     /// compare reco to sim the handle of reco::Vertex and TrackingVertex collections
     virtual reco::VertexSimToRecoCollection associateSimToReco(const edm::Handle<edm::View<reco::Vertex> >& vCH, 
                                                                const edm::Handle<TrackingVertexCollection>& tVCH) const = 0;
+
+    /// Compare the argument to possibly internally hold track ref
+    /// product ID, return false if they are not equal
+    virtual bool checkTrackRefProductID(const edm::ProductID& id) const { return true; }
+
   };
 }
 

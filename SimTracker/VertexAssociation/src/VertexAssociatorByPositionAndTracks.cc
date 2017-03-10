@@ -173,3 +173,7 @@ reco::VertexSimToRecoCollection VertexAssociatorByPositionAndTracks::associateSi
 
   return ret;
 }
+
+bool VertexAssociatorByPositionAndTracks::checkTrackRefProductID(const edm::ProductID& id) const {
+  return id == trackRecoToSimAssociation_->refProd().key.id();
+}
