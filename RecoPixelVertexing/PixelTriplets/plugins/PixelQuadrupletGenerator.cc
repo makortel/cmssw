@@ -4,8 +4,6 @@
 #include "RecoTracker/TkMSParametrization/interface/PixelRecoLineRZ.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h"
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerTools.h"
 #include "TrackingTools/DetLayers/interface/BarrelDetLayer.h"
 
 #include "RecoPixelVertexing/PixelTrackFitting/interface/RZLine.h"
@@ -16,6 +14,7 @@
 
 #include "RecoTracker/TkSeedingLayers/interface/SeedComparitorFactory.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedComparitor.h"
+#include "CommonTools/RecoAlgos/interface/FKDTree.h"
 
 #include "CommonTools/Utils/interface/DynArray.h"
 
@@ -111,11 +110,13 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
   const RecHitsSortedInPhi *fourthHitMap[size];
   typedef RecHitsSortedInPhi::Hit Hit;
 
-  using NodeInfo = KDTreeNodeInfo<unsigned int>;
-  std::vector<NodeInfo > layerTree; // re-used throughout
   std::vector<unsigned int> foundNodes; // re-used thoughout
 
-  declareDynArray(KDTreeLinkerAlgo<unsigned int>, size, hitTree);
+
+
+  std::vector<FKDTree<float,2> > hitFKDTree(size);
+
+
   float rzError[size]; //save maximum errors
 
   declareDynArray(ThirdHitRZPrediction<PixelRecoLineRZ>, size, preds);
@@ -129,26 +130,37 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
     pred.initLayer(fourthLayers[il].detLayer());
     pred.initTolerance(extraHitRZtolerance);
 
-    layerTree.clear();
-    float maxphi = Geom::ftwoPi(), minphi = -maxphi; // increase to cater for any range
-    float minv=999999.0, maxv= -999999.0; // Initialise to extreme values in case no hits
+
+
+
     float maxErr=0.0f;
     for (unsigned int i=0; i!=hits.size(); ++i) {
       auto angle = hits.phi(i);
       auto v =  hits.gv(i);
       //use (phi,r) for endcaps rather than (phi,z)
-      minv = std::min(minv,v);  maxv = std::max(maxv,v);
+     
       float myerr = hits.dv[i];
       maxErr = std::max(maxErr,myerr);
-      layerTree.emplace_back(i, angle, v); // save it
+      ////////////////////////////////////////
+      //FP
+      hitFKDTree[il].push_back(FKDPoint<float,2>{angle, v, i});
+      
+      /////////////////
       if (angle < 0)  // wrap all points in phi
-	{ layerTree.emplace_back(i, angle+Geom::ftwoPi(), v);}
+	{
+          hitFKDTree[il].push_back(FKDPoint<float,2>{angle+Geom::ftwoPi(), v, i});
+
+	}
       else
-	{ layerTree.emplace_back(i, angle-Geom::ftwoPi(), v);}
+	{
+          hitFKDTree[il].push_back(FKDPoint<float,2>{angle-Geom::ftwoPi(), v, i});
+
     }
-    KDTreeBox phiZ(minphi, maxphi, minv-0.01f, maxv+0.01f);  // declare our bounds
+
+   }
     //add fudge factors in case only one hit and also for floating-point inaccuracy
-    hitTree[il].build(layerTree, phiZ); // make KDtree
+
+    hitFKDTree[il].build();
     rzError[il] = maxErr; // save error
   }
 
@@ -198,7 +210,7 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
     barrels[2] = isBarrel(triplet.outer()->geographicalId().subdetId());
 
     for(size_t il=0; il!=size; ++il) {
-      if(hitTree[il].empty()) continue; // Don't bother if no hits
+      if(hitFKDTree[il].size()==0) continue; // Don't bother if no hits
 
       auto const& hits = *fourthHitMap[il];
       const DetLayer *layer = fourthLayers[il].detLayer();
@@ -221,12 +233,14 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
         phiRange = Range(std::min(phi1, phi2)-thisExtraPhiTolerance, std::max(phi1, phi2)+thisExtraPhiTolerance);
       }
 
-      KDTreeBox phiZ(phiRange.min(), phiRange.max(),
-                     rzRange.min()-nSigmaRZ*rzError[il],
-                     rzRange.max()+nSigmaRZ*rzError[il]);
+
+      FKDPoint<float,2> minPoint(phiRange.min(), rzRange.min()-nSigmaRZ*rzError[il]);
+      FKDPoint<float,2> maxPoint(phiRange.max(), rzRange.max()+nSigmaRZ*rzError[il]);
+
 
       foundNodes.clear();
-      hitTree[il].search(phiZ, foundNodes);
+      hitFKDTree[il].search(minPoint, maxPoint, foundNodes);
+
 
       if(foundNodes.empty()) {
         continue;
