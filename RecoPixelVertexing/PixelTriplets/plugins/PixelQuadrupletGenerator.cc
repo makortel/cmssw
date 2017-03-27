@@ -115,7 +115,7 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
 
 
   std::vector<FKDTree<float,2> > hitFKDTree(size);
-
+  std::vector<FKDPoint<float,2> > points;
 
   float rzError[size]; //save maximum errors
 
@@ -130,6 +130,7 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
     pred.initLayer(fourthLayers[il].detLayer());
     pred.initTolerance(extraHitRZtolerance);
 
+    points.clear();
 
 
 
@@ -143,24 +144,23 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
       maxErr = std::max(maxErr,myerr);
       ////////////////////////////////////////
       //FP
-      hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle, v, i});
+      points.emplace_back(angle, v, i);
       
       /////////////////
       if (angle < 0)  // wrap all points in phi
 	{
-          hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle+Geom::ftwoPi(), v, i});
+          points.emplace_back(angle+Geom::ftwoPi(), v, i);
 
 	}
       else
 	{
-          hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle-Geom::ftwoPi(), v, i});
+          points.emplace_back(angle-Geom::ftwoPi(), v, i);
 
     }
 
    }
-    //add fudge factors in case only one hit and also for floating-point inaccuracy
 
-    hitFKDTree[il].build();
+    hitFKDTree[il].build(points);
     rzError[il] = maxErr; // save error
   }
 

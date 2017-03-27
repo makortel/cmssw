@@ -51,9 +51,7 @@ FKDTree()
 	{
 
 		thePoints.push_back(point);
-		for (unsigned int i = 0; i < numberOfDimensions; ++i)
-			theDimensions[i].push_back(point[i]);
-		theIds.push_back(point.getId());
+
 
 	
 	}
@@ -62,9 +60,7 @@ FKDTree()
 	{
 
 		thePoints.emplace_back(point);
-		for (unsigned int i = 0; i < numberOfDimensions; ++i)
-			theDimensions[i].push_back(point[i]);
-		theIds.push_back(point.getId());
+
 
 	}
 
@@ -75,7 +71,7 @@ FKDTree()
 
 	bool empty()
 	{
-		return thePoints.empty();
+		return theNumberOfPoints==0;
 	}
 
 
@@ -148,7 +144,8 @@ FKDTree()
 		theDepth = ilog2(theNumberOfPoints);
 		theIntervalLength.resize(theNumberOfPoints, 0);
 		theIntervalMin.resize(theNumberOfPoints, 0);
-	
+      for (unsigned int i = 0; i < numberOfDimensions; ++i)  theDimensions[i].resize(theNumberOfPoints);
+      theIds.resize(theNumberOfPoints);	
 
 		//gather kdtree building
 		int dimension;
@@ -213,6 +210,92 @@ FKDTree()
 				indexInArray < theNumberOfPoints; ++indexInArray)
 		{
 			add_at_position(thePoints[theIntervalMin[indexInArray]],
+					indexInArray);
+
+		}
+
+	}
+
+
+
+
+
+
+
+	void build(std::vector<FKDPoint<TYPE, numberOfDimensions> >& points)
+	{
+
+		theNumberOfPoints = points.size();
+		theDepth = ilog2(theNumberOfPoints);
+		theIntervalLength.resize(theNumberOfPoints, 0);
+		theIntervalMin.resize(theNumberOfPoints, 0);
+		for (unsigned int i = 0; i < numberOfDimensions; ++i)  theDimensions[i].resize(theNumberOfPoints);
+      theIds.resize(theNumberOfPoints);
+
+
+		//gather kdtree building
+		int dimension;
+		theIntervalMin[0] = 0;
+		theIntervalLength[0] = theNumberOfPoints;
+
+		for (unsigned int depth = 0; depth < theDepth; ++depth)
+		{
+
+			dimension = depth % numberOfDimensions;
+			unsigned int firstIndexInDepth = (1 << depth) - 1;
+			unsigned int maxDepth = (1 << depth);
+			for (unsigned int indexInDepth = 0; indexInDepth < maxDepth;
+					++indexInDepth)
+			{
+				unsigned int indexInArray = firstIndexInDepth + indexInDepth;
+				unsigned int leftSonIndexInArray = 2 * indexInArray + 1;
+				unsigned int rightSonIndexInArray = leftSonIndexInArray + 1;
+
+				unsigned int whichElementInInterval = partition_complete_kdtree(
+						theIntervalLength[indexInArray]);
+				std::nth_element(
+						points.begin() + theIntervalMin[indexInArray],
+						points.begin() + theIntervalMin[indexInArray]
+								+ whichElementInInterval,
+						points.begin() + theIntervalMin[indexInArray]
+								+ theIntervalLength[indexInArray],
+						[dimension](const FKDPoint<TYPE,numberOfDimensions> & a, const FKDPoint<TYPE,numberOfDimensions> & b) -> bool
+						{
+							if(a[dimension] == b[dimension])
+							return a.getId() < b.getId();
+							else
+							return a[dimension] < b[dimension];
+						});
+				add_at_position(
+						points[theIntervalMin[indexInArray]
+								+ whichElementInInterval], indexInArray);
+
+				if (leftSonIndexInArray < theNumberOfPoints)
+				{
+					theIntervalMin[leftSonIndexInArray] =
+							theIntervalMin[indexInArray];
+					theIntervalLength[leftSonIndexInArray] =
+							whichElementInInterval;
+				}
+
+				if (rightSonIndexInArray < theNumberOfPoints)
+				{
+					theIntervalMin[rightSonIndexInArray] =
+							theIntervalMin[indexInArray]
+									+ whichElementInInterval + 1;
+					theIntervalLength[rightSonIndexInArray] =
+							(theIntervalLength[indexInArray] - 1
+									- whichElementInInterval);
+				}
+			}
+		}
+
+		dimension = theDepth % numberOfDimensions;
+		unsigned int firstIndexInDepth = (1 << theDepth) - 1;
+		for (unsigned int indexInArray = firstIndexInDepth;
+				indexInArray < theNumberOfPoints; ++indexInArray)
+		{
+			add_at_position(points[theIntervalMin[indexInArray]],
 					indexInArray);
 
 		}

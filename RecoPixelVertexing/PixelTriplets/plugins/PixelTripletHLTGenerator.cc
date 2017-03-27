@@ -132,7 +132,8 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
   typedef RecHitsSortedInPhi::Hit Hit;
 
   std::vector<FKDTree<float,2> > hitFKDTree(nThirdLayers);
-
+  std::vector<FKDPoint<float,2> > points;
+  
   std::vector<unsigned int> foundNodes; // re-used thoughout
   foundNodes.reserve(100);
 
@@ -147,7 +148,7 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
     ThirdHitRZPrediction<PixelRecoLineRZ> & pred = preds[il];
     pred.initLayer(thirdLayerDetLayer[il]);
     pred.initTolerance(extraHitRZtolerance);
-
+	 points.clear();
     corrections[il].init(es, region.ptMin(), *doublets.detLayer(HitDoublets::inner), *doublets.detLayer(HitDoublets::outer), 
                          *thirdLayerDetLayer[il], useMScat, useBend);
 
@@ -158,13 +159,13 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
       //use (phi,r) for endcaps rather than (phi,z)
       float myerr = hits.dv[i];
       maxErr = std::max(maxErr,myerr);
-      hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle, v, i});
+      points.emplace_back(angle, v, i);
       // populate side-bands
-      if (angle>safePhi) hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle-Geom::ftwoPi(), v, i});
-      else if (angle<-safePhi) hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle+Geom::ftwoPi(), v, i});
+      if (angle>safePhi) points.emplace_back(angle-Geom::ftwoPi(), v, i);
+      else if (angle<-safePhi) points.emplace_back(angle+Geom::ftwoPi(), v, i);
 
     }
-    hitFKDTree[il].build();
+    hitFKDTree[il].build(points);
     rzError[il] = maxErr; //save error
     // std::cout << "layer " << thirdLayerDetLayer[il]->seqNum() << " " << layerTree.size() << std::endl; 
   }
