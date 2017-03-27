@@ -1,5 +1,5 @@
-#ifndef FKDTREE_QUEUE_H_
-#define FKDTREE_QUEUE_H_
+#ifndef COMMONTOOLS_RECOALGOS_FQUEUE_H
+#define COMMONTOOLS_RECOALGOS_FQUEUE_H
 
 #include <vector>
 
@@ -11,10 +11,6 @@ class FQueue
 public:
 	FQueue()
 	{
-
-		theBuffer.resize(0);
-
-
 		theSize = 0;
 		theFront = 0;
 		theTail = 0;
@@ -34,79 +30,21 @@ public:
 		theCapacity = initialCapacity;
 	}
 
-	FQueue(const FQueue<T> & v)
-	{
-		theSize = v.theSize;
-		theBuffer = v.theBuffer;
-		theFront = v.theFront;
-		theTail = v.theTail;
-		theCapacity = v.theCapacity;
-	}
 
-	FQueue(FQueue<T> && other) :
-			theSize(0), theFront(0), theTail(0)
-	{
-
-		theBuffer.clear();
-
-		theCapacity = other.theCapacity;
-		theSize = other.theSize;
-		theFront = other.theFront;
-		theTail = other.theTail;
-		theBuffer = other.theBuffer;
-		other.theSize = 0;
-		other.theFront = 0;
-		other.theTail = 0;
-	}
-
-	FQueue<T>& operator=(FQueue<T> && other)
-	{
-
-		if (this != &other)
-		{
-
-			theBuffer.clear();
-
-			theSize = other.theSize;
-			theFront = other.theFront;
-			theTail = other.theTail;
-			theBuffer = other.theBuffer;
-			other.theSize = 0;
-			other.theFront = 0;
-			other.theTail = 0;
-		}
-		return *this;
-
-	}
-
-	FQueue<T> & operator=(const FQueue<T>& v)
-	{
-		if (this != &v)
-		{
-
-			theBuffer.clear();
-
-			theSize = v.theSize;
-			theBuffer = v.theBuffer;
-			theFront = v.theFront;
-			theTail = v.theTail;
-		}
-		return *this;
-
-	}
-	~FQueue()
-	{
-	}
 
 	unsigned int size() const
 	{
 		return theSize;
 	}
+
+
 	bool empty() const
 	{
 		return theSize == 0;
 	}
-	T & front()
+
+
+	T front() const
 	{
 
 		return theBuffer[theFront];
@@ -117,9 +55,9 @@ public:
 		return theBuffer[theTail];
 	}
 
-  constexpr unsigned int wrapIndex(unsigned int i) {
-    return i & (theBuffer.size()-1);
-  }
+  	constexpr unsigned int wrapIndex(unsigned int i) {
+    	return i & (theBuffer.size()-1);
+ 	}
 
 
 	void push_back(const T & value)
@@ -157,17 +95,15 @@ public:
 
 
 
-	T pop_front()
+	void pop_front()
 	{
 
 		if (theSize > 0)
 		{
-			T element = theBuffer[theFront];
 			theFront = wrapIndex(theFront + 1);
 			theSize--;
 
 
-			return element;
 		}
 	}
 
@@ -184,13 +120,6 @@ public:
 	{
 
 		theBuffer.reserve(capacity);
-
-	}
-	void resize(unsigned int capacity)
-	{
-
-		theBuffer.resize(capacity);
-
 
 	}
 

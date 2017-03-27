@@ -1,5 +1,5 @@
-#ifndef FKDTREE_KDPOINT_H_
-#define FKDTREE_KDPOINT_H_
+#ifndef COMMONTOOLS_RECOALGOS_FKDPOINT_H
+#define COMMONTOOLS_RECOALGOS_FKDPOINT_H
 #include <array>
 #include <utility>
 
@@ -13,28 +13,10 @@ public:
 	{
 	}
 
-	FKDPoint(const FKDPoint<TYPE, numberOfDimensions>& other) :
-			theElements(other.theElements),theId(other.theId)
-	{
-
-	}
-
-	template<class T>
-	FKDPoint<TYPE, numberOfDimensions> & operator=(
-			const FKDPoint<TYPE, numberOfDimensions> & other)
-	{
-		if (this != &other)
-		{
-			theId = other.theId;
-			theElements = other.theElements;
-		}
-		return *this;
-
-	}
 
 	FKDPoint(TYPE x, TYPE y, unsigned int id=0)
 	{
-      static_assert(numberOfDimensions==2,"FKDPoint number of arguments does not match the number of dimensions");
+    	static_assert(numberOfDimensions==2,"FKDPoint number of arguments does not match the number of dimensions");
       	
 		theId = id;
 		theElements[0] = x;
@@ -43,7 +25,7 @@ public:
 
 	FKDPoint(TYPE x, TYPE y, TYPE z, unsigned int id=0)
 	{
-      static_assert(numberOfDimensions==3,"FKDPoint number of arguments does not match the number of dimensions");
+      	static_assert(numberOfDimensions==3,"FKDPoint number of arguments does not match the number of dimensions");
       	
 		theId = id;
 		theElements[0] = x;
@@ -53,7 +35,7 @@ public:
 
 	FKDPoint(TYPE x, TYPE y, TYPE z, TYPE w, unsigned int id=0)
 	{
-      static_assert(numberOfDimensions==4,"FKDPoint number of arguments does not match the number of dimensions");
+      	static_assert(numberOfDimensions==4,"FKDPoint number of arguments does not match the number of dimensions");
 		theId = id;
 		theElements[0] = x;
 		theElements[1] = y;
@@ -95,4 +77,4 @@ private:
 
 
 
-#endif /* FKDTREE_KDPOINT_H_ */
+#endif 

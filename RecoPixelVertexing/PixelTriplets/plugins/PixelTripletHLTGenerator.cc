@@ -18,8 +18,9 @@
 #include "RecoTracker/TkSeedingLayers/interface/SeedComparitor.h"
 
 #include "DataFormats/GeometryVector/interface/Pi.h"
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerAlgo.h" //amend to point at your copy...
-#include "RecoPixelVertexing/PixelTriplets/plugins/KDTreeLinkerTools.h"
+#include "CommonTools/RecoAlgos/interface/FKDTree.h"
+
+
 
 #include "CommonTools/Utils/interface/DynArray.h"
 
@@ -130,16 +131,14 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
 
   typedef RecHitsSortedInPhi::Hit Hit;
 
-  using NodeInfo = KDTreeNodeInfo<unsigned int>;
-  std::vector<NodeInfo > layerTree; // re-used throughout
+  std::vector<FKDTree<float,2> > hitFKDTree(nThirdLayers);
+
   std::vector<unsigned int> foundNodes; // re-used thoughout
   foundNodes.reserve(100);
 
-  declareDynArray(KDTreeLinkerAlgo<unsigned int>,nThirdLayers, hitTree);
   float rzError[nThirdLayers]; //save maximum errors
 
   const float maxDelphi = region.ptMin() < 0.3f ? float(M_PI)/4.f : float(M_PI)/8.f; // FIXME move to config?? 
-  const float maxphi = M_PI+maxDelphi, minphi = -maxphi; // increase to cater for any range
   const float safePhi = M_PI-maxDelphi; // sideband
 
   // fill the prediction vector
@@ -152,24 +151,20 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
     corrections[il].init(es, region.ptMin(), *doublets.detLayer(HitDoublets::inner), *doublets.detLayer(HitDoublets::outer), 
                          *thirdLayerDetLayer[il], useMScat, useBend);
 
-    layerTree.clear();
-    float minv=999999.0f, maxv= -minv; // Initialise to extreme values in case no hits
     float maxErr=0.0f;
     for (unsigned int i=0; i!=hits.size(); ++i) {
       auto angle = hits.phi(i);
       auto v =  hits.gv(i);
       //use (phi,r) for endcaps rather than (phi,z)
-      minv = std::min(minv,v);  maxv = std::max(maxv,v);
       float myerr = hits.dv[i];
       maxErr = std::max(maxErr,myerr);
-      layerTree.emplace_back(i, angle, v); // save it
+      hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle, v, i});
       // populate side-bands
-      if (angle>safePhi) layerTree.emplace_back(i, angle-Geom::ftwoPi(), v);
-      else if (angle<-safePhi) layerTree.emplace_back(i, angle+Geom::ftwoPi(), v);
+      if (angle>safePhi) hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle-Geom::ftwoPi(), v, i});
+      else if (angle<-safePhi) hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle+Geom::ftwoPi(), v, i});
+
     }
-    KDTreeBox phiZ(minphi, maxphi, minv-0.01f, maxv+0.01f);  // declare our bounds
-    //add fudge factors in case only one hit and also for floating-point inaccuracy
-    hitTree[il].build(layerTree, phiZ); // make KDtree
+    hitFKDTree[il].build();
     rzError[il] = maxErr; //save error
     // std::cout << "layer " << thirdLayerDetLayer[il]->seqNum() << " " << layerTree.size() << std::endl; 
   }
@@ -210,8 +205,8 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
 
       if ( (!barrelLayer) & (toPos != std::signbit(layer->position().z())) ) continue;
 
-      if (hitTree[il].empty()) continue; // Don't bother if no hits
-      
+      if(hitFKDTree[il].empty()) continue; // Don't bother if no hits
+
       auto const & hits = *thirdHitMap[il];
       
       auto & correction = corrections[il];
@@ -293,15 +288,21 @@ void PixelTripletHLTGenerator::hitTriplets(const TrackingRegion& region, Ordered
 	  correction.correctRZRange(regMin);
 	  correction.correctRZRange(regMax);
 	  if (regMax.min() < regMin.min()) { swap(regMax, regMin);}
-	  KDTreeBox phiZ(prmin, prmax, regMin.min()-nSigmaRZ*rzError[il], regMax.max()+nSigmaRZ*rzError[il]);
-	  hitTree[il].search(phiZ, foundNodes);
-	}
+
+
+    FKDPoint<float,2> minPoint(prmin, regMin.min()-nSigmaRZ*rzError[il]);
+    FKDPoint<float,2> maxPoint(prmax, regMax.max()+nSigmaRZ*rzError[il]);
+
+    hitFKDTree[il].search(minPoint, maxPoint, foundNodes);	
+  }
       else
 	{
-	  KDTreeBox phiZ(prmin, prmax,
-			 rzRange.min()-regOffset-nSigmaRZ*rzError[il],
-			 rzRange.max()+regOffset+nSigmaRZ*rzError[il]);
-	  hitTree[il].search(phiZ, foundNodes);
+
+    FKDPoint<float,2> minPoint(prmin, rzRange.min()-regOffset-nSigmaRZ*rzError[il]);
+    FKDPoint<float,2> maxPoint(prmax, rzRange.max()+regOffset+nSigmaRZ*rzError[il]);
+    hitFKDTree[il].search(minPoint, maxPoint, foundNodes);  
+
+
 	}
 
       // std::cout << ip << ": " << thirdLayerDetLayer[il]->seqNum() << " " << foundNodes.size() << " " << prmin << " " << prmax << std::endl;

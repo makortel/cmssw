@@ -143,17 +143,17 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
       maxErr = std::max(maxErr,myerr);
       ////////////////////////////////////////
       //FP
-      hitFKDTree[il].push_back(FKDPoint<float,2>{angle, v, i});
+      hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle, v, i});
       
       /////////////////
       if (angle < 0)  // wrap all points in phi
 	{
-          hitFKDTree[il].push_back(FKDPoint<float,2>{angle+Geom::ftwoPi(), v, i});
+          hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle+Geom::ftwoPi(), v, i});
 
 	}
       else
 	{
-          hitFKDTree[il].push_back(FKDPoint<float,2>{angle-Geom::ftwoPi(), v, i});
+          hitFKDTree[il].emplace_back(FKDPoint<float,2>{angle-Geom::ftwoPi(), v, i});
 
     }
 
@@ -210,7 +210,7 @@ void PixelQuadrupletGenerator::hitQuadruplets(const TrackingRegion& region, Orde
     barrels[2] = isBarrel(triplet.outer()->geographicalId().subdetId());
 
     for(size_t il=0; il!=size; ++il) {
-      if(hitFKDTree[il].size()==0) continue; // Don't bother if no hits
+      if(hitFKDTree[il].empty()) continue; // Don't bother if no hits
 
       auto const& hits = *fourthHitMap[il];
       const DetLayer *layer = fourthLayers[il].detLayer();
