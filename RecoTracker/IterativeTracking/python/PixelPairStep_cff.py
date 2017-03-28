@@ -36,6 +36,17 @@ trackingPhase1PU70.toModify(pixelPairStepSeedLayers,
         'FPix2_pos+FPix3_pos', 'FPix2_neg+FPix3_neg'
     ]
 )
+# only layers covering the region not covered by quadruplets
+# (so it is just acting as backup of triplets)
+_layerListForPhase1 = [
+    'BPix1+BPix2', 'BPix1+BPix3', 'BPix2+BPix3',
+    'BPix1+FPix1_pos', 'BPix1+FPix1_neg',
+    'BPix2+FPix1_pos', 'BPix2+FPix1_neg'
+]
+from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase1QuadProp
+trackingPhase1.toModify(pixelPairStepSeedLayers, layerList = _layerListForPhase1)
+trackingPhase1QuadProp.toModify(pixelPairStepSeedLayers, layerList = _layerListForPhase1)
 
 # only layers covering the region not covered by quadruplets
 # (so it is just acting as backup of triplets)
@@ -71,6 +82,8 @@ pixelPairStepTrackingRegions = _globalTrackingRegionWithVertices.clone(RegionPSe
 ))
 from Configuration.Eras.Modifier_trackingLowPU_cff import trackingLowPU
 trackingLowPU.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(useMultipleScattering=False))
+trackingPhase1.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(useMultipleScattering=False))
+trackingPhase1QuadProp.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(useMultipleScattering=False))
 trackingPhase1PU70.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(ptMin = 1.2, useMultipleScattering=False))
 trackingPhase2PU140.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(ptMin = 0.6, useMultipleScattering=False))
 
@@ -112,6 +125,8 @@ trackingPhase1PU70.toReplaceWith(pixelPairStepTrajectoryFilterBase, _pixelPairSt
     maxLostHitsFraction = 1./10.,
     constantValueForLostHitsFractionFilter = 0.801,
 ))
+trackingPhase1.toModify(pixelPairStepTrajectoryFilterBase, minimumNumberOfHits = 4)
+trackingPhase1QuadProp.toModify(pixelPairStepTrajectoryFilterBase, minimumNumberOfHits = 4)
 trackingPhase2PU140.toReplaceWith(pixelPairStepTrajectoryFilterBase, _pixelPairStepTrajectoryFilterBase.clone(
     minimumNumberOfHits = 4,
     maxLostHitsFraction = 1./10.,
@@ -167,12 +182,13 @@ pixelPairStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuil
     maxPtForLooperReconstruction = cms.double(0.7) 
     )
 trackingLowPU.toModify(pixelPairStepTrajectoryBuilder, maxCand = 2)
-
-trackingPhase2PU140.toModify(pixelPairStepTrajectoryBuilder,
+_seedExtension = dict(
     inOutTrajectoryFilter = dict(refToPSet_ = "pixelPairStepTrajectoryFilterInOut"),
     useSameTrajFilter = False,
-    maxCand = 3,
 )
+trackingPhase1.toModify(pixelPairStepTrajectoryBuilder, **_seedExtension)
+trackingPhase1QuadProp.toModify(pixelPairStepTrajectoryBuilder, **_seedExtension)
+trackingPhase2PU140.toModify(pixelPairStepTrajectoryBuilder, **_seedExtension)
 
 
 
