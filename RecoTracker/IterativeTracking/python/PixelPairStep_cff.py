@@ -76,6 +76,8 @@ pixelPairStepTrackingRegions = _globalTrackingRegionWithVertices.clone(RegionPSe
 ))
 from Configuration.Eras.Modifier_trackingLowPU_cff import trackingLowPU
 trackingLowPU.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(useMultipleScattering=False))
+trackingPhase1.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(useMultipleScattering=False))
+trackingPhase1QuadProp.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(useMultipleScattering=False))
 trackingPhase1PU70.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(ptMin = 1.2, useMultipleScattering=False))
 trackingPhase2PU140.toModify(pixelPairStepTrackingRegions, RegionPSet=dict(ptMin = 0.6, useMultipleScattering=False))
 
