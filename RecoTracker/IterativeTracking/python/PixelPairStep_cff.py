@@ -36,19 +36,27 @@ trackingPhase1PU70.toModify(pixelPairStepSeedLayers,
         'FPix2_pos+FPix3_pos', 'FPix2_neg+FPix3_neg'
     ]
 )
-# only layers covering the region not covered by quadruplets
-# (so it is just acting as backup of triplets)
 _layerListForPhase1 = [
-        'BPix1+BPix2', 'BPix1+BPix3', 'BPix2+BPix3',
-        'BPix1+FPix1_pos', 'BPix1+FPix1_neg',
-        'BPix2+FPix1_pos', 'BPix2+FPix1_neg'
+    # layers covering the region not covered by quadruplets (so it is
+    # just acting as backup of triplets)
+    'BPix1+BPix2', 'BPix1+BPix3', 'BPix2+BPix3',
+    'BPix1+FPix1_pos', 'BPix1+FPix1_neg',
+    'BPix2+FPix1_pos', 'BPix2+FPix1_neg',
+    # recovery of holes
+    'BPix3+BPix4',
 ]
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase1QuadProp
 trackingPhase1.toModify(pixelPairStepSeedLayers, layerList = _layerListForPhase1)
 trackingPhase1QuadProp.toModify(pixelPairStepSeedLayers, layerList = _layerListForPhase1)
 
-_layerListForPhase2 = _layerListForPhase1
+# only layers covering the region not covered by quadruplets
+# (so it is just acting as backup of triplets)
+_layerListForPhase2 = [
+        'BPix1+BPix2', 'BPix1+BPix3', 'BPix2+BPix3',
+        'BPix1+FPix1_pos', 'BPix1+FPix1_neg',
+        'BPix2+FPix1_pos', 'BPix2+FPix1_neg'
+]
 from Configuration.Eras.Modifier_trackingPhase2PU140_cff import trackingPhase2PU140
 trackingPhase2PU140.toModify(pixelPairStepSeedLayers, 
     layerList = _layerListForPhase2,
