@@ -45,6 +45,7 @@ _layerListForPhase1 = [
     # recovery of holes
     'BPix3+BPix4',
     'BPix3+FPix1_pos', 'BPix3+FPix1_neg',
+    'FPix1_pos+FPix2_pos', 'FPix1_neg+FPix2_neg',
 ]
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase1QuadProp
