@@ -46,6 +46,7 @@ _layerListForPhase1 = [
     'BPix3+BPix4',
     'BPix3+FPix1_pos',
     'FPix1_pos+FPix2_pos',
+    'BPix1+BPix4',
 ]
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase1QuadProp
