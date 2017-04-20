@@ -81,6 +81,9 @@ public:
             return t.algoMask()[algo];
           }) == algorithmMask_.end()) algo_ok = false;
     }
+
+    const auto dphi = deltaPhi(t.phi(), minPhi_);
+
     return
       (
        (algo_ok & quality_ok) &&
@@ -91,7 +94,7 @@ public:
        t.hitPattern().numberOfValidStripLayersWithMonoAndStereo() >= min3DLayer_ &&
        fabs(t.pt()) >= ptMin_ &&
        t.eta() >= minRapidity_ && t.eta() <= maxRapidity_ &&
-       t.phi() >= minPhi_ && deltaPhi(t.phi(), minPhi_) <= rangePhi_ &&
+       dphi >= 0. && dphi <= rangePhi_ &&
        fabs(t.dxy(vertex_)) <= tip_ &&
        fabs(t.dsz(vertex_)) <= lip_  &&
        t.normalizedChi2()<=maxChi2_

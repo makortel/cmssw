@@ -21,7 +21,8 @@ public:
 			     double tip,double lip,int minHit, bool signalOnly, bool intimeOnly, bool chargedOnly, bool stableOnly,
 			     const std::vector<int>& pdgId = std::vector<int>(),
 			     double minPhi=-3.2, double maxPhi=3.2) :
-    ptMin2_( ptMin*ptMin ), minRapidity_( minRapidity ), maxRapidity_( maxRapidity ), minPhi_(minPhi), rangePhi_(maxPhi-minPhi_),
+    ptMin2_( ptMin*ptMin ), minRapidity_( minRapidity ), maxRapidity_( maxRapidity ),
+    minPhi_(minPhi), rangePhi_(maxPhi-minPhi_),
     tip2_( tip*tip ), lip_( lip ), minHit_( minHit ), signalOnly_(signalOnly), intimeOnly_(intimeOnly), chargedOnly_(chargedOnly), stableOnly_(stableOnly), pdgId_( pdgId ) { }
 
   /// Operator() performs the selection: e.g. if (tPSelector(tp)) {...}
@@ -58,7 +59,7 @@ public:
     }
 
     auto etaOk = [&](const TrackingParticle& p)->bool{ float eta= etaFromXYZ(p.px(),p.py(),p.pz()); return (eta>= minRapidity_) & (eta<=maxRapidity_);};
-    auto phiOk = [&](const TrackingParticle& p) { float phi = atan2f(p.py(),p.px()); return phi >= minPhi_ && deltaPhi(phi, minPhi_) <= rangePhi_; };
+    auto phiOk = [&](const TrackingParticle& p) { float dphi = deltaPhi(atan2f(p.py(),p.px()), minPhi_); return dphi >= 0.f && dphi <= rangePhi_; };
     return (
  	    tp.numberOfTrackerLayers() >= minHit_ &&
 	    tp.p4().perp2() >= ptMin2_ &&
