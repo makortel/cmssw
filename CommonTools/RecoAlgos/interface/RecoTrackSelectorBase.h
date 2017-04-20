@@ -19,8 +19,8 @@ public:
     ptMin_(cfg.getParameter<double>("ptMin")),
     minRapidity_(cfg.getParameter<double>("minRapidity")),
     maxRapidity_(cfg.getParameter<double>("maxRapidity")),
-    minPhi_(cfg.getParameter<double>("minPhi")),
-    rangePhi_(cfg.getParameter<double>("maxPhi") - minPhi_),
+    meanPhi_((cfg.getParameter<double>("minPhi")+cfg.getParameter<double>("maxPhi"))/2.),
+    rangePhi_((cfg.getParameter<double>("maxPhi")-cfg.getParameter<double>("minPhi"))/2.),
     tip_(cfg.getParameter<double>("tip")),
     lip_(cfg.getParameter<double>("lip")),
     maxChi2_(cfg.getParameter<double>("maxChi2")),
@@ -82,7 +82,7 @@ public:
           }) == algorithmMask_.end()) algo_ok = false;
     }
 
-    const auto dphi = deltaPhi(t.phi(), minPhi_);
+    const auto dphi = deltaPhi(t.phi(), meanPhi_);
 
     return
       (
@@ -94,7 +94,7 @@ public:
        t.hitPattern().numberOfValidStripLayersWithMonoAndStereo() >= min3DLayer_ &&
        fabs(t.pt()) >= ptMin_ &&
        t.eta() >= minRapidity_ && t.eta() <= maxRapidity_ &&
-       dphi >= 0. && dphi <= rangePhi_ &&
+       dphi >= -rangePhi_ && dphi <= rangePhi_ &&
        fabs(t.dxy(vertex_)) <= tip_ &&
        fabs(t.dsz(vertex_)) <= lip_  &&
        t.normalizedChi2()<=maxChi2_
@@ -106,7 +106,7 @@ private:
   double ptMin_;
   double minRapidity_;
   double maxRapidity_;
-  double minPhi_;
+  double meanPhi_;
   double rangePhi_;
   double tip_;
   double lip_;

@@ -12,7 +12,6 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/Math/interface/PtEtaPhiMass.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 class TrackingParticleSelector {
 
@@ -23,7 +22,7 @@ public:
 			     const std::vector<int>& pdgId = std::vector<int>(),
 			     double minPhi=-3.2, double maxPhi=3.2) :
     ptMin2_( ptMin*ptMin ), minRapidity_( minRapidity ), maxRapidity_( maxRapidity ),
-    minPhi_(minPhi), rangePhi_(maxPhi-minPhi_),
+    meanPhi_((minPhi+maxPhi)/2.), rangePhi_((maxPhi-minPhi)/2.),
     tip2_( tip*tip ), lip_( lip ), minHit_( minHit ), signalOnly_(signalOnly), intimeOnly_(intimeOnly), chargedOnly_(chargedOnly), stableOnly_(stableOnly), pdgId_( pdgId ) { }
 
   /// Operator() performs the selection: e.g. if (tPSelector(tp)) {...}
@@ -60,12 +59,7 @@ public:
     }
 
     auto etaOk = [&](const TrackingParticle& p)->bool{ float eta= etaFromXYZ(p.px(),p.py(),p.pz()); return (eta>= minRapidity_) & (eta<=maxRapidity_);};
-    auto phiOk = [&](const TrackingParticle& p) {
-      float phi = atan2f(p.py(),p.px());
-      float dphi = deltaPhi(phi, minPhi_);
-      bool ret = (dphi >= 0.f && dphi <= rangePhi_);
-      edm::LogPrint("Foo") << "TP phi " << phi << " minPhi " << minPhi_ << " dphi " << dphi << " rangePhi_ " << rangePhi_ << " ret " << ret;
-      return ret; };
+    auto phiOk = [&](const TrackingParticle& p) { float dphi = deltaPhi(atan2f(p.py(),p.px()), meanPhi_); return dphi >= -rangePhi_ && dphi <= rangePhi_; };
     return (
  	    tp.numberOfTrackerLayers() >= minHit_ &&
 	    tp.p4().perp2() >= ptMin2_ &&
@@ -80,7 +74,7 @@ private:
   double ptMin2_;
   float minRapidity_;
   float maxRapidity_;
-  float minPhi_;
+  float meanPhi_;
   float rangePhi_;
   double tip2_;
   double lip_;
