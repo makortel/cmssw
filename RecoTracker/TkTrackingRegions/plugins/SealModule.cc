@@ -9,6 +9,7 @@
 #include "GlobalTrackingRegionWithVerticesProducer.h"
 #include "GlobalTrackingRegionProducer.h"
 #include "GlobalTrackingRegionProducerFromBeamSpot.h"
+#include "AreaSeededTrackingRegionsProducer.h"
 
 DEFINE_EDM_PLUGIN(TrackingRegionProducerFactory, GlobalTrackingRegionProducer, "GlobalRegionProducer");
 DEFINE_EDM_PLUGIN(TrackingRegionProducerFactory, GlobalTrackingRegionProducerFromBeamSpot, "GlobalRegionProducerFromBeamSpot");
@@ -25,3 +26,6 @@ DEFINE_FWK_MODULE(GlobalTrackingRegionFromBeamSpotEDProducer);
 
 using GlobalTrackingRegionWithVerticesEDProducer = TrackingRegionEDProducerT<GlobalTrackingRegionWithVerticesProducer>;
 DEFINE_FWK_MODULE(GlobalTrackingRegionWithVerticesEDProducer);
+
+using AreaSeededTrackingRegionsEDProducer = TrackingRegionEDProducerT<AreaSeededTrackingRegionsProducer>;
+DEFINE_FWK_MODULE(AreaSeededTrackingRegionsEDProducer);
