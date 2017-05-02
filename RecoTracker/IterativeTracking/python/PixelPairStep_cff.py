@@ -43,10 +43,12 @@ _layerListForPhase1 = [
     'BPix1+FPix1_pos', 'BPix1+FPix1_neg',
     'BPix2+FPix1_pos', 'BPix2+FPix1_neg',
     # recovery of holes
-    'BPix3+BPix4',
-    'BPix3+FPix1_pos',
-    'FPix1_pos+FPix2_pos',
-    'BPix1+BPix4',
+# L1-L2
+#    'BPix3+BPix4',
+#    'BPix3+FPix1_pos',
+#    'FPix1_pos+FPix2_pos',
+# L2-L3
+#    'BPix1+BPix4',
 ]
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase1QuadProp
@@ -111,6 +113,68 @@ pixelPairStepSeeds = _seedCreatorFromRegionConsecutiveHitsEDProducer.clone(
         ClusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCache'),
     )
 )
+
+# Clone for the phase1 recovery mode
+pixelPairStepSeedsA = pixelPairStepSeeds.clone()
+
+# Recovery for regions with 2 inactive layers
+from RecoTracker.TkTrackingRegions.pixelInactiveAreaTrackingRegionsAndSeedingLayers_cfi import pixelInactiveAreaTrackingRegionsAndSeedingLayers as _pixelInactiveAreaTrackingRegionsAndSeedingLayers
+pixelPairStepTrackingRegionsSeedLayersB = _pixelInactiveAreaTrackingRegionsAndSeedingLayers.clone(
+    layerList = [
+# Commented ones are already included in the global seeds (A), but are
+# included below for completenees
+#
+#        "BPix1+BPix2",
+#        "BPix1+BPix3",
+        "BPix1+BPix4",
+#        "BPix2+BPix3",
+        "BPix2+BPix4",
+        "BPix3+BPix4",
+#        "BPix1+FPix1_pos"    , "BPix1+FPix1_neg",
+        "BPix1+FPix2_pos"    , "BPix1+FPix2_neg",
+        "BPix1+FPix3_pos"    , "BPix1+FPix3_neg",
+#        "BPix2+FPix1_pos"    , "BPix2+FPix1_neg",
+        "BPix2+FPix2_pos"    , "BPix2+FPix2_neg",
+        "BPix3+FPix1_pos"    , "BPix3+FPix1_neg",
+        "FPix1_pos+FPix2_pos", "FPix1_neg+FPix2_neg",
+        "FPix1_pos+FPix3_pos", "FPix1_neg+FPix3_neg",
+        "FPix2_pos+FPix3_pos", "FPix2_neg+FPix3_neg",
+    ],
+    BPix = dict(
+        TTRHBuilder = cms.string('WithTrackAngle'),
+        HitProducer = cms.string('siPixelRecHits'),
+        skipClusters = cms.InputTag('pixelPairStepClusters')
+    ),
+    FPix = dict(
+        TTRHBuilder = cms.string('WithTrackAngle'),
+        HitProducer = cms.string('siPixelRecHits'),
+        skipClusters = cms.InputTag('pixelPairStepClusters')
+    ),
+    RegionPSet = dict(
+        ptMin = 0.6,
+        originRadius = 0.015,
+        mode = "VerticesFixed",
+        zErrorVertex = 0.03,
+        maxNVertices = 5,
+    ),
+#    debug = True,
+)
+pixelPairStepHitDoubletsB = pixelPairStepHitDoublets.clone(
+    seedingLayers = "",
+    trackingRegions = "",
+    trackingRegionsSeedingLayers = "pixelPairStepTrackingRegionsSeedLayersB",
+)
+pixelPairStepSeedsB = pixelPairStepSeedsA.clone(seedingHitSets = "pixelPairStepHitDoubletsB")
+
+
+# Merge
+from RecoTracker.TkSeedGenerator.GlobalCombinedSeeds_cfi import globalCombinedSeeds as _globalCombinedSeeds
+_pixelPairStepSeedsMerged = _globalCombinedSeeds.clone(
+    seedCollections = ["pixelPairStepSeedsA", "pixelPairStepSeedsB"],
+)
+trackingPhase1.toReplaceWith(pixelPairStepSeeds, _pixelPairStepSeedsMerged)
+trackingPhase1QuadProp.toReplaceWith(pixelPairStepSeeds, _pixelPairStepSeedsMerged)
+
 
 # QUALITY CUTS DURING TRACK BUILDING
 import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
@@ -362,6 +426,13 @@ PixelPairStep = cms.Sequence(pixelPairStepClusters*
                          pixelPairStepTrackCandidates*
                          pixelPairStepTracks*
                          pixelPairStep)
+_PixelPairStep_Phase1 = PixelPairStep.copy()
+_PixelPairStep_Phase1.replace(pixelPairStepSeeds,
+                              pixelPairStepSeedsA *
+                              pixelPairStepTrackingRegionsSeedLayersB*pixelPairStepHitDoubletsB*pixelPairStepSeedsB*
+                              pixelPairStepSeeds)
+trackingPhase1.toReplaceWith(PixelPairStep, _PixelPairStep_Phase1)
+trackingPhase1QuadProp.toReplaceWith(PixelPairStep, _PixelPairStep_Phase1)
 _PixelPairStep_LowPU_Phase1PU70 = PixelPairStep.copy()
 _PixelPairStep_LowPU_Phase1PU70.replace(pixelPairStep, pixelPairStepSelector)
 trackingLowPU.toReplaceWith(PixelPairStep, _PixelPairStep_LowPU_Phase1PU70)
