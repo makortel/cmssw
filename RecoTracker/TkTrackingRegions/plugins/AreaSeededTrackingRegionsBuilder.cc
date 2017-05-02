@@ -168,12 +168,17 @@ std::unique_ptr<TrackingRegion> AreaSeededTrackingRegionsBuilder::Builder::regio
       const auto phi_rmin_phimax = std::atan2(tan_rmin_phimax[1], tan_rmin_phimax[0]);
       const auto phi_rmax_phimax = std::atan2(tan_rmax_phimax[1], tan_rmax_phimax[0]);
 
-      LogTrace("AreaSeededTrackingRegionBuilder") << "   rmin_phimax vec " << p_rmin_phimax[0] << "," << p_rmin_phimax[1]
-                                                  << " tangent " << tan_rmin_phimax[0] << "," << tan_rmin_phimax[1]
-                                                  << " phi " << phi_rmin_phimax;
-
       auto phimax = std::abs(reco::deltaPhi(phi_rmin_phimax, phi_ref)) > std::abs(reco::deltaPhi(phi_rmax_phimax, phi_ref)) ?
         phi_rmin_phimax : phi_rmax_phimax;
+
+      LogTrace("AreaSeededTrackingRegionBuilder") << "   rmin_phimax vec " << p_rmin_phimax[0] << "," << p_rmin_phimax[1]
+                                                  << " tangent " << tan_rmin_phimax[0] << "," << tan_rmin_phimax[1]
+                                                  << " phi " << phi_rmin_phimax << "\n"
+                                                  << "   rmax_phimax vec " << p_rmax_phimax[0] << "," << p_rmax_phimax[1]
+                                                  << " tangent " << tan_rmax_phimax[0] << "," << tan_rmax_phimax[1]
+                                                  << " phi " << phi_rmax_phimax << "\n"
+                                                  << "   phimax " << phimax;
+
 
 
       // for minimum phi we need the orthogonal vector to the right
@@ -184,6 +189,15 @@ std::unique_ptr<TrackingRegion> AreaSeededTrackingRegionsBuilder::Builder::regio
 
       auto phimin = std::abs(reco::deltaPhi(phi_rmin_phimin, phi_ref)) > std::abs(reco::deltaPhi(phi_rmax_phimin, phi_ref)) ?
         phi_rmin_phimin : phi_rmax_phimin;
+
+
+      LogTrace("AreaSeededTrackingRegionBuilder") << "   rmin_phimin vec " << p_rmin_phimin[0] << "," << p_rmin_phimin[1]
+                                                  << " tangent " << tan_rmin_phimin[0] << "," << tan_rmin_phimin[1]
+                                                  << " phi " << phi_rmin_phimin << "\n"
+                                                  << "   rmax_phimin vec " << p_rmax_phimin[0] << "," << p_rmax_phimin[1]
+                                                  << " tangent " << tan_rmax_phimin[0] << "," << tan_rmax_phimin[1]
+                                                  << " phi " << phi_rmax_phimin << "\n"
+                                                  << "   phimin " << phimin;
 
       // wrapped around, need to decide which one to wrap
       if(phimax < phimin) {
