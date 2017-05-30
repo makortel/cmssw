@@ -249,7 +249,10 @@ from RecoVertex.PrimaryVertexProducer.OfflinePrimaryVertices_cfi import offlineP
 firstStepPrimaryVerticesUnsorted = _offlinePrimaryVertices.clone()
 firstStepPrimaryVerticesUnsorted.TrackLabel = cms.InputTag("initialStepTracks")
 firstStepPrimaryVerticesUnsorted.vertexCollections = [_offlinePrimaryVertices.vertexCollections[0].clone()]
-from RecoTracker.IterativeTracking.JetCoreRegionalStep_cff import initialStepTrackRefsForJets, caloTowerForTrk, ak4CaloJetsForTrk, caloJetsForTrk
+
+from RecoJets.JetProducers.TracksForJets_cff import trackRefsForJets
+initialStepTrackRefsForJets = trackRefsForJets.clone(src = cms.InputTag('initialStepTracks'))
+from RecoJets.JetProducers.caloJetsForTrk_cff import *
 from CommonTools.RecoAlgos.sortedPrimaryVertices_cfi import sortedPrimaryVertices as _sortedPrimaryVertices
 firstStepPrimaryVertices = _sortedPrimaryVertices.clone(
     vertices = "firstStepPrimaryVerticesUnsorted",
