@@ -123,11 +123,14 @@ pixelPairStepSeedLayersB = pixelPairStepSeedLayers.clone(
 from RecoTracker.TkTrackingRegions.pointSeededTrackingRegion_cfi import pointSeededTrackingRegion as _pointSeededTrackingRegion
 pixelPairStepTrackingRegionsB = _pointSeededTrackingRegion.clone(
     RegionPSet = dict(
+        ptMin = 0.6,
+        originRadius = 0.015,
+        mode = "VerticesFixed",
+        zErrorVetex = 0.03,
         vertexCollection = "firstStepPrimaryVertices",
         beamSpot = "offlineBeamSpot",
         maxNVertices = 5,
         maxNRegions = 5,
-        mode = "VerticesFixed",
         whereToUseMeasurementTracker = "Never",
         deltaEta = 1.2,
         deltaPhi = 0.5,
