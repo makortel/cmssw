@@ -131,6 +131,7 @@ pixelPairStepTrackingRegionsB = _pointSeededTrackingRegion.clone(
         beamSpot = "offlineBeamSpot",
         maxNVertices = 5,
         maxNRegions = 5,
+        useMultipleScattering = False,
         whereToUseMeasurementTracker = "Never",
         deltaEta = 1.2,
         deltaPhi = 0.5,
