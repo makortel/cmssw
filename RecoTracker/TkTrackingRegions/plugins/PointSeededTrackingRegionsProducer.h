@@ -85,6 +85,7 @@ public:
     m_deltaEta         = regPSet.getParameter<double>("deltaEta");
     m_deltaPhi         = regPSet.getParameter<double>("deltaPhi");
     m_precise          = regPSet.getParameter<bool>("precise");
+    m_useMS            = regPSet.getParameter<bool>("useMultipleScattering");
     m_whereToUseMeasurementTracker = RectangularEtaPhiTrackingRegion::stringToUseMeasurementTracker(regPSet.getParameter<std::string>("whereToUseMeasurementTracker"));
     if(m_whereToUseMeasurementTracker != RectangularEtaPhiTrackingRegion::UseMeasurementTracker::kNever) {
       token_measurementTracker = iC.consumes<MeasurementTrackerEvent>(regPSet.getParameter<edm::InputTag>("measurementTrackerName"));
@@ -126,6 +127,7 @@ public:
     desc.add<double>("deltaEta", 0.5);
     desc.add<double>("deltaPhi", 0.5);
     desc.add<bool>("precise", true);
+    desc.add<bool>("useMultipleScattering", true);
 
     desc.add<double>("nSigmaZVertex", 3.);
     desc.add<double>("zErrorVetex", 0.2);
@@ -222,7 +224,8 @@ public:
           m_whereToUseMeasurementTracker,
           m_precise,
           measurementTracker,
-          m_searchOpt
+          m_searchOpt,
+          m_useMS
         ));
         ++n_regions;
       }
@@ -250,6 +253,7 @@ private:
   float m_deltaEta;
   float m_deltaPhi;
   bool m_precise;
+  bool m_useMS;
   edm::EDGetTokenT<MeasurementTrackerEvent> token_measurementTracker;
   RectangularEtaPhiTrackingRegion::UseMeasurementTracker m_whereToUseMeasurementTracker;
   bool m_searchOpt;

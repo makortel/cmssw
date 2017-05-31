@@ -96,12 +96,12 @@ public:
                                    UseMeasurementTracker whereToUseMeasurementTracker = UseMeasurementTracker::kNever,
                                    bool precise = true,
                                    const MeasurementTrackerEvent *measurementTracker = nullptr,
-				   bool etaPhiRegion=false) 
+				   bool etaPhiRegion=false, bool useMS=true)
     : RectangularEtaPhiTrackingRegion(dir, vertexPos, Range( -1/ptMin, 1/ptMin), rVertex, zVertex,
                                       Margin(std::abs(deltaEta), std::abs(deltaEta)),
                                       Margin(std::abs(deltaPhi), std::abs(deltaPhi)),
                                       whereToUseMeasurementTracker, precise,
-                                      measurementTracker, etaPhiRegion)
+                                      measurementTracker, etaPhiRegion, useMS)
     {}
  
  /** constructor (asymmetrinc eta and phi margins). <BR>
@@ -118,11 +118,11 @@ public:
                                    UseMeasurementTracker whereToUseMeasurementTracker = UseMeasurementTracker::kNever,
 				   bool precise = true, 
                                    const MeasurementTrackerEvent *measurementTracker = nullptr,
-				   bool etaPhiRegion=false) 
+				   bool etaPhiRegion=false, bool useMS=true)
     : RectangularEtaPhiTrackingRegion(dir, vertexPos, Range( -1/ptMin, 1/ptMin), rVertex, zVertex,
                                       etaMargin, phiMargin,
                                       whereToUseMeasurementTracker, precise,
-                                      measurementTracker, etaPhiRegion)
+                                      measurementTracker, etaPhiRegion, useMS)
     {}
 
  /** constructor (explicit pt range, asymmetrinc eta and phi margins). <BR>
