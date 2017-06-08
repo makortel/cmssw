@@ -49,6 +49,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
+class TrackerTopology;
+
   class dso_hidden SiPixelClusterProducer final : public edm::stream::EDProducer<> {
   public:
     //--- Constructor, virtual destructor (just in case)
@@ -79,6 +81,8 @@
     const int32_t maxTotalClusters_;
 
     const std::string payloadType_;
+
+    TrackerTopology const * theTopo=nullptr;
   };
 
 

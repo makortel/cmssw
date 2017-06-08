@@ -43,6 +43,10 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 
+#include "DataFormats/SiPixelDetId/interface/PixelBarrelName.h"
+#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
+
   //---------------------------------------------------------------------------
   //!  Constructor: set the ParameterSet and defer all thinking to setupClusterizer().
   //---------------------------------------------------------------------------
@@ -87,6 +91,11 @@
   //---------------------------------------------------------------------------
   void SiPixelClusterProducer::produce(edm::Event& e, const edm::EventSetup& es)
   {
+
+     //Retrieve tracker topology from geometry
+    edm::ESHandle<TrackerTopology> tTopo;
+    es.get<TrackerTopologyRcd>().get(tTopo);
+    theTopo = tTopo.product();
 
     //Setup gain calibration service
     theSiPixelGainCalibration_->setESObjects( es );
@@ -165,11 +174,16 @@
       ++numberOfDetUnits;
 
       //  LogDebug takes very long time, get rid off.
-      //LogDebug("SiStripClusterizer") << "[SiPixelClusterProducer::run] DetID" << DSViter->id;
+      //LogDebug("SiStripClusterizer") << "[SiPixelClusterProducer::run] DetID" << DSViter->id;      
 
       std::vector<short> badChannels; 
       DetId detIdObject(DSViter->detId());
-      
+
+      if (detIdObject.subdetId() == PixelSubdetector::PixelBarrel)
+        if(theTopo->pxbLayer(detIdObject) == 1
+           && PixelBarrelName(detIdObject,theTopo,true).ladderName()%2==0) continue;
+        
+
       // Comment: At the moment the clusterizer depends on geometry
       // to access information as the pixel topology (number of columns
       // and rows in a detector module). 
