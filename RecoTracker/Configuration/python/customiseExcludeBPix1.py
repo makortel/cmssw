@@ -1,6 +1,7 @@
 from HLTrigger.Configuration.common import replace_with
 
 def customiseExcludeBPix1(process):
+    # InitialStep(PreSplitting) to triplets
     for postfix in ["PreSplitting", ""]:
         getattr(process, "initialStepSeedLayers"+postfix).layerList = [
             'BPix2+BPix3+BPix4',
@@ -35,5 +36,16 @@ def customiseExcludeBPix1(process):
             getattr(process, "initialStepHitQuadruplets"+postfix),
             getattr(process, "initialStepHitTriplets"+postfix)
         )
+
+    # Phase0-style combinations to pixelPairStep
+    process.pixelPairStepSeedLayers.layerList = [
+        'BPix2+BPix3',
+        'BPix3+BPix4',
+        'BPix2+BPix4',
+        'BPix2+FPix1_pos', 'BPix2+FPix1_neg',
+        'FPix1_pos+FPix2_pos', 'FPix1_neg+FPix2_neg',
+        'FPix2_pos+FPix3_pos', 'FPix2_neg+FPix3_neg',
+        'FPix1_pos+FPix3_pos', 'FPix1_neg+FPix3_neg',
+    ]
 
     return process
