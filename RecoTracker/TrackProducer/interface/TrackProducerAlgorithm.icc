@@ -29,6 +29,7 @@
 #include "TrackingTools/GeomPropagators/interface/AnalyticalPropagator.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/ErrorFrameTransformer.h"
 #include "TrackingTools/TrackFitters/interface/RecHitSorter.h"
+#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 
 #include "DataFormats/SiStripDetId/interface/SiStripDetId.h"
 
@@ -95,6 +96,7 @@ TrackProducerAlgorithm<T>::runWithTrack(const TrackingGeometry * theG,
 					const Propagator * thePropagator,
 					const TransientTrackingRecHitBuilder* gbuilder,
 			   		const reco::BeamSpot& bs,
+                                        const TrackerTopology& ttopo,
 					AlgoProductCollection& algoResults)
 {
   LogDebug("TrackProducer") << "Number of input Tracks: " << theTCollection.size() << "\n";
@@ -153,7 +155,10 @@ TrackProducerAlgorithm<T>::runWithTrack(const TrackingGeometry * theG,
 	   }//if rematching option is on.
 
 
-	  if ((**i).geographicalId()!=0U)  hits.push_back( (**i).cloneForFit(*builder->geometry()->idToDet( (**i).geographicalId() ) ) );
+	   auto hitId = (**i).geographicalId();
+	   if (hitId!=0U && (hitId.det() == DetId::Tracker && hitId.subdetId() == PixelSubdetector::PixelBarrel && ttopo.layer(hitId) != 1)) {
+	     hits.push_back( (**i).cloneForFit(*builder->geometry()->idToDet( (**i).geographicalId() ) ) );
+	   }
 	}
 	
 	TrajectoryStateOnSurface theInitialStateForRefitting = getInitialState(theT,hits,theG,theMF);

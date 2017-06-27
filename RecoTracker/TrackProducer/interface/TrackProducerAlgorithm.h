@@ -28,6 +28,7 @@ class TrackingGeometry;
 class Propagator;
 class Trajectory;
 class TrajectoryStateOnSurface;
+class TrackerTopology;
 
 struct FitterCloner {
    std::unique_ptr<TrajectoryFitter> fitter;
@@ -91,6 +92,7 @@ public:
 		    const Propagator *,
 		    const TransientTrackingRecHitBuilder*,
 		    const reco::BeamSpot&,
+                    const TrackerTopology&,
 		    AlgoProductCollection &);
 
   /// Run the Final Fit taking TrackMomConstraintAssociation as input (Refitter with momentum constraint)
