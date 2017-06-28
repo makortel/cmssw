@@ -1739,9 +1739,8 @@ TrackingNtuple::SimHitData TrackingNtuple::matchCluster(const OmniClusterRef& cl
       //SimHit is dummy: for simHitTPAssociationListGreater sorting only the TP is needed
       auto range = std::equal_range(simHitsTPAssoc.begin(), simHitsTPAssoc.end(),
                                     simHitTPpairWithDummyTP, SimHitTPAssociationProducer::simHitTPAssociationListGreater);
-      int simHitKey = -1;
+      bool foundSimHit = false;
       bool foundElectron = false;
-      edm::ProductID simHitID;
       for(auto ip = range.first; ip != range.second; ++ip) {
         TrackPSimHitRef TPhit = ip->second;
         DetId dId = DetId(TPhit->detUnitId());
@@ -1752,12 +1751,31 @@ TrackingNtuple::SimHitData TrackingNtuple::matchCluster(const OmniClusterRef& cl
             continue;
           }
 
-          simHitKey = TPhit.key();
-          simHitID = TPhit.id();
-          break;
+          foundSimHit = true;
+          auto simHitKey = TPhit.key();
+          auto simHitID = TPhit.id();
+
+          auto simHitIndex = simHitRefKeyToIndex.at(std::make_pair(simHitKey, simHitID));
+          ret.matchingSimHit.push_back(simHitIndex);
+
+          double chargeFraction = 0.;
+          for(const SimTrack& simtrk: trackingParticle->g4Tracks()) {
+            auto found = simTrackIdToChargeFraction.find(simtrk.trackId());
+            if(found != simTrackIdToChargeFraction.end()) {
+              chargeFraction += found->second;
+            }
+          }
+          ret.chargeFraction.push_back(chargeFraction);
+
+          // only for debug prints
+          ret.bunchCrossing.push_back(bx);
+          ret.event.push_back(event);
+
+          simhit_hitIdx[simHitIndex].push_back(clusterKey);
+          simhit_hitType[simHitIndex].push_back(static_cast<int>(hitType));
         }
       }
-      if(simHitKey < 0) {
+      if(!foundSimHit) {
         // In case we didn't find a simhit because of filtered-out
         // electron SimHit, just ignore the missing SimHit.
         if(foundElectron)
@@ -1776,24 +1794,6 @@ TrackingNtuple::SimHitData TrackingNtuple::matchCluster(const OmniClusterRef& cl
         }
         throw ex;
       }
-      auto simHitIndex = simHitRefKeyToIndex.at(std::make_pair(simHitKey, simHitID));
-      ret.matchingSimHit.push_back(simHitIndex);
-
-      double chargeFraction = 0.;
-      for(const SimTrack& simtrk: trackingParticle->g4Tracks()) {
-        auto found = simTrackIdToChargeFraction.find(simtrk.trackId());
-        if(found != simTrackIdToChargeFraction.end()) {
-          chargeFraction += found->second;
-        }
-      }
-      ret.chargeFraction.push_back(chargeFraction);
-
-      // only for debug prints
-      ret.bunchCrossing.push_back(bx);
-      ret.event.push_back(event);
-
-      simhit_hitIdx[simHitIndex].push_back(clusterKey);
-      simhit_hitType[simHitIndex].push_back(static_cast<int>(hitType));
     }
   }
 
