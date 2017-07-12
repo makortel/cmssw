@@ -293,8 +293,8 @@ class _TrackingParticleMatchAdaptor(object):
     def bestMatchingTrackingParticleShareFracSimDenom(self):
         return self.bestSimTrkShareFracSimDenom()
 
-    def bestMatchingTrackingParticleChi2(self):
-        return self.bestSimTrkChi2()
+    def bestMatchingTrackingParticleNormalizedChi2(self):
+        return self.bestSimTrkNChi2()
 
     def bestMatchingTrackingParticleFromFirstHit(self):
         """Returns best-matching TrackingParticle, even for fake tracks, or None if there is no best-matching TrackingParticle.
@@ -315,8 +315,8 @@ class _TrackingParticleMatchAdaptor(object):
     def bestMatchingTrackingParticleFromFirstHitShareFracSimDenom(self):
         return self.bestFromFirstHitSimTrkShareFracSimDenom()
 
-    def bestMatchingTrackingParticleFromFirstHitChi2(self):
-        return self.bestFromFirstHitSimTrkChi2()
+    def bestMatchingTrackingParticleFromFirstHitNormalizedChi2(self):
+        return self.bestFromFirstHitSimTrkNChi2()
 
 ##########
 class TrackingNtuple(object):
