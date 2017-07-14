@@ -155,6 +155,12 @@ RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
         initialSeed = cms.untracked.uint32(1357987),
         engineName = cms.untracked.string('TRandom3')
      ),
+
+    siPixelDigis = cms.PSet(
+        initialSeed = cms.untracked.uint32(123456789),
+        engineName = cms.untracked.string("HepJamesRandom")
+    ),
+
     # filter for simulated beam spot
     simBeamSpotFilter = cms.PSet(
         initialSeed = cms.untracked.uint32(87654321),

@@ -34,6 +34,14 @@
 #include "EventFilter/SiPixelRawToDigi/interface/PixelUnpackingRegions.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
+#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/RandomNumberGenerator.h"
+#include "CLHEP/Random/RandomEngine.h"
+#include "CLHEP/Random/RandFlat.h"
+
+
 #include "TH1D.h"
 #include "TFile.h"
 
@@ -266,6 +274,52 @@ void SiPixelRawToDigi::produce( edm::Event& ev,
     }
   }
 
+  // Insert random killing of double columns here
+  edm::ESHandle<TrackerTopology> tTopoHandle;
+  es.get<TrackerTopologyRcd>().get(tTopoHandle);
+  const TrackerTopology& tTopo = *tTopoHandle;
+
+  edm::Service<edm::RandomNumberGenerator> rng;
+  CLHEP::HepRandomEngine& engine = rng->getEngine(ev.streamID());
+  auto filteredColl = std::make_unique<edm::DetSetVector<PixelDigi>>();
+
+  const int killLayer = 1;
+  const auto eff_bpix1 = 0.8;
+  const auto eff_bpix2 = 0.5;
+
+  constexpr int oneNCols = 416;
+  constexpr int NCols = 2*oneNCols; // two rows of ROCs in a module
+  constexpr int NRows = 80;
+
+  std::bitset<NCols> colmask;
+  for(const auto& detset: *collection) {
+    auto detid = DetId(detset.detId());
+    //edm::LogPrint("Foo") << "DetSet " << detset.detId() << " subdet " << detid.subdetId() << " layer " << tTopo.layer(detid);
+
+    colmask.set();
+    const bool killDCols = (detid.subdetId() == 1 && tTopo.layer(detid) == killLayer);
+    double eff = 1;
+    if(killLayer == 1) eff = eff_bpix1;
+    else if(killLayer == 2) eff = eff_bpix2;
+
+    if(killDCols) {
+      for(auto i=0U; i<NCols; i+=2) {
+        const bool enabled = engine.flat() < eff;
+        colmask.set(i, enabled);
+        colmask.set(i+1, enabled);
+      }
+    }
+
+    auto& filteredDetset = filteredColl->find_or_insert(detset.detId());
+    for(const auto& digi: detset) {
+      const auto index = digi.row() < NRows ? digi.column() : oneNCols+digi.column();
+      //edm::LogPrint("Foo") << " digi channel " << digi.channel() << " row " << digi.row() << " col " << digi.column() << " enabled " << colmask[index];
+      if(colmask[index]) {
+        filteredDetset.push_back(digi);
+      }
+    }
+  }
+
   if(includeErrors) {
     edm::DetSet<SiPixelRawDataError>& errorDetSet = errorcollection->find_or_insert(dummydetid);
     errorDetSet.data = nodeterrors;
@@ -284,7 +338,8 @@ void SiPixelRawToDigi::produce( edm::Event& ev,
   }
 
   //send digis and errors back to framework 
-  ev.put(std::move(collection));
+  //ev.put(std::move(collection));
+  ev.put(std::move(filteredColl));
   if(includeErrors){
     ev.put(std::move(errorcollection));
     ev.put(std::move(tkerror_detidcollection));
