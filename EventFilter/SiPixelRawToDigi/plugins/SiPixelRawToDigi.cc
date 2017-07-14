@@ -109,6 +109,8 @@ SiPixelRawToDigi::SiPixelRawToDigi( const edm::ParameterSet& conf )
   //CablingMap could have a label //Tav
   cablingMapLabel = config_.getParameter<std::string> ("CablingMapLabel");
 
+  dcolKillBPixLayer = config_.getParameter<unsigned int>("dcolKillBPixLayer");
+  dcolKillBPixEfficiency = config_.getParameter<double>("dcolKillBPixEfficiency");
 }
 
 
@@ -157,6 +159,8 @@ SiPixelRawToDigi::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   desc.add<bool>("UsePhase1",false)->setComment("##  Use phase1");
   desc.add<std::string>("CablingMapLabel","")->setComment("CablingMap label"); //Tav
   desc.addOptional<bool>("CheckPixelOrder");  // never used, kept for back-compatibility
+  desc.add<unsigned int>("dcolKillBPixLayer", 0);
+  desc.add<double>("dcolKillBPixEfficiency", 1.0);
   descriptions.add("siPixelRawToDigi",desc);
 }
 
@@ -283,10 +287,6 @@ void SiPixelRawToDigi::produce( edm::Event& ev,
   CLHEP::HepRandomEngine& engine = rng->getEngine(ev.streamID());
   auto filteredColl = std::make_unique<edm::DetSetVector<PixelDigi>>();
 
-  const int killLayer = 1;
-  const auto eff_bpix1 = 0.8;
-  const auto eff_bpix2 = 0.5;
-
   constexpr int oneNCols = 416;
   constexpr int NCols = 2*oneNCols; // two rows of ROCs in a module
   constexpr int NRows = 80;
@@ -297,14 +297,10 @@ void SiPixelRawToDigi::produce( edm::Event& ev,
     //edm::LogPrint("Foo") << "DetSet " << detset.detId() << " subdet " << detid.subdetId() << " layer " << tTopo.layer(detid);
 
     colmask.set();
-    const bool killDCols = (detid.subdetId() == 1 && tTopo.layer(detid) == killLayer);
-    double eff = 1;
-    if(killLayer == 1) eff = eff_bpix1;
-    else if(killLayer == 2) eff = eff_bpix2;
-
+    const bool killDCols = (detid.subdetId() == 1 && tTopo.layer(detid) == dcolKillBPixLayer);
     if(killDCols) {
       for(auto i=0U; i<NCols; i+=2) {
-        const bool enabled = engine.flat() < eff;
+        const bool enabled = engine.flat() < dcolKillBPixEfficiency;
         colmask.set(i, enabled);
         colmask.set(i+1, enabled);
       }

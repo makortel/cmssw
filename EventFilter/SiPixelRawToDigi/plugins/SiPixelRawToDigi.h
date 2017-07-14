@@ -61,5 +61,7 @@ private:
   bool usePilotBlade;
   bool usePhase1;
   std::string cablingMapLabel;
+  unsigned int dcolKillBPixLayer;
+  double dcolKillBPixEfficiency;
 };
 #endif
