@@ -23,8 +23,8 @@ private:
       virtual void produce(edm::Event&, const edm::EventSetup&) override;
 
 protected:
-      void updatePixels( const edm::Event&, PxMeasurementDetSet & thePxDets, std::vector<bool> & pixelClustersToSkip, 
-			 const TrackerGeometry& trackerGeom, const SiPixelFedCablingMap& cablingMap) const;
+      void updatePixels( const edm::Event&, const edm::EventSetup&, PxMeasurementDetSet & thePxDets, std::vector<bool> & pixelClustersToSkip,
+			 const TrackerGeometry& trackerGeom) const;
       void updateStrips( const edm::Event&, StMeasurementDetSet & theStDets, std::vector<bool> & stripClustersToSkip ) const;
       void updatePhase2OT( const edm::Event&, Phase2OTMeasurementDetSet & thePh2OTDets ) const;
       //FIXME:: going to be updated soon

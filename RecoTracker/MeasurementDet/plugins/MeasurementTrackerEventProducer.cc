@@ -79,9 +79,6 @@ MeasurementTrackerEventProducer::produce(edm::Event &iEvent, const edm::EventSet
     edm::ESHandle<MeasurementTracker> measurementTracker;
     iSetup.get<CkfComponentsRecord>().get(measurementTrackerLabel_, measurementTracker);
 
-    edm::ESHandle<SiPixelFedCablingMap> cablingMap;
-    iSetup.get<SiPixelFedCablingMapRcd>().get(pixelCablingMapLabel_, cablingMap);
-
     // create new data structures from templates
     auto stripData = std::make_unique<StMeasurementDetSet>(measurementTracker->stripDetConditions());
     auto pixelData=  std::make_unique<PxMeasurementDetSet>(measurementTracker->pixelDetConditions());
@@ -91,7 +88,7 @@ MeasurementTrackerEventProducer::produce(edm::Event &iEvent, const edm::EventSet
     std::vector<bool> phase2ClustersToSkip;
     // fill them
     updateStrips(iEvent, *stripData, stripClustersToSkip);
-    updatePixels(iEvent, *pixelData, pixelClustersToSkip, dynamic_cast<const TrackerGeometry&>(*(measurementTracker->geomTracker())), *cablingMap);
+    updatePixels(iEvent, iSetup, *pixelData, pixelClustersToSkip, dynamic_cast<const TrackerGeometry&>(*(measurementTracker->geomTracker())));
     updatePhase2OT(iEvent, *phase2OTData);
     updateStacks(iEvent, *phase2OTData);
 
@@ -105,8 +102,8 @@ MeasurementTrackerEventProducer::produce(edm::Event &iEvent, const edm::EventSet
 }
 
 void 
-MeasurementTrackerEventProducer::updatePixels( const edm::Event& event, PxMeasurementDetSet & thePxDets, std::vector<bool> & pixelClustersToSkip, 
-					       const TrackerGeometry& trackerGeom, const SiPixelFedCablingMap& cablingMap) const
+MeasurementTrackerEventProducer::updatePixels( const edm::Event& event, const edm::EventSetup& iSetup, PxMeasurementDetSet & thePxDets, std::vector<bool> & pixelClustersToSkip,
+					       const TrackerGeometry& trackerGeom) const
 {
   // start by clearinng everything
   thePxDets.setEmpty();
@@ -140,6 +137,10 @@ MeasurementTrackerEventProducer::updatePixels( const edm::Event& event, PxMeasur
   }
 
   if (!theBadPixelFEDChannelsLabels.empty()) {
+    edm::ESHandle<SiPixelFedCablingMap> h_cablingMap;
+    iSetup.get<SiPixelFedCablingMapRcd>().get(pixelCablingMapLabel_, h_cablingMap);
+    const auto& cablingMap = *h_cablingMap;
+
     edm::Handle<PixelFEDChannelCollection> pixelFEDChannelCollectionHandle;
     for (const edm::EDGetTokenT<PixelFEDChannelCollection>& tk: theBadPixelFEDChannelsLabels) {
       if (!event.getByToken(tk, pixelFEDChannelCollectionHandle)) continue;
