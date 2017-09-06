@@ -31,6 +31,17 @@ def customiseFor19824(process) :
          producer.PixelShapeFileL1 = cms.string('RecoPixelVertexing/PixelLowPtUtilities/data/pixelShapePhase1_all.par')
     return process
 
+# Refactor track MVA classifiers
+def customiseForXXXXX(process):
+    for producer in producers_by_type(process, "TrackMVAClassifierDetached", "TrackMVAClassifierPrompt"):
+        producer.mva.GBRForestLabel = producer.GBRForestLabel
+        producer.mva.GBRForestFileName = producer.GBRForestFileName
+        del producer.GBRForestLabel
+        del producer.GBRForestFileName
+    for producer in producers_by_type(process, "TrackCutClassifier"):
+        del producer.GBRForestLabel
+        del producer.GBRForestFileName
+    return process
 
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
@@ -40,5 +51,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
 
     process = customiseFor19029(process)
     process = customiseFor19824(process)
+    process = customiseForXXXXX(process)
 
     return process
