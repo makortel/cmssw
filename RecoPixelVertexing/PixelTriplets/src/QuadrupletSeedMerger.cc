@@ -39,6 +39,7 @@ QuadrupletSeedMerger
 
 // Helper functions
 namespace {
+#ifdef REMOVED
   bool areHitsOnLayers(const SeedMergerPixelLayer& layer1, const SeedMergerPixelLayer& layer2,
                        const std::pair<SeedingHitSet::ConstRecHitPointer,SeedingHitSet::ConstRecHitPointer>& hits,
                        const TrackerTopology *tTopo) {
@@ -49,6 +50,7 @@ namespace {
             (layer1.isContainsDetector(secondHitId, tTopo) &&
              layer2.isContainsDetector(firstHitId, tTopo)));
   }
+#endif
 
   bool areHitsEqual(const TrackingRecHit & hit1, const TrackingRecHit & hit2) {
     constexpr double epsilon = 0.00001;
@@ -109,6 +111,7 @@ QuadrupletSeedMerger::~QuadrupletSeedMerger() {
 //const std::vector<SeedingHitSet> QuadrupletSeedMerger::mergeTriplets( const OrderedSeedingHits& inputTriplets, const edm::EventSetup& es ) {
 const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeedingHits& inputTriplets, const edm::EventSetup& es ) {
 
+#ifdef REMOVED
   //Retrieve tracker topology from geometry
   edm::ESHandle<TrackerTopology> tTopoHand;
   es.get<TrackerTopologyRcd>().get(tTopoHand);
@@ -118,6 +121,7 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
   if(theLayerBuilder_.check(es)) {
     theLayerSets_ = theLayerBuilder_.layers( es ); // this is a vector<vector<SeedingLayer> >
   }
+#endif
 
   
   // make a working copy of the input triplets
@@ -208,11 +212,13 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
                                           -1,
                                           1, // 101=5 shared, not shared = 1
                                           0}; // 110=6 shared, not shared = 0
+#ifdef REMOVED
   constexpr short nonSharedToShared[3][2] = {
     {1, 2},
     {0, 2},
     {0, 1}
   };
+#endif
 
   typedef std::tuple<unsigned int, short, short> T2NonSharedTuple;
   std::vector<T2NonSharedTuple> t2Tmp; // temporary to sort t2's before insertion to t2List
@@ -293,6 +299,7 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
   }
   nodes.clear();
 
+#ifdef REMOVED
   for( ctfseeding::SeedingLayerSets::const_iterator lsIt = theLayerSets_.begin(); lsIt < theLayerSets_.end(); ++lsIt ) {
 
     // fill a vector with the layers in this set
@@ -363,6 +370,7 @@ const OrderedSeedingHits& QuadrupletSeedMerger::mergeTriplets( const OrderedSeed
     }
   
   } // seeding layer sets
+#endif
   
   // add the remaining triplets
   if( isAddRemainingTriplets_ ) {

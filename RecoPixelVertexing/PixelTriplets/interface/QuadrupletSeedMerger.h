@@ -23,7 +23,6 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSets.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedingHitSet.h"
 #include "RecoTracker/TransientTrackingRecHit/interface/TSiPixelRecHit.h"
@@ -105,7 +104,9 @@ class QuadrupletSeedMerger {
     // bool isValidQuadruplet( const SeedingHitSet&, const std::vector<SeedMergerPixelLayer>& ) const;
 
   SeedingLayerSetsBuilder theLayerBuilder_;
+#ifdef REMOVED
   ctfseeding::SeedingLayerSets theLayerSets_;
+#endif
   edm::ESHandle<TrackerGeometry> theTrackerGeometry_;
   edm::ESHandle<TransientTrackingRecHitBuilder> theTTRHBuilder_;
   std::unique_ptr<SeedCreator> theSeedCreator_;
