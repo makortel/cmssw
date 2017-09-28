@@ -5,8 +5,6 @@
 
 #include "SimDataFormats/Associations/interface/TrackToTrackingParticleAssociator.h"
 
-#include "SimTracker/TrackerHitAssociation/interface/TrackerHitAssociator.h"
-
 #include "SimTracker/TrackerHitAssociation/interface/ClusterTPAssociation.h"
 
 #include "FWCore/Utilities/interface/IndexSet.h"
@@ -181,8 +179,6 @@ public:
   
   double weightedNumberOfTrackHits(const reco::Track& track) const;
   double weightedNumberOfTrackHits(const TrajectorySeed& seed) const;
-
-  const TrackingRecHit* getMostProbableHit(const SiTrackerMultiRecHit*& mhit) const;
 
   /** @brief creates either a ClusterTPAssociation OR a TrackerHitAssociator and stores it in the provided unique_ptr. The other will be null.
    *
