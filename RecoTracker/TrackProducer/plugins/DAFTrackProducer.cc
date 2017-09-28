@@ -36,10 +36,13 @@ DAFTrackProducer::DAFTrackProducer(const edm::ParameterSet& iConfig):
   produces<std::vector<Trajectory> >();
   produces<TrajTrackAssociationCollection>();
   produces<TrajAnnealingCollection>().setBranchAlias( alias_ + "TrajectoryAnnealing" );
+  produces<std::vector<int>>();
   produces<reco::TrackCollection>("beforeDAF").setBranchAlias( alias_ + "TracksBeforeDAF" );
   produces<reco::TrackExtraCollection>("beforeDAF").setBranchAlias( alias_ + "TrackExtrasBeforeDAF" );
+  produces<std::vector<int>>("beforeDAF").setBranchAlias( alias_ + "IndecesBeforeDAF" );;
   produces<reco::TrackCollection>("afterDAF").setBranchAlias( alias_ + "TracksAfterDAF" );
   produces<reco::TrackExtraCollection>("afterDAF").setBranchAlias( alias_ + "TrackExtrasAfterDAF" );
+  produces<std::vector<int>>("afterDAF").setBranchAlias( alias_ + "IndecesAfterDAF" );;
 
   TrajAnnSaving_ = iConfig.getParameter<bool>("TrajAnnealingSaving");
 }
@@ -56,7 +59,6 @@ void DAFTrackProducer::produce(edm::Event& theEvent, const edm::EventSetup& setu
   std::unique_ptr<std::vector<Trajectory> >    outputTrajectoryColl(new std::vector<Trajectory>);
   std::unique_ptr<TrajAnnealingCollection>     outputTrajAnnColl(new TrajAnnealingCollection);
   std::unique_ptr<std::vector<int> >           outputIndecesInputColl(new std::vector<int>);
-
  
   //new tracks collections (changes before and after DAF)
   std::unique_ptr<TrackingRecHitCollection>    outputRHCollBeforeDAF (new TrackingRecHitCollection);

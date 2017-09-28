@@ -3,8 +3,6 @@
 
 #include "QuickTrackAssociatorByHitsImpl.h"
 
-#include "SimTracker/TrackerHitAssociation/interface/TrackerHitAssociator.h"
-
 #include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHit.h"
 #include "DataFormats/TrackerRecHit2D/interface/SiStripMatchedRecHit2D.h"
 #include "DataFormats/TrackerRecHit2D/interface/SiStripRecHit2D.h"
@@ -402,33 +400,56 @@ template<typename iter> std::vector<OmniClusterRef> QuickTrackAssociatorByHitsIm
     if (rhit->isValid()) {
       int subdetid = rhit->geographicalId().subdetId();
       if (subdetid==PixelSubdetector::PixelBarrel||subdetid==PixelSubdetector::PixelEndcap) {
-	const SiPixelRecHit* pRHit = dynamic_cast<const SiPixelRecHit*>(rhit);
-	if (!pRHit->cluster().isNonnull())
-	  edm::LogError("TrackAssociator") << ">>> RecHit does not have an associated cluster!" << " file: " << __FILE__ << " line: " << __LINE__;
-	returnValue.push_back(pRHit->omniClusterRef());
+	const std::type_info &tid = typeid(*rhit);
+        LogDebug("TrackAssociator") << "rhit type " << typeid(*rhit).name();
+	if (tid == typeid(SiTrackerMultiRecHit)) {
+          LogDebug("TrackAssociator") << "multi rechit associated!"; 
+	  const SiTrackerMultiRecHit* mHit = dynamic_cast<const SiTrackerMultiRecHit*>(rhit);
+          rhit = getMostProbableHit(mHit);
+        }
+	const std::type_info &tid2 = typeid(*rhit);
+        LogDebug("TrackAssociator") << "rhit type " << typeid(*rhit).name();
+	if (tid == typeid(SiPixelRecHit) || tid2 == typeid(SiPixelRecHit)) {
+	  const SiPixelRecHit* pRHit = dynamic_cast<const SiPixelRecHit*>(rhit);
+	  if (!pRHit->cluster().isNonnull())
+	    edm::LogError("TrackAssociator") << ">>> RecHit does not have an associated cluster!" << " file: " << __FILE__ << " line: " << __LINE__;
+	  returnValue.push_back(pRHit->omniClusterRef());
+        }
+	else {
+	  edm::LogError("TrackAssociator") << ">>> getMatchedClusters: TrackingRecHit not associated to any SiPixelCluster! subdetid = " << subdetid;
+        }
       }
       else if (subdetid==SiStripDetId::TIB||subdetid==SiStripDetId::TOB||subdetid==SiStripDetId::TID||subdetid==SiStripDetId::TEC) {
 	const std::type_info &tid = typeid(*rhit);
-	if (tid == typeid(SiStripMatchedRecHit2D)) {
+        LogDebug("TrackAssociator") << "rhit type " << typeid(*rhit).name();
+        if (tid == typeid(SiTrackerMultiRecHit)) {
+          LogDebug("TrackAssociator") << "multi rechit associated!";
+          const SiTrackerMultiRecHit* mHit = dynamic_cast<const SiTrackerMultiRecHit*>(rhit);
+          rhit = getMostProbableHit(mHit);
+        }
+        const std::type_info &tid2 = typeid(*rhit);
+        LogDebug("TrackAssociator") << "rhit type " << typeid(*rhit).name();
+
+	if (tid == typeid(SiStripMatchedRecHit2D) || tid2 == typeid(SiStripMatchedRecHit2D)) {
 	  const SiStripMatchedRecHit2D* sMatchedRHit = dynamic_cast<const SiStripMatchedRecHit2D*>(rhit);
 	  if (!sMatchedRHit->monoHit().cluster().isNonnull() || !sMatchedRHit->stereoHit().cluster().isNonnull())
 	    edm::LogError("TrackAssociator") << ">>> RecHit does not have an associated cluster!" << " file: " << __FILE__ << " line: " << __LINE__;
 	  returnValue.push_back(sMatchedRHit->monoClusterRef());
 	  returnValue.push_back(sMatchedRHit->stereoClusterRef());
 	}
-	else if (tid == typeid(SiStripRecHit2D)) {
+	else if (tid == typeid(SiStripRecHit2D) || tid2 == typeid(SiStripRecHit2D)) {
 	  const SiStripRecHit2D* sRHit = dynamic_cast<const SiStripRecHit2D*>(rhit);
 	  if (!sRHit->cluster().isNonnull())
 	    edm::LogError("TrackAssociator") << ">>> RecHit does not have an associated cluster!" << " file: " << __FILE__ << " line: " << __LINE__;
 	  returnValue.push_back(sRHit->omniClusterRef());
 	}
-	else if (tid == typeid(SiStripRecHit1D)) {
+	else if (tid == typeid(SiStripRecHit1D) || tid2 == typeid(SiStripRecHit1D)) {
 	  const SiStripRecHit1D* sRHit = dynamic_cast<const SiStripRecHit1D*>(rhit);
 	  if (!sRHit->cluster().isNonnull())
 	    edm::LogError("TrackAssociator") << ">>> RecHit does not have an associated cluster!" << " file: " << __FILE__ << " line: " << __LINE__;
 	  returnValue.push_back(sRHit->omniClusterRef());
 	}
-	else if (tid == typeid(Phase2TrackerRecHit1D)) {
+	else if (tid == typeid(Phase2TrackerRecHit1D) || tid2 == typeid(Phase2TrackerRecHit1D)) {
 	  const Phase2TrackerRecHit1D* ph2Hit = dynamic_cast<const Phase2TrackerRecHit1D*>(rhit);
           if (!ph2Hit->cluster().isNonnull() )
 	    edm::LogError("TrackAssociator") << ">>> RecHit does not have an associated cluster!" << " file: " << __FILE__ << " line: " << __LINE__;
@@ -726,4 +747,14 @@ double QuickTrackAssociatorByHitsImpl::weightedNumberOfTrackHits(const Trajector
     sum += weight;
   }
   return sum;
+}
+
+const TrackingRecHit* QuickTrackAssociatorByHitsImpl::getMostProbableHit(const SiTrackerMultiRecHit*& mHit) const{
+  std::vector<const TrackingRecHit*> componenthits = mHit->recHits();
+  int idmostprobable = 0;
+  for (unsigned int i=0; i < mHit->weights().size(); ++i){
+    if(mHit->weight(i) > mHit->weight(idmostprobable)) idmostprobable=i;
+  }
+
+  return componenthits[idmostprobable];
 }
