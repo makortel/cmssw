@@ -415,6 +415,7 @@ LongDCAMax = cms.double(8.0),
 # Overcoming the 255 arguments limit
 # TrackingRegion monitoring
 TrackMon.RegionProducer = cms.InputTag("")
+TrackMon.RegionSeedingLayersProducer = cms.InputTag("")
 TrackMon.RegionCandidates = cms.InputTag("")
 TrackMon.doRegionPlots = cms.bool(False)
 TrackMon.doRegionCandidatePlots = cms.bool(False)

@@ -139,7 +139,7 @@ pixelPairStepTrackingRegionsSeedLayersB = _pixelInactiveAreaTrackingRegionsAndSe
     RegionPSet = dict(
         ptMin = 0.6,
         originRadius = 0.015,
-        mode = "VerticesFixed",
+        operationMode = "VerticesFixed",
         zErrorVertex = 0.03,
         maxNVertices = 5,
     ),
