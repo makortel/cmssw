@@ -11,6 +11,7 @@ class SiStripRecHit1D;
 class SiStripMatchedRecHit2D;
 class ProjectedSiStripRecHit2D;
 class Phase2TrackerRecHit1D;
+class VectorHit;
 
 class TkCloner {
 public:
@@ -32,6 +33,7 @@ public:
   virtual std::unique_ptr<SiStripMatchedRecHit2D> operator()(SiStripMatchedRecHit2D const & hit, TrajectoryStateOnSurface const& tsos) const=0;
   virtual std::unique_ptr<ProjectedSiStripRecHit2D> operator()(ProjectedSiStripRecHit2D const & hit, TrajectoryStateOnSurface const& tsos) const=0;
   virtual std::unique_ptr<Phase2TrackerRecHit1D> operator()(Phase2TrackerRecHit1D const & hit, TrajectoryStateOnSurface const& tsos) const=0;
+  virtual std::unique_ptr<VectorHit> operator()(VectorHit const & hit, TrajectoryStateOnSurface const& tsos) const=0;
 
 #ifndef __GCCXML__
   virtual TrackingRecHit::ConstRecHitPointer makeShared(SiPixelRecHit const & hit, TrajectoryStateOnSurface const& tsos) const=0;
@@ -40,6 +42,7 @@ public:
   virtual TrackingRecHit::ConstRecHitPointer makeShared(SiStripMatchedRecHit2D const & hit, TrajectoryStateOnSurface const& tsos) const=0;
   virtual TrackingRecHit::ConstRecHitPointer makeShared(ProjectedSiStripRecHit2D const & hit, TrajectoryStateOnSurface const& tsos) const=0;
   virtual TrackingRecHit::ConstRecHitPointer makeShared(Phase2TrackerRecHit1D const & hit, TrajectoryStateOnSurface const& tsos) const=0;
+  virtual TrackingRecHit::ConstRecHitPointer makeShared(VectorHit const & hit, TrajectoryStateOnSurface const& tsos) const=0;
 #endif
 
 };

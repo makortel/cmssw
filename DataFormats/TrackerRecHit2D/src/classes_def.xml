@@ -167,6 +167,13 @@
   <class name="Phase2TrackerRecHit1D" ClassVersion="3">
       <version ClassVersion="3" checksum="1217326271"/>
   </class>
+  <class name="VectorHit" ClassVersion="-1">
+   <version ClassVersion="-1" checksum="546506376"/>
+  </class>
+  <class name="VectorHit2D" ClassVersion="-1">
+   <version ClassVersion="-1" checksum="333065919"/>
+  </class>
+
   <class name="std::vector< Phase2TrackerRecHit1D >"/>
   <class name="std::vector< edmNew::DetSet< Phase2TrackerRecHit1D > >"/>
   <class name="edmNew::DetSet< Phase2TrackerRecHit1D >"/>
