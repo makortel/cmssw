@@ -63,14 +63,12 @@ process.RECOSIMoutput = cms.OutputModule("PoolOutputModule",
 process.MessageLogger = cms.Service("MessageLogger",
                                     destinations = cms.untracked.vstring("debugVHs"),
                                     debugModules = cms.untracked.vstring("*"),
-                                    categories = cms.untracked.vstring("VectorHitBuilderEDProducer","VectorHitBuilderAlgorithm","VectorHitsBuilderValidation","VectorHitBuilder"),
+                                    categories = cms.untracked.vstring("VectorHitBuilder","VectorHitBuilderAlgorithm"),
                                     debugVHs = cms.untracked.PSet(threshold = cms.untracked.string("DEBUG"),
                                                                        DEBUG = cms.untracked.PSet(limit = cms.untracked.int32(0)),
                                                                        default = cms.untracked.PSet(limit = cms.untracked.int32(0)),
                                                                        VectorHitBuilder = cms.untracked.PSet(limit = cms.untracked.int32(-1)),
-                                                                       VectorHitBuilderEDProducer = cms.untracked.PSet(limit = cms.untracked.int32(-1)),
                                                                        VectorHitBuilderAlgorithm = cms.untracked.PSet(limit = cms.untracked.int32(-1)),
-                                                                       VectorHitsBuilderValidation = cms.untracked.PSet(limit = cms.untracked.int32(-1))
                                                                        )
                                     )
 
