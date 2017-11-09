@@ -13,10 +13,10 @@
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
 
 VectorHitBuilderAlgorithm::VectorHitBuilderAlgorithm(const edm::ParameterSet& conf) :
+  cpeTag_(conf.getParameter<edm::ESInputTag>("CPE")),
   nMaxVHforeachStack(conf.getParameter<int>("maxVectorHitsinaStack")),
   barrelCut(conf.getParameter< std::vector< double > >("BarrelCut")),
   endcapCut(conf.getParameter< std::vector< double > >("EndcapCut")),
-  cpeTag_(conf.getParameter<edm::ESInputTag>("CPE")),
   theFitter(new LinearFit())
 {}
 

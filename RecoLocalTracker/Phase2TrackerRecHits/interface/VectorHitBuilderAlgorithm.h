@@ -17,6 +17,11 @@
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+namespace edm {
+   class ParameterSet;
+   template<typename T> class RefGetter;
+   class EventSetup;
+}
 
 class VectorHitBuilderAlgorithm {
  public:

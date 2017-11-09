@@ -75,17 +75,17 @@ void VectorHitBuilderEDProducer::produce(edm::Event& event, const edm::EventSetu
   //ERICA::output should be moved in the different algo classes?
 //  run( clustersHandle, *outputClustersAccepted, *outputClustersRejected, *outputVHAccepted, *outputVHRejected);
 //
-//  unsigned int numberOfVectorHits = 0;
-//  edmNew::DetSetVector<VectorHit>::const_iterator DSViter;
-//  for( DSViter = (*outputVHAccepted).begin() ; DSViter != (*outputVHAccepted).end(); DSViter++){
-//
-//    edmNew::DetSet< VectorHit >::const_iterator vh;
-//    for ( vh = DSViter->begin(); vh != DSViter->end(); ++vh) {
-//      numberOfVectorHits++;
-//      LogDebug("VectorHitBuilder") << "\t vectorhit in output " << *vh << std::endl;
-//    }
-//
-//  }
+  unsigned int numberOfVectorHits = 0;
+  edmNew::DetSetVector<VectorHit>::const_iterator DSViter;
+  for( DSViter = (*outputVHAccepted).begin() ; DSViter != (*outputVHAccepted).end(); DSViter++){
+
+    edmNew::DetSet< VectorHit >::const_iterator vh;
+    for ( vh = DSViter->begin(); vh != DSViter->end(); ++vh) {
+      numberOfVectorHits++;
+      LogDebug("VectorHitBuilder") << "\t vectorhit in output " << *vh << std::endl;
+    }
+
+  }
 /*
   if(numberOfVectorHits > maxOfflinestubs) {
     edm::LogError("VectorHitBuilder") <<  "Limit on the number of stubs exceeded. An empty output collection will be produced instead.\n";
@@ -99,14 +99,13 @@ void VectorHitBuilderEDProducer::produce(edm::Event& event, const edm::EventSetu
   event.put( std::move(outputVHAccepted), offlinestubsTag + "Accepted" );
   event.put( std::move(outputVHRejected), offlinestubsTag + "Rejected" );
 
-//  LogDebug("VectorHitBuilder") << " Executing " << algoTag << " resulted in " << numberOfVectorHits << ".";
-//  LogDebug("VectorHitBuilder") << "found\n" << numberOfVectorHits << " .\n" ;
+  LogDebug("VectorHitBuilder") << " Executing " << algoTag << " resulted in " << numberOfVectorHits << ".";
 
 }
 
 void VectorHitBuilderEDProducer::setupAlgorithm(edm::ParameterSet const& conf) {
 
-  if ( algoTag == "VectorHitBuilder" ) {
+  if ( algoTag == "VectorHitBuilderAlgorithm" ) {
     builderAlgo = new VectorHitBuilderAlgorithm(conf);
     readytobuild = true;
   } else {
