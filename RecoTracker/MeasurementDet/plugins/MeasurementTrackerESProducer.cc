@@ -137,7 +137,7 @@ MeasurementTrackerESProducer::produce(const CkfComponentsRecord& iRecord)
   iRecord.getRecord<TrackerRecoGeometryRecord>().get(geometricSearchTracker);
 
   if(phase2TrackerCPEName != ""){
-      iRecord.getRecord<TkStripCPERecord>().get(phase2TrackerCPEName,phase2TrackerCPE);
+      iRecord.getRecord<TkPhase2OTCPERecord>().get(phase2TrackerCPEName,phase2TrackerCPE);
       _measurementTracker  = std::make_shared<MeasurementTrackerImpl>(pset_,
 							          pixelCPE.product(),
 							          stripCPE.product(),
