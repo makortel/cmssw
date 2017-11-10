@@ -69,12 +69,11 @@ void VectorHitBuilderEDProducer::produce(edm::Event& event, const edm::EventSetu
   else edm::LogError("VectorHitBuilder") << "Impossible initialization of builder!!";
 
   // check on the input clusters
-//  builderAlgo->printClusters(*clustersHandle);
+  builderAlgo->printClusters(*clustersHandle);
 
   // running the stub building algorithm
-  //ERICA::output should be moved in the different algo classes?
-//  run( clustersHandle, *outputClustersAccepted, *outputClustersRejected, *outputVHAccepted, *outputVHRejected);
-//
+  run( clustersHandle, *outputClustersAccepted, *outputClustersRejected, *outputVHAccepted, *outputVHRejected);
+
   unsigned int numberOfVectorHits = 0;
   edmNew::DetSetVector<VectorHit>::const_iterator DSViter;
   for( DSViter = (*outputVHAccepted).begin() ; DSViter != (*outputVHAccepted).end(); DSViter++){
@@ -119,14 +118,14 @@ void VectorHitBuilderEDProducer::setupAlgorithm(edm::ParameterSet const& conf) {
 void VectorHitBuilderEDProducer::run(edm::Handle< edmNew::DetSetVector<Phase2TrackerCluster1D> > clusters,
    edmNew::DetSetVector<Phase2TrackerCluster1D>& clustersAcc, edmNew::DetSetVector<Phase2TrackerCluster1D>& clustersRej,
    VectorHitCollectionNew& outputAcc, VectorHitCollectionNew& outputRej ){
-//
-//  if ( !readytobuild ) {
-//    edm::LogError("VectorHitBuilder") << " No stub builder algorithm was found - cannot run!" ;
-//    return;
-//  }
-//
-//  builderAlgo->run(clusters, outputAcc, outputRej, clustersAcc, clustersRej);
-//
+
+  if ( !readytobuild ) {
+    edm::LogError("VectorHitBuilder") << " No stub builder algorithm was found - cannot run!" ;
+    return;
+  }
+
+  builderAlgo->run(clusters, outputAcc, outputRej, clustersAcc, clustersRej);
+
 }
 
 #include "FWCore/Utilities/interface/typelookup.h"

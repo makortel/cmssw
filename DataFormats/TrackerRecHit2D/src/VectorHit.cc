@@ -429,7 +429,7 @@ std::ostream& operator<<(std::ostream& os, const VectorHit& vh) {
         " Vectorhit local direction     : " << vh.localDirection() << "\n" <<
         " Vectorhit global direction    : " << vh.globalDirection() << "\n" <<
         //" Vectorhit theta               : " << vh.theta() << "\n" <<
-        //" Cov: " << vh.parametersError() << "\n" <<
+        " Cov: " << vh.parametersError() << "\n" <<
         //" Dim: " << vh.dimension() << "\n" <<
         //" chi2/ndof: " << vh.chi2() << "/" << vh.degreesOfFreedom() << "\n" <<
         " Lower cluster global position : " << vh.lowerGlobalPos() << "\n" <<

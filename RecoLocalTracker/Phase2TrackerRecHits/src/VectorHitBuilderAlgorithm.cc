@@ -164,7 +164,6 @@ void VectorHitBuilderAlgorithm::run(edm::Handle< edmNew::DetSetVector<Phase2Trac
   LogDebug("VectorHitBuilderAlgorithm") << "Run VectorHitBuilderAlgorithm ... \n" ;
   const  edmNew::DetSetVector<Phase2TrackerCluster1D>* ClustersPhase2Collection = clusters.product();
 
-
   std::map< DetId, std::vector<VectorHit> > tempVHAcc, tempVHRej;
   std::map< DetId, std::vector<VectorHit> >::iterator it_temporary;
 
@@ -185,9 +184,9 @@ void VectorHitBuilderAlgorithm::run(edm::Handle< edmNew::DetSetVector<Phase2Trac
     DetId detIdStack = theTkTopo->stack(detId1);
 
     //debug
-    LogDebug("VectorHitBuilderAlgorithm") << "  DetId stack : " << detIdStack.rawId() << std::endl;
-    LogDebug("VectorHitBuilderAlgorithm") << "  DetId lower set of clusters  : " << lowerDetId.rawId();
-    LogDebug("VectorHitBuilderAlgorithm") << "  DetId upper set of clusters  : " << upperDetId.rawId() << std::endl;
+    LogTrace("VectorHitBuilderAlgorithm") << "  DetId stack : " << detIdStack.rawId() << std::endl;
+    LogTrace("VectorHitBuilderAlgorithm") << "  DetId lower set of clusters  : " << lowerDetId.rawId();
+    LogTrace("VectorHitBuilderAlgorithm") << "  DetId upper set of clusters  : " << upperDetId.rawId() << std::endl;
 
     it_temporary = tempVHAcc.find(detIdStack);
     if ( it_temporary != tempVHAcc.end() ) {
@@ -276,7 +275,6 @@ bool VectorHitBuilderAlgorithm::checkClustersCompatibility(Local3DPoint& poslowe
                                                            LocalError& errlower, 
                                                            LocalError& errupper)
 {
-
   return true;
 
 }
@@ -291,6 +289,7 @@ std::vector<std::pair<VectorHit,bool>> VectorHitBuilderAlgorithm::buildVectorHit
 {
 
   std::vector<std::pair<VectorHit,bool>> result;
+  //ERICA: I am not sure why I introduced this first check. Maybe it is better to remove it..
   if(checkClustersCompatibilityBeforeBuilding(clusters, theLowerDetSet, theUpperDetSet)){
     LogDebug("VectorHitBuilderAlgorithm") << "  compatible -> continue ... " << std::endl;
   } else { LogTrace("VectorHitBuilderAlgorithm") << "  not compatible, going to the next cluster"; }
@@ -315,14 +314,14 @@ std::vector<std::pair<VectorHit,bool>> VectorHitBuilderAlgorithm::buildVectorHit
     const PixelGeomDetUnit* gduLow = dynamic_cast< const PixelGeomDetUnit* >(stack->lowerDet());
     auto && lparamsLow = cpe->localParameters( *cluL, *gduLow );
     for ( auto cluU : upperClusters){
-      LogDebug("VectorHitBuilderAlgorithm") << "\t upper clusters " << std::endl;
+      LogTrace("VectorHitBuilderAlgorithm") << "\t upper clusters " << std::endl;
       printCluster(stack->upperDet(),&*cluU);
       const PixelGeomDetUnit* gduUpp = dynamic_cast< const PixelGeomDetUnit* >(stack->upperDet());
       auto && lparamsUpp = cpe->localParameters( *cluU, *gduUpp );
 
       //applying the parallax correction
       double pC = computeParallaxCorrection(gduLow,lparamsLow.first,gduUpp,lparamsUpp.first);
-      LogDebug("VectorHitBuilderAlgorithm") << " \t parallax correction:" << pC << std::endl;
+      LogTrace("VectorHitBuilderAlgorithm") << " \t parallax correction:" << pC << std::endl;
       double lpos_upp_corr = 0.0;
       double lpos_low_corr = 0.0;
       if(lparamsUpp.first.x() > lparamsLow.first.x()){
@@ -354,8 +353,8 @@ std::vector<std::pair<VectorHit,bool>> VectorHitBuilderAlgorithm::buildVectorHit
         }
       }
 
-      LogDebug("VectorHitBuilderAlgorithm") << " \t local pos upper corrected (x):" << lpos_upp_corr << std::endl;
-      LogDebug("VectorHitBuilderAlgorithm") << " \t local pos lower corrected (x):" << lpos_low_corr << std::endl;
+      LogTrace("VectorHitBuilderAlgorithm") << " \t local pos upper corrected (x):" << lpos_upp_corr << std::endl;
+      LogTrace("VectorHitBuilderAlgorithm") << " \t local pos lower corrected (x):" << lpos_low_corr << std::endl;
 
       //building my tolerance : 10*sigma
       double delta = 10.0*sqrt(lparamsLow.second.xx()+lparamsUpp.second.xx()); 
@@ -363,7 +362,6 @@ std::vector<std::pair<VectorHit,bool>> VectorHitBuilderAlgorithm::buildVectorHit
 
       double width = lpos_low_corr - lpos_upp_corr;
       LogDebug("VectorHitBuilderAlgorithm") << " \t width: " << width << std::endl;
-
 
       unsigned int layerStack = theTkTopo->layer(stack->geographicalId());
       if(stack->subDetector() == GeomDetEnumerators::SubDetector::P2OTB ) LogDebug("VectorHitBuilderAlgorithm") << " \t is barrel.    " << std::endl;
@@ -378,7 +376,10 @@ std::vector<std::pair<VectorHit,bool>> VectorHitBuilderAlgorithm::buildVectorHit
       //no cut
       LogDebug("VectorHitBuilderAlgorithm") << " accepting VH! " << std::endl;
       VectorHit vh = buildVectorHit( stack, cluL, cluU);
+      //protection: the VH can also be empty!!
       if (vh.isValid()){
+        LogTrace("VectorHitBuilderAlgorithm") << "-> Vectorhit " << vh ;
+        LogTrace("VectorHitBuilderAlgorithm") << std::endl;
         result.push_back(std::make_pair(vh, true));
       }
 
@@ -406,35 +407,6 @@ std::vector<std::pair<VectorHit,bool>> VectorHitBuilderAlgorithm::buildVectorHit
     }
   }
 
-
-
-
-
-/*
-  for ( const_iterator cil = theLowerDetSet.begin(); cil != theLowerDetSet.end(); ++ cil ) {
-    //possibility to introducing the skipping of the clusters
-    //if(phase2OTClustersToSkip.empty() or (not phase2OTClustersToSkip[cil]) ) {
-
-    Phase2TrackerCluster1DRef clusterLower = edmNew::makeRefTo( clusters, cil );
-
-    for ( const_iterator ciu = theUpperDetSet.begin(); ciu != theUpperDetSet.end(); ++ ciu ) {
-
-      LogTrace("VectorHitBuilderAlgorithm")<<" in the loop for upper clusters with index " << ciu << " on detId " << stack->geographicalId().rawId();
-
-      Phase2TrackerCluster1DRef clusterUpper = edmNew::makeRefTo( clusters, ciu );
-      VectorHit vh = buildVectorHit( stack, clusterLower, clusterUpper);
-      LogTrace("VectorHitBuilderAlgorithm") << "-> Vectorhit " << vh ;
-      LogTrace("VectorHitBuilderAlgorithm") << std::endl;
-      //protection: the VH can also be empty!!
-
-      if (vh.isValid()){
-        result.push_back(vh);
-      }
-
-    }
-  }
-*/
-
   //if( result.size() > nMaxVHforeachStack ){
   //  result.erase(result.begin()+nMaxVHforeachStack, result.end());
   //}
@@ -449,29 +421,27 @@ VectorHit VectorHitBuilderAlgorithm::buildVectorHit(const StackGeomDet * stack,
 {
 
   LogTrace("VectorHitBuilderAlgorithm") << "Build VH with: ";
-  //printCluster(stack->lowerDet(),&*lower);
-  //printCluster(stack->upperDet(),&*upper);
+  printCluster(stack->lowerDet(),&*lower);
+  printCluster(stack->upperDet(),&*upper);
 
   const PixelGeomDetUnit* geomDetLower = dynamic_cast< const PixelGeomDetUnit* >(stack->lowerDet());
   const PixelGeomDetUnit* geomDetUpper = dynamic_cast< const PixelGeomDetUnit* >(stack->upperDet());
 
   auto && lparamsLower = cpe->localParameters( *lower, *geomDetLower );          // x, y, z, e2_xx, e2_xy, e2_yy
   Global3DPoint gparamsLower = geomDetLower->surface().toGlobal(lparamsLower.first);
-  LogTrace("VectorHitBuilderAlgorithm") << "\t lower global pos: " << gparamsLower ;
 
   auto && lparamsUpper = cpe->localParameters( *upper, *geomDetUpper );
   Global3DPoint gparamsUpper = geomDetUpper->surface().toGlobal(lparamsUpper.first);
-  LogTrace("VectorHitBuilderAlgorithm") << "\t upper global pos: " << gparamsUpper ;
 
   //local parameters of upper cluster in lower system of reference
   Local3DPoint lparamsUpperInLower = geomDetLower->surface().toLocal(gparamsUpper);
 
   LogTrace("VectorHitBuilderAlgorithm") << "\t lower global pos: " << gparamsLower ;
   LogTrace("VectorHitBuilderAlgorithm") << "\t upper global pos: " << gparamsUpper ;
-
   LogTrace("VectorHitBuilderAlgorithm") << "A:\t lower local pos: " << lparamsLower.first << " with error: " << lparamsLower.second << std::endl;
   LogTrace("VectorHitBuilderAlgorithm") << "A:\t upper local pos in the lower sof " << lparamsUpperInLower << " with error: " << lparamsUpper.second << std::endl;
 
+  //ERICA: do we want to introduce some other geometrical cuts?
   bool ok = checkClustersCompatibility(lparamsLower.first, lparamsUpper.first, lparamsLower.second, lparamsUpper.second);
 
   if(ok){
