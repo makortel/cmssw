@@ -336,7 +336,7 @@ std::pair<double,double> VectorHit::curvatureORphi(std::string curvORphi) const 
 
 
   } else {
-std::cout << " straight line!" << std::endl;
+    //std::cout << " straight line!" << std::endl;
     return std::make_pair(0.0,0.0);
   }
   
@@ -398,17 +398,9 @@ AlgebraicMatrix VectorHit::projectionMatrix() const {
 */ return the4DProjectionMatrix; //ERICA:QUESTO NON ESISTEVA!!
 }
 
-/*
-LocalError VectorHit::localPositionError() const {
-  return LocalError(theCovMatrix[2][2],theCovMatrix[2][3],theCovMatrix[3][3]);
-}
-*/
-
 LocalError VectorHit::localDirectionError() const {
   return LocalError(theCovMatrix[0][0],theCovMatrix[0][1],theCovMatrix[1][1]);
 }
-
-
 
 AlgebraicSymMatrix VectorHit::parametersError() const {
 

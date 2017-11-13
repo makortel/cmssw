@@ -20,7 +20,16 @@
 <use   name="DataFormats/Phase2TrackerCluster"/>
 <use   name="DataFormats/ParticleFlowCandidate"/>
 <use   name="DataFormats/ParticleFlowReco"/>
+
+<use   name="RecoLocalTracker/Records"/>
+<use   name="SimDataFormats/TrackingAnalysis"/>
+<use   name="RecoLocalTracker/Phase2TrackerRecHits"/>
+
 <library   file="RecHitsValidation.cc" name="Phase2TrackerRecHitsValidation">
+  <flags   EDM_PLUGIN="1"/>
+  <flags CXXFLAGS="-g3"/>
+</library>
+<library   file="VectorHitsValidation.cc" name="VectorHitsBuilderValidation">
   <flags   EDM_PLUGIN="1"/>
   <flags CXXFLAGS="-g3"/>
 </library>
