@@ -87,7 +87,7 @@ TkTransientTrackingRecHitBuilderESProducer::produce(const TransientRecHitRecord 
   const ClusterParameterEstimator<Phase2TrackerCluster1D> * p2OTp;
 
   if (p2OTname != "") {
-    iRecord.getRecord<TkStripCPERecord>().get( p2OTname, p2OTe );
+    iRecord.getRecord<TkPhase2OTCPERecord>().get( p2OTname, p2OTe );
     p2OTp = p2OTe.product();
     _builder  = std::make_shared<TkTransientTrackingRecHitBuilder>(pDD.product(), pp, p2OTp);
   } else {

@@ -26,6 +26,7 @@
 #include "DataFormats/TrackerRecHit2D/interface/FastProjectedTrackerRecHit.h"
 #include "DataFormats/TrackerRecHit2D/interface/FastTrackerRecHitCollection.h"
 #include "DataFormats/TrackerRecHit2D/interface/Phase2TrackerRecHit1D.h"
+#include "DataFormats/TrackerRecHit2D/interface/VectorHit.h"
 #include "DataFormats/TrackerRecHit2D/interface/BaseTrackerRecHit.h"
 #include <vector>
 
@@ -139,6 +140,9 @@ namespace DataFormats_TrackerRecHit2D {
         edm::Wrapper< std::vector< edmNew::DetSet< Phase2TrackerRecHit1D > > > cl3;
         edm::Wrapper< Phase2TrackerRecHit1DCollectionNew > cl4;
 
+        VectorHitCollectionNew vhc1_new;
+        edm::RefProd<VectorHitCollectionNew> vhc1_new2;
+        edm::Wrapper<VectorHitCollectionNew> wh1_new;
   };
 }
 
