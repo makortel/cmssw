@@ -214,7 +214,7 @@ GoodSeedProducer::produce(Event& iEvent, const EventSetup& iSetup)
       math::XYZVectorF tkmom(Tk[i].momentum());
       auto tketa= tkmom.eta();
       auto tkpt = std::sqrt(tkmom.perp2());
-      auto const & Seed=(*trackRef->seedRef());
+      auto const & Seed=*(trackRef->seedtPtr());
       if(!disablePreId_)
 	{
 	  int ipteta=getBin(Tk[i].eta(),Tk[i].pt());

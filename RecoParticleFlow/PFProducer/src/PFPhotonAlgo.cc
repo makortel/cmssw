@@ -1388,12 +1388,12 @@ void PFPhotonAlgo::EarlyConversion(
       reco::GsfTrackRef gsf=ec->gsfTrackRef();
       //some hoopla to get Electron SC ref
       
-      if(gsf->extra().isAvailable() && gsf->extra()->seedRef().isAvailable() && mh>0) 
+      if(gsf->extra().isAvailable() && gsf->extra()->seedPtr() != nullptr && mh>0) 
 	{
-	  reco::ElectronSeedRef seedRef=  gsf->extra()->seedRef().castTo<reco::ElectronSeedRef>();
-	  if(seedRef.isAvailable() && seedRef->isEcalDriven()) 
+          const auto *seedPtr = dynamic_cast<const reco::ElectronSeed *>(gsf->extra()->seedPtr());
+	  if(seedPtr != nullptr && seedPtr->isEcalDriven()) 
 	    {
-	      reco::SuperClusterRef ElecscRef = seedRef->caloCluster().castTo<reco::SuperClusterRef>();
+	      reco::SuperClusterRef ElecscRef = seedPtr->caloCluster().castTo<reco::SuperClusterRef>();
 	      
 	      if(ElecscRef.isNonnull()){
 		//finally see if it matches:

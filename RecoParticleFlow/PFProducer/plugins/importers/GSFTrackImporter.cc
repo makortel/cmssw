@@ -53,12 +53,11 @@ importToBlock( const edm::Event& e,
     const reco::GsfTrackRef& basegsfref = gsftrack->gsfTrackRef();    
     const auto& gsfextraref = basegsfref->extra();
     // import associated super clusters
-    if( gsfextraref.isAvailable() && gsfextraref->seedRef().isAvailable()) {
-      reco::ElectronSeedRef seedref = 
-	gsfextraref->seedRef().castTo<reco::ElectronSeedRef>();
-      if( seedref.isAvailable() && seedref->isEcalDriven() ) {
+    if( gsfextraref.isAvailable() && gsfextraref->seedPtr() != nullptr) {
+      const auto *seedptr = dynamic_cast<const reco::ElectronSeed *>(gsfextraref->seedPtr());
+      if( seedptr != nullptr && seedptr->isEcalDriven() ) {
 	reco::SuperClusterRef scref = 
-	  seedref->caloCluster().castTo<reco::SuperClusterRef>();
+	  seedptr->caloCluster().castTo<reco::SuperClusterRef>();
 	if( scref.isNonnull() ) {
 	  // explicitly veto HGCal super clusters
 	  if( scref->seed()->seed().det() == DetId::Forward ) continue;

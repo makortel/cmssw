@@ -17,13 +17,13 @@ GsfElectronCore::GsfElectronCore
   ( const GsfTrackRef & gsfTrack )
   : gsfTrack_(gsfTrack), ctfGsfOverlap_(0.), isEcalDrivenSeed_(false), isTrackerDrivenSeed_(false)
   {
-   edm::RefToBase<TrajectorySeed> seed = gsfTrack_->extra()->seedRef() ;
-   if (seed.isNull())
+   const TrajectorySeed *seed = gsfTrack_->extra()->seedPtr() ;
+   if (seed == nullptr)
     { edm::LogError("GsfElectronCore")<<"The GsfTrack has no seed ?!" ; }
    else
     {
-     ElectronSeedRef elseed = seed.castTo<ElectronSeedRef>() ;
-     if (elseed.isNull())
+     const ElectronSeed *elseed = dynamic_cast<const ElectronSeed *>(seed);
+     if (elseed == nullptr)
       { edm::LogError("GsfElectronCore")<<"The GsfTrack seed is not an ElectronSeed ?!" ; }
      else
       {

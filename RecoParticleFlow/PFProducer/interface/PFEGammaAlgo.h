@@ -83,7 +83,7 @@ class PFEGammaAlgo {
     ProtoEGObject() : parentSC(nullptr) {}
     reco::PFBlockRef parentBlock;
     const PFSCElement* parentSC; // if ECAL driven
-    reco::ElectronSeedRef electronSeed; // if there is one
+    const reco::ElectronSeed *electronSeed; // if there is one
     // this is a mutable list of clusters
     // if ECAL driven we take the PF SC and refine it
     // if Tracker driven we add things to it as we discover more valid clusters

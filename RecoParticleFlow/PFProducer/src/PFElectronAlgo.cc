@@ -2444,10 +2444,10 @@ void PFElectronAlgo::SetCandidates(const reco::PFBlockRef&  blockRef,
 	temp_Candidate.setVertexSource(PFCandidate::kGSFVertex);
 	
 	// save the superclusterRef when available
-	if(RefGSF->extra().isAvailable() && RefGSF->extra()->seedRef().isAvailable()) {
-	  reco::ElectronSeedRef seedRef=  RefGSF->extra()->seedRef().castTo<reco::ElectronSeedRef>();
-	  if(seedRef.isAvailable() && seedRef->isEcalDriven()) {
-	    reco::SuperClusterRef scRef = seedRef->caloCluster().castTo<reco::SuperClusterRef>();
+	if(RefGSF->extra().isAvailable() && RefGSF->extra()->seedPtr() != nullptr) {
+          const auto seedPtr = dynamic_cast<const reco::ElectronSeed *>(RefGSF->extra()->seedPtr());
+	  if(seedPtr != nullptr && seedPtr->isEcalDriven()) {
+	    reco::SuperClusterRef scRef = seedPtr->caloCluster().castTo<reco::SuperClusterRef>();
 	    if(scRef.isNonnull())  
 	      temp_Candidate.setSuperClusterRef(scRef);
 	  }

@@ -342,10 +342,10 @@ getPFCandMatch(const reco::PFCandidate& cand,
       for( auto ipf = pf->begin(); ipf != pf->end(); ++ipf ) {
 	if( std::abs(ipf->pdgId()) == pdgid_search  && pdgid_search == 11) {
 	  reco::GsfTrackRef gsfref = ipf->gsfTrackRef();	    
-	  reco::ElectronSeedRef sRef = gsfref->seedRef().castTo<reco::ElectronSeedRef>();
-	  if( sRef.isNonnull() && sRef.isAvailable() && sRef->isEcalDriven() ) {
-	    reco::SuperClusterRef temp(sRef->caloCluster().castTo<reco::SuperClusterRef>());
-	    if( scref == temp ) {
+          const auto sPtr = dynamic_cast<const reco::ElectronSeed *>(gsfref->seedPtr());
+	  if( sPtr != nullptr && sPtr->isEcalDriven() ) {
+            const auto seedIndex = gsfref->seedIndex();
+            if( scref.key() == seedIndex.second && scref.id() == seedIndex.first ) {
 	      return true;
 	    }
 	  }

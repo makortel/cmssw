@@ -199,12 +199,12 @@ PFElecTkProducer::produce(Event& iEvent, const EventSetup& iSetup)
 	bool isEcalDriven = true;
 	bool isTrackerDriven = true;
 	
-	if (&(*trackRef->seedRef())==nullptr) {
+	if (trackRef->seedPtr()==nullptr) {
 	  isEcalDriven = false;
 	  isTrackerDriven = false;
 	}
 	else {
-	  auto const& SeedFromRef= static_cast<ElectronSeed const&>(*(trackRef->extra()->seedRef()) );
+	  auto const& SeedFromRef= static_cast<ElectronSeed const&>(*(trackRef->seedPtr()) );
 	  if(SeedFromRef.caloCluster().isNull())
 	    isEcalDriven = false;
 	  if(SeedFromRef.ctfTrack().isNull())
@@ -482,8 +482,8 @@ PFElecTkProducer::FindPfRef(const reco::PFRecTrackCollection  & PfRTkColl,
 // -- method to apply gsf electron selection to EcalDriven seeds
 bool 
 PFElecTkProducer::applySelection(const reco::GsfTrack& gsftk) {
-  if (&(*gsftk.seedRef())==nullptr) return false;
-  auto const& ElSeedFromRef=static_cast<ElectronSeed const&>( *(gsftk.extra()->seedRef()) );
+  if (gsftk.seedPtr())==nullptr) return false;
+  auto const& ElSeedFromRef=static_cast<ElectronSeed const&>( *(gsftk.seedPtr()) );
 
   bool passCut = false;
   if (ElSeedFromRef.ctfTrack().isNull()){

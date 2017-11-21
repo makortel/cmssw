@@ -130,7 +130,7 @@ namespace {
   
   struct SeedMatchesToSCElement : public PFFlaggedElementMatcher {
     reco::SuperClusterRef _scfromseed;
-    SeedMatchesToSCElement(const reco::ElectronSeedRef& s) {
+    SeedMatchesToSCElement(const reco::ElectronSeed *s) {
       _scfromseed = s->caloCluster().castTo<reco::SuperClusterRef>();
     }
     bool operator() (const PFFlaggedElement& elem) {
@@ -164,7 +164,7 @@ namespace {
   struct SeedMatchesToProtoObject : public POMatcher {
     reco::SuperClusterRef _scfromseed;
     bool _ispfsc;
-    SeedMatchesToProtoObject(const reco::ElectronSeedRef& s) {
+    SeedMatchesToProtoObject(const reco::ElectronSeed *s) {
       _scfromseed = s->caloCluster().castTo<reco::SuperClusterRef>();
       _ispfsc = false;
       if( _scfromseed.isNonnull() ) {
@@ -996,7 +996,7 @@ initializeProtoCands(std::list<PFEGammaAlgo::ProtoEGObject>& egobjs) {
   // step 2: build GSF-seed-based proto-candidates
   reco::GsfTrackRef gsfref_forextra;
   reco::TrackExtraRef gsftrk_extra;
-  reco::ElectronSeedRef theseedref; 
+  const reco::ElectronSeed *theseedptr = nullptr; 
   std::list<ProtoEGObject>::iterator objsbegin, objsend;  
   for( auto& element : _splayedblock[PFBlockElement::GSF] ) {
     LOGDRESSED("PFEGammaAlgo") 
@@ -1017,12 +1017,12 @@ initializeProtoCands(std::list<PFEGammaAlgo::ProtoEGObject>& egobjs) {
     gsfref_forextra = elementAsGSF->GsftrackRef();
     gsftrk_extra = ( gsfref_forextra.isAvailable() ? 
 		     gsfref_forextra->extra() : reco::TrackExtraRef() );
-    theseedref = ( gsftrk_extra.isAvailable() ?
-		   gsftrk_extra->seedRef().castTo<reco::ElectronSeedRef>() :
-		   reco::ElectronSeedRef() );  
-    fromGSF.electronSeed = theseedref;
+    theseedptr = ( gsftrk_extra.isAvailable() ?
+		   dynamic_cast<const reco::ElectronSeed *>(gsftrk_extra->seedPtr()) :
+		   nullptr );  
+    fromGSF.electronSeed = theseedptr;
     // exception if there's no seed
-    if(fromGSF.electronSeed.isNull() || !fromGSF.electronSeed.isAvailable()) {
+    if(fromGSF.electronSeed == nullptr) {
       std::stringstream gsf_err;
       elementAsGSF->Dump(gsf_err,"\t");
       throw cms::Exception("PFEGammaAlgo::initializeProtoCands()")
@@ -1059,11 +1059,9 @@ initializeProtoCands(std::list<PFEGammaAlgo::ProtoEGObject>& egobjs) {
 	 << "GSF-based proto-object is ECAL driven, merging SC-cand"
 	 << std::endl;
        LOGVERB("PFEGammaAlgo")
-	 << "ECAL Seed Ptr: " << fromGSF.electronSeed.get() 
-	 << " isAvailable: " << fromGSF.electronSeed.isAvailable() 
-	 << " isNonnull: " << fromGSF.electronSeed.isNonnull() 
+	 << "ECAL Seed Ptr: " << fromGSF.electronSeed
 	 << std::endl;           
-       SeedMatchesToProtoObject sctoseedmatch(fromGSF.electronSeed);      
+       SeedMatchesToProtoObject sctoseedmatch(fromGSF.electronSeed);
        objsbegin = _refinableObjects.begin();
        objsend   = _refinableObjects.end();
        // this auto is a std::list<ProtoEGObject>::iterator
