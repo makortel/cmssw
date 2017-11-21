@@ -205,13 +205,24 @@ public:
         return extra_->seedDirection();
     }
 
-    /**  return the edm::reference to the trajectory seed in the original
-     *   seeds collection. If the collection has been dropped from the
-     *   Event, the reference may be invalid. Its validity should be tested,
-     *   before the reference is actually used.
+    /**
+     * Return raw pointer (object owned elsewhere, lifetime as long as
+     * this Track object) to the trajectory seed in the seeds
+     * collection. As it is a raw pointer, it is non-null only in the
+     * job creating the tracks. Always test if the pointer is null
+     * before use.
      */
-    const edm::RefToBase<TrajectorySeed>& seedRef() const {
-        return extra_->seedRef();
+    const TrajectorySeed *seedPtr() const {
+        return extra_->seedPtr();
+    }
+
+    /**
+     * Return edm::ProductID to the original trajectory seed collection
+     * and in index within the collection to allow identifying the seed
+     * also jobs subsequent to the job that produced the tracks.
+     */
+    std::pair<edm::ProductID, size_t> seedIndex() const {
+        return extra_->seedIndex();
     }
 
     /// get the residuals

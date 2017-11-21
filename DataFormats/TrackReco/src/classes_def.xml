@@ -301,7 +301,9 @@
   </ioread>
 
 
-  <class name="reco::TrackExtra" ClassVersion="14">
+  <class name="reco::TrackExtra" ClassVersion="15">
+   <version ClassVersion="15" checksum="2730960955"/>
+    <field name="seedPtr_" transient="true"/>
    <version ClassVersion="14" checksum="388593738"/>
    <version ClassVersion="13" checksum="2526033150"/>
    <version ClassVersion="12" checksum="106004853"/>
@@ -312,6 +314,9 @@
     <field name="innerPosition_" iotype="ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<Double32_t>,ROOT::Math::DefaultCoordinateSystemTag>" /> 
     <field name="innerMomentum_" iotype="ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<Double32_t>,ROOT::Math::DefaultCoordinateSystemTag>" /> 
   </class>
+  <ioread sourceClass = "reco::TrackExtra" version="[-14]" targetClass="reco::TrackExtra" source="edm::RefToBase<TrajectorySeed> seedRef_" target="seedIndex_">
+    <![CDATA[seedIndex_ = std::make_pair(onfile.seedRef_.id(), onfile.seedRef_.key());]]>
+  </ioread>
   <class name="std::vector<reco::TrackExtra>"/>
   <class name="edm::Wrapper<std::vector<reco::TrackExtra> >"/>
   <class name="edm::RefProd<std::vector<reco::TrackExtra> >"/>

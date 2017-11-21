@@ -116,10 +116,11 @@ void KfTrackProducerBase::putInEvt(edm::Event& evt,
       }
     //==============================================================
     
+    auto seedRef = theTraj->seedRef();
     selTrackExtras->push_back( reco::TrackExtra (outpos, outmom, true, inpos, inmom, true,
 						 outertsos.curvilinearError(), outerId,
 						 innertsos.curvilinearError(), innerId,
-    						 seedDir, theTraj->seedRef()));
+						 seedDir, std::make_pair(seedRef.id(), seedRef.key()), &(*seedRef)));
 
     // FIXME will remove this obsolete config-param in a future PR 
     assert(!useSplitting);

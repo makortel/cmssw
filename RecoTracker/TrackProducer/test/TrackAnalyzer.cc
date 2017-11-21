@@ -62,8 +62,8 @@ class TrackAnalyzer : public edm::EDAnalyzer {
       cout<<"\tFrom EXTRA : "<<endl;
       cout<<"\t\touter PT "<< track->outerPt()<<endl;
       std::cout << "\t direction: " << track->seedDirection() << std::endl;
-      if(!track->seedRef().isNull())
-	std::cout << "\t direction from seedRef: " << track->seedRef()->direction() << std::endl;
+      if(track->seedPtr() != nullptr)
+	std::cout << "\t direction from seedRef: " << track->seedPtr()->direction() << std::endl;
       //
       // try and access Hits
       //

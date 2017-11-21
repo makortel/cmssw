@@ -114,11 +114,12 @@ GsfTrackProducerBase::putInEvt(edm::Event& evt,
 	setSecondHitPattern(theTraj,track,prop,&*mte, ttopo);
       }
     //==============================================================
-    
+
+    auto seedRef = theTraj->seedRef();
     selTrackExtras->push_back( reco::TrackExtra (outpos, outmom, true, inpos, inmom, true,
 						 outertsos.curvilinearError(), outerId,
 						 innertsos.curvilinearError(), innerId,
-						 seedDir, theTraj->seedRef()));
+						 seedDir, std::make_pair(seedRef.id(), seedRef.key()), &(*seedRef)));
 
 
     reco::TrackExtra & tx = selTrackExtras->back();

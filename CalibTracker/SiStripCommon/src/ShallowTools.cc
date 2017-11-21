@@ -1,6 +1,7 @@
 #include "CalibTracker/SiStripCommon/interface/ShallowTools.h"
 
 #include "FWCore/Framework/interface/Event.h"
+#include "DataFormats/Common/interface/View.h"
 #include "DataFormats/SiStripCluster/interface/SiStripCluster.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "CondFormats/SiStripObjects/interface/SiStripLorentzAngle.h"

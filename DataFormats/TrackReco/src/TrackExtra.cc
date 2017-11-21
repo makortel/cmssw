@@ -8,7 +8,7 @@ TrackExtra::TrackExtra(const Point &outerPosition, const Vector &outerMomentum,
                        bool iok, const CovarianceMatrix &outerCov, unsigned int outerId,
                        const CovarianceMatrix &innerCov, unsigned int innerId,
                        PropagationDirection seedDir,
-                       edm::RefToBase<TrajectorySeed> seedRef):
+                       std::pair<edm::ProductID, size_t> seedIndex, const TrajectorySeed *seedPtr):
 
     TrackExtraBase(),
     outerPosition_(outerPosition),
@@ -20,7 +20,8 @@ TrackExtra::TrackExtra(const Point &outerPosition, const Vector &outerMomentum,
     innerOk_(iok),
     innerDetId_(innerId),
     seedDir_(seedDir),
-    seedRef_(seedRef)
+    seedIndex_(seedIndex),
+    seedPtr_(seedPtr)
 {
     index idx = 0;
     for (index i = 0; i < dimension; ++i) {

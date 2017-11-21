@@ -12,7 +12,6 @@
  *
  */
 #include <Rtypes.h>
-#include "DataFormats/Common/interface/RefToBase.h"
 #include "DataFormats/Math/interface/Vector3D.h"
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/Math/interface/Error.h"
@@ -50,12 +49,25 @@ public:
         innerOk_(false),
         innerDetId_(0),
         seedDir_(anyDirection),
-        seedRef_() {
+        seedIndex_() {
         for (index i = 0; i < covarianceSize; ++i) {
             outerCovariance_[i] = 0;
             innerCovariance_[i] = 0;
         }
     }
+
+    /// constructor from outermost/innermost position and momentum
+    TrackExtra(const Point & outerPosition, const Vector & outerMomentum, bool ok ,
+               const Point & innerPosition, const Vector & innerMomentum, bool iok,
+               const CovarianceMatrix& outerState, unsigned int outerId,
+               const CovarianceMatrix& innerState, unsigned int innerId,
+               PropagationDirection seedDir):
+      TrackExtra(outerPosition, outerMomentum, ok,
+                 innerPosition, innerMomentum, iok,
+                 outerState, outerId,
+                 innerState, innerId,
+                 seedDir, std::make_pair(edm::ProductID(), size_t(0)), nullptr)
+    {}
 
     /// constructor from outermost/innermost position and momentum and Seed information
     TrackExtra(const Point & outerPosition, const Vector & outerMomentum, bool ok ,
@@ -63,7 +75,7 @@ public:
                const CovarianceMatrix& outerState, unsigned int outerId,
                const CovarianceMatrix& innerState, unsigned int innerId,
                PropagationDirection seedDir,
-               edm::RefToBase<TrajectorySeed> seedRef = edm::RefToBase<TrajectorySeed>());
+               std::pair<edm::ProductID, size_t> seedIndex, const TrajectorySeed *seedPtr);
 
     /// outermost hit position
     const Point &outerPosition() const {
@@ -159,16 +171,28 @@ public:
         return seedDir_;
     }
 
-    /**  return the edm::reference to the trajectory seed in the original
-     *   seeds collection. If the collection has been dropped from the
-     *   Event, the reference may be invalid. Its validity should be tested,
-     *   before the reference is actually used.
+    /**
+     * Return raw pointer (object owned elsewhere, lifetime as long as
+     * this Track object) to the trajectory seed in the seeds
+     * collection. As it is a raw pointer, it is non-null only in the
+     * job creating the tracks. Always test if the pointer is null
+     * before use.
      */
-    const edm::RefToBase<TrajectorySeed>& seedRef() const {
-        return seedRef_;
+    const TrajectorySeed *seedPtr() const {
+        return seedPtr_;
     }
-    void setSeedRef(const edm::RefToBase<TrajectorySeed> &r) {
-        seedRef_ = r;
+
+    /**
+     * Return edm::ProductID to the original trajectory seed collection
+     * and in index within the collection to allow identifying the seed
+     * also jobs subsequent to the job that produced the tracks.
+     */
+    std::pair<edm::ProductID, size_t> seedIndex() const {
+        return seedIndex_;
+    }
+    void setSeedIndex(std::pair<edm::ProductID, size_t> ind, const TrajectorySeed *ptr) {
+        seedIndex_ = ind;
+        seedPtr_ = ptr;
     }
     /// set the residuals
     void setResiduals(const TrackResiduals &r) {
@@ -204,7 +228,8 @@ private:
     unsigned int innerDetId_;
 
     PropagationDirection seedDir_;
-    edm::RefToBase<TrajectorySeed> seedRef_;
+    std::pair<edm::ProductID, size_t> seedIndex_;
+    const TrajectorySeed *seedPtr_ = nullptr;
 
     /// unbiased track residuals
     TrackResiduals trackResiduals_;
