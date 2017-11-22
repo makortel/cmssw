@@ -14,16 +14,18 @@
 
 namespace {
   struct lwtnn {
-    lwtnn(const edm::ParameterSet& cfg) {
+    lwtnn(const edm::ParameterSet& cfg){
       // TODO: investigate if the construction of the NN could be
       // moved to an ESProducer (or if it is worth of the effort) as
       // in our case we will use the same network N times with
       // different input collections (and cuts).
 
-      const auto fileName = cfg.getParameter<edm::FileInPath>("fileName");
+//      const auto fileName = cfg.getParameter<edm::FileInPath>("fileName");
 
-      std::ifstream jsonfile(fileName.fullPath());
+//      std::ifstream jsonfile(fileName.fullPath().c_str());
+      std::ifstream jsonfile("/afs/cern.ch/work/j/jhavukai/private/LWTNNinCMSSW/CMSSW_9_4_0_pre3/src/RecoTracker/FinalTrackSelectors/plugins/neural_net.json"); 
       auto config = lwt::parse_json(jsonfile);
+//      std::cout<<"Generated config"<<std::endl;
 
       neuralNetwork_ = std::make_unique<lwt::LightweightNeuralNetwork>(config.inputs, config.layers, config.outputs);
     }
@@ -31,7 +33,8 @@ namespace {
     static const char *name() { return "TrackLwtnnClassifier"; }
 
     static void fillDescriptions(edm::ParameterSetDescription& desc) {
-      desc.add<edm::FileInPath>("fileName", edm::FileInPath());
+//      desc.add<edm::FileInPath>("fileName", edm::FileInPath());
+//	desc.add<edm::FileInPath>("/afs/cern.ch/work/j/jhavukai/private/LWTNNinCMSSW/CMSSW_9_4_0_pre3/src/RecoTracker/FinalTrackSelectors/plugins/neural_net.json");
     }
 
     void beginStream() {}
@@ -70,7 +73,9 @@ namespace {
       // there should only one output
       if(out.size() != 1) throw cms::Exception("LogicError") << "Expecting exactly one output from NN, got " << out.size();
 
-      return out.begin()->second;
+
+      float output = 2.0*out.begin()->second-1.0;
+      return output;
     }
 
 
