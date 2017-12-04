@@ -12,6 +12,7 @@
 #include "DataFormats/Common/interface/Ptr.h"
 #include "DataFormats/Common/interface/PtrVector.h"
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include <memory>
 #include "boost/static_assert.hpp"
 #include "boost/type_traits.hpp"
@@ -95,6 +96,8 @@ namespace helper {
     ObjectSelectorBase( const edm::ParameterSet &) {
       this-> template produces<OutputCollection>();
     }    
+
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {}
   };
 
   template<typename OutputCollection, typename EdmFilter=edm::EDFilter>

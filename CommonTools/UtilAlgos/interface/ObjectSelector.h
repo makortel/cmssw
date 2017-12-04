@@ -16,6 +16,8 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
 #include "CommonTools/UtilAlgos/interface/NonNullNumberSelector.h"
@@ -47,6 +49,7 @@ public:
     selector_(cfg, this->consumesCollector()),
     sizeSelector_(reco::modules::make<SizeSelector>(cfg)),
     postProcessor_(cfg, this->consumesCollector()) {
+    // with fillDescriptions the "filter" parameter treatment below is not needed
     const std::string filter("filter");
     std::vector<std::string> bools = cfg.template getParameterNamesForType<bool>();
     bool found = std::find(bools.begin(), bools.end(), filter) != bools.end();
@@ -55,6 +58,17 @@ public:
    }
   /// destructor
   ~ObjectSelector() override { }
+
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+    edm::ParameterSetDescription desc;
+    desc.add<edm::InputTag>("src", edm::InputTag());
+    desc.add<bool>("filter", false);
+    Base::fillPSetDescription(desc);
+    Selector::fillPSetDescription(desc);
+    reco::modules::fillPSetDescription<SizeSelector>(desc);
+    PostProcessor::fillPSetDescription(desc);
+    descriptions.addWithDefaultLabel(desc);
+  }
 
 private:
   /// process one event
