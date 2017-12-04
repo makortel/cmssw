@@ -13,6 +13,7 @@
  *
  */
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "CommonTools/UtilAlgos/interface/SelectionAdderTrait.h"
 #include "CommonTools/UtilAlgos/interface/StoreContainerTrait.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
@@ -39,6 +40,11 @@ struct SingleElementCollectionSelector {
   typedef typename container::const_iterator const_iterator;
   SingleElementCollectionSelector(const edm::ParameterSet & cfg, edm::ConsumesCollector && iC) :
     select_(reco::modules::make<Selector>(cfg, iC)) { }
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    reco::modules::fillPSetDescription<Selector>(desc);
+  }
+
   const_iterator begin() const { return selected_.begin(); }
   const_iterator end() const { return selected_.end(); }
   void select(const edm::Handle<InputCollection> & c, const edm::Event &, const edm::EventSetup&) {
