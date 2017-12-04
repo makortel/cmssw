@@ -25,17 +25,8 @@ template<typename InputCollection, typename Selector,
 	 typename StoreManager = typename ::helper::StoreManagerTrait<OutputCollection, EdmFilter>::type,
 	 typename Base = typename ::helper::StoreManagerTrait<OutputCollection, EdmFilter>::base,
 	 typename RefAdder = typename ::helper::SelectionAdderTrait<InputCollection, StoreContainer>::type>
-class SingleObjectSelectorBase : 
-  public ObjectSelector<SingleElementCollectionSelector<InputCollection, Selector, OutputCollection, StoreContainer, RefAdder>, 
-			OutputCollection, NonNullNumberSelector, PostProcessor, StoreManager, Base> {
-public:
-  // SingleObjectSelectorBase() = default;
-  explicit SingleObjectSelectorBase( const edm::ParameterSet & cfg ) :
-    ObjectSelector<SingleElementCollectionSelector<InputCollection, Selector, OutputCollection, StoreContainer, RefAdder>, 
-		   OutputCollection, NonNullNumberSelector, PostProcessor, StoreManager, Base>( cfg ) { }
-  ~SingleObjectSelectorBase() override { }
-};
-
+using SingleObjectSelectorBase = ObjectSelector<SingleElementCollectionSelector<InputCollection, Selector, OutputCollection, StoreContainer, RefAdder>, 
+                                                OutputCollection, NonNullNumberSelector, PostProcessor, StoreManager, Base>;
 
 
 template<typename InputCollection, typename Selector,
