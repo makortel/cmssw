@@ -12,7 +12,7 @@ from PhysicsTools.PatAlgos.recoLayer0.tauDiscriminators_cff import *
 
 # add PAT specifics
 from PhysicsTools.JetMCAlgos.TauGenJets_cfi import *
-from PhysicsTools.JetMCAlgos.TauGenJetsDecayModeSelectorAllHadrons_cfi import *
+from PhysicsTools.JetMCAlgos.tauGenJetsDecayModeSelectorAllHadrons_cfi import *
 from PhysicsTools.PatAlgos.mcMatchLayer0.tauMatch_cfi import *
 
 # produce object
