@@ -24,6 +24,7 @@
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "CommonTools/RecoAlgos/interface/ClusterStorer.h"
 #include "CommonTools/UtilAlgos/interface/ObjectSelector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 namespace helper {
   struct MuonCollectionStoreManager {
@@ -167,6 +168,8 @@ namespace helper {
       produces<TrackingRecHitCollection>("StandAlone").setBranchAlias( alias + "StandAloneHits" );
 
     }
+
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {}
    }; // (end of class MuonSelectorBase)
 
 
