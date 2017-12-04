@@ -25,6 +25,7 @@
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "CommonTools/RecoAlgos/interface/ClusterStorer.h"
 #include "CommonTools/UtilAlgos/interface/ObjectSelector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 
 namespace helper {
@@ -143,6 +144,8 @@ namespace helper {
       produces< edmNew::DetSetVector<SiPixelCluster> >().setBranchAlias( alias + "PixelClusters" );
       produces< edmNew::DetSetVector<SiStripCluster> >().setBranchAlias( alias + "StripClusters" );
     }
+
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {}
   };  // (end of class TrackSelectorBase)
 
 
