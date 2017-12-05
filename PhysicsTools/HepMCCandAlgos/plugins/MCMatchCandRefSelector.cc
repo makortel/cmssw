@@ -3,6 +3,7 @@
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "CommonTools/UtilAlgos/interface/EventSetupInitTrait.h"
@@ -42,6 +43,10 @@ namespace reco {
     struct ParameterAdapter<MCMatchCandRefSelector> {
       static MCMatchCandRefSelector make(const ParameterSet & cfg, edm::ConsumesCollector & iC) {
 	return MCMatchCandRefSelector(iC.consumes<GenParticleMatch>(cfg.getParameter<InputTag>("match")));
+      }
+
+      static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+        desc.add<edm::InputTag>("match", edm::InputTag());
       }
     };
 
