@@ -16,6 +16,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
@@ -26,6 +27,8 @@ public:
   typedef std::vector<const reco::Vertex*> container;
   typedef container::const_iterator const_iterator;
   PATPrimaryVertexSelector (const edm::ParameterSet& cfg, edm::ConsumesCollector && iC);
+  /// needed for use with an ObjectSelector
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
   /// needed for use with an ObjectSelector
   const_iterator begin() const { return selected_.begin(); }
   /// needed for use with an ObjectSelector

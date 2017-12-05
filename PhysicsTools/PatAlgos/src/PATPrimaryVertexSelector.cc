@@ -14,6 +14,16 @@ PATPrimaryVertexSelector::PATPrimaryVertexSelector (const edm::ParameterSet& cfg
   dr2Cut_ *= dr2Cut_;
 }
 
+void PATPrimaryVertexSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  // default values are from the hat as there was no example where to get them
+  desc.add<unsigned int>("minMultiplicity", 0);
+  desc.add<double>("minPtSum", 0.);
+  desc.add<double>("maxTrackEta", 0.);
+  desc.add<double>("maxNormChi2", 0.);
+  desc.add<double>("maxDeltaR", 0.);
+  desc.add<double>("maxDletaZ", 0.);
+}
+
 void
 PATPrimaryVertexSelector::select (const edm::Handle<collection>& handle,
 				  const edm::Event& event,
