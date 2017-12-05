@@ -1,4 +1,5 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "Alignment/CommonAlignmentProducer/interface/AlignmentSeedSelector.h"
 
@@ -20,6 +21,13 @@ AlignmentSeedSelector::AlignmentSeedSelector(const edm::ParameterSet & cfg) :
 
 AlignmentSeedSelector::~AlignmentSeedSelector()
 {}
+
+void fillPSetDescription(edm::ParameterSetDescription& desc) {
+  // default values are from the hat as there was no example where to get them
+  desc.add<bool>("applySeedNumber", false);
+  desc.add<int>("minNSeeds", 0);
+  desc.add<int>("maxNSeeds", 0);
+}
 
 
 // do selection ---------------------------------------------------------------

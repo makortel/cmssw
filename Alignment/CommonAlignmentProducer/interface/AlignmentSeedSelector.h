@@ -2,6 +2,7 @@
 #define Alignment_CommonAlignmentAlgorithm_AlignmentSeedSelector_h
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "DataFormats/TrajectorySeed/interface/TrajectorySeed.h"
 #include <vector>
 
@@ -19,6 +20,8 @@ class AlignmentSeedSelector
 
   /// destructor
   ~AlignmentSeedSelector();
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
   /// select tracks
   Seeds select(const Seeds& seeds, const edm::Event& evt) const;
