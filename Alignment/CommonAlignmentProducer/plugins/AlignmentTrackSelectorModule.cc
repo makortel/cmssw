@@ -1,6 +1,8 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ObjectSelectorStream.h"
 
 //the selectores used to select the tracks
@@ -66,5 +68,25 @@ private:
 };
 
 typedef ObjectSelectorStream<TrackConfigSelector>  AlignmentTrackSelectorModule;
+
+template <>
+void AlignmentTrackSelectorModule::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+
+  desc.add<edm::InputTag>("src", edm::InputTag("generalTracks"));
+  desc.add<bool>("filter", false);
+
+  AlignmentTrackSelector::fillPSetDescription(desc);
+
+  edm::ParameterSetDescription descGlobalSelector;
+  AlignmentGlobalTrackSelector::fillPSetDescription(descGlobalSelector);
+  desc.add<edm::ParameterSetDescription>("GlobalSelector", descGlobalSelector)->setComment("Settings for the global track selector");
+
+  edm::ParameterSetDescription descTwoBodyDecaySelector;
+  AlignmentTwoBodyDecayTrackSelector::fillPSetDescription(descTwoBodyDecaySelector);
+  desc.add<edm::ParameterSetDescription>("TwoBodyDecaySelector", descGlobalSelector)->setComment("Settings for the tow Body Decay TrackSelector");
+
+  descriptions.add("AlignmentTrackSelector", desc);
+}
 
 DEFINE_FWK_MODULE( AlignmentTrackSelectorModule );

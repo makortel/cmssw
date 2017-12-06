@@ -3,6 +3,7 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "FWCore/Framework/interface/Event.h"
 
@@ -231,6 +232,78 @@ AlignmentTrackSelector::AlignmentTrackSelector(const edm::ParameterSet & cfg, ed
 
 AlignmentTrackSelector::~AlignmentTrackSelector()
 {}
+
+void AlignmentTrackSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  // FIXME this should get its own PSet
+  desc.add<bool>("applyBasicCuts", true);
+  desc.add<double>("ptMin", 0.0);
+  desc.add<double>("ptMax", 999.0);
+  desc.add<double>("pMin", 0.0);
+  desc.add<double>("pMax", 9999.0);
+  desc.add<double>("etaMin", -2.6);
+  desc.add<double>("etaMax", 2.6);
+  desc.add<double>("phiMax", 3.1416);
+  desc.add<double>("phiMin", -3.1416);
+  desc.add<double>("chi2nMax", 999999.0);
+  desc.add<int>("theCharge", 0)->setComment("1 neg charge, +1 pos charge, 0 all charges");
+  desc.add<double>("d0Min", -999999.0);
+  desc.add<double>("d0Max", 999999.0);
+  desc.add<double>("dzMin", -999999.0);
+  desc.add<double>("dzMax", 999999.0);
+  desc.add<double>("nHitMin", 0.0);
+  desc.add<double>("nHitMax", 999.0);
+  desc.add<double>("nLostHitMax", 999.0);
+  desc.add<unsigned int>("nHitMin2D", 0);
+  desc.add<std::vector<double>>("RorZofFirstHitMin", {0.0, 0.0});
+  desc.add<std::vector<double>>("RorZofFirstHitMax", {999.0, 999.0});
+  desc.add<std::vector<double>>("RorZofLastHitMin", {0.0, 0.0});
+  desc.add<std::vector<double>>("RorZofLastHitMax", {999.0, 999.0});
+  desc.add<bool>("countStereoHitAs2D", true);
+  {
+    edm::ParameterSetDescription psd0;
+    psd0.add<int>("inTEC", 0);
+    psd0.add<int>("inTOB", 0);
+    psd0.add<int>("inFPIX", 0);
+    psd0.add<int>("inTID", 0);
+    psd0.add<int>("inBPIX", 0);
+    psd0.add<int>("inTIB", 0);
+    psd0.add<int>("inPIXEL", 0);
+    psd0.add<int>("inTIDplus", 0);
+    psd0.add<int>("inTIDminus", 0);
+    psd0.add<int>("inTECplus", 0);
+    psd0.add<int>("inTECminus", 0);
+    psd0.add<int>("inFPIXplus", 0);
+    psd0.add<int>("inFPIXminus", 0);
+    psd0.add<int>("inENDCAP", 0);
+    psd0.add<int>("inENDCAPplus", 0);
+    psd0.add<int>("inENDCAPminus", 0);
+    desc.add<edm::ParameterSetDescription>("minHitsPerSubDet", psd0);
+  }
+  desc.add<double>("maxHitDiffEndcaps", 999.0);
+  desc.add<int>("seedOnlyFrom", 0);
+
+  desc.add<bool>("applyMultiplicityFilter", false);
+  desc.add<int>("minMultiplicity", 1);
+  desc.add<int>("maxMultiplicity", 999999);
+  desc.add<bool>("multiplicityOnInput", false);
+
+  desc.add<bool>("applyNHighestPt", false);
+  desc.add<int>("nHighestPt", 2);
+
+  desc.add<edm::InputTag>("rphirecHits", edm::InputTag("siStripMatchedRecHits","rphiRecHit"));
+  desc.add<edm::InputTag>("matchedrecHits", edm::InputTag("siStripMatchedRecHits","matchedRecHit"));
+  desc.add<bool>("applyIsolationCut", false);
+  desc.add<double>("minHitIsolation", 0.01);
+  desc.add<bool>("applyChargeCheck", false);
+  desc.add<double>("minHitChargeStrip", 20.0);
+
+  desc.add<std::vector<std::string>>("trackQualities", {})->setComment("take all if empty");
+  desc.add<std::vector<std::string>>("iterativeTrackingSteps", {})->setComment("take all if empty");
+
+  // settings for filtering on the hits taken by the Skim&Prescale workflow
+  desc.add<edm::InputTag>("hitPrescaleMapTag", edm::InputTag(""))->setComment("setting for filtering on the hits taken by the Skim&Prescale workflow");
+  desc.add<int>("minPrescaledHits", -1)->setComment("setting for filtering on the hits taken by the Skim&Prescale workflow");
+}
 
 
 // do selection ---------------------------------------------------------------

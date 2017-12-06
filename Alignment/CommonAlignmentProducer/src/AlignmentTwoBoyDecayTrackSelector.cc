@@ -4,6 +4,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/InputTag.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 //DataFormats
 #include <DataFormats/TrackReco/interface/Track.h>
@@ -70,6 +71,27 @@ AlignmentTwoBodyDecayTrackSelector::AlignmentTwoBodyDecayTrackSelector(const edm
 AlignmentTwoBodyDecayTrackSelector::~AlignmentTwoBodyDecayTrackSelector()
 {}
 
+void AlignmentTwoBodyDecayTrackSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<bool>("applyMassrangeFilter", false);
+  desc.add<double>("daughterMass", 0.105)->setComment("in GeV");
+
+  desc.add<bool>("useUnsignedCharge", true);
+  desc.add<edm::InputTag>("missingETSource", edm::InputTag("met"));
+  desc.add<double>("maxXMass", 15000.0)->setComment("in GeV");
+
+  desc.add<int>("charge", 0);
+  desc.add<double>("acoplanarDistance", 1.0)->setComment("in radian");
+
+  desc.add<double>("minXMass", 0.0)->setComment("in GeV");
+
+  desc.add<bool>("applyChargeFilter", false);
+  desc.add<bool>("applyAcoplanarityFilter", false);
+  desc.add<bool>("applyMissingETFilter", false);
+
+  desc.add<unsigned int>("numberOfCandidates", 1);
+  desc.add<bool>("applySecThreshold", false);
+  desc.add<double>("secondThreshold", 6.0);
+}
 
 ///returns if any of the Filters is used.
 bool AlignmentTwoBodyDecayTrackSelector::useThisFilter()

@@ -5,6 +5,7 @@
 //Framework
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 //STL
 #include <vector>
@@ -25,6 +26,8 @@ class AlignmentTwoBodyDecayTrackSelector
 
   /// destructor
   ~AlignmentTwoBodyDecayTrackSelector();
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
   /// select tracks
   Tracks select(const Tracks& tracks, const edm::Event& iEvent, const edm::EventSetup& iSetup);

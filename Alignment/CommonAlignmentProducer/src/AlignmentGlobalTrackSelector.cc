@@ -3,6 +3,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/InputTag.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 //DataFormats
 #include <DataFormats/Candidate/interface/Particle.h>
@@ -73,6 +74,27 @@ AlignmentGlobalTrackSelector::AlignmentGlobalTrackSelector(const edm::ParameterS
 // destructor -----------------------------------------------------------------
 AlignmentGlobalTrackSelector::~AlignmentGlobalTrackSelector()
 {}
+
+void AlignmentGlobalTrackSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  // for global muon finding
+  desc.add<bool>("applyGlobalMuonFilter", false);
+  desc.add<edm::InputTag>("muonSource", edm::InputTag("muons"));
+  desc.add<double>("maxTrackDeltaR", 0.001);
+  desc.add<int>("minGlobalMuonCount", 1);
+
+  // for isolation tests
+  desc.add<bool>("applyIsolationtest", false);
+  desc.add<edm::InputTag>("jetIsoSource", edm::InputTag("kt6CaloJets"));
+  desc.add<double>("maxJetPt", 40.0);
+  desc.add<double>("minJetDeltaR", 0.2);
+  desc.add<int>("minIsolatedCount", 0);
+
+  // for Jet Count
+  desc.add<bool>("applyJetCountFilter", false);
+  desc.add<edm::InputTag>("jetCountSource", edm::InputTag("kt6CaloJets"));
+  desc.add<int>("maxJetCount", 3);
+  desc.add<double>("minJetPt", 40.0);
+}
 
 ///returns if any of the Filters is used.
 bool AlignmentGlobalTrackSelector::useThisFilter()

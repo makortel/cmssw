@@ -8,12 +8,12 @@
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include <vector>
 
 namespace edm {
   class Event;
   class EventSetup;
-  class ParameterSet;
 }
 
 class TrackingRecHit;
@@ -32,6 +32,8 @@ class AlignmentTrackSelector
 
   /// destructor
   ~AlignmentTrackSelector();
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
   /// select tracks
   Tracks select(const Tracks& tracks, const edm::Event& evt, const edm::EventSetup& eSetup) const;
