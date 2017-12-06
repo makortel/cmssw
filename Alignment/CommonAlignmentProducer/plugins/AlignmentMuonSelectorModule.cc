@@ -14,6 +14,8 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ObjectSelector.h"
 #include "Alignment/CommonAlignmentProducer/interface/AlignmentMuonSelector.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
@@ -53,6 +55,52 @@ private:
 };
 
 typedef ObjectSelector<MuonConfigSelector>  AlignmentMuonSelectorModule;
+
+template<>
+void AlignmentMuonSelectorModule::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+
+  desc.add<edm::InputTag>("src", edm::InputTag("muons"));
+  desc.add<bool>("filter", true);
+
+  desc.add<bool>("applyBasicCuts", true);
+
+  desc.add<double>("pMin", 0.0);
+  desc.add<double>("pMax", 999999.0);
+  desc.add<double>("ptMin", 10.0);
+  desc.add<double>("ptMax", 999999.0);
+  desc.add<double>("etaMin", -2.4);
+  desc.add<double>("etaMax", 2.4);
+  desc.add<double>("phiMin", -3.1416);
+  desc.add<double>("phiMax", 3.1416);
+
+  // Stand Alone Muons
+  desc.add<double>("nHitMinSA", 0.0)->setComment("For Stand Alone Muons");
+  desc.add<double>("nHitMaxSA", 9999999.0)->setComment("For Stand Alone Muons");
+  desc.add<double>("chi2nMaxSA", 9999999.0)->setComment("For Stand Alone Muons");
+
+  // Global Muons
+  desc.add<double>("nHitMinGB", 0.0)->setComment("For Global Muons");
+  desc.add<double>("nHitMaxGB", 9999999.0)->setComment("For Global Muons");
+  desc.add<double>("chi2nMaxGB", 9999999.0)->setComment("For Global Muons");
+
+  // Tracker Only
+  desc.add<double>("nHitMinTO", 0.0)->setComment("For Global Muons");
+  desc.add<double>("nHitMaxTO", 9999999.0)->setComment("For Global Muons");
+  desc.add<double>("chi2nMaxTO", 9999999.0)->setComment("For Global Muons");
+
+  desc.add<bool>("applyNHighestPt", false);
+  desc.add<int>("nHighestPt", 2);
+
+  desc.add<bool>("applyMultiplicityFilter", false);
+  desc.add<int>("minMultiplicity", 1);
+
+  desc.add<bool>("applyMassPairFilter", false)->setComment("copy best mass pair combination muons to result vector\nCriteria:\na) maxMassPair != minMassPair: the two highest pt muons with mass pair inside the given mass window\nb) maxMassPair == minMassPair: the muon pair with mass pair closest to given mass value");
+  desc.add<double>("minMassPair", 89.0);
+  desc.add<double>("maxMassPair", 90.0);
+
+  descriptions.add("AlignmentMuonSelector", desc);
+}
 
 DEFINE_FWK_MODULE( AlignmentMuonSelectorModule );
 
