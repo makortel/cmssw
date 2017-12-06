@@ -1,6 +1,7 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "CommonTools/UtilAlgos/interface/ObjectSelectorStream.h"
 
 //the selectores used to select the tracks
@@ -21,6 +22,10 @@ struct CSCTrackConfigSelector {
       typedef reco::TrackCollection collection;
 
       CSCTrackConfigSelector( const edm::ParameterSet & cfg, edm::ConsumesCollector && iC ) : theBaseSelector(cfg) {}
+
+      static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+        AlignmentCSCTrackSelector::fillPSetDescription(desc);
+      }
 
       const_iterator begin() const { return theSelectedTracks.begin(); }
       const_iterator end() const { return theSelectedTracks.end(); }

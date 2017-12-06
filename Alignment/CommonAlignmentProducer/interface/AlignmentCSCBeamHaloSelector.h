@@ -3,11 +3,11 @@
 
 #include <vector>
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 
 namespace edm {
    class Event;
-   class ParameterSet;
 }
 
 class TrackingRecHit;
@@ -21,6 +21,8 @@ class AlignmentCSCBeamHaloSelector {
 
       /// destructor
       ~AlignmentCSCBeamHaloSelector();
+
+      static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
       /// select tracks
       Tracks select(const Tracks &tracks, const edm::Event &iEvent) const;

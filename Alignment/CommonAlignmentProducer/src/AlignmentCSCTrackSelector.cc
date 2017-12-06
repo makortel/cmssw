@@ -2,6 +2,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "FWCore/Framework/interface/Event.h"
 
@@ -26,6 +27,16 @@ AlignmentCSCTrackSelector::AlignmentCSCTrackSelector(const edm::ParameterSet & c
 
 AlignmentCSCTrackSelector::~AlignmentCSCTrackSelector()
 {}
+
+void AlignmentCSCTrackSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  // default values are from the hat as there was no example where to get them
+  desc.add<edm::InputTag>("src", edm::InputTag());
+  desc.add<int>("stationA", 0);
+  desc.add<int>("stationB", 0);
+  desc.add<int>("minHitsDT", 0);
+  desc.add<int>("minHitsPerStation", 0);
+  desc.add<int>("maxHitsPerStation", 0);
+}
 
 
 // do selection ---------------------------------------------------------------

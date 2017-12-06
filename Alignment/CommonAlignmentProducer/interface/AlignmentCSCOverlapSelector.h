@@ -3,10 +3,10 @@
 
 #include <vector>
 #include "DataFormats/TrackReco/interface/Track.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 namespace edm {
    class Event;
-   class ParameterSet;
 }
 
 class TrackingRecHit;
@@ -20,6 +20,8 @@ class AlignmentCSCOverlapSelector {
 
       /// destructor
       ~AlignmentCSCOverlapSelector();
+
+      static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
       /// select tracks
       Tracks select(const Tracks &tracks, const edm::Event &iEvent) const;

@@ -2,6 +2,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/MuonDetId/interface/MuonSubdetId.h"
@@ -28,6 +29,11 @@ AlignmentCSCOverlapSelector::AlignmentCSCOverlapSelector(const edm::ParameterSet
 // destructor -----------------------------------------------------------------
 
 AlignmentCSCOverlapSelector::~AlignmentCSCOverlapSelector() {}
+
+void AlignmentCSCOverlapSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<int>("station", 0);
+  desc.add<unsigned int>("minHitsPerChamber", 1);
+}
 
 // do selection ---------------------------------------------------------------
 

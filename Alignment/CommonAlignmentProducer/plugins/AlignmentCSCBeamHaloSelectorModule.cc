@@ -1,6 +1,7 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "CommonTools/UtilAlgos/interface/ObjectSelectorStream.h"
 #include "Alignment/CommonAlignmentProducer/interface/AlignmentCSCBeamHaloSelector.h"
 
@@ -20,6 +21,10 @@ struct CSCBeamHaloConfigSelector {
     CSCBeamHaloConfigSelector(cfg, iC) {}
   CSCBeamHaloConfigSelector( const edm::ParameterSet & cfg, edm::ConsumesCollector & iC ) :
     theSelector(cfg, iC) {}
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    AlignmentCSCBeamHaloSelector::fillPSetDescription(desc);
+  }
 
   const_iterator begin() const { return selected_.begin(); }
   const_iterator end() const { return selected_.end(); }
