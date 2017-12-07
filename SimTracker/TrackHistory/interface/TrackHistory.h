@@ -1,3 +1,4 @@
+
 #ifndef TrackHistory_h
 #define TrackHistory_h
 
@@ -8,6 +9,7 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 #include "SimDataFormats/Associations/interface/TrackToTrackingParticleAssociator.h"
 #include "SimTracker/TrackHistory/interface/HistoryBase.h"
@@ -26,6 +28,8 @@ public:
     */
     TrackHistory(const edm::ParameterSet &,
                  edm::ConsumesCollector&& );
+
+    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
 
     //! Pre-process event information (for accessing reconstruction information)
     void newEvent(const edm::Event &, const edm::EventSetup &);

@@ -92,6 +92,30 @@ TrackerHitAssociator::Config::Config(const edm::ParameterSet& conf, edm::Consume
   }
  }
 
+void TrackerHitAssociator::Config::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<bool>("associatePixel", true);
+  desc.add<bool>("associateStrip", true);
+  desc.add<bool>("associateRecoTracks", true);
+  desc.add<bool>("associateHitBySimTrack", false);
+  desc.add<bool>("usePhase2Tracker", false);
+
+  desc.add<edm::InputTag>("phase2TrackerSimLinkSrc", edm::InputTag());
+  desc.add<edm::InputTag>("stripSimLinkSrc", edm::InputTag("simSiStripDigis"));
+  desc.add<edm::InputTag>("pixelDigiSimLink", edm::InputTag("simSiPixelDigis"));
+  desc.add<std::vector<std::string> >("ROUList", {"TrackerHitsTIBLowTof",
+                                                  "TrackerHitsTIBHighTof",
+                                                  "TrackerHitsTIDLowTof",
+                                                  "TrackerHitsTIDHighTof",
+                                                  "TrackerHitsTOBLowTof",
+                                                  "TrackerHitsTOBHighTof",
+                                                  "TrackerHitsTECLowTof",
+                                                  "TrackerHitsTECHighTof",
+                                                  "TrackerHitsPixelBarrelLowTof",
+                                                  "TrackerHitsPixelBarrelHighTof",
+                                                  "TrackerHitsPixelEndcapLowTof",
+                                                  "TrackerHitsPixelEndcapHighTof"});
+}
+
 //
 // Constructor supporting consumes interface
 //

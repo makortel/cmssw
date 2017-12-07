@@ -4,6 +4,7 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
@@ -38,6 +39,8 @@ public:
     //! Constructor by ParameterSet
     TrackClassifier(edm::ParameterSet const &,
                     edm::ConsumesCollector&& );
+
+    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
 
     //! Pre-process event information (for accessing reconstraction information)
     void newEvent(edm::Event const &, edm::EventSetup const &);

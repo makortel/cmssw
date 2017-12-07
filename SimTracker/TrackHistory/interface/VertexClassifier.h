@@ -4,6 +4,7 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
@@ -28,6 +29,8 @@ public:
                      edm::ConsumesCollector&&);
 
     virtual ~VertexClassifier() {}
+
+    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
 
     //! Pre-process event information (for accessing reconstraction information)
     virtual void newEvent(edm::Event const &, edm::EventSetup const &);

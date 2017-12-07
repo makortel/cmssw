@@ -24,6 +24,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 //--- for SimHit
 #include "SimDataFormats/TrackingHit/interface/PSimHit.h"
@@ -58,6 +59,7 @@ class TrackerHitAssociator {
   struct Config {
     Config(const edm::ParameterSet& conf, edm::ConsumesCollector && iC);
     Config(edm::ConsumesCollector && iC);
+    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
     bool doPixel_, doStrip_, useOTph2_, doTrackAssoc_, assocHitbySimTrack_;
     edm::EDGetTokenT<edm::DetSetVector<StripDigiSimLink> > stripToken_;
     edm::EDGetTokenT<edm::DetSetVector<PixelDigiSimLink> > pixelToken_, ph2OTrToken_;

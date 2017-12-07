@@ -3,6 +3,7 @@
 #define VertexClassifierByProxy_h
 
 #include "DataFormats/Common/interface/AssociationMap.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "SimTracker/TrackHistory/interface/VertexClassifier.h"
 
@@ -23,6 +24,10 @@ public:
       collector.consumes<Association>(proxy_);
     }
 
+    static void fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+      desc.addUntracked<edm::InputTag>("VertexProducer", edm::InputTag(""));
+    }
+  
     //! Pre-process event information (for accessing reconstraction information).
     void newEvent(edm::Event const & event, edm::EventSetup const & config) override
     {

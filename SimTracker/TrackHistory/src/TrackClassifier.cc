@@ -5,6 +5,7 @@
 
 #include "HepPDT/ParticleID.hh"
 
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "SimTracker/TrackHistory/interface/TrackClassifier.h"
 
 #define update(a, b) do { (a) = (a) | (b); } while(0)
@@ -39,6 +40,18 @@ TrackClassifier::TrackClassifier(edm::ParameterSet const & config,
     minTrackerSimHits_ = config.getUntrackedParameter<unsigned int>("minTrackerSimHits");
 }
 
+void TrackClassifier::fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+  desc.addUntracked<edm::InputTag>("hepMC", edm::InputTag("generatorSmeared"));
+  desc.addUntracked<edm::InputTag>("beamSpot", edm::InputTag("offlineBeamSpot"));
+  desc.addUntracked<double>("badPull", 3.0);
+  desc.addUntracked<double>("longLivedDecayLength", 1e-14);
+  desc.addUntracked<double>("vertexClusteringDistance", 0.0001);
+  desc.addUntracked<unsigned int>("numberOfInnerLayers", 2);
+  desc.addUntracked<unsigned int>("minTrackerSimHits", 3);
+
+  TrackHistory::fillPSetDescription(desc);
+  TrackQuality::fillPSetDescription(desc);
+}
 
 void TrackClassifier::newEvent ( edm::Event const & event, edm::EventSetup const & setup )
 {

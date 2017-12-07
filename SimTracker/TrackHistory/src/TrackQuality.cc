@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticleFwd.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
@@ -145,6 +146,11 @@ TrackQuality::TrackQuality(const edm::ParameterSet &config,  edm::ConsumesCollec
         trackerHitAssociatorConfig_(config.getParameter<edm::ParameterSet>("hitAssociator"), std::move(iC))
 {
 }
+
+void TrackHistory::fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+  edm::ParameterSetDescription nested;
+  TrackerHitAssociator::Config::fillPSetDescription(nested);
+  desc.add<edm::ParameterSetDescription>("hitAssociator", nested);
 
 void TrackQuality::newEvent(const edm::Event &ev, const edm::EventSetup &es)
 {

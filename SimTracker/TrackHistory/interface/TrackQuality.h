@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 
@@ -70,6 +71,8 @@ public:
        /param[in] pset with the configuration values
     */
     TrackQuality(const edm::ParameterSet &, edm::ConsumesCollector& iC);
+
+    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
 
     //! Pre-process event information (for accessing reconstruction information)
     void newEvent(const edm::Event &, const edm::EventSetup &);

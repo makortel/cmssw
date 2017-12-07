@@ -8,6 +8,7 @@
 
 #include "HepPDT/ParticleID.hh"
 
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "SimTracker/TrackHistory/interface/VertexClassifier.h"
 
 
@@ -31,6 +32,13 @@ VertexClassifier::VertexClassifier(edm::ParameterSet const & config,
     vertexClusteringDistance_ = config.getUntrackedParameter<double>("vertexClusteringDistance");
 }
 
+void TrackClassifier::fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+  desc.addUntracked<edm::InputTag>("hepMC", edm::InputTag("generatorSmeared"));
+  desc.addUntracked<double>("longLivedDecayLength", 1e-14);
+  desc.addUntracked<double>("vertexClusteringDistance", 0.003);
+
+  VertexHistory::fillPSetDescription(desc);
+}
 
 void VertexClassifier::newEvent(edm::Event const & event, edm::EventSetup const & setup)
 {
