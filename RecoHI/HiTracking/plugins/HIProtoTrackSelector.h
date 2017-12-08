@@ -2,6 +2,7 @@
 #define HIProtoTrackSelection_h
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
@@ -45,6 +46,16 @@ class HIProtoTrackSelector
     minZCut_(iConfig.getParameter<double>("minZCut")),
     maxD0Significance_(iConfig.getParameter<double>("maxD0Significance"))
     {};
+
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<edm::InputTag>("VertexCollection", edm::InputTag());
+      desc.add<edm::InputTag>("beamSpotLabel", edm::InputTag());
+      desc.add<double>("ptMin", 0.);
+      desc.add<double>("nSigmaZ", 0.);
+      desc.add<double>("minZCut", 0.);
+      desc.add<double>("maxD0Significance", 0.);
+    }
+
 
   // select object from a collection and possibly event content
   void select( edm::Handle<reco::TrackCollection>& TCH, const edm::Event & iEvent, const edm::EventSetup & iSetup)
