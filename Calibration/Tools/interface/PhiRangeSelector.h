@@ -1,6 +1,7 @@
 #ifndef UtilAlgos_PhiRangeSelector_h
 #define UtilAlgos_PhiRangeSelector_h
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
 
 
@@ -24,6 +25,10 @@ namespace reco {
       static PhiRangeSelector make(const edm::ParameterSet & cfg, edm::ConsumesCollector & iC) {
         return PhiRangeSelector(cfg.getParameter<double>("phiMin"),
                                 cfg.getParameter<double>("phiMax") );
+      }
+      static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+        desc.add<double>("phiMin", 0.);
+        desc.add<double>("phiMax", 0.);
       }
     };
   }

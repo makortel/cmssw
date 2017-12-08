@@ -1,6 +1,7 @@
 #ifndef UtilAlgos_IMASelector_h
 #define UtilAlgos_IMASelector_h
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
 #include <iostream>
 
@@ -53,6 +54,16 @@ namespace reco {
 			   cfg.getParameter<double>("EMPoutMin"),
 			   cfg.getParameter<double>("EMPoutMax")
 			   );
+      }
+      static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+        desc.add<double>("ESCOPinMin", 0.);
+        desc.add<double>("ESeedOPoutMin", 0.);
+        desc.add<double>("PinMPoutOPinMin", 0.);
+        desc.add<double>("ESCOPinMax", 0.);
+        desc.add<double>("ESeedOPoutMax", 0.);
+        desc.add<double>("PinMPoutOPinMax", 0.);
+        desc.add<double>("EMPoutMin", 0.);
+        desc.add<double>("EMPoutMax", 0.);
       }
     };
   }
