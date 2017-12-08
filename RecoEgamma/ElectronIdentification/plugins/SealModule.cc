@@ -35,7 +35,7 @@ void EleIdCutBasedRef::fillDescriptions(edm::ConfigurationDescriptions& descript
   // With the current structure it is impossible to create a fully
   // working fillDescriptions, so treat as if fillDescriptions would
   // not be implemented.
-  ParameterSetDescription desc;
+  edm::ParameterSetDescription desc;
   desc.setUnknown();
   descriptions.addDefault(desc);
 }
@@ -45,7 +45,7 @@ void EleIdNeuralNetRef::fillDescriptions(edm::ConfigurationDescriptions& descrip
   // continue with the existing naming convention where the module
   // labels (eid*) and cfi files (electronId*) differ. The real
   // implementation is left for the domain experts.
-  ParameterSetDescription desc;
+  edm::ParameterSetDescription desc;
   desc.setUnknown();
   descriptions.addDefault(desc);
 }
@@ -55,7 +55,7 @@ void EleIdLikelihoodRef::fillDescriptions(edm::ConfigurationDescriptions& descri
   // continue with the existing naming convention where the module
   // labels (eid*) and cfi files (electronId*) differ. The real
   // implementation is left for the domain experts.
-  ParameterSetDescription desc;
+  edm::ParameterSetDescription desc;
   desc.setUnknown();
   descriptions.addDefault(desc);
 }
@@ -81,7 +81,7 @@ void EleIdCutBased::fillDescriptions(edm::ConfigurationDescriptions& description
   // With the current structure it is impossible to create a fully
   // working fillDescriptions, so treat as if fillDescriptions would
   // not be implemented.
-  ParameterSetDescription desc;
+  edm::ParameterSetDescription desc;
   desc.setUnknown();
   descriptions.addDefault(desc);
 }

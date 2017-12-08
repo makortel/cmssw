@@ -18,6 +18,7 @@ private:
 };
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
 
 namespace reco {
@@ -27,6 +28,9 @@ namespace reco {
     struct ParameterAdapter<TrackChargeSelector> {
       static TrackChargeSelector make( const edm::ParameterSet & cfg, edm::ConsumesCollector & iC ) {
         return TrackChargeSelector(cfg.getParameter<int>( "charge" ));
+      }
+      static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+        desc.add<int>("charge", 0);
       }
     };
 
