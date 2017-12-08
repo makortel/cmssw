@@ -3,6 +3,7 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Utilities/interface/transform.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "DataFormats/TauReco/interface/CaloTau.h"
 #include "DataFormats/TauReco/interface/CaloTauDiscriminator.h"
@@ -31,6 +32,15 @@ struct CaloTauSelectorDefinition {
   }
 
   ~CaloTauSelectorDefinition () { delete cut_; }
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    edm::ParameterSetDescription validator;
+    validator.add<edm::InputTag>("discriminator", edm::InputTag());
+    validator.add<double>("selectionCut", 0.);
+    desc.addVPSet("discriminators", validator, std::vector<edm::ParameterSet>{});
+
+    desc.add<std::string>("cut", "");
+  }
 
   const_iterator begin() const { return selected_.begin(); }
 
