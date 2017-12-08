@@ -9,6 +9,7 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 #include "SimTracker/TrackHistory/interface/HistoryBase.h"
 #include "SimTracker/TrackHistory/interface/Utils.h"
@@ -27,6 +28,8 @@ public:
     */
     VertexHistory(const edm::ParameterSet &,
                   edm::ConsumesCollector&&);
+
+    static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
     //! Pre-process event information (for accessing reconstruction information)
     void newEvent(const edm::Event &, const edm::EventSetup &);

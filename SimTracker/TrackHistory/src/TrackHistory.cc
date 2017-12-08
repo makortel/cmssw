@@ -36,8 +36,8 @@ TrackHistory::TrackHistory (
     quality_ = 0.;
 }
 
-void TrackHistory::fillPSetDescription(edm::ParameterSetDescriptions& desc) {
-  desc.addUntracked<bool>("bestMatchByMaxValue", );
+void TrackHistory::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.addUntracked<bool>("bestMatchByMaxValue", true);
   desc.addUntracked<edm::InputTag>("trackingTruth", edm::InputTag("mix","MergedTrackTruth"));
   desc.addUntracked<edm::InputTag>("trackAssociator", edm::InputTag("quickTrackAssociatorByHits"));
   desc.addUntracked<edm::InputTag>("trackProducer", edm::InputTag("generalTracks"));

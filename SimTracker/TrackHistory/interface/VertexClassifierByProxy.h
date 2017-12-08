@@ -24,7 +24,7 @@ public:
       collector.consumes<Association>(proxy_);
     }
 
-    static void fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
       desc.addUntracked<edm::InputTag>("VertexProducer", edm::InputTag(""));
     }
   

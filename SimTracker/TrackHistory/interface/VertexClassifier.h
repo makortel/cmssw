@@ -30,7 +30,7 @@ public:
 
     virtual ~VertexClassifier() {}
 
-    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
+    static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
     //! Pre-process event information (for accessing reconstraction information)
     virtual void newEvent(edm::Event const &, edm::EventSetup const &);

@@ -40,7 +40,7 @@ TrackClassifier::TrackClassifier(edm::ParameterSet const & config,
     minTrackerSimHits_ = config.getUntrackedParameter<unsigned int>("minTrackerSimHits");
 }
 
-void TrackClassifier::fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+void TrackClassifier::fillPSetDescription(edm::ParameterSetDescription& desc) {
   desc.addUntracked<edm::InputTag>("hepMC", edm::InputTag("generatorSmeared"));
   desc.addUntracked<edm::InputTag>("beamSpot", edm::InputTag("offlineBeamSpot"));
   desc.addUntracked<double>("badPull", 3.0);

@@ -40,7 +40,7 @@ public:
     TrackClassifier(edm::ParameterSet const &,
                     edm::ConsumesCollector&& );
 
-    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
+    static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
     //! Pre-process event information (for accessing reconstraction information)
     void newEvent(edm::Event const &, edm::EventSetup const &);

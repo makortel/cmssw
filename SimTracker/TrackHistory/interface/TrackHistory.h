@@ -29,7 +29,7 @@ public:
     TrackHistory(const edm::ParameterSet &,
                  edm::ConsumesCollector&& );
 
-    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
+    static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
     //! Pre-process event information (for accessing reconstruction information)
     void newEvent(const edm::Event &, const edm::EventSetup &);

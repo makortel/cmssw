@@ -35,7 +35,7 @@ public:
             classifier_(config,std::move(iC)),
             evaluate_( config.getParameter<std::string>("cut") ) {}
 
-    static void fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
       Classifier::fillPSetDescription(desc);
       desc.add<std::string>("cut", "");
     }

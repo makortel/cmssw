@@ -32,7 +32,7 @@ VertexClassifier::VertexClassifier(edm::ParameterSet const & config,
     vertexClusteringDistance_ = config.getUntrackedParameter<double>("vertexClusteringDistance");
 }
 
-void TrackClassifier::fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+void VertexClassifier::fillPSetDescription(edm::ParameterSetDescription& desc) {
   desc.addUntracked<edm::InputTag>("hepMC", edm::InputTag("generatorSmeared"));
   desc.addUntracked<double>("longLivedDecayLength", 1e-14);
   desc.addUntracked<double>("vertexClusteringDistance", 0.003);

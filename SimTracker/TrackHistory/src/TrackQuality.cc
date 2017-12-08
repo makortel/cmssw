@@ -147,10 +147,11 @@ TrackQuality::TrackQuality(const edm::ParameterSet &config,  edm::ConsumesCollec
 {
 }
 
-void TrackHistory::fillPSetDescription(edm::ParameterSetDescriptions& desc) {
+void TrackQuality::fillPSetDescription(edm::ParameterSetDescription& desc) {
   edm::ParameterSetDescription nested;
   TrackerHitAssociator::Config::fillPSetDescription(nested);
   desc.add<edm::ParameterSetDescription>("hitAssociator", nested);
+}
 
 void TrackQuality::newEvent(const edm::Event &ev, const edm::EventSetup &es)
 {

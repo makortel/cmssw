@@ -59,7 +59,7 @@ class TrackerHitAssociator {
   struct Config {
     Config(const edm::ParameterSet& conf, edm::ConsumesCollector && iC);
     Config(edm::ConsumesCollector && iC);
-    static void fillPSetDescription(edm::ParameterSetDescriptions& desc);
+    static void fillPSetDescription(edm::ParameterSetDescription& desc);
     bool doPixel_, doStrip_, useOTph2_, doTrackAssoc_, assocHitbySimTrack_;
     edm::EDGetTokenT<edm::DetSetVector<StripDigiSimLink> > stripToken_;
     edm::EDGetTokenT<edm::DetSetVector<PixelDigiSimLink> > pixelToken_, ph2OTrToken_;
