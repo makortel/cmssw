@@ -14,6 +14,7 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/SelectionAdderTrait.h"
 #include "CommonTools/UtilAlgos/interface/StoreContainerTrait.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
@@ -43,6 +44,9 @@ public:
   SortCollectionSelector(const edm::ParameterSet & cfg, edm::ConsumesCollector && iC) :
     compare_(Comparator()),
     maxNumber_(cfg.template getParameter<unsigned int>("maxNumber")) { }
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    desc.add<unsigned int>("maxNumber", 0);
+  }
   const_iterator begin() const { return selected_.begin(); }
   const_iterator end() const { return selected_.end(); }
   void select(const edm::Handle<InputCollection> & c, const edm::Event &, const edm::EventSetup&) {
