@@ -1,6 +1,8 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "CommonTools/UtilAlgos/interface/ObjectSelectorStream.h"
 
 //the selectores used to select the tracks
@@ -55,5 +57,11 @@ private:
 };
 
 typedef ObjectSelectorStream<SiStripCalTrackConfigSelector>  CalibrationTrackSelectorModule;
+template <>
+void CalibrationTrackSelectorModule::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+  CalibrationTrackSelector::fillPSetDescription(desc);
+  descriptions.add("CalibrationTrackSelector", desc);
+}
 
 DEFINE_FWK_MODULE( CalibrationTrackSelectorModule );

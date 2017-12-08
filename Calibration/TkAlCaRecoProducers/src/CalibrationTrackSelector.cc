@@ -2,6 +2,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "FWCore/Framework/interface/Event.h"
 
@@ -93,10 +94,48 @@ CalibrationTrackSelector::CalibrationTrackSelector(const edm::ParameterSet & cfg
 }
 
 // destructor -----------------------------------------------------------------
-
 CalibrationTrackSelector::~CalibrationTrackSelector()
 {}
 
+void CalibrationTrackSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<double>("minHitChargeStrip", 20.0);
+  desc.add<edm::InputTag>("rphirecHits", edm::InputTag("siStripMatchedRecHits","rphiRecHit"));
+  desc.add<bool>("applyMultiplicityFilter", false);
+  desc.add<edm::InputTag>("matchedrecHits", edm::InputTag("siStripMatchedRecHits","matchedRecHit"));
+  desc.add<double>("etaMin", -2.6);
+  desc.add<double>("etaMax", 2.6);
+  desc.add<double>("minHitIsolation", 0.01);
+  desc.add<double>("phiMax", 3.1416);
+  desc.add<double>("phiMin", -3.1416);
+  desc.add<double>("ptMin", 10.0);
+  desc.add<int>("minMultiplicity", 1);
+  desc.add<double>("nHitMin", 0.0);
+  desc.add<double>("ptMax", 999.0);
+  desc.add<double>("nHitMax", 999.0);
+  desc.add<bool>("applyNHighestPt", false);
+  desc.add<bool>("applyChargeCheck", false);
+  {
+    edm::ParameterSetDescription psd0;
+    psd0.add<int>("inTEC", 0);
+    psd0.add<int>("inTOB", 0);
+    psd0.add<int>("inFPIX", 0);
+    psd0.add<int>("inTID", 0);
+    psd0.add<int>("inBPIX", 0);
+    psd0.add<int>("inTIB", 0);
+    desc.add<edm::ParameterSetDescription>("minHitsPerSubDet", psd0);
+  }
+  desc.add<int>("nHighestPt", 2);
+  desc.add<unsigned int>("nHitMin2D", 0);
+  desc.add<edm::InputTag>("src", edm::InputTag("generalTracks"));
+
+  desc.add<bool>("applyIsolationCut", false);
+  desc.add<bool>("multiplicityOnInput", false);
+  desc.add<bool>("filter", false);
+  desc.add<int>("maxMultiplicity", 999999);
+  desc.add<int>("seedOnlyFrom", 0);
+  desc.add<double>("chi2nMax", 999999.0);
+  desc.add<bool>("applyBasicCuts", true);
+}
 
 // do selection ---------------------------------------------------------------
 

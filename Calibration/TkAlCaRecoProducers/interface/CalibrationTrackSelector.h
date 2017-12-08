@@ -3,6 +3,7 @@
 
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "FWCore/Utilities/interface/InputTag.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include <vector>
 
 namespace edm {
@@ -24,6 +25,8 @@ class CalibrationTrackSelector
 
   /// destructor
   ~CalibrationTrackSelector();
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
   /// select tracks
   Tracks select(const Tracks& tracks, const edm::Event& evt) const;
