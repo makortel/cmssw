@@ -28,10 +28,11 @@ struct CaloTauSelectorDefinition {
   CaloTauSelectorDefinition ( const edm::ParameterSet & cfg, edm::ConsumesCollector && iC ) {
     discriminatorsPSets_ = cfg.getParameter< std::vector<edm::ParameterSet> >( "discriminators" );
     discriminatorTokens_ = edm::vector_transform( discriminatorsPSets_, [&](edm::ParameterSet const & pSet){return iC.consumes<reco::CaloTauDiscriminator>(pSet.getParameter<edm::InputTag>("discriminator"));} );
-    cut_ = ( cfg.exists("cut") ) ? new StringCutObjectSelector<reco::CaloTau>( cfg.getParameter<std::string>( "cut" ) ) : nullptr;
+    auto cut = cfg.getParameter<std::string>( "cut" );
+    if(cut != "") cut_ = std::make_unique<StringCutObjectSelector<reco::CaloTau> >( cut );
   }
 
-  ~CaloTauSelectorDefinition () { delete cut_; }
+  ~CaloTauSelectorDefinition () = default;
 
   static void fillPSetDescription(edm::ParameterSetDescription& desc) {
     edm::ParameterSetDescription validator;
@@ -105,7 +106,7 @@ struct CaloTauSelectorDefinition {
   container selected_;
   std::vector< edm::ParameterSet > discriminatorsPSets_;
   std::vector< edm::EDGetTokenT<reco::CaloTauDiscriminator> > discriminatorTokens_;
-  StringCutObjectSelector<reco::CaloTau>* cut_;
+  std::unique_ptr<StringCutObjectSelector<reco::CaloTau> > cut_;
 
 };
 
