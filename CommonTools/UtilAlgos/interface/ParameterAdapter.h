@@ -21,7 +21,7 @@ namespace reco {
       }
 
       static void fillPSetDescription(edm::ParameterSetDescription& desc) {
-        S::template fillPSetDescription(desc);
+        S::fillPSetDescription(desc);
       }
     };
 
