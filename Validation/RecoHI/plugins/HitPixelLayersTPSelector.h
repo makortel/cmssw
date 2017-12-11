@@ -6,6 +6,7 @@
 
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
@@ -45,6 +46,21 @@ class HitPixelLayersTPSelector
     tpStatusBased_(iConfig.getParameter<bool>("tpStatusBased")),
     pdgId_(iConfig.getParameter< std::vector<int> >("pdgId"))
       {};
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    desc.add<bool>("tripletSeedOnly", false);
+    desc.add<double>("ptMin", 0.);
+    desc.add<double>("minRapidity", 0.);
+    desc.add<double>("maxRapidity", 0.);
+    desc.add<double>("tip", 0.);
+    desc.add<double>("lip", 0.);
+    desc.add<int>("minHit", 0);
+    desc.add<bool>("signalOnly", false);
+    desc.add<bool>("chargedOnly", false);
+    desc.add<bool>("primaryOnly", false);
+    desc.add<bool>("tpStatusBased", false);
+    desc.add<int>("pdgId", 0);
+  }
 
     // select object from a collection and
     // possibly event content
