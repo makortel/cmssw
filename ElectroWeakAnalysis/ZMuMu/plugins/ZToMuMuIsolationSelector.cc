@@ -49,6 +49,7 @@ private:
 #include "DataFormats/PatCandidates/interface/GenericParticle.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 template<typename Isolator>
 class ZToMuMuIsolationSelector {
@@ -75,6 +76,10 @@ public:
     else   throw edm::Exception(edm::errors::Configuration)
       << "Invalid isolation type: " << iso << ". Valid types are:"
       << "'track', 'ecal', 'hcal', 'calo'\n";
+  }
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    desc.add<std::string>("isoCut", "");
+    desc.add<std::string>("isolationType", "");
   }
   bool operator()(const reco::Candidate & z) const {
     if(z.numberOfDaughters()!=2)
