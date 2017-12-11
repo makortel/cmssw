@@ -5,6 +5,7 @@
 
 struct ZMuMuOverlap {
   ZMuMuOverlap(const edm::ParameterSet&) { }
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {}
   bool operator()(const reco::Candidate & zMuMu, const reco::Candidate & z) const {
     
     using namespace std;
