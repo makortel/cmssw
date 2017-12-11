@@ -3,6 +3,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/SingleObjectSelector.h"
 #include "DataFormats/Common/interface/View.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
@@ -42,6 +43,7 @@ class ZGoldenFilter {
 
 public:
   ZGoldenFilter(const edm::ParameterSet&, edm::ConsumesCollector & iC );
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
   bool operator()(const reco::Candidate & ) const;
   void newEvent (const edm::Event&, const edm::EventSetup&);
   edm::EDGetTokenT<edm::TriggerResults> trigToken_;
@@ -65,6 +67,16 @@ ZGoldenFilter::ZGoldenFilter(const edm::ParameterSet& cfg, edm::ConsumesCollecto
   L3FilterName_(cfg.getParameter<std::string >("L3FilterName")),
   maxDPtRel_(cfg.getParameter<double>("maxDPtRel")),
   maxDeltaR_(cfg.getParameter<double>("maxDeltaR")){
+}
+
+void ZGoldenFilter::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<edm::InputTag>("TrigTag", edm::InputTag("TriggerResults", "", "HLT"));
+  desc.add<edm::InputTag>("triggerEvent", edm::InputTag("hltTriggerSummaryAOD", "HLT"));
+  desc.add<std::string>("condition", "atLeastOneMatched");
+  desc.add<std::string>("hltPath", "hltSingleMu9L3Filtered9");
+  desc.add<std::string>("L3FilterName", "hltSingleMu9L3Filtered9");
+  desc.add<double>("maxDPtRel", 1.0);
+  desc.add<double>("maxDeltaR", 0.2);
 }
 
 void  ZGoldenFilter::newEvent(const edm::Event& ev, const edm::EventSetup& ){
