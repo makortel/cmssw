@@ -49,6 +49,7 @@ private:
 #include "DataFormats/PatCandidates/interface/GenericParticle.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "DataFormats/RecoCandidate/interface/IsoDepositVetos.h"
 #include "DataFormats/RecoCandidate/interface/IsoDepositDirection.h"
 #include "DataFormats/RecoCandidate/interface/IsoDeposit.h"
@@ -73,6 +74,20 @@ public:
     alpha(cfg.getUntrackedParameter<double>("alpha")),
     beta(cfg.getUntrackedParameter<double>("beta")),
     relativeIsolation(cfg.template getParameter<bool>("relativeIsolation")) {
+  }
+
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    desc.add<double>("isoCut", 3.);
+    desc.add<double>("ptThreshold", 0.);
+    desc.add<double>("etEcalThreshold", 0.);
+    desc.add<double>("etHcalThreshold", 0.);
+    desc.add<double>("deltaRVetoTrk", 0.01);
+    desc.add<double>("deltaRTrk", 0.3);
+    desc.add<double>("deltaREcal", 0.3);
+    desc.add<double>("deltaRHcal", 0.3);
+    desc.add<double>("alpha", 0.);
+    desc.add<double>("beta", 0.);
+    desc.add<bool>("relativeIsolation", false);
   }
 
   template<typename T>
