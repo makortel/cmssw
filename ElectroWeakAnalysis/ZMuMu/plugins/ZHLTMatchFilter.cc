@@ -6,6 +6,7 @@
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/SingleObjectSelector.h"
 #include "DataFormats/Common/interface/View.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
@@ -19,6 +20,10 @@ namespace modules {
     ZHLTMatchFilter(const edm::ParameterSet& cfg, edm::ConsumesCollector & iC) :
     cond_(cfg.getParameter<std::string >("condition")),
     hltPath_(cfg.getParameter<std::string >("hltPath")){ }
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<std::string>("condition", "");
+      desc.add<std::string>("hltPath", "");
+    }
     bool operator()(const reco::Candidate & z) const {
       assert(z.numberOfDaughters()==2);
       bool singleTrigFlag0 = false;
