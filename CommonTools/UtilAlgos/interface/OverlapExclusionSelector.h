@@ -1,6 +1,7 @@
 #ifndef CommonTools_UtilAlgos_OverlapExclusionSelector_h
 #define CommonTools_UtilAlgos_OverlapExclusionSelector_h
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
@@ -14,6 +15,7 @@ public:
   OverlapExclusionSelector(const edm::ParameterSet& cfg, edm::ConsumesCollector && iC) :
     OverlapExclusionSelector(cfg, iC) {};
   OverlapExclusionSelector(const edm::ParameterSet& cfg, edm::ConsumesCollector & iC);
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
   void newEvent(const edm::Event&, const edm::EventSetup&) const;
   bool operator()(const T&) const;
 private:
@@ -26,6 +28,12 @@ template<typename C, typename T, typename O>
 OverlapExclusionSelector<C, T, O>::OverlapExclusionSelector(const edm::ParameterSet& cfg, edm::ConsumesCollector & iC) :
   srcToken_(iC.consumes<C>(cfg.template getParameter<edm::InputTag>("overlap"))),
   overlap_(cfg) {
+}
+
+template <typename C, typename T, typename O>
+void OverlapExclusionSelector<C, T, O>::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<edm::InputTag>("ovelap", edm::InputTag());
+  O::fillPSetDescription(desc);
 }
 
 template<typename C, typename T, typename O>
