@@ -16,7 +16,20 @@ namespace reco {
   namespace modules {
     typedef SingleObjectSelector<TrackingParticleCollection,::TrackingParticleSelector> 
     TrackingParticleSelector ;
+  }
+}
 
+template <>
+void reco::modules::TrackingParticleSelector::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+  fillPSetSrc(desc, edm::InputTag("mix", "MergedTrackTruth"));
+  reco::modules::ParameterAdapter<TrackingParticleSelector>::fillPSetDescription(desc);
+  descriptions.addWithDefaultLabel(desc);
+}
+
+namespace reco {
+  namespace modules {
     DEFINE_FWK_MODULE( TrackingParticleSelector );
   }
 }
+

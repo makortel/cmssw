@@ -100,6 +100,7 @@ private:
 };
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
 
 namespace reco {
@@ -124,8 +125,24 @@ namespace reco {
 	  cfg.getParameter<double>( "minPhi" ),
 	  cfg.getParameter<double>( "maxPhi" ));
       }
-    };
 
+      static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+        desc.add<double>("ptMin", 0.9);
+        desc.add<double>("ptMax", 1e100);
+        desc.add<double>("minRapidity", -2.4);
+        desc.add<double>("maxRapidity", 2.4);
+        desc.add<double>("tip", 3.5);
+        desc.add<double>("lip", 30.);
+        desc.add<int>("minHit", 0);
+        desc.add<bool>("signalOnly", true);
+        desc.add<bool>("intimeOnly", false);
+        desc.add<bool>("chargedOnly", true);
+        desc.add<bool>("stableOnly", false);
+        desc.add<std::vector<int> >("pdgId", std::vector<int>{});
+        desc.add<double>("minPhi", -3.2);
+        desc.add<double>("maxPhi", 3.2);
+      }
+    };
   }
 }
 
