@@ -197,6 +197,14 @@ lowPtQuadStep =  TrackMVAClassifierPrompt.clone(
     qualityCuts = [-0.7,-0.35,-0.15],
 )
 
+#LWTNN selector
+from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+trackingPhase1.toReplaceWith(lowPtQuadStep, TrackLwtnnClassifier.clone(
+    src = 'lowPtQuadStepTracks',
+    qualityCuts = [-0.2,0.2,0.4]
+))
+
 # For Phase2PU140
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
 lowPtQuadStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(

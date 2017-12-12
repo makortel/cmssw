@@ -277,9 +277,11 @@ from RecoTracker.FinalTrackSelectors.ClassifierMerger_cfi import *
 mixedTripletStep = ClassifierMerger.clone()
 mixedTripletStep.inputClassifiers=['mixedTripletStepClassifier1','mixedTripletStepClassifier2']
 
-trackingPhase1.toReplaceWith(mixedTripletStep, mixedTripletStepClassifier1.clone(
-     mva = dict(GBRForestLabel = 'MVASelectorMixedTripletStep_Phase1'),
-     qualityCuts = [-0.5,0.0,0.5],
+#LWTNN selector
+from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+trackingPhase1.toReplaceWith(mixedTripletStep, TrackLwtnnClassifier.clone(
+     src = 'mixedTripletStepTracks',
+     qualityCuts = [-0.95,-0.9,-0.6]
 ))
 trackingPhase1QuadProp.toReplaceWith(mixedTripletStep, mixedTripletStepClassifier1.clone(
      mva = dict(GBRForestLabel = 'MVASelectorMixedTripletStep_Phase1'),

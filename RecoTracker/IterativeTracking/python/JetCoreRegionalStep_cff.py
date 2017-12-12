@@ -173,11 +173,14 @@ jetCoreRegionalStep.mva.maxDr = [0.3,0.2,0.1];
 jetCoreRegionalStep.vertices = 'firstStepGoodPrimaryVertices'
 
 from RecoTracker.FinalTrackSelectors.TrackMVAClassifierPrompt_cfi import *
-trackingPhase1.toReplaceWith(jetCoreRegionalStep, TrackMVAClassifierPrompt.clone(
+
+#LWTNN selector
+from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+trackingPhase1.toReplaceWith(jetCoreRegionalStep, TrackLwtnnClassifier.clone(
      src = 'jetCoreRegionalStepTracks',
-     mva = dict(GBRForestLabel = 'MVASelectorJetCoreRegionalStep_Phase1'),
-     qualityCuts = [-0.2,0.0,0.4],
+     qualityCuts = [0.7,0.85,0.95]
 ))
+
 trackingPhase1QuadProp.toReplaceWith(jetCoreRegionalStep, TrackMVAClassifierPrompt.clone(
      src = 'jetCoreRegionalStepTracks',
      mva = dict(GBRForestLabel = 'MVASelectorJetCoreRegionalStep_Phase1'),

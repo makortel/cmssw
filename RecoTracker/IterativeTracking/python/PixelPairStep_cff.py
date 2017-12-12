@@ -268,8 +268,15 @@ pixelPairStep.src = 'pixelPairStepTracks'
 pixelPairStep.mva.GBRForestLabel = 'MVASelectorIter2_13TeV'
 pixelPairStep.qualityCuts = [-0.2,0.0,0.3]
 
-trackingPhase1.toModify(pixelPairStep, mva=dict(GBRForestLabel = 'MVASelectorPixelPairStep_Phase1'))
 trackingPhase1QuadProp.toModify(pixelPairStep, mva=dict(GBRForestLabel = 'MVASelectorPixelPairStep_Phase1'))
+
+#LWTNN selector
+from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+trackingPhase1.toReplaceWith(pixelPairStep, TrackLwtnnClassifier.clone(
+    src='pixelPairStepTracks',
+    qualityCuts=[-0.8,-0.7,-0.4]
+))
+
 
 # For LowPU and Phase2PU140
 import RecoTracker.IterativeTracking.LowPtTripletStep_cff

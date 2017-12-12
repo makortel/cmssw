@@ -323,9 +323,12 @@ tobTecStep.inputClassifiers=['tobTecStepClassifier1','tobTecStepClassifier2']
 
 from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase1QuadProp
-trackingPhase1.toReplaceWith(tobTecStep, tobTecStepClassifier1.clone(
-     mva = dict(GBRForestLabel = 'MVASelectorTobTecStep_Phase1'),
-     qualityCuts = [-0.6,-0.45,-0.3],
+
+#LWTNN selector
+from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+trackingPhase1.toReplaceWith(tobTecStep, TrackLwtnnClassifier.clone(
+     src = 'tobTecStepTracks',
+     qualityCuts = [-0.9,-0.85,-0.8]
 ))
 trackingPhase1QuadProp.toReplaceWith(tobTecStep, tobTecStepClassifier1.clone(
      mva = dict(GBRForestLabel = 'MVASelectorTobTecStep_Phase1'),

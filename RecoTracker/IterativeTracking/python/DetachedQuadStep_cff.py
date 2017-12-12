@@ -206,6 +206,14 @@ detachedQuadStep = TrackMVAClassifierDetached.clone(
     qualityCuts = [-0.5,0.0,0.5],
 )
 
+#LWTNN selector
+from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+trackingPhase1.toReplaceWith(detachedQuadStep,TrackLwtnnClassifier.clone(
+    src = 'detachedQuadStepTracks',
+    qualityCuts = [-0.6,0.1,0.85]
+))
+
 
 # For Phase2PU140
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi

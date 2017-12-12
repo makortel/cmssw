@@ -224,6 +224,13 @@ highPtTripletStep = TrackMVAClassifierPrompt.clone(
     qualityCuts	= [0.2,0.3,0.4],
 )
 
+#LWTNN selector
+from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
+from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+trackingPhase1.toReplaceWith(highPtTripletStep,TrackLwtnnClassifier.clone(
+    src = 'highPtTripletStepTracks',
+    qualityCuts = [0.7,0.8,0.85]
+))
 
 # For Phase2PU140
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
