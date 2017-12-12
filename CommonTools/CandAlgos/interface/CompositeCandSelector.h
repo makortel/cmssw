@@ -1,6 +1,7 @@
 #ifndef CommonTools_CandAlgos_CompositeCandSelector_h
 #define CommonTools_CandAlgos_CompositeCandSelector_h
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
 #include "CommonTools/CandUtils/interface/CompositeCandSelector.h"
 #include "CommonTools/UtilAlgos/interface/StringCutObjectSelector.h"
@@ -13,6 +14,10 @@ namespace reco {
 	static CompositeCandSelector<Selector, T1, T2, nDau> make(const edm::ParameterSet & cfg) {
 	  return CompositeCandSelector<Selector, T1, T2, nDau>(modules::make<Selector>(cfg));
 	}
+
+        static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+          modules::fillPSetDescription<Selector>(desc);
+        }
       };
 
     template<template<typename, typename> class Combiner, typename T1, typename T2, unsigned int nDau>
@@ -26,6 +31,11 @@ namespace reco {
 	    Combiner<StringCutObjectSelector<T1>, StringCutObjectSelector<T2> > c(s1, s2);
 	    return Selector(c);
 	  }
+
+          static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+            desc.add<std::string>("daughter1cut", "");
+            desc.add<std::string>("daughter2cut", "");
+          }
       };
 
   }
