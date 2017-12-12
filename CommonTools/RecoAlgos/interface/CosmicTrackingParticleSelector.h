@@ -14,6 +14,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "TrackingTools/TrajectoryState/interface/FreeTrajectoryState.h"
 #include "TrackingTools/PatternTools/interface/TSCBLBuilderNoMaterial.h"
 #include "TrackingTools/PatternTools/interface/TSCPBuilderNoMaterial.h"
@@ -63,6 +64,16 @@ public:
       pdgId_(cfg.getParameter<std::vector<int> >("pdgId")),
       beamSpotToken_(iC.consumes<reco::BeamSpot>(edm::InputTag("offlineBeamSpot"))) { }
 
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<double>("ptMin", 0.);
+      desc.add<double>("minRapidity", 0.);
+      desc.add<double>("maxRapidity", 0.);
+      desc.add<double>("tip", 0.);
+      desc.add<double>("lip", 0.);
+      desc.add<int>("minHit", 0);
+      desc.add<bool>("chargedOnly", false);
+      desc.add<std::vector<int> >("pdgId", std::vector<int>{});
+    }
 
       void select( const edm::Handle<collection>& c, const edm::Event & event, const edm::EventSetup& setup) {
 	selected_.clear();
