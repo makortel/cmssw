@@ -23,7 +23,7 @@ namespace {
 //      const auto fileName = cfg.getParameter<edm::FileInPath>("fileName");
 
 //      std::ifstream jsonfile(fileName.fullPath().c_str());
-      std::ifstream jsonfile("/afs/cern.ch/work/j/jhavukai/private/LWTNNinCMSSW/CMSSW_9_4_0_pre3/src/RecoTracker/FinalTrackSelectors/data/neural_net.json"); 
+      std::ifstream jsonfile("/afs/cern.ch/work/j/jhavukai/private/LWTNNinCMSSW/CMSSW_9_4_0_pre3/src/RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"); 
       auto config = lwt::parse_json(jsonfile);
 
       neuralNetwork_ = std::make_unique<lwt::LightweightNeuralNetwork>(config.inputs, config.layers, config.outputs);
