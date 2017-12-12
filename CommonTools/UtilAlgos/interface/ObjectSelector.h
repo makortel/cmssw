@@ -59,10 +59,16 @@ public:
   /// destructor
   ~ObjectSelector() override { }
 
+  static void fillPSetSrcFilter(edm::ParameterSetDescription& desc, const edm::InputTag& src, bool filter) {
+    desc.add<edm::InputTag>("src", src);
+    desc.add<bool>("filter", filter);
+  }
+  static void fillPSetSrc(edm::ParameterSetDescription& desc, const edm::InputTag& src) {
+    fillPSetSrcFilter(desc, src, false);
+  }
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
     edm::ParameterSetDescription desc;
-    desc.add<edm::InputTag>("src", edm::InputTag());
-    desc.add<bool>("filter", false);
+    fillPSetSrc(desc, edm::InputTag());
     Base::fillPSetDescription(desc);
     Selector::fillPSetDescription(desc);
     reco::modules::fillPSetDescription<SizeSelector>(desc);
