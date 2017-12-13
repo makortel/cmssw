@@ -4,6 +4,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "CommonTools/ParticleFlow/interface/PFCandidateSelectorDefinition.h"
@@ -16,6 +17,9 @@ namespace pf2pat {
     PtMinPFCandidateSelectorDefinition ( const edm::ParameterSet & cfg, edm::ConsumesCollector && iC ) :
       ptMin_( cfg.getParameter< double >( "ptMin" ) ) { }
 
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<double>("ptMin", 0.);
+    }
 
     void select( const HandleToCollection & hc,
 		 const edm::EventBase & e,
