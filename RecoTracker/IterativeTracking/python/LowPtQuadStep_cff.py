@@ -190,21 +190,12 @@ lowPtQuadStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.
 
 
 # Final selection
-from RecoTracker.FinalTrackSelectors.TrackMVAClassifierPrompt_cfi import *
-lowPtQuadStep =  TrackMVAClassifierPrompt.clone(
-    src = 'lowPtQuadStepTracks',
-    mva = dict(GBRForestLabel = 'MVASelectorLowPtQuadStep_Phase1'),
-    qualityCuts = [-0.7,-0.35,-0.15],
-)
-
-#LWTNN selector
-from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
-trackingPhase1.toReplaceWith(lowPtQuadStep, TrackLwtnnClassifier.clone(
+lowPtQuadStep = TrackLwtnnClassifier.clone(
     src = 'lowPtQuadStepTracks',
     qualityCuts = [-0.2,0.2,0.4],
     mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
-))
+)
 
 # For Phase2PU140
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi

@@ -199,21 +199,12 @@ detachedQuadStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProduc
 )
 
 # TRACK SELECTION AND QUALITY FLAG SETTING.
-from RecoTracker.FinalTrackSelectors.TrackMVAClassifierDetached_cfi import *
-detachedQuadStep = TrackMVAClassifierDetached.clone(
-    src = 'detachedQuadStepTracks',
-    mva = dict(GBRForestLabel = 'MVASelectorDetachedQuadStep_Phase1'),
-    qualityCuts = [-0.5,0.0,0.5],
-)
-
-#LWTNN selector
-from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
-trackingPhase1.toReplaceWith(detachedQuadStep,TrackLwtnnClassifier.clone(
+detachedQuadStep = TrackLwtnnClassifier.clone(
     src = 'detachedQuadStepTracks',
     qualityCuts = [-0.6,0.1,0.85],
     mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
-))
+)
 
 
 # For Phase2PU140
