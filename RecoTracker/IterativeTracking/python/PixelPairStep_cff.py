@@ -274,7 +274,8 @@ trackingPhase1QuadProp.toModify(pixelPairStep, mva=dict(GBRForestLabel = 'MVASel
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
 trackingPhase1.toReplaceWith(pixelPairStep, TrackLwtnnClassifier.clone(
     src='pixelPairStepTracks',
-    qualityCuts=[-0.8,-0.7,-0.4]
+    qualityCuts=[-0.8,-0.7,-0.4],
+    mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
 ))
 
 

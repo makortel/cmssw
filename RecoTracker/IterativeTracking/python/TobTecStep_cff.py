@@ -328,7 +328,8 @@ from Configuration.Eras.Modifier_trackingPhase1QuadProp_cff import trackingPhase
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
 trackingPhase1.toReplaceWith(tobTecStep, TrackLwtnnClassifier.clone(
      src = 'tobTecStepTracks',
-     qualityCuts = [-0.9,-0.85,-0.8]
+     qualityCuts = [-0.9,-0.85,-0.8],
+     mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
 ))
 trackingPhase1QuadProp.toReplaceWith(tobTecStep, tobTecStepClassifier1.clone(
      mva = dict(GBRForestLabel = 'MVASelectorTobTecStep_Phase1'),

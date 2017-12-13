@@ -269,7 +269,8 @@ initialStep.inputClassifiers=['initialStepClassifier1','initialStepClassifier2',
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
 trackingPhase1.toReplaceWith(initialStep, TrackLwtnnClassifier.clone(
 	src = 'initialStepTracks',
-	qualityCuts = [-0.2,0.2,0.4]
+	qualityCuts = [-0.2,0.2,0.4],
+        mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
 ))
 
 trackingPhase1QuadProp.toReplaceWith(initialStep, initialStepClassifier1.clone(

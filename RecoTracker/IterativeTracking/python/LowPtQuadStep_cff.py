@@ -202,7 +202,8 @@ from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
 trackingPhase1.toReplaceWith(lowPtQuadStep, TrackLwtnnClassifier.clone(
     src = 'lowPtQuadStepTracks',
-    qualityCuts = [-0.2,0.2,0.4]
+    qualityCuts = [-0.2,0.2,0.4],
+    mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
 ))
 
 # For Phase2PU140

@@ -281,8 +281,11 @@ mixedTripletStep.inputClassifiers=['mixedTripletStepClassifier1','mixedTripletSt
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
 trackingPhase1.toReplaceWith(mixedTripletStep, TrackLwtnnClassifier.clone(
      src = 'mixedTripletStepTracks',
-     qualityCuts = [-0.95,-0.9,-0.6]
+     qualityCuts = [-0.95,-0.9,-0.6],
+     mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
+
 ))
+
 trackingPhase1QuadProp.toReplaceWith(mixedTripletStep, mixedTripletStepClassifier1.clone(
      mva = dict(GBRForestLabel = 'MVASelectorMixedTripletStep_Phase1'),
      qualityCuts = [-0.5,0.0,0.5],

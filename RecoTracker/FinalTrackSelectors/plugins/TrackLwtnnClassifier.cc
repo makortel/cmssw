@@ -20,10 +20,9 @@ namespace {
       // in our case we will use the same network N times with
       // different input collections (and cuts).
 
-//      const auto fileName = cfg.getParameter<edm::FileInPath>("fileName");
-
-//      std::ifstream jsonfile(fileName.fullPath().c_str());
-      std::ifstream jsonfile("/afs/cern.ch/work/j/jhavukai/private/LWTNNinCMSSW/CMSSW_9_4_0_pre3/src/RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"); 
+      const auto fileName = cfg.getParameter<edm::FileInPath>("fileName");
+      std::cout<<fileName.fullPath().c_str()<<std::endl;
+      std::ifstream jsonfile(fileName.fullPath().c_str());
       auto config = lwt::parse_json(jsonfile);
 
       neuralNetwork_ = std::make_unique<lwt::LightweightNeuralNetwork>(config.inputs, config.layers, config.outputs);
@@ -32,7 +31,7 @@ namespace {
     static const char *name() { return "TrackLwtnnClassifier"; }
 
     static void fillDescriptions(edm::ParameterSetDescription& desc) {
-//      desc.add<edm::FileInPath>("fileName", edm::FileInPath());
+      desc.add<edm::FileInPath>("fileName", edm::FileInPath());
     }
 
     void beginStream() {}
