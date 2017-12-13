@@ -1,6 +1,7 @@
 #include "RecoTracker/FinalTrackSelectors/interface/TrackMVAClassifier.h"
 
-#include "FWCore/ParameterSet/interface/FileInPath.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ESHandle.h"
 
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
@@ -8,34 +9,27 @@
 #include "getBestVertex.h"
 
 //from lwtnn
+#include "RecoTracker/Record/interface/CkfComponentsRecord.h"
 #include "lwtnn/LightweightNeuralNetwork.hh"
-#include "lwtnn/parse_json.hh"
-#include <fstream>
 
 namespace {
   struct lwtnn {
-    lwtnn(const edm::ParameterSet& cfg){
-      // TODO: investigate if the construction of the NN could be
-      // moved to an ESProducer (or if it is worth of the effort) as
-      // in our case we will use the same network N times with
-      // different input collections (and cuts).
-
-      const auto fileName = cfg.getParameter<edm::FileInPath>("fileName");
-      std::cout<<fileName.fullPath().c_str()<<std::endl;
-      std::ifstream jsonfile(fileName.fullPath().c_str());
-      auto config = lwt::parse_json(jsonfile);
-
-      neuralNetwork_ = std::make_unique<lwt::LightweightNeuralNetwork>(config.inputs, config.layers, config.outputs);
-    }
+    lwtnn(const edm::ParameterSet& cfg):
+      lwtnnLabel_(cfg.getParameter<std::string>("lwtnnLabel"))
+    {}
 
     static const char *name() { return "TrackLwtnnClassifier"; }
 
     static void fillDescriptions(edm::ParameterSetDescription& desc) {
-      desc.add<edm::FileInPath>("fileName", edm::FileInPath());
+      desc.add<std::string>("lwtnnLabel", "trackSelectionLwtnn");
     }
 
     void beginStream() {}
-    void initEvent(const edm::EventSetup& es) {}
+    void initEvent(const edm::EventSetup& es) {
+      edm::ESHandle<lwt::LightweightNeuralNetwork> lwtnnHandle;
+      es.get<CkfComponentsRecord>().get(lwtnnLabel_, lwtnnHandle);
+      neuralNetwork_ = lwtnnHandle.product();
+    }
 
     float operator()(reco::Track const & trk,
                      reco::BeamSpot const & beamSpot,
@@ -76,7 +70,8 @@ namespace {
     }
 
 
-    std::unique_ptr<lwt::LightweightNeuralNetwork> neuralNetwork_;
+    std::string lwtnnLabel_;
+    const lwt::LightweightNeuralNetwork *neuralNetwork_;
     lwt::ValueMap inputs_; //typedef of map<string, double>
   };
 

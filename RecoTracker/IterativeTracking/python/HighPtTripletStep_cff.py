@@ -218,10 +218,10 @@ highPtTripletStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProdu
 
 # Final selection
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+from RecoTracker.FinalTrackSelectors.trackSelectionLwtnn_cfi import *
 highPtTripletStep = TrackLwtnnClassifier.clone(
     src = 'highPtTripletStepTracks',
     qualityCuts = [0.7,0.8,0.85],
-    mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
 )
 
 # For Phase2PU140

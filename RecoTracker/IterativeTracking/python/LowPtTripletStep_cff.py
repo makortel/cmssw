@@ -238,10 +238,10 @@ trackingPhase1QuadProp.toReplaceWith(lowPtTripletStep, lowPtTripletStep.clone(
 
 #LWTNN selector
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+from RecoTracker.FinalTrackSelectors.trackSelectionLwtnn_cfi import *
 trackingPhase1.toReplaceWith(lowPtTripletStep, TrackLwtnnClassifier.clone(
      src = 'lowPtTripletStepTracks',
      qualityCuts = [-0.2,0.1,0.3],
-     mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
 ))
 
 # For LowPU and Phase2PU140

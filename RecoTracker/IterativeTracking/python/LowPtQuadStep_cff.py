@@ -191,10 +191,10 @@ lowPtQuadStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.
 
 # Final selection
 from RecoTracker.FinalTrackSelectors.TrackLwtnnClassifier_cfi import *
+from RecoTracker.FinalTrackSelectors.trackSelectionLwtnn_cfi import *
 lowPtQuadStep = TrackLwtnnClassifier.clone(
     src = 'lowPtQuadStepTracks',
     qualityCuts = [-0.2,0.2,0.4],
-    mva = dict(fileName = cms.FileInPath("RecoTracker/FinalTrackSelectors/data/LWTNN_network_v1.json"))
 )
 
 # For Phase2PU140
