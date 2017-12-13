@@ -1,5 +1,6 @@
 #include <functional>
 #include "FWCore/Utilities/interface/EDGetToken.h"
+#include "FWCore/Utilities/interface/TransientEDGetToken.h"
 
 namespace edm {
   class TestEDGetToken {
@@ -12,6 +13,16 @@ namespace edm {
     template <typename T, typename... Args>
     static edm::EDGetTokenT<T> makeTokenT( Args&&... iArgs) {
       return edm::EDGetTokenT<T>(std::forward<Args>(iArgs)...);
+    }
+
+    template <typename... Args>
+    static edm::TransientEDGetToken makeTransientToken( Args&&... iArgs) {
+      return edm::TransientEDGetToken(std::forward<Args>(iArgs)...);
+    }
+
+    template <typename T, typename... Args>
+    static edm::TransientEDGetTokenT<T> makeTransientTokenT( Args&&... iArgs) {
+      return edm::TransientEDGetTokenT<T>(std::forward<Args>(iArgs)...);
     }
   };
 }
@@ -53,5 +64,43 @@ int main() {
      !(token12.index() == 11)) {
     std::cout << "EDGetToken 1 argument constructor failed 12" << std::endl;
     abort();
+  }
+
+  // Transient
+  {
+    edm::TransientEDGetTokenT<int> token1 = edm::TestEDGetToken::makeTransientTokenT<int>();
+    if(!token1.isUninitialized() ||
+       !(token1.index() == 0xFFFFFFFF)) {
+      std::cout << "TransientEDGetTokenT no argument constructor failed 1" << std::endl;
+      abort();
+    }
+
+    edm::TransientEDGetTokenT<int> token2 = edm::TestEDGetToken::makeTransientTokenT<int>(11);
+    if(token2.isUninitialized() ||
+       !(token2.index() == 11)) {
+      std::cout << "TransientEDGetTokenT 1 argument constructor failed 2" << std::endl;
+      abort();
+    }
+
+    edm::TransientEDGetToken token10 = edm::TestEDGetToken::makeTransientToken();
+    if(!token10.isUninitialized() ||
+       !(token10.index() == 0xFFFFFFFF)) {
+      std::cout << "TransientEDGetToken no argument constructor failed 10" << std::endl;
+      abort();
+    }
+
+    edm::TransientEDGetToken token11 = edm::TestEDGetToken::makeTransientToken(100);
+    if(token11.isUninitialized() ||
+       !(token11.index() == 100)) {
+      std::cout << "TransientEDGetToken 1 argument constructor failed 11" << std::endl;
+      abort();
+    }
+
+    edm::TransientEDGetToken token12(token2);
+    if(token12.isUninitialized() ||
+       !(token12.index() == 11)) {
+      std::cout << "TransientEDGetToken 1 argument constructor failed 12" << std::endl;
+      abort();
+    }
   }
 }
