@@ -12,6 +12,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "CommonTools/ParticleFlow/interface/PFCandidateSelectorDefinition.h"
@@ -23,6 +24,10 @@ namespace pf2pat {
 
     GenericPFCandidateSelectorDefinition ( const edm::ParameterSet & cfg, edm::ConsumesCollector && iC ) :
       selector_( cfg.getParameter< std::string >( "cut" ) ) { }
+
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<std::string>("cut", "");
+    }
 
     void select( const HandleToCollection & hc,
 		 const edm::Event & e,
