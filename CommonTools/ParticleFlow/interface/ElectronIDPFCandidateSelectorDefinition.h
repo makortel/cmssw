@@ -54,6 +54,14 @@ namespace pf2pat {
         }
     }
 
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<edm::InputTag>("recoGsfElectrons", edm::InputTag());
+      desc.add<edm::InputTag>("electronIdMap", edm::InputTag());
+      desc.addNode(edm::ParameterDescription<std::vector<std::string> >("bitsToCheck", std::vector<std::string>{}, true) xor
+                   edm::ParameterDescription<unsigned int>("bitsToCheck", 0, true) xor
+                   edm::ParameterDescription<double>("electronIdCut", 0, true));
+    }
+
     void select( const HandleToCollection & hc,
 		 const edm::Event & e,
 		 const edm::EventSetup& s) {
