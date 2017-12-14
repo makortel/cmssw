@@ -10,6 +10,7 @@
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/transform.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 namespace pf2pat {
 
@@ -27,6 +28,15 @@ namespace pf2pat {
       isRelative_(cfg.getParameter<bool>("isRelative")),
       isolationCut_(cfg.getParameter<double>("isolationCut")) {}
 
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<std::vector<edm::InputTag> >("isolationValueMapsCharged", std::vector<edm::InputTag>{});
+      desc.add<std::vector<edm::InputTag> >("isolationValueMapsNeutral", std::vector<edm::InputTag>{});
+      desc.add<bool>("doDeltaBetaCorrection", false);
+      desc.add<edm::InputTag>("deltaBetaIsolationValueMap", edm::InputTag());
+      desc.add<double>("deltaBetaFactor", 0.);
+      desc.add<bool>("isRelative", false);
+      desc.add<double>("isolationCut", 0.);
+    }
 
 
     void select( const HandleToCollection & hc,
