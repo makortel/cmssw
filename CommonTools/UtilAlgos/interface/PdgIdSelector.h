@@ -1,6 +1,7 @@
 #ifndef UtilAlgos_PdgIdSelector_h
 #define UtilAlgos_PdgIdSelector_h
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
 #include "CommonTools/Utils/interface/PdgIdSelector.h"
 
@@ -11,6 +12,10 @@ namespace reco {
     struct ParameterAdapter<PdgIdSelector> {
       static PdgIdSelector make( const edm::ParameterSet & cfg, edm::ConsumesCollector & iC ) {
 	return PdgIdSelector( cfg.getParameter<std::vector<int> >( "pdgId" ) );
+      }
+
+      static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+        desc.add<std::vector<std::string> >("pdgId", std::vector<std::string>{});
       }
     };
 
