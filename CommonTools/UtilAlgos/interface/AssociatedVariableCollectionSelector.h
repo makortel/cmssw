@@ -10,6 +10,7 @@
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "CommonTools/UtilAlgos/interface/SelectionAdderTrait.h"
@@ -37,6 +38,10 @@ public:
   AssociatedVariableCollectionSelector(const edm::ParameterSet & cfg, edm::ConsumesCollector && iC) :
     varToken_(iC.consumes<VarCollection>(cfg.template getParameter<edm::InputTag>("var"))),
     select_(reco::modules::make<Selector>(cfg, iC)) { }
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+    desc.add<edm::InputTag>("var", edm::InputTag());
+    reco::modules::fillPSetDescription<Selector>(desc);
+  }
   const_iterator begin() const { return selected_.begin(); }
   const_iterator end() const { return selected_.end(); }
   void select(const edm::Handle<InputCollection>& c, const edm::Event& evt, const edm::EventSetup&) {
