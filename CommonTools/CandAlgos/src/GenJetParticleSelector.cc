@@ -1,6 +1,7 @@
 #include "CommonTools/CandAlgos/interface/GenJetParticleSelector.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "SimGeneral/HepPDTRecord/interface/PdtEntry.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include <algorithm>
@@ -10,6 +11,7 @@ using namespace edm;
 GenJetParticleSelector::GenJetParticleSelector(const ParameterSet& cfg, edm::ConsumesCollector & iC) :
   stableOnly_(cfg.getParameter<bool>("stableOnly")),
   partons_(false), bInclude_(false) {
+  // TODO: the parameter retrieval can be simplified now that we have fillDescriptions
   const string excludeString("excludeList");
   const string includeString("includeList");
   vpdt includeList, excludeList;
@@ -38,6 +40,20 @@ GenJetParticleSelector::GenJetParticleSelector(const ParameterSet& cfg, edm::Con
   if(stableOnly_ && partons_) {
     throw cms::Exception("ConfigError", "not allowed to have both stableOnly and partons true at the same time\n");
   }
+}
+
+void GenJetParticleSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<bool>("stableOnly", false);
+
+  // PdtEntry can be constructed either from string or int32 (see
+  // PdtEntry.h and .cc. I don't know if we can specialize
+  // ParameterSetDescription similarly.
+  desc.addNode(edm::ParameterDescription<std::vector<std::string> >("includeList", std::vector<std::string>{}, true) xor
+               edm::ParameterDescription<std::vector<int> >("includeList", std::vector<int>{}, true) );
+  desc.addNode(edm::ParameterDescription<std::vector<std::string> >("excludeList", std::vector<std::string>{}, true) xor
+               edm::ParameterDescription<std::vector<int> >("excludeList", std::vector<int>{}, true) );
+
+  desc.add<bool>("partons", false);
 }
 
 bool GenJetParticleSelector::operator()(const reco::Candidate& p) {

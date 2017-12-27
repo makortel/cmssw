@@ -8,6 +8,7 @@
  *
  */
 #include "SimGeneral/HepPDTRecord/interface/PdtEntry.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include <set>
 
 namespace edm { class ParameterSet; class EventSetup; class Event; class ConsumesCollector; }
@@ -16,6 +17,7 @@ namespace reco { class Candidate; }
 class GenJetParticleSelector {
 public:
   GenJetParticleSelector(const edm::ParameterSet&, edm::ConsumesCollector & iC);
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
   bool operator()(const reco::Candidate&);
   void init(const edm::EventSetup&);
 private:
