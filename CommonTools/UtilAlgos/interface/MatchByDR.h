@@ -5,6 +5,7 @@
  */
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "CommonTools/UtilAlgos/interface/DeltaR.h"
 
 namespace reco {
@@ -12,6 +13,9 @@ namespace reco {
   public:
     MatchByDR (const edm::ParameterSet& cfg) :
       maxDR_(cfg.getParameter<double>("maxDeltaR")) {}
+    static void fillPSetDescription(edm::ParameterSetDescription& desc) {
+      desc.add<double>("maxDeltaR", 0.);
+    }
     bool operator() (const T1& t1, const T2& t2) const {
       return deltaR_(t1,t2)<maxDR_;
     }
