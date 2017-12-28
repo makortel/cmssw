@@ -12,6 +12,7 @@
 #include "CommonTools/UtilAlgos/interface/EventSetupInitTrait.h"
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 
 namespace edm {
@@ -23,6 +24,7 @@ namespace edm {
 class DummySelector {
 public:
   explicit DummySelector(const edm::ParameterSet&, edm::ConsumesCollector & iC) : updated_(false) { }
+  static void fillPSetDescription(edm::ParameterSetDescription& desc) {}
   void newEvent(const edm::Event&, const edm::EventSetup&) { updated_ = true; }
   template<typename T>
   bool operator()(const T&) {
