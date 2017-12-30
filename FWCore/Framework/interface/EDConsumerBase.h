@@ -30,6 +30,7 @@
 #include "FWCore/Utilities/interface/TypeToGet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
+#include "FWCore/Utilities/interface/TransientEDGetToken.h"
 #include "FWCore/Utilities/interface/SoATuple.h"
 #include "DataFormats/Provenance/interface/BranchType.h"
 #include "FWCore/Utilities/interface/ProductResolverIndex.h"
@@ -106,6 +107,11 @@ namespace edm {
       TypeToGet tid=TypeToGet::make<ProductType>();
       return EDGetTokenT<ProductType>{recordConsumes(B,tid, checkIfEmpty(tag),true)};
     }
+    template <typename ProductType, BranchType B=InEvent>
+    TransientEDGetTokenT<ProductType> transientConsumes(edm::InputTag const& tag) {
+      TypeToGet tid=TypeToGet::make<ProductType>();
+      return TransientEDGetTokenT<ProductType>{recordConsumes(B,tid, checkIfEmpty(tag),true,true)};
+    }
 
     EDGetToken consumes(const TypeToGet& id, edm::InputTag const& tag) {
       return EDGetToken{recordConsumes(InEvent, id, checkIfEmpty(tag), true)};
@@ -147,7 +153,7 @@ namespace edm {
     }
 
   private:
-    unsigned int recordConsumes(BranchType iBranch, TypeToGet const& iType, edm::InputTag const& iTag, bool iAlwaysGets);
+    unsigned int recordConsumes(BranchType iBranch, TypeToGet const& iType, edm::InputTag const& iTag, bool iAlwaysGets, bool iIsTransient=false);
 
     void throwTypeMismatch(edm::TypeID const&, EDGetToken) const;
     void throwBranchMismatch(BranchType, EDGetToken) const;
@@ -181,8 +187,8 @@ namespace edm {
     };
 
     //define the purpose of each 'column' in m_tokenInfo
-    enum {kLookupInfo,kAlwaysGets,kLabels,kKind};
-    edm::SoATuple<TokenLookupInfo,bool,LabelPlacement,edm::KindOfType> m_tokenInfo;
+    enum {kLookupInfo,kAlwaysGets,kTransient,kLabels,kKind};
+    edm::SoATuple<TokenLookupInfo,bool,bool,LabelPlacement,edm::KindOfType> m_tokenInfo;
 
     //m_tokenStartOfLabels holds the entries into this container
     // for each of the 3 labels needed to id the data

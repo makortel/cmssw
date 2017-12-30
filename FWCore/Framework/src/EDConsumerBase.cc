@@ -85,7 +85,7 @@ EDConsumerBase::checkIfEmpty(edm::InputTag const& iTag) {
 }
 
 unsigned int
-EDConsumerBase::recordConsumes(BranchType iBranch, TypeToGet const& iType, edm::InputTag const& iTag, bool iAlwaysGets) {
+EDConsumerBase::recordConsumes(BranchType iBranch, TypeToGet const& iType, edm::InputTag const& iTag, bool iAlwaysGets, bool iIsTransient) {
 
   if(frozen_) {
     throwConsumesCallAfterFrozen(iType, iTag);
@@ -102,6 +102,7 @@ EDConsumerBase::recordConsumes(BranchType iBranch, TypeToGet const& iType, edm::
   unsigned short delta2 = labelSize+2+productInstanceSize;
   m_tokenInfo.emplace_back(TokenLookupInfo{iType.type(), ProductResolverIndexInvalid, skipCurrentProcess, iBranch},
                            iAlwaysGets,
+                           iIsTransient,
                            LabelPlacement{labelStart,delta1,delta2},
                            iType.kind());
 
@@ -177,12 +178,14 @@ EDConsumerBase::updateLookup(BranchType iBranchType,
       // requested but for now I want to remember these are part of a get many
       const LabelPlacement labels= m_tokenInfo.get<kLabels>(i);
       bool alwaysGet = m_tokenInfo.get<kAlwaysGets>(i);
+      bool transient = m_tokenInfo.get<kTransient>(i);
       for(unsigned int j=0;j!=matches.numberOfMatches();++j) {
         //only keep the ones that are for a specific data item and not a collection
         if(matches.isFullyResolved(j)) {
           auto index =matches.index(j);
           m_tokenInfo.emplace_back(TokenLookupInfo{info.m_type, index, info.m_index.skipCurrentProcess(), info.m_branchType},
                                    alwaysGet,
+                                   transient,
                                    labels,
                                    kind);
         }
