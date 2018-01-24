@@ -23,7 +23,7 @@ namespace {
 
   using OutputType = HeterogeneousProduct<unsigned int, unsigned int>;
 
-  class TestTask: public AcceleratorTask<accelerator::CPU, accelerator::GPUCuda> {
+  class TestTask: public AcceleratorTask<accelerator::CPU, accelerator::GPUMock> {
   public:
     TestTask(const OutputType *input, unsigned int eventId, unsigned int streamId):
       input_(input), eventId_(eventId), streamId_(streamId) {}
@@ -35,10 +35,10 @@ namespace {
         std::random_device r;
         std::mt19937 gen(r());
         auto dist1 = std::uniform_int_distribution<>(0, 1); // simulate the scheduler decision
-        return dist1(gen) == 0 ? accelerator::Capabilities::kGPUCuda : accelerator::Capabilities::kCPU;
+        return dist1(gen) == 0 ? accelerator::Capabilities::kGPUMock : accelerator::Capabilities::kCPU;
       }
       else if(input_->isProductOn(HeterogeneousLocation::kGPU)) {
-        return accelerator::Capabilities::kGPUCuda;
+        return accelerator::Capabilities::kGPUMock;
       }
       else {
         return accelerator::Capabilities::kCPU;
@@ -58,7 +58,7 @@ namespace {
       output_ = input + streamId_*100 + eventId_;
     }
 
-    void run_GPUCuda(std::function<void()> callback) override {
+    void run_GPUMock(std::function<void()> callback) override {
       std::random_device r;
       std::mt19937 gen(r());
       auto dist = std::uniform_real_distribution<>(0.1, 1.0); 
