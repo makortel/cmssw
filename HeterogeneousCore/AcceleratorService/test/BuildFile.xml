@@ -16,4 +16,5 @@
   <use name="FWCore/ParameterSet"/>
   <use name="HeterogeneousCore/AcceleratorService"/>
   <use name="cuda"/>
+  <use name="cuda-api-wrappers"/>
 </library>
