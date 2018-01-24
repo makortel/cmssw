@@ -9,7 +9,7 @@
   <use name="FWCore/ParameterSet"/>
   <use name="HeterogeneousCore/AcceleratorService"/>
 </library>
-<library file="TestAcceleratorServiceProducerGPU.cc TestAcceleratorServiceProducerGPUHelpers.cu" name="HeterogeneousCoreAcceleratorServiceHeterogeneousCore">
+<library file="TestAcceleratorServiceProducerGPU.cc TestAcceleratorServiceProducerGPUHelpers.cu" name="HeterogeneousCoreAcceleratorServiceTestGPU">
   <flags EDM_PLUGIN="1"/>
   <use name="FWCore/Framework"/>
   <use name="FWCore/PluginManager"/>
