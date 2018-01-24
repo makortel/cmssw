@@ -22,7 +22,7 @@
 #include <cuda_runtime.h>
 
 namespace {
-  using OutputType = HeterogeneousProduct<unsigned int, unsigned int>;
+  using OutputType = HeterogeneousProduct<unsigned int, TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>;
 
   class TestTask: public AcceleratorTask<accelerator::CPU, accelerator::GPUCuda> {
   public:
@@ -59,8 +59,8 @@ namespace {
 
     void run_GPUCuda(std::function<void()> callback) override {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU synchronously";
-      auto input = input_ ? input_->getGPUProduct() : 0U;
-      gpuAlgo_->runAlgo(input);
+      auto input = input_ ? input_->getCPUProduct() : 0U; // next step is go back to GPUProduct
+      gpuOutput_ = gpuAlgo_->runAlgo(input);
       edm::LogPrint("Foo") << "    GPU kernel finished";
 
       ranOnGPU_ = true;
@@ -68,17 +68,16 @@ namespace {
     }
 
     auto makeTransfer() const {
-      return [this](const unsigned int& src, unsigned int& dst) {
+      return [this](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
         edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
-        // Why do I need the src here?
-        dst = gpuAlgo_->getResult();
+        dst = gpuAlgo_->getResult(src);
         edm::LogPrint("Foo") << "    GPU result " << dst;
       };
     }
 
     bool ranOnGPU() const { return ranOnGPU_; }
     unsigned int getOutput() const { return output_; }
-    unsigned int getGPUOutput() const { return gpuAlgo_->getResult(); } // why do I need to copy to CPU here?
+    const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() const { return gpuOutput_.get(); }
 
   private:
     // input
@@ -88,6 +87,7 @@ namespace {
 
     // GPU stuff
     std::unique_ptr<TestAcceleratorServiceProducerGPUTask> gpuAlgo_;
+    TestAcceleratorServiceProducerGPUTask::ResultType gpuOutput_;
     bool ranOnGPU_ = false;
 
     // output
@@ -148,7 +148,7 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
   unsigned int value = 0;
   if(task.ranOnGPU()) {
     ret = std::make_unique<OutputType>(task.getGPUOutput(), task.makeTransfer());
-    value = ret->getGPUProduct();
+    //value = ret->getGPUProduct(); //???
   }
   else {
     ret = std::make_unique<OutputType>(task.getOutput());

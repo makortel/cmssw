@@ -12,13 +12,14 @@ public:
   TestAcceleratorServiceProducerGPUTask();
   ~TestAcceleratorServiceProducerGPUTask() = default;
 
-  void runAlgo(int input);
-  int getResult();
+  using ResultType = cuda::memory::device::unique_ptr<int[]>;
+  using ResultTypeRaw = ResultType::pointer;
+  
+  ResultType runAlgo(int input);
+  int getResult(const ResultTypeRaw& d_c);
 
 private:
   std::unique_ptr<cuda::stream_t<>> streamPtr;
-  cuda::memory::host::unique_ptr<int[]> h_c;
-  cuda::memory::device::unique_ptr<int[]> d_c;
 };
 
 #endif

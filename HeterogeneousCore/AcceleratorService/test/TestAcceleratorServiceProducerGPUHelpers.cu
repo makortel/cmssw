@@ -70,10 +70,10 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
   streamPtr = std::make_unique<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
 }
 
-void TestAcceleratorServiceProducerGPUTask::runAlgo(int input) {
+TestAcceleratorServiceProducerGPUTask::ResultType
+TestAcceleratorServiceProducerGPUTask::runAlgo(int input) {
   auto h_a = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
   auto h_b = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
-  h_c = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
 
   for (auto i=0; i<NUM_VALUES; i++) {
     h_a[i] = input + i;
@@ -83,7 +83,7 @@ void TestAcceleratorServiceProducerGPUTask::runAlgo(int input) {
   auto current_device = cuda::device::current::get();
   auto d_a = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
   auto d_b = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
-  d_c = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
+  auto d_c = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
 
   auto stream = *streamPtr;
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(int), stream.id());
@@ -95,11 +95,13 @@ void TestAcceleratorServiceProducerGPUTask::runAlgo(int input) {
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
   stream.synchronize();
+  return d_c;
 }
 
-int TestAcceleratorServiceProducerGPUTask::getResult() {
+int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
   auto stream = *streamPtr;
-  cuda::memory::async::copy(h_c.get(), d_c.get(), NUM_VALUES*sizeof(int), stream.id());
+  auto h_c = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
+  cuda::memory::async::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int), stream.id());
   stream.synchronize();
 
   int ret = 0;
