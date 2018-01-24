@@ -5,8 +5,9 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
+#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
 #include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousProduct.h"
 
@@ -21,16 +22,21 @@
 #include <cuda_runtime.h>
 
 namespace {
-  using OutputType = HeterogeneousProduct<unsigned int, unsigned int>;
+  using OutputType = HeterogeneousProduct<unsigned int, TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>;
 
   class TestTask: public AcceleratorTask<accelerator::CPU, accelerator::GPUCuda> {
   public:
     TestTask(const OutputType *input, unsigned int eventId, unsigned int streamId):
-      input_(input), eventId_(eventId), streamId_(streamId) {}
+      input_(input), eventId_(eventId), streamId_(streamId) {
+      edm::Service<CUDAService> cudaService;
+      if(cudaService->enabled()) {
+        gpuAlgo_ = std::make_unique<TestAcceleratorServiceProducerGPUTask>();
+      }
+    }
     ~TestTask() override = default;
 
     accelerator::Capabilities preferredDevice() const override {
-      if(input_ == nullptr || input_->isProductOn(HeterogeneousLocation::kGPU)) {
+      if(gpuAlgo_ && (input_ == nullptr || input_->isProductOn(HeterogeneousLocation::kGPU))) {
         return accelerator::Capabilities::kGPUCuda;
       }
       else {
@@ -53,24 +59,24 @@ namespace {
 
     void run_GPUCuda(std::function<void()> callback) override {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU synchronously";
-      auto input = input_ ? input_->getGPUProduct() : 0U;
-      gpuOutput_ = TestAcceleratorServiceProducerGPUHelpers_simple_kernel(input);
-      edm::LogPrint("Foo") << "    Got " << gpuOutput_ << " from GPU kernel";
+      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : nullptr);
+      edm::LogPrint("Foo") << "    GPU kernel finished";
 
       ranOnGPU_ = true;
       callback();
     }
 
     auto makeTransfer() const {
-      return [this](const unsigned int& src, unsigned int& dst) {
+      return [this](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
         edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
-        dst = src;
+        dst = gpuAlgo_->getResult(src);
+        edm::LogPrint("Foo") << "    GPU result " << dst;
       };
     }
 
     bool ranOnGPU() const { return ranOnGPU_; }
     unsigned int getOutput() const { return output_; }
-    unsigned int getGPUOutput() const { return gpuOutput_; }
+    const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() const { return gpuOutput_.get(); }
 
   private:
     // input
@@ -78,10 +84,10 @@ namespace {
     unsigned int eventId_;
     unsigned int streamId_;
 
+    // GPU stuff
+    std::unique_ptr<TestAcceleratorServiceProducerGPUTask> gpuAlgo_;
+    TestAcceleratorServiceProducerGPUTask::ResultType gpuOutput_;
     bool ranOnGPU_ = false;
-
-    // simulating GPU memory
-    unsigned int gpuOutput_;
 
     // output
     unsigned int output_;
@@ -141,7 +147,7 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
   unsigned int value = 0;
   if(task.ranOnGPU()) {
     ret = std::make_unique<OutputType>(task.getGPUOutput(), task.makeTransfer());
-    value = ret->getGPUProduct();
+    //value = ret->getGPUProduct(); //???
   }
   else {
     ret = std::make_unique<OutputType>(task.getOutput());
