@@ -1,5 +1,7 @@
 #include "TestAcceleratorServiceProducerGPUHelpers.h"
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+
 #include <cuda/api_wrappers.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -71,12 +73,12 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 }
 
 TestAcceleratorServiceProducerGPUTask::ResultType
-TestAcceleratorServiceProducerGPUTask::runAlgo(int input) {
+TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArray) {
   auto h_a = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
   auto h_b = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
 
   for (auto i=0; i<NUM_VALUES; i++) {
-    h_a[i] = input + i;
+    h_a[i] = i;
     h_b[i] = i*i;
   }
 
@@ -84,6 +86,10 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input) {
   auto d_a = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
   auto d_b = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
   auto d_c = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
+  decltype(d_c) d_d;
+  if(inputArray != nullptr) {
+    d_d = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
+  }
 
   auto stream = *streamPtr;
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(int), stream.id());
@@ -93,6 +99,10 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input) {
   int blocksPerGrid = (NUM_VALUES + threadsPerBlock - 1) / threadsPerBlock;
 
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
+  if(inputArray != nullptr) {
+    vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(inputArray, d_c.get(), d_d.get(), NUM_VALUES);
+    std::swap(d_c, d_d);
+  }
 
   stream.synchronize();
   return d_c;

@@ -59,8 +59,7 @@ namespace {
 
     void run_GPUCuda(std::function<void()> callback) override {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU synchronously";
-      auto input = input_ ? input_->getCPUProduct() : 0U; // next step is go back to GPUProduct
-      gpuOutput_ = gpuAlgo_->runAlgo(input);
+      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : nullptr);
       edm::LogPrint("Foo") << "    GPU kernel finished";
 
       ranOnGPU_ = true;

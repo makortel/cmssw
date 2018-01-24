@@ -15,7 +15,7 @@ public:
   using ResultType = cuda::memory::device::unique_ptr<int[]>;
   using ResultTypeRaw = ResultType::pointer;
   
-  ResultType runAlgo(int input);
+  ResultType runAlgo(int input, const ResultTypeRaw inputArray=nullptr);
   int getResult(const ResultTypeRaw& d_c);
 
 private:
