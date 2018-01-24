@@ -109,11 +109,3 @@ unsigned int AcceleratorService::tokenStreamIdsToDataIndex(unsigned int tokenId,
 bool AcceleratorService::isGPUAvailable() const {
   return true;
 }
-
-// for the macros
-#include "FWCore/ServiceRegistry/interface/ServiceMaker.h"
-#include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-using AcceleratorServiceMaker = edm::serviceregistry::AllArgsMaker<AcceleratorService>;
-DEFINE_FWK_SERVICE_MAKER(AcceleratorService, AcceleratorServiceMaker);
