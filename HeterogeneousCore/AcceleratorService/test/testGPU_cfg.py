@@ -15,6 +15,7 @@ process.options = cms.untracked.PSet(
 
 #process.Tracer = cms.Service("Tracer")
 process.AcceleratorService = cms.Service("AcceleratorService")
+process.CUDAService = cms.Service("CUDAService")
 process.prod1 = cms.EDProducer('TestAcceleratorServiceProducerGPU')
 process.prod2= cms.EDProducer('TestAcceleratorServiceProducerGPU',
     src = cms.InputTag("prod1")
