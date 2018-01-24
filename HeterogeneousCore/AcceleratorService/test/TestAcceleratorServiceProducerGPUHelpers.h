@@ -1,0 +1,6 @@
+#ifndef TestGPU_AcceleratorService_TestAcceleratorServiceProducerGPUHelpers
+#define TestGPU_AcceleratorService_TestAcceleratorServiceProducerGPUHelpers
+
+int TestAcceleratorServiceProducerGPUHelpers_simple_kernel(int input);
+
+#endif
