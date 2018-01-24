@@ -1,0 +1,6 @@
+#ifndef HeterogeneousCore_AcceleratorService_TestAcceleratorServiceProducerGPUHelpers
+#define HeterogeneousCore_AcceleratorService_TestAcceleratorServiceProducerGPUHelpers
+
+int TestAcceleratorServiceProducerGPUHelpers_simple_kernel(int input);
+
+#endif
