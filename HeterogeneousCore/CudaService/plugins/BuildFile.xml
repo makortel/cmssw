@@ -1,0 +1,4 @@
+<library file="*.cc" name="HeterogeneousCoreCudaServicePlugins">
+  <use   name="HeterogeneousCore/CudaService"/>
+  <flags EDM_PLUGIN="1"/>
+</library>
