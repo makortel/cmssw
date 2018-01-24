@@ -6,6 +6,9 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "HeterogeneousCore/CudaService/interface/CudaService.h"
+
 #include <limits>
 #include <algorithm>
 #include <thread>
@@ -67,8 +70,10 @@ void AcceleratorService::async(Token token, edm::StreamID streamID, std::unique_
   const auto index = tokenStreamIdsToDataIndex(token.id(), streamID);
   tasks_[index] = std::move(taskPtr);
   auto task = tasks_[index].get();
-  const auto gpuAvail = isGPUAvailable();
-  if(task->preferredDevice() == accelerator::Capabilities::kGPUCuda && gpuAvail) {
+
+  edm::Service<CudaService> cudaService;
+  const auto cudaAvailable = cudaService->enabled();
+  if(task->preferredDevice() == accelerator::Capabilities::kGPUCuda && cudaAvailable) {
     edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPU";
     task->call_run_GPUCuda([waitingTaskHolder = std::move(waitingTaskHolder),
                             token = token,
@@ -78,6 +83,17 @@ void AcceleratorService::async(Token token, edm::StreamID streamID, std::unique_
                              waitingTaskHolder.doneWaiting(nullptr);
                            });
     edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPU asynchronously(?)";
+  }
+  else if(task->preferredDevice() == accelerator::Capabilities::kGPUMock) { // assume the mock GPU is always available
+    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPUMock";
+    task->call_run_GPUMock([waitingTaskHolder = std::move(waitingTaskHolder),
+                            token = token,
+                            streamID = streamID,
+                            task = task]() mutable {
+                             edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPUMock";
+                             waitingTaskHolder.doneWaiting(nullptr);
+                           });
+    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPUMock asynchronously(?)";
   }
   else {
     if(task->preferredDevice() == accelerator::Capabilities::kGPUCuda) {
@@ -104,8 +120,4 @@ void AcceleratorService::print() {
 unsigned int AcceleratorService::tokenStreamIdsToDataIndex(unsigned int tokenId, edm::StreamID streamId) const {
   assert(streamId < numberOfStreams_);
   return tokenId*numberOfStreams_ + streamId;
-}
-
-bool AcceleratorService::isGPUAvailable() const {
-  return true;
 }
