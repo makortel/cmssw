@@ -7,11 +7,14 @@
 namespace edm {
   class ParameterSet;
   class ActivityRegistry;
+  class ConfigurationDescriptions;
 }
 
 class CudaService {
 public:
   CudaService(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry);
+
+  static void fillDescriptions(edm::ConfigurationDescriptions & descriptions);
 
   bool enabled() const { return enabled_; }
 

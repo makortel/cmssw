@@ -1,12 +1,20 @@
 #include "HeterogeneousCore/CudaService/interface/CudaService.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 
 #include <cuda.h>
 
 #include <dlfcn.h>
 
 CudaService::CudaService(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry) {
+  bool configEnabled = iConfig.getUntrackedParameter<bool>("enabled");
+  if(!configEnabled) {
+    edm::LogInfo("CudaService") << "CudaService disabled by configuration";
+  }
+
   // First check if we can load the cuda runtime library
   void *cudaLib = dlopen("libcuda.so", RTLD_NOW);
   if(cudaLib == nullptr) {
@@ -70,4 +78,11 @@ CudaService::CudaService(edm::ParameterSet const& iConfig, edm::ActivityRegistry
 
   edm::LogInfo("CudaService") << "CudaService fully initialized";
   enabled_ = true;
+}
+
+void CudaService::fillDescriptions(edm::ConfigurationDescriptions & descriptions) {
+  edm::ParameterSetDescription desc;
+  desc.addUntracked<bool>("enabled", true);
+
+  descriptions.add("CudaService", desc);
 }
