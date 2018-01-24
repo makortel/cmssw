@@ -5,8 +5,9 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
+#include "HeterogeneousCore/CudaService/interface/CudaService.h"
 
 #include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousProduct.h"
 
@@ -26,11 +27,16 @@ namespace {
   class TestTask: public AcceleratorTask<accelerator::CPU, accelerator::GPUCuda> {
   public:
     TestTask(const OutputType *input, unsigned int eventId, unsigned int streamId):
-      input_(input), eventId_(eventId), streamId_(streamId) {}
+      input_(input), eventId_(eventId), streamId_(streamId) {
+      edm::Service<CudaService> cudaService;
+      if(cudaService->enabled()) {
+        gpuAlgo_ = std::make_unique<TestAcceleratorServiceProducerGPUTask>();
+      }
+    }
     ~TestTask() override = default;
 
     accelerator::Capabilities preferredDevice() const override {
-      if(input_ == nullptr || input_->isProductOn(HeterogeneousLocation::kGPU)) {
+      if(gpuAlgo_ && (input_ == nullptr || input_->isProductOn(HeterogeneousLocation::kGPU))) {
         return accelerator::Capabilities::kGPUCuda;
       }
       else {
@@ -54,8 +60,8 @@ namespace {
     void run_GPUCuda(std::function<void()> callback) override {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU synchronously";
       auto input = input_ ? input_->getGPUProduct() : 0U;
-      gpuOutput_ = TestAcceleratorServiceProducerGPUHelpers_simple_kernel(input);
-      edm::LogPrint("Foo") << "    Got " << gpuOutput_ << " from GPU kernel";
+      gpuAlgo_->runAlgo(input);
+      edm::LogPrint("Foo") << "    GPU kernel finished";
 
       ranOnGPU_ = true;
       callback();
@@ -64,13 +70,15 @@ namespace {
     auto makeTransfer() const {
       return [this](const unsigned int& src, unsigned int& dst) {
         edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
-        dst = src;
+        // Why do I need the src here?
+        dst = gpuAlgo_->getResult();
+        edm::LogPrint("Foo") << "    GPU result " << dst;
       };
     }
 
     bool ranOnGPU() const { return ranOnGPU_; }
     unsigned int getOutput() const { return output_; }
-    unsigned int getGPUOutput() const { return gpuOutput_; }
+    unsigned int getGPUOutput() const { return gpuAlgo_->getResult(); } // why do I need to copy to CPU here?
 
   private:
     // input
@@ -78,10 +86,9 @@ namespace {
     unsigned int eventId_;
     unsigned int streamId_;
 
+    // GPU stuff
+    std::unique_ptr<TestAcceleratorServiceProducerGPUTask> gpuAlgo_;
     bool ranOnGPU_ = false;
-
-    // simulating GPU memory
-    unsigned int gpuOutput_;
 
     // output
     unsigned int output_;
