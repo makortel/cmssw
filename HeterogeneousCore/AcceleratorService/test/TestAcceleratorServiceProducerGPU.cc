@@ -58,12 +58,12 @@ namespace {
     }
 
     void run_GPUCuda(std::function<void()> callback) override {
-      edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU synchronously";
-      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : nullptr);
-      edm::LogPrint("Foo") << "    GPU kernel finished";
-
-      ranOnGPU_ = true;
-      callback();
+      edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
+      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : nullptr, [callback,this](){
+          edm::LogPrint("Foo") << "    GPU kernel finished (in callback)";
+          ranOnGPU_ = true;
+          callback();
+        });
     }
 
     auto makeTransfer() const {
