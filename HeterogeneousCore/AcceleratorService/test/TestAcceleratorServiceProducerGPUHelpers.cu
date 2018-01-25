@@ -10,12 +10,52 @@
 // Vector Addition Kernel
 //
 namespace {
-template<typename T>
-__global__
-void vectorAdd(const T *a, const T *b, T *c, int numElements) {
+  template<typename T>
+  __global__
+  void vectorAdd(const T *a, const T *b, T *c, int numElements) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i < numElements) { c[i] = a[i] + b[i]; }
-}
+  }
+
+  template <typename T>
+  __global__
+  void vectorProd(const T *a, const T *b, T *c, int numElements) {
+    int row = blockIdx.y*blockDim.y + threadIdx.y;
+    int col = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if(row < numElements && col < numElements) {
+      c[row*numElements + col] = a[row]*b[col];
+    }
+  }
+
+  template <typename T>
+  __global__
+  void matrixMul(const T *a, const T *b, T *c, int numElements) {
+    int row = blockIdx.y*blockDim.y + threadIdx.y;
+    int col = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if(row < numElements && col < numElements) {
+      T tmp = 0;
+      for(int i=0; i<numElements; ++i) {
+        tmp += a[row*numElements + i] * b[i*numElements + col];
+      }
+      c[row*numElements + col] = tmp;
+    }
+  }
+
+  template <typename T>
+  __global__
+  void matrixMulVector(const T *a, const T *b, T *c, int numElements) {
+    int row = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if(row < numElements) {
+      T tmp = 0;
+      for(int i=0; i<numElements; ++i) {
+        tmp += a[row*numElements + i] * b[i];
+      }
+      c[row] = tmp;
+    }
+  }
 }
 
 int TestAcceleratorServiceProducerGPUHelpers_simple_kernel(int input) {
@@ -74,8 +114,8 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 
 TestAcceleratorServiceProducerGPUTask::ResultType
 TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArray, std::function<void()> callback) {
-  auto h_a = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
-  auto h_b = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
+  auto h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
+  auto h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
 
   for (auto i=0; i<NUM_VALUES; i++) {
     h_a[i] = i;
@@ -83,42 +123,64 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   }
 
   auto current_device = cuda::device::current::get();
-  auto d_a = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
-  auto d_b = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
-  auto d_c = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
+  auto d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+  auto d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+  auto d_c = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   decltype(d_c) d_d;
   if(inputArray != nullptr) {
-    d_d = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
+    d_d = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   }
 
-  auto stream = *streamPtr;
-  cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(int), stream.id());
-  cuda::memory::async::copy(d_b.get(), h_b.get(), NUM_VALUES*sizeof(int), stream.id());
+  auto d_ma = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+  auto d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+  auto d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
 
-  int threadsPerBlock {256};
+  auto& stream = *streamPtr;
+  cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(float), stream.id());
+  cuda::memory::async::copy(d_b.get(), h_b.get(), NUM_VALUES*sizeof(float), stream.id());
+
+  int threadsPerBlock {32};
   int blocksPerGrid = (NUM_VALUES + threadsPerBlock - 1) / threadsPerBlock;
 
+  edm::LogPrint("Foo") << "--- launching kernels";
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
   if(inputArray != nullptr) {
     vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(inputArray, d_c.get(), d_d.get(), NUM_VALUES);
     std::swap(d_c, d_d);
   }
 
+  dim3 threadsPerBlock3{NUM_VALUES, NUM_VALUES};
+  dim3 blocksPerGrid3{1,1};
+  if(NUM_VALUES*NUM_VALUES > 32) {
+    threadsPerBlock3.x = 32;
+    threadsPerBlock3.y = 32;
+    blocksPerGrid3.x = ceil(double(NUM_VALUES)/double(threadsPerBlock3.x));
+    blocksPerGrid3.y = ceil(double(NUM_VALUES)/double(threadsPerBlock3.y));
+  }
+  vectorProd<<<blocksPerGrid3, threadsPerBlock3, 0, stream.id()>>>(d_a.get(), d_b.get(), d_ma.get(), NUM_VALUES);
+  vectorProd<<<blocksPerGrid3, threadsPerBlock3, 0, stream.id()>>>(d_a.get(), d_c.get(), d_mb.get(), NUM_VALUES);
+  matrixMul<<<blocksPerGrid3, threadsPerBlock3, 0, stream.id()>>>(d_ma.get(), d_mb.get(), d_mc.get(), NUM_VALUES);
+
+  matrixMulVector<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_mc.get(), d_b.get(), d_c.get(), NUM_VALUES);
+
+  edm::LogPrint("Foo") << "--- kernels launched, enqueueing the callback";
   stream.enqueue.callback([callback](cuda::stream::id_t stream_id, cuda::status_t status){
       callback();
     });
 
+  edm::LogPrint("Foo") << "--- finished, returning return pointer";
   return d_c;
 }
 
 int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
-  auto h_c = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
+  auto h_c = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   cuda::memory::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int));
 
-  int ret = 0;
-  for (auto i=0; i<10; i++) {
+  float ret = 0;
+  for (auto i=0; i<NUM_VALUES; i++) {
     ret += h_c[i];
   }
 
-  return ret;
+  return static_cast<int>(ret);
 }
+
