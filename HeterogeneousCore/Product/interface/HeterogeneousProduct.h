@@ -1,7 +1,5 @@
-#ifndef HeterogeneousCore_AcceleratorService_interface_HeterogeneousData_h
-#define HeterogeneousCore_AcceleratorService_interface_HeterogeneousData_h
-
-#include "HeterogeneousCore/AcceleratorService/interface/AcceleratorTask.h"
+#ifndef HeterogeneousCore_Product_interface_HeterogeneousData_h
+#define HeterogeneousCore_Product_interface_HeterogeneousData_h
 
 #include "FWCore/Utilities/interface/Exception.h"
 
@@ -17,7 +15,6 @@ enum class HeterogeneousLocation {
 template <typename CPUProduct, typename GPUProduct>
 class HeterogeneousProduct {
 public:
-  using TaskGetter = std::function<const AcceleratorTaskBase *(void)>;
   using TransferCallback = std::function<void(const GPUProduct&, CPUProduct&)>;
 
   HeterogeneousProduct() = default;

@@ -9,7 +9,7 @@
 #include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
 #include "HeterogeneousCore/CudaService/interface/CudaService.h"
 
-#include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousProduct.h"
+#include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
 #include "TestAcceleratorServiceProducerGPUHelpers.h"
 
