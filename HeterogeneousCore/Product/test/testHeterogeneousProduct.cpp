@@ -1,6 +1,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousProduct.h"
+#include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
 class testHeterogeneousProduct: public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(testHeterogeneousProduct);
