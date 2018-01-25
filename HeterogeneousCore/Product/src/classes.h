@@ -4,6 +4,7 @@
 namespace {
   struct dictionary {
     HeterogeneousProduct<unsigned int, unsigned int> hpuu;
-    HeterogeneousProduct<unsigned int, int*> hpuup;
+    HeterogeneousProduct<unsigned int, int*> hpuip;
+    HeterogeneousProduct<unsigned int, float*> hpufp;
   };
 }

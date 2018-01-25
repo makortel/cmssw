@@ -64,7 +64,7 @@ int TestAcceleratorServiceProducerGPUHelpers_simple_kernel(int input) {
 }
 
 namespace {
-  constexpr int NUM_VALUES = 10000;
+  constexpr long NUM_VALUES = 100000;
 }
 
 TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
@@ -74,8 +74,8 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 
 TestAcceleratorServiceProducerGPUTask::ResultType
 TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArray, std::function<void()> callback) {
-  auto h_a = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
-  auto h_b = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
+  auto h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
+  auto h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
 
   for (auto i=0; i<NUM_VALUES; i++) {
     h_a[i] = i;
@@ -83,12 +83,12 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   }
 
   auto current_device = cuda::device::current::get();
-  auto d_a = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
-  auto d_b = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
-  auto d_c = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
+  auto d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+  auto d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+  auto d_c = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   decltype(d_c) d_d;
   if(inputArray != nullptr) {
-    d_d = cuda::memory::device::make_unique<int[]>(current_device, NUM_VALUES);
+    d_d = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   }
 
   auto stream = *streamPtr;
@@ -112,13 +112,13 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
 }
 
 int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
-  auto h_c = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
+  auto h_c = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   cuda::memory::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int));
 
-  int ret = 0;
+  float ret = 0;
   for (auto i=0; i<10; i++) {
     ret += h_c[i];
   }
 
-  return ret;
+  return static_cast<int>(ret);
 }
