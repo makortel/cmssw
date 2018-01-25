@@ -64,6 +64,7 @@ namespace {
           ranOnGPU_ = true;
           callback();
         });
+      edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " launched";
     }
 
     auto makeTransfer() const {

@@ -13,7 +13,7 @@ public:
   TestAcceleratorServiceProducerGPUTask();
   ~TestAcceleratorServiceProducerGPUTask() = default;
 
-  using ResultType = cuda::memory::device::unique_ptr<int[]>;
+  using ResultType = cuda::memory::device::unique_ptr<float[]>;
   using ResultTypeRaw = ResultType::pointer;
   
   ResultType runAlgo(int input, const ResultTypeRaw inputArray, std::function<void()> callback);
