@@ -135,13 +135,14 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   auto d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
   auto d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
 
-  auto stream = *streamPtr;
+  auto& stream = *streamPtr;
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(int), stream.id());
   cuda::memory::async::copy(d_b.get(), h_b.get(), NUM_VALUES*sizeof(int), stream.id());
 
-  int threadsPerBlock {256};
+  int threadsPerBlock {32};
   int blocksPerGrid = (NUM_VALUES + threadsPerBlock - 1) / threadsPerBlock;
 
+  edm::LogPrint("Foo") << "--- launching kernels";
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
   if(inputArray != nullptr) {
     vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(inputArray, d_c.get(), d_d.get(), NUM_VALUES);
@@ -150,9 +151,9 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
 
   dim3 threadsPerBlock3{NUM_VALUES, NUM_VALUES};
   dim3 blocksPerGrid3{1,1};
-  if(NUM_VALUES*NUM_VALUES > 512) {
-    threadsPerBlock3.x = 512;
-    threadsPerBlock3.y = 512;
+  if(NUM_VALUES*NUM_VALUES > 32) {
+    threadsPerBlock3.x = 32;
+    threadsPerBlock3.y = 32;
     blocksPerGrid3.x = ceil(double(NUM_VALUES)/double(threadsPerBlock3.x));
     blocksPerGrid3.y = ceil(double(NUM_VALUES)/double(threadsPerBlock3.y));
   }
@@ -161,11 +162,13 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   matrixMul<<<blocksPerGrid3, threadsPerBlock3, 0, stream.id()>>>(d_ma.get(), d_mb.get(), d_mc.get(), NUM_VALUES);
 
   matrixMulVector<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_mc.get(), d_b.get(), d_c.get(), NUM_VALUES);
-  
+
+  edm::LogPrint("Foo") << "--- kernels launched, enqueueing the callback";
   stream.enqueue.callback([callback](cuda::stream::id_t stream_id, cuda::status_t status){
       callback();
     });
 
+  edm::LogPrint("Foo") << "--- finished, returning return pointer";
   return d_c;
 }
 
@@ -174,9 +177,10 @@ int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
   cuda::memory::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int));
 
   float ret = 0;
-  for (auto i=0; i<10; i++) {
+  for (auto i=0; i<NUM_VALUES; i++) {
     ret += h_c[i];
   }
 
   return static_cast<int>(ret);
 }
+
