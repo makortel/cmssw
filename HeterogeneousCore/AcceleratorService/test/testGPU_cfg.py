@@ -18,7 +18,8 @@ process.AcceleratorService = cms.Service("AcceleratorService")
 process.CudaService = cms.Service("CudaService")
 process.prod1 = cms.EDProducer('TestAcceleratorServiceProducerGPU')
 process.prod2= cms.EDProducer('TestAcceleratorServiceProducerGPU',
-    src = cms.InputTag("prod1")
+    src = cms.InputTag("prod1"),
+    showResult = cms.untracked.bool(True),                        
 )
 
 #process.t = cms.Task(process.prod1, process.prod2)
