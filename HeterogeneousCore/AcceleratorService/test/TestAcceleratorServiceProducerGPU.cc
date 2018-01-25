@@ -106,6 +106,7 @@ private:
   AcceleratorService::Token accToken_;
 
   edm::EDGetTokenT<OutputType> srcToken_;
+  bool showResult_;
 
   // to mimic external task worker interface
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTask) override;
@@ -115,7 +116,8 @@ private:
 
 TestAcceleratorServiceProducerGPU::TestAcceleratorServiceProducerGPU(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
-  accToken_(edm::Service<AcceleratorService>()->book())
+  accToken_(edm::Service<AcceleratorService>()->book()),
+  showResult_(iConfig.getUntrackedParameter<bool>("showResult"))
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
   if(!srcTag.label().empty()) {
@@ -144,16 +146,14 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
   edm::Service<AcceleratorService> acc;
   const auto& task = dynamic_cast<const ::TestTask&>(acc->getTask(accToken_, iEvent.streamID()));
   std::unique_ptr<OutputType> ret;
-  unsigned int value = 0;
   if(task.ranOnGPU()) {
     ret = std::make_unique<OutputType>(task.getGPUOutput(), task.makeTransfer());
-    //value = ret->getGPUProduct(); //???
   }
   else {
     ret = std::make_unique<OutputType>(task.getOutput());
-    value = ret->getCPUProduct();
   }
 
+  unsigned int value = showResult_ ? ret->getCPUProduct() : 0;
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
   iEvent.put(std::move(ret));
 }
@@ -161,6 +161,7 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
 void TestAcceleratorServiceProducerGPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag());
+  desc.addUntracked<bool>("showResult", false);
   descriptions.add("testAcceleratorServiceProducerGPU", desc);
 }
 
