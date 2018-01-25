@@ -73,7 +73,7 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 }
 
 TestAcceleratorServiceProducerGPUTask::ResultType
-TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArray) {
+TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArray, std::function<void()> callback) {
   auto h_a = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
   auto h_b = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
 
@@ -104,15 +104,16 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
     std::swap(d_c, d_d);
   }
 
-  stream.synchronize();
+  stream.enqueue.callback([callback](cuda::stream::id_t stream_id, cuda::status_t status){
+      callback();
+    });
+
   return d_c;
 }
 
 int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
-  auto stream = *streamPtr;
   auto h_c = cuda::memory::host::make_unique<int[]>(NUM_VALUES);
-  cuda::memory::async::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int), stream.id());
-  stream.synchronize();
+  cuda::memory::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int));
 
   int ret = 0;
   for (auto i=0; i<10; i++) {
