@@ -8,7 +8,7 @@
 #include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousProduct.h"
+#include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
 #include "tbb/concurrent_vector.h"
 

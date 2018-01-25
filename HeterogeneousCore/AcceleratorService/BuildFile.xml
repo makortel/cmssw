@@ -4,7 +4,6 @@
 <use name="FWCore/MessageLogger"/>
 <use name="DataFormats/Provenance"/>
 <use name="HeterogeneousCore/CUDAServices"/>
-<use name="root"/>
 
 <export>
     <lib name="1"/>
