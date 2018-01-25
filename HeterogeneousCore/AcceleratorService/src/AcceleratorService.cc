@@ -66,7 +66,6 @@ AcceleratorService::Token AcceleratorService::book() {
 }
 
 void AcceleratorService::async(Token token, edm::StreamID streamID, std::unique_ptr<AcceleratorTaskBase> taskPtr, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  edm::LogPrint("Foo") << " AcceleratorService token " << token.id() << " stream " << streamID << " launching thread";
   const auto index = tokenStreamIdsToDataIndex(token.id(), streamID);
   tasks_[index] = std::move(taskPtr);
   auto task = tasks_[index].get();
