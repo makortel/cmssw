@@ -17,17 +17,16 @@ process.options = cms.untracked.PSet(
 process.AcceleratorService = cms.Service("AcceleratorService")
 process.CUDAService = cms.Service("CUDAService")
 process.prod1 = cms.EDProducer('TestAcceleratorServiceProducerGPU')
-process.prod2= cms.EDProducer('TestAcceleratorServiceProducerGPU',
+process.prod2 = cms.EDProducer('TestAcceleratorServiceProducerGPU',
     src = cms.InputTag("prod1"),
-    showResult = cms.untracked.bool(True),                        
+)
+process.prod3 = cms.EDProducer('TestAcceleratorServiceProducerGPU',
+    src = cms.InputTag("prod1"),
+)
+process.ana = cms.EDAnalyzer("TestAcceleratorServiceAnalyzer",
+    src = cms.VInputTag("prod2", "prod3")
 )
 
-#process.t = cms.Task(process.prod1, process.prod2)
-
-process.eca = cms.EDAnalyzer("EventContentAnalyzer",
-    getData = cms.untracked.bool(True),
-    getDataForModuleLabels = cms.untracked.vstring("producer"),
-    listContent = cms.untracked.bool(True),
-)
-process.p = cms.Path(process.prod1+process.prod2)#+process.eca)
-#process.p.associate(process.t)
+process.t = cms.Task(process.prod1, process.prod2, process.prod3)
+process.p = cms.Path(process.ana)
+process.p.associate(process.t)

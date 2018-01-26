@@ -1,4 +1,4 @@
-<library file="TestAcceleratorServiceProducerGPUMock.cc" name="HeterogeneousCoreAcceleratorServiceTest">
+<library file="TestAcceleratorServiceProducerGPUMock.cc TestAcceleratorServiceAnalyzer.cc" name="HeterogeneousCoreAcceleratorServiceTest">
   <flags EDM_PLUGIN="1"/>
   <use name="FWCore/Framework"/>
   <use name="FWCore/PluginManager"/>
