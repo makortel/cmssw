@@ -171,9 +171,9 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   return d_c;
 }
 
-int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
-  // This is a suboptimal place to release the temporary memory, but
-  // what would be better? Apparently I can't do that from the callback.
+void TestAcceleratorServiceProducerGPUTask::release() {
+  // any way to automate the release?
+  edm::LogPrint("Foo") << "--- releasing temporary memory";
   h_a.reset();
   h_b.reset();
   d_a.reset();
@@ -182,7 +182,9 @@ int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
   d_ma.reset();
   d_mb.reset();
   d_mc.reset();
-  
+}
+
+int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
   auto h_c = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   cuda::memory::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int));
 
