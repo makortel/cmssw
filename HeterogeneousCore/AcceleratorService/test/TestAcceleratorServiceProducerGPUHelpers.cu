@@ -172,6 +172,8 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
 }
 
 int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
+  // This is a suboptimal place to release the temporary memory, but
+  // what would be better? Apparently I can't do that from the callback.
   h_a.reset();
   h_b.reset();
   d_a.reset();
