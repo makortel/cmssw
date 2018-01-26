@@ -21,6 +21,16 @@ public:
 
 private:
   std::unique_ptr<cuda::stream_t<>> streamPtr;
+
+  // temporary storage, need to be somewhere to allow async execution
+  cuda::memory::host::unique_ptr<float[]> h_a;
+  cuda::memory::host::unique_ptr<float[]> h_b;
+  cuda::memory::device::unique_ptr<float[]> d_a;
+  cuda::memory::device::unique_ptr<float[]> d_b;
+  cuda::memory::device::unique_ptr<float[]> d_d;
+  cuda::memory::device::unique_ptr<float[]> d_ma;
+  cuda::memory::device::unique_ptr<float[]> d_mb;
+  cuda::memory::device::unique_ptr<float[]> d_mc;
 };
 
 #endif
