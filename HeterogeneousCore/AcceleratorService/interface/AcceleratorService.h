@@ -56,6 +56,7 @@ private:
   // nearly (if not all) happens multi-threaded, so we need some
   // thread-locals to keep track in which module we are
   static thread_local unsigned int currentModuleId_;
+  static thread_local std::string currentModuleLabel_; // only for printouts
 
   // TODO: how to treat subprocesses?
   std::mutex moduleMutex_;

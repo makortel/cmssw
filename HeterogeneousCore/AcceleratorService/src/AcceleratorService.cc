@@ -17,6 +17,7 @@
 #include <cassert>
 
 thread_local unsigned int AcceleratorService::currentModuleId_ = std::numeric_limits<unsigned int>::max();
+thread_local std::string AcceleratorService::currentModuleLabel_ = "";
 
 AcceleratorService::AcceleratorService(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry) {
   edm::LogWarning("AcceleratorService") << "Constructor";
@@ -36,9 +37,11 @@ void AcceleratorService::preallocate(edm::service::SystemBounds const& bounds) {
 
 void AcceleratorService::preModuleConstruction(edm::ModuleDescription const& desc) {
   currentModuleId_ = desc.id();
+  currentModuleLabel_ = desc.moduleLabel();
 }
 void AcceleratorService::postModuleConstruction(edm::ModuleDescription const& desc) {
   currentModuleId_ = std::numeric_limits<unsigned int>::max();
+  currentModuleLabel_ = "";
 }
 
 
@@ -60,7 +63,7 @@ AcceleratorService::Token AcceleratorService::book() {
     index = std::distance(moduleIds_.begin(), found);
   }
 
-  edm::LogPrint("Foo") << "AcceleratorService::book for module " << currentModuleId_ << " token id " << index << " moduleIds_.size() " << moduleIds_.size();
+  edm::LogPrint("Foo") << "AcceleratorService::book for module " << currentModuleId_ << " " << currentModuleLabel_ << " token id " << index << " moduleIds_.size() " << moduleIds_.size();
 
   return Token(index);
 }
