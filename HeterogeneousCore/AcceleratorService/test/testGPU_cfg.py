@@ -19,15 +19,12 @@ process.CudaService = cms.Service("CudaService")
 process.prod1 = cms.EDProducer('TestAcceleratorServiceProducerGPU')
 process.prod2= cms.EDProducer('TestAcceleratorServiceProducerGPU',
     src = cms.InputTag("prod1"),
-    showResult = cms.untracked.bool(True),                        
+)
+process.ana2 = cms.EDAnalyzer("TestAcceleratorServiceAnalyzer",
+    src = cms.InputTag("prod2")
 )
 
-#process.t = cms.Task(process.prod1, process.prod2)
+process.t = cms.Task(process.prod1, process.prod2)
 
-process.eca = cms.EDAnalyzer("EventContentAnalyzer",
-    getData = cms.untracked.bool(True),
-    getDataForModuleLabels = cms.untracked.vstring("producer"),
-    listContent = cms.untracked.bool(True),
-)
-process.p = cms.Path(process.prod1+process.prod2)#+process.eca)
-#process.p.associate(process.t)
+process.p = cms.Path(process.ana2)
+process.p.associate(process.t)
