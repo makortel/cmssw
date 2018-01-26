@@ -77,7 +77,10 @@ namespace {
 
     bool ranOnGPU() const { return ranOnGPU_; }
     unsigned int getOutput() const { return output_; }
-    const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() const { return gpuOutput_.get(); }
+    const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() const {
+      gpuAlgo_->release();
+      return gpuOutput_.get();
+    }
 
   private:
     // input
