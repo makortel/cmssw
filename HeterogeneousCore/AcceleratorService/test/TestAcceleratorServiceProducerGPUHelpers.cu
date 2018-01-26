@@ -114,8 +114,8 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 
 TestAcceleratorServiceProducerGPUTask::ResultType
 TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArray, std::function<void()> callback) {
-  auto h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
-  auto h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
+  h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
+  h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
 
   for (auto i=0; i<NUM_VALUES; i++) {
     h_a[i] = i;
@@ -123,17 +123,16 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   }
 
   auto current_device = cuda::device::current::get();
-  auto d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
-  auto d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+  d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+  d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   auto d_c = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
-  decltype(d_c) d_d;
   if(inputArray != nullptr) {
     d_d = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   }
 
-  auto d_ma = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
-  auto d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
-  auto d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+  d_ma = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+  d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+  d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
 
   auto& stream = *streamPtr;
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(int), stream.id());
@@ -173,6 +172,15 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
 }
 
 int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
+  h_a.reset();
+  h_b.reset();
+  d_a.reset();
+  d_b.reset();
+  d_d.reset();
+  d_ma.reset();
+  d_mb.reset();
+  d_mc.reset();
+  
   auto h_c = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   cuda::memory::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int));
 
