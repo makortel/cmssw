@@ -79,8 +79,11 @@ bool AcceleratorService::scheduleGPUMock(Token token, edm::StreamID streamID, ed
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPUMock";
   gpuMockAlgo.runGPUMock([waitingTaskHolder = std::move(waitingTaskHolder),
                           token = token,
-                          streamID = streamID]() mutable {
+                          streamID = streamID,
+                          &location = algoExecutionLocation_[tokenStreamIdsToDataIndex(token.id(), streamID)]
+                          ]() mutable {
                            edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPUMock";
+                           location = HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0);
                            waitingTaskHolder.doneWaiting(nullptr);
                          });
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPUMock asynchronously(?)";
@@ -97,8 +100,11 @@ bool AcceleratorService::scheduleGPUCuda(Token token, edm::StreamID streamID, ed
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPU";
   gpuCudaAlgo.runGPUCuda([waitingTaskHolder = std::move(waitingTaskHolder),
                           token = token,
-                          streamID = streamID]() mutable {
+                          streamID = streamID,
+                          &location = algoExecutionLocation_[tokenStreamIdsToDataIndex(token.id(), streamID)]
+                          ]() mutable {
                            edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPU";
+                           location = HeterogeneousDeviceId(HeterogeneousDevice::kGPUCuda, 0);
                            waitingTaskHolder.doneWaiting(nullptr);
                          });
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPU asynchronously(?)";
@@ -108,6 +114,7 @@ bool AcceleratorService::scheduleGPUCuda(Token token, edm::StreamID streamID, ed
 void AcceleratorService::scheduleCPU(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoCPUBase& cpuAlgo) {
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on CPU";
   cpuAlgo.runCPU();
+  algoExecutionLocation_[tokenStreamIdsToDataIndex(token.id(), streamID)] = HeterogeneousDeviceId(HeterogeneousDevice::kCPU, 0);
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on CPU";
 }
 

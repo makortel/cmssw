@@ -57,7 +57,6 @@ namespace {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
       gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : nullptr, [callback,this](){
           edm::LogPrint("Foo") << "    GPU kernel finished (in callback)";
-          ranOnGPU_ = true;
           callback();
         });
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " launched";
@@ -71,7 +70,6 @@ namespace {
       };
     }
 
-    bool ranOnGPU() const { return ranOnGPU_; }
     unsigned int getOutput() const { return output_; }
     const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() const {
       gpuAlgo_->release();
@@ -87,7 +85,6 @@ namespace {
     // GPU stuff
     std::unique_ptr<TestAcceleratorServiceProducerGPUTask> gpuAlgo_;
     TestAcceleratorServiceProducerGPUTask::ResultType gpuOutput_;
-    bool ranOnGPU_ = false;
 
     // output
     unsigned int output_;
@@ -151,7 +148,8 @@ void TestAcceleratorServiceProducerGPU::acquire(const edm::Event& iEvent, const 
 void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
   std::unique_ptr<OutputType> ret;
-  if(algo_.ranOnGPU()) {
+  edm::Service<AcceleratorService> acc;
+  if(acc->algoExecutionLocation(accToken_, iEvent.streamID()).deviceType() == HeterogeneousDevice::kGPUCuda) {
     ret = std::make_unique<OutputType>(algo_.getGPUOutput(), algo_.makeTransfer());
   }
   else {
