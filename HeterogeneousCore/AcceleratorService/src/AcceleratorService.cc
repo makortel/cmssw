@@ -31,8 +31,8 @@ AcceleratorService::AcceleratorService(edm::ParameterSet const& iConfig, edm::Ac
 void AcceleratorService::preallocate(edm::service::SystemBounds const& bounds) {
   numberOfStreams_ = bounds.maxNumberOfStreams();
   edm::LogPrint("Foo") << "AcceleratorService: number of streams " << numberOfStreams_;
-  // called after module construction, so initialize tasks_ here
-  tasks_.resize(moduleIds_.size()*numberOfStreams_);
+  // called after module construction, so initialize algoExecutionLocation_ here
+  algoExecutionLocation_.resize(moduleIds_.size()*numberOfStreams_);
 }
 
 void AcceleratorService::preModuleConstruction(edm::ModuleDescription const& desc) {
@@ -67,58 +67,6 @@ AcceleratorService::Token AcceleratorService::book() {
 
   return Token(index);
 }
-
-void AcceleratorService::async(Token token, edm::StreamID streamID, std::unique_ptr<AcceleratorTaskBase> taskPtr, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  const auto index = tokenStreamIdsToDataIndex(token.id(), streamID);
-  tasks_[index] = std::move(taskPtr);
-  auto task = tasks_[index].get();
-
-  edm::Service<CudaService> cudaService;
-  const auto cudaAvailable = cudaService->enabled();
-  if(task->preferredDevice() == accelerator::Capabilities::kGPUCuda && cudaAvailable) {
-    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPU";
-    task->call_run_GPUCuda([waitingTaskHolder = std::move(waitingTaskHolder),
-                            token = token,
-                            streamID = streamID,
-                            task = task]() mutable {
-                             edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPU";
-                             waitingTaskHolder.doneWaiting(nullptr);
-                           });
-    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPU asynchronously(?)";
-  }
-  else if(task->preferredDevice() == accelerator::Capabilities::kGPUMock) { // assume the mock GPU is always available
-    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPUMock";
-    task->call_run_GPUMock([waitingTaskHolder = std::move(waitingTaskHolder),
-                            token = token,
-                            streamID = streamID,
-                            task = task]() mutable {
-                             edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPUMock";
-                             waitingTaskHolder.doneWaiting(nullptr);
-                           });
-    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPUMock asynchronously(?)";
-  }
-  else {
-    if(task->preferredDevice() == accelerator::Capabilities::kGPUCuda) {
-      edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " preferred GPU but it was not available";
-    }
-    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on CPU";
-    task->call_run_CPU();
-    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on CPU";
-  }
-}
-
-const AcceleratorTaskBase& AcceleratorService::getTask(Token token, edm::StreamID streamID) const {
-  auto& ptr = tasks_[tokenStreamIdsToDataIndex(token.id(), streamID)];
-  if(ptr == nullptr) {
-    throw cms::Exception("LogicError") << "No task for token " << token.id() << " stream " << streamID;
-  }
-  return *ptr;
-}
-
-void AcceleratorService::print() {
-  edm::LogPrint("AcceleratorService") << "Hello world";
-}
-
 
 bool AcceleratorService::scheduleGPUMock(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMockBase& gpuMockAlgo) {
   // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions

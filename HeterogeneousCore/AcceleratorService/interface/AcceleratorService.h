@@ -80,26 +80,6 @@ namespace accelerator {
 }
 
 class AcceleratorService {
-  // experiment just storing the output
-  /*
-  class AsyncWrapperBase {
-  public:
-    virtual std::type_info const& dynamicTypeInfo() = 0;
-    virtual accelerator::Capabilities const whichRun() = 0;
-    virtual void putInEvent(edm::Event& iEvent) = 0;
-  };
-  template <typename T>
-  class AsyncWrapper {
-  public:
-    AsyncWrapper(T const *ptr, accelerator::Capabilities whichRun): ptr_(ptr), whichRun_(whichRun) {}
-    std::type_info const& dynamicTypeInfo() override { return typeid(T); }
-    void putInEvent(edm::Event& iEvent) { ptr_->putInEvent(iEvent); }
-  private:
-    T const *ptr_; // does not own
-    accelerator::Capabilities whichRun_;
-  };
-  */
-
 public:
   class Token {
   public:
@@ -113,10 +93,6 @@ public:
   AcceleratorService(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry);
 
   Token book(); // TODO: better name, unfortunately 'register' is a reserved keyword...
-
-  // old interface
-  void async(Token token, edm::StreamID streamID, std::unique_ptr<AcceleratorTaskBase> task, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-  const AcceleratorTaskBase& getTask(Token token, edm::StreamID streamID) const;
 
   /**
    * Schedule the various versions of the algorithm to the available
@@ -141,8 +117,6 @@ public:
   HeterogeneousDeviceId algoExecutionLocation(Token token, edm::StreamID streamID) const {
     return algoExecutionLocation_[tokenStreamIdsToDataIndex(token.id(), streamID)];
   }
-
-  void print();
 
 private:
   // signals
@@ -203,9 +177,6 @@ private:
   // TODO: how to treat subprocesses?
   std::mutex moduleMutex_;
   std::vector<unsigned int> moduleIds_;                      // list of module ids that have registered something on the service
-  std::vector<std::unique_ptr<AcceleratorTaskBase> > tasks_; // numberOfStreams x moduleIds_.size(), indexing defined by moduleStreamIdsToDataIndex
-
-  // experimenting new interface
   std::vector<HeterogeneousDeviceId> algoExecutionLocation_;
 };
 

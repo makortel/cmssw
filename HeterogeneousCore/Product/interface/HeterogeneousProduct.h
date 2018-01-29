@@ -20,6 +20,10 @@ enum class HeterogeneousDevice {
 
 class HeterogeneousDeviceId {
 public:
+  HeterogeneousDeviceId():
+    deviceType_(HeterogeneousDevice::kCPU),
+    deviceId_(0)
+  {}
   explicit HeterogeneousDeviceId(HeterogeneousDevice device, unsigned int id=0):
     deviceType_(device), deviceId_(id)
   {}
