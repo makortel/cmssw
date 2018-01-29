@@ -24,27 +24,23 @@
 namespace {
   using OutputType = HeterogeneousProduct<unsigned int, TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>;
 
-  class TestTask: public AcceleratorTask<accelerator::CPU, accelerator::GPUCuda> {
+  class TestAlgo {
   public:
-    TestTask(const OutputType *input, unsigned int eventId, unsigned int streamId):
-      input_(input), eventId_(eventId), streamId_(streamId) {
+    TestAlgo() {
       edm::Service<CUDAService> cudaService;
       if(cudaService->enabled()) {
         gpuAlgo_ = std::make_unique<TestAcceleratorServiceProducerGPUTask>();
       }
     }
-    ~TestTask() override = default;
+    ~TestAlgo() = default;
 
-    accelerator::Capabilities preferredDevice() const override {
-      if(gpuAlgo_ && (input_ == nullptr || input_->isProductOn(HeterogeneousLocation::kGPU))) {
-        return accelerator::Capabilities::kGPUCuda;
-      }
-      else {
-        return accelerator::Capabilities::kCPU;
-      }
+    void setInput(const OutputType *input, unsigned int eventId, unsigned int streamId) {
+      input_ = input;
+      eventId_ = eventId;
+      streamId_ = streamId;
     }
-
-    void run_CPU() override {
+    
+    void runCPU() {
       std::random_device r;
       std::mt19937 gen(r());
       auto dist = std::uniform_real_distribution<>(1.0, 3.0); 
@@ -57,7 +53,7 @@ namespace {
       output_ = input + streamId_*100 + eventId_;
     }
 
-    void run_GPUCuda(std::function<void()> callback) override {
+    void runGPUCuda(std::function<void()> callback) {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
       gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : nullptr, [callback,this](){
           edm::LogPrint("Foo") << "    GPU kernel finished (in callback)";
@@ -84,9 +80,9 @@ namespace {
 
   private:
     // input
-    const OutputType *input_;
-    unsigned int eventId_;
-    unsigned int streamId_;
+    const OutputType *input_ = nullptr;
+    unsigned int eventId_ = 0;
+    unsigned int streamId_ = 0;
 
     // GPU stuff
     std::unique_ptr<TestAcceleratorServiceProducerGPUTask> gpuAlgo_;
@@ -106,15 +102,16 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTask) override;
+  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+
   std::string label_;
   AcceleratorService::Token accToken_;
 
   edm::EDGetTokenT<OutputType> srcToken_;
   bool showResult_;
 
-  // to mimic external task worker interface
-  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTask) override;
-  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  TestAlgo algo_;
 };
 
 
@@ -139,22 +136,26 @@ void TestAcceleratorServiceProducerGPU::acquire(const edm::Event& iEvent, const 
     input = hin.product();
   }
 
+  algo_.setInput(input, iEvent.id().event(), iEvent.streamID());
+
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " input " << input;
   edm::Service<AcceleratorService> acc;
-  acc->async(accToken_, iEvent.streamID(), std::make_unique<::TestTask>(input, iEvent.id().event(), iEvent.streamID()), std::move(waitingTaskHolder));
+  acc->schedule(accToken_, iEvent.streamID(), std::move(waitingTaskHolder), input,
+                accelerator::algoGPUCuda(&algo_),
+                accelerator::algoCPU(&algo_)
+                );
+
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
 }
 
 void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
-  edm::Service<AcceleratorService> acc;
-  const auto& task = dynamic_cast<const ::TestTask&>(acc->getTask(accToken_, iEvent.streamID()));
   std::unique_ptr<OutputType> ret;
-  if(task.ranOnGPU()) {
-    ret = std::make_unique<OutputType>(task.getGPUOutput(), task.makeTransfer());
+  if(algo_.ranOnGPU()) {
+    ret = std::make_unique<OutputType>(algo_.getGPUOutput(), algo_.makeTransfer());
   }
   else {
-    ret = std::make_unique<OutputType>(task.getOutput());
+    ret = std::make_unique<OutputType>(algo_.getOutput());
   }
 
   unsigned int value = showResult_ ? ret->getCPUProduct() : 0;

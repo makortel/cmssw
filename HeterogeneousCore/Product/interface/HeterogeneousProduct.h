@@ -12,6 +12,30 @@ enum class HeterogeneousLocation {
   kSize
 };
 
+enum class HeterogeneousDevice {
+  kCPU = 0,
+  kGPUMock = 1,
+  kGPUCuda = 2,
+};
+
+class HeterogeneousDeviceId {
+public:
+  HeterogeneousDeviceId():
+    deviceType_(HeterogeneousDevice::kCPU),
+    deviceId_(0)
+  {}
+  explicit HeterogeneousDeviceId(HeterogeneousDevice device, unsigned int id=0):
+    deviceType_(device), deviceId_(id)
+  {}
+
+  HeterogeneousDevice deviceType() const { return deviceType_; }
+
+  unsigned int deviceId() const { return deviceId_; }
+private:
+  HeterogeneousDevice deviceType_;
+  unsigned int deviceId_;
+};
+
 template <typename CPUProduct, typename GPUProduct>
 class HeterogeneousProduct {
 public:
