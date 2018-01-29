@@ -23,40 +23,60 @@ namespace edm {
 }
 
 namespace accelerator {
-  /*
-#define GENERATE(NAME) \
-  template <typename T> struct Algo##NAME { T *algo; }; \
-  template <typename T> Algo##Name<T> algoCPU(T *algo) { return Algo##Name<T>{algo}; }
-
-  GENERATE(CPU);
-  GENERATE(GPUMock);
-  GENERATE(GPU);
-#undef GENERATE
-  */
-
-  // Inheritance vs. type erasure? I'm now going with the former as it
-  // is simpler to set up.
+  // Inheritance vs. type erasure? I'm now going with the latter even
+  // if it is more complex to setup and maintain in order to support a
+  // case where a single class implements multiple CPU/GPU/etc
+  // interfaces, in which case via inheritance we can't separate the
+  // cases in the scheduling interface.
   //
-  // Need a base class in order to have the per-device calls to be
-  // made non-inlined.
-  class AlgoCPU {
+  // Want a base class in order to have the per-device calls to be
+  // made non-inlined (how necessary is this?)
+  class AlgoCPUBase {
   public:
-    AlgoCPU() {}
-    virtual ~AlgoCPU() = default;
+    AlgoCPUBase() {}
+    virtual ~AlgoCPUBase() = default;
     virtual void runCPU() = 0;
   };
-  class AlgoGPUMock {
+  template <typename T> class AlgoCPU: public AlgoCPUBase {
   public:
-    AlgoGPUMock() {}
-    virtual ~AlgoGPUMock() = default;
+    AlgoCPU(T *algo): algo_(algo) {}
+    void runCPU() override { algo_->runCPU(); }
+  private:
+    T *algo_;
+  };
+  template <typename T> AlgoCPU<T> algoCPU(T *algo) { return AlgoCPU<T>(algo); }
+
+  //
+  class AlgoGPUMockBase {
+  public:
+    AlgoGPUMockBase() {}
+    virtual ~AlgoGPUMockBase() = default;
     virtual void runGPUMock(std::function<void()> callback) = 0;
   };
-  class AlgoGPUCuda {
+  template <typename T> class AlgoGPUMock: public AlgoGPUMockBase {
   public:
-    AlgoGPUCuda() {}
-    virtual ~AlgoGPUCuda() = default;
+    AlgoGPUMock(T *algo): algo_(algo) {}
+    void runGPUMock(std::function<void()> callback) override { algo_->runGPUMock(std::move(callback)); }
+  private:
+    T *algo_;
+  };
+  template <typename T> AlgoGPUMock<T> algoGPUMock(T *algo) { return AlgoGPUMock<T>(algo); }
+
+  //
+  class AlgoGPUCudaBase {
+  public:
+    AlgoGPUCudaBase() {}
+    virtual ~AlgoGPUCudaBase() = default;
     virtual void runGPUCuda(std::function<void()> callback) = 0;
   };
+  template <typename T> class AlgoGPUCuda: public AlgoGPUCudaBase {
+  public:
+    AlgoGPUCuda(T *algo): algo_(algo) {}
+    void runGPUCuda(std::function<void()> callback) override { algo_->runGPUCuda(std::move(callback)); }
+  private:
+    T *algo_;
+  };
+  template <typename T> AlgoGPUCuda<T> algoGPUCuda(T *algo) { return AlgoGPUCuda<T>(algo); }
 }
 
 class AcceleratorService {
@@ -114,8 +134,8 @@ public:
    * somehow we have to schedule according to the input. Try to think
    * something better.
    */
-  template <typename T, typename... Args>
-  void schedule(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, Args&&... args) {
+  template <typename I, typename... Args>
+  void schedule(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const I *input, Args&&... args) {
     scheduleImpl(token, streamID, std::move(waitingTaskHolder), input, std::forward<Args>(args)...);
   }
   HeterogeneousDeviceId algoExecutionLocation(Token token, edm::StreamID streamID) const {
@@ -135,8 +155,9 @@ private:
   unsigned int tokenStreamIdsToDataIndex(unsigned int tokenId, edm::StreamID streamId) const;
 
   // experimenting new interface
-  template <typename T, typename... Args>
-  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, accelerator::AlgoGPUMock *gpuMockAlgo, Args&&... args) {
+  template <typename I, typename A, typename... Args>
+  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const I *input,
+                    accelerator::AlgoGPUMock<A> gpuMockAlgo, Args&&... args) {
     bool succeeded = true;
     if(input) {
       succeeded = input->isProductOn(HeterogeneousLocation::kGPU);
@@ -145,11 +166,12 @@ private:
       succeeded = scheduleGPUMock(token, streamID, waitingTaskHolder, gpuMockAlgo);
     }
     if(!succeeded) {
-      scheduleImpl(token, streamID, std::move(waitingTaskHolder), std::forward<Args>(args)...);
+      scheduleImpl(token, streamID, std::move(waitingTaskHolder), input, std::forward<Args>(args)...);
     }
   }
-  template <typename T, typename... Args>
-  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, accelerator::AlgoGPUCuda *gpuCudaAlgo, Args&&... args) {
+  template <typename I, typename A, typename... Args>
+  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const I *input,
+                    accelerator::AlgoGPUCuda<A> gpuCudaAlgo, Args&&... args) {
     bool succeeded = true;
     if(input) {
       succeeded = input->isProductOn(HeterogeneousLocation::kGPU);
@@ -158,16 +180,17 @@ private:
       succeeded = scheduleGPUCuda(token, streamID, waitingTaskHolder, gpuCudaAlgo);
     }
     if(!succeeded)
-      scheduleImpl(token, streamID, std::move(waitingTaskHolder), std::forward<Args>(args)...);
+      scheduleImpl(token, streamID, std::move(waitingTaskHolder), input, std::forward<Args>(args)...);
   }
   // Break recursion, require CPU to be the last
-  template <typename T>
-  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, accelerator::AlgoCPU *cpuAlgo) {
+  template <typename I, typename A>
+  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const I *input,
+                    accelerator::AlgoCPU<A> cpuAlgo) {
     scheduleCPU(token, streamID, std::move(waitingTaskHolder), cpuAlgo);
   }
-  bool scheduleGPUMock(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMock *gpuMockAlgo);
-  bool scheduleGPUCuda(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUCuda *gpuCudaAlgo);
-  void scheduleCPU(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoCPU *cpuAlgo);
+  bool scheduleGPUMock(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMockBase& gpuMockAlgo);
+  bool scheduleGPUCuda(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUCudaBase& gpuCudaAlgo);
+  void scheduleCPU(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoCPUBase& cpuAlgo);
 
   
   unsigned int numberOfStreams_ = 0;

@@ -120,19 +120,19 @@ void AcceleratorService::print() {
 }
 
 
-bool AcceleratorService::scheduleGPUMock(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMock *gpuMockAlgo) {
+bool AcceleratorService::scheduleGPUMock(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMockBase& gpuMockAlgo) {
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPUMock";
-  gpuMockAlgo->runGPUMock([waitingTaskHolder = std::move(waitingTaskHolder),
-                           token = token,
-                           streamID = streamID]() mutable {
-                            edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPUMock";
-                            waitingTaskHolder.doneWaiting(nullptr);
-                          });
+  gpuMockAlgo.runGPUMock([waitingTaskHolder = std::move(waitingTaskHolder),
+                          token = token,
+                          streamID = streamID]() mutable {
+                           edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPUMock";
+                           waitingTaskHolder.doneWaiting(nullptr);
+                         });
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPUMock asynchronously(?)";
   return true;
 }
 
-bool AcceleratorService::scheduleGPUCuda(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUCuda *gpuCudaAlgo) {
+bool AcceleratorService::scheduleGPUCuda(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUCudaBase& gpuCudaAlgo) {
   edm::Service<CudaService> cudaService;
   if(!cudaService->enabled()) {
     edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " CudaService is disabled";
@@ -140,19 +140,19 @@ bool AcceleratorService::scheduleGPUCuda(Token token, edm::StreamID streamID, ed
   }
 
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPU";
-  gpuCudaAlgo->runGPUCuda([waitingTaskHolder = std::move(waitingTaskHolder),
-                           token = token,
-                           streamID = streamID]() mutable {
-                            edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPU";
-                            waitingTaskHolder.doneWaiting(nullptr);
-                          });
+  gpuCudaAlgo.runGPUCuda([waitingTaskHolder = std::move(waitingTaskHolder),
+                          token = token,
+                          streamID = streamID]() mutable {
+                           edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on GPU";
+                           waitingTaskHolder.doneWaiting(nullptr);
+                         });
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launched task on GPU asynchronously(?)";
   return true;
 }
 
-void AcceleratorService::scheduleCPU(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoCPU *cpuAlgo) {
+void AcceleratorService::scheduleCPU(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoCPUBase& cpuAlgo) {
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on CPU";
-  cpuAlgo->runCPU();
+  cpuAlgo.runCPU();
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " task finished on CPU";
 }
 
