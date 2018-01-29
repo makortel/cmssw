@@ -121,6 +121,15 @@ void AcceleratorService::print() {
 
 
 bool AcceleratorService::scheduleGPUMock(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMockBase& gpuMockAlgo) {
+  // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions
+  std::random_device r;
+  std::mt19937 gen(r());
+  auto dist1 = std::uniform_int_distribution<>(0, 10); // simulate the scheduler decision
+  if(dist1(gen) == 0) {
+    edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " GPUMock is disabled (by chance)";
+    return false;
+  }
+
   edm::LogPrint("Foo") << "  AcceleratorService token " << token.id() << " stream " << streamID << " launching task on GPUMock";
   gpuMockAlgo.runGPUMock([waitingTaskHolder = std::move(waitingTaskHolder),
                           token = token,
