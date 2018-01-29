@@ -109,10 +109,14 @@ public:
    * device, to be extended) try the next one etc. The CPU version has
    * to be the last one.
    *
+   *
+   * TODO: passing the "input" parameter here is a bit boring, but
+   * somehow we have to schedule according to the input. Try to think
+   * something better.
    */
-  template <typename... Args>
-  void schedule(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, Args&&... args) {
-    scheduleImpl(token, streamID, std::move(waitingTaskHolder), std::forward<Args>(args)...);
+  template <typename T, typename... Args>
+  void schedule(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, Args&&... args) {
+    scheduleImpl(token, streamID, std::move(waitingTaskHolder), input, std::forward<Args>(args)...);
   }
   HeterogeneousDeviceId algoExecutionLocation(Token token, edm::StreamID streamID) const {
     return algoExecutionLocation_[tokenStreamIdsToDataIndex(token.id(), streamID)];
@@ -131,20 +135,34 @@ private:
   unsigned int tokenStreamIdsToDataIndex(unsigned int tokenId, edm::StreamID streamId) const;
 
   // experimenting new interface
-  template <typename... Args>
-  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMock *gpuMockAlgo, Args&&... args) {
-    auto ret = scheduleGPUMock(token, streamID, waitingTaskHolder, gpuMockAlgo);
-    if(!ret)
+  template <typename T, typename... Args>
+  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, accelerator::AlgoGPUMock *gpuMockAlgo, Args&&... args) {
+    bool succeeded = true;
+    if(input) {
+      succeeded = input->isProductOn(HeterogeneousLocation::kGPU);
+    }
+    if(succeeded) {
+      succeeded = scheduleGPUMock(token, streamID, waitingTaskHolder, gpuMockAlgo);
+    }
+    if(!succeeded) {
       scheduleImpl(token, streamID, std::move(waitingTaskHolder), std::forward<Args>(args)...);
+    }
   }
-  template <typename... Args>
-  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUCuda *gpuCudaAlgo, Args&&... args) {
-    auto ret = scheduleGPUCuda(token, streamID, waitingTaskHolder, gpuCudaAlgo);
-    if(!ret)
+  template <typename T, typename... Args>
+  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, accelerator::AlgoGPUCuda *gpuCudaAlgo, Args&&... args) {
+    bool succeeded = true;
+    if(input) {
+      succeeded = input->isProductOn(HeterogeneousLocation::kGPU);
+    }
+    if(succeeded) {
+      succeeded = scheduleGPUCuda(token, streamID, waitingTaskHolder, gpuCudaAlgo);
+    }
+    if(!succeeded)
       scheduleImpl(token, streamID, std::move(waitingTaskHolder), std::forward<Args>(args)...);
   }
   // Break recursion, require CPU to be the last
-  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoCPU *cpuAlgo) {
+  template <typename T>
+  void scheduleImpl(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, const T *input, accelerator::AlgoCPU *cpuAlgo) {
     scheduleCPU(token, streamID, std::move(waitingTaskHolder), cpuAlgo);
   }
   bool scheduleGPUMock(Token token, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, accelerator::AlgoGPUMock *gpuMockAlgo);
