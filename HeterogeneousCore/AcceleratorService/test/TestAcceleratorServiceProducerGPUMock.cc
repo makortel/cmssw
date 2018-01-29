@@ -23,29 +23,18 @@ namespace {
 
   using OutputType = HeterogeneousProduct<unsigned int, unsigned int>;
 
-  class TestTask: public AcceleratorTask<accelerator::CPU, accelerator::GPUMock> {
+  class TestAlgo {
   public:
-    TestTask(const OutputType *input, unsigned int eventId, unsigned int streamId):
-      input_(input), eventId_(eventId), streamId_(streamId) {}
-    ~TestTask() override = default;
+    TestAlgo() {}
+    ~TestAlgo() = default;
 
-    accelerator::Capabilities preferredDevice() const override {
-      if(input_ == nullptr) {
-        // Without input decide randomly whether to run on GPU or CPU to simulate scheduler decisions
-        std::random_device r;
-        std::mt19937 gen(r());
-        auto dist1 = std::uniform_int_distribution<>(0, 1); // simulate the scheduler decision
-        return dist1(gen) == 0 ? accelerator::Capabilities::kGPUMock : accelerator::Capabilities::kCPU;
-      }
-      else if(input_->isProductOn(HeterogeneousLocation::kGPU)) {
-        return accelerator::Capabilities::kGPUMock;
-      }
-      else {
-        return accelerator::Capabilities::kCPU;
-      }
+    void setInput(const OutputType *input, unsigned int eventId, unsigned int streamId) {
+      input_ = input;
+      eventId_ = eventId;
+      streamId_ = streamId;
     }
-
-    void run_CPU() override {
+    
+    void runCPU() {
       std::random_device r;
       std::mt19937 gen(r());
       auto dist = std::uniform_real_distribution<>(1.0, 3.0); 
@@ -58,7 +47,7 @@ namespace {
       output_ = input + streamId_*100 + eventId_;
     }
 
-    void run_GPUMock(std::function<void()> callback) override {
+    void runGPUMock(std::function<void()> callback) {
       std::random_device r;
       std::mt19937 gen(r());
       auto dist = std::uniform_real_distribution<>(0.1, 1.0); 
@@ -91,9 +80,9 @@ namespace {
 
   private:
     // input
-    const OutputType *input_;
-    unsigned int eventId_;
-    unsigned int streamId_;
+    const OutputType *input_ = nullptr;
+    unsigned int eventId_ = 0;
+    unsigned int streamId_ = 0;
 
     bool ranOnGPU_ = false;
 
@@ -113,14 +102,15 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTask) override;
+  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+
   std::string label_;
   AcceleratorService::Token accToken_;
 
   edm::EDGetTokenT<OutputType> srcToken_;
 
-  // to mimic external task worker interface
-  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTask) override;
-  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  TestAlgo algo_;
 };
 
 
@@ -144,24 +134,27 @@ void TestAcceleratorServiceProducerGPUMock::acquire(const edm::Event& iEvent, co
     input = hin.product();
   }
 
+  algo_.setInput(input, iEvent.id().event(), iEvent.streamID());
+
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " input " << input;
   edm::Service<AcceleratorService> acc;
-  acc->async(accToken_, iEvent.streamID(), std::make_unique<::TestTask>(input, iEvent.id().event(), iEvent.streamID()), std::move(waitingTaskHolder));
+  acc->schedule(accToken_, iEvent.streamID(), std::move(waitingTaskHolder), input,
+                accelerator::algoGPUMock(&algo_),
+                accelerator::algoCPU(&algo_)
+                );
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
 }
 
 void TestAcceleratorServiceProducerGPUMock::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
-  edm::Service<AcceleratorService> acc;
-  const auto& task = dynamic_cast<const ::TestTask&>(acc->getTask(accToken_, iEvent.streamID()));
   std::unique_ptr<OutputType> ret;
   unsigned int value = 0;
-  if(task.ranOnGPU()) {
-    ret = std::make_unique<OutputType>(task.getGPUOutput(), task.makeTransfer());
+  if(algo_.ranOnGPU()) {
+    ret = std::make_unique<OutputType>(algo_.getGPUOutput(), algo_.makeTransfer());
     value = ret->getGPUProduct();
   }
   else {
-    ret = std::make_unique<OutputType>(task.getOutput());
+    ret = std::make_unique<OutputType>(algo_.getOutput());
     value = ret->getCPUProduct();
   }
 
