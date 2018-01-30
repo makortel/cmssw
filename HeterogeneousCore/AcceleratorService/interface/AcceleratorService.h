@@ -30,7 +30,14 @@ namespace accelerator {
   //
   // Want a base class in order to have the per-device calls to be
   // made non-inlined (how necessary is this?)
-  class AlgoCPUBase {
+  class AlgoBase {
+  public:
+    AlgoBase() {}
+    virtual ~AlgoBase() = 0;
+    HeterogeneousDeviceId executionLocation() const = 0;
+  };
+
+  class AlgoCPUBase: public AlgoBase {
   public:
     AlgoCPUBase() {}
     virtual ~AlgoCPUBase() = default;
@@ -40,13 +47,14 @@ namespace accelerator {
   public:
     AlgoCPU(T *algo): algo_(algo) {}
     void runCPU() override { algo_->runCPU(); }
+    HeterogeneousDeviceId executionLocation() const { return HeterogeneousDeviceId(HeterogeneousDevice::kCPU, 0); }
   private:
     T *algo_;
   };
   template <typename T> AlgoCPU<T> algoCPU(T *algo) { return AlgoCPU<T>(algo); }
 
   //
-  class AlgoGPUMockBase {
+  class AlgoGPUMockBase: public AlgoBase {
   public:
     AlgoGPUMockBase() {}
     virtual ~AlgoGPUMockBase() = default;
@@ -56,13 +64,14 @@ namespace accelerator {
   public:
     AlgoGPUMock(T *algo): algo_(algo) {}
     void runGPUMock(std::function<void()> callback) override { algo_->runGPUMock(std::move(callback)); }
+    HeterogeneousDeviceId executionLocation() const { return HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0); }
   private:
     T *algo_;
   };
   template <typename T> AlgoGPUMock<T> algoGPUMock(T *algo) { return AlgoGPUMock<T>(algo); }
 
   //
-  class AlgoGPUCudaBase {
+  class AlgoGPUCudaBase: public AlgoBase {
   public:
     AlgoGPUCudaBase() {}
     virtual ~AlgoGPUCudaBase() = default;
@@ -72,6 +81,7 @@ namespace accelerator {
   public:
     AlgoGPUCuda(T *algo): algo_(algo) {}
     void runGPUCuda(std::function<void()> callback) override { algo_->runGPUCuda(std::move(callback)); }
+    HeterogeneousDeviceId executionLocation() const { return HeterogeneousDeviceId(HeterogeneousDevice::kGPUCuda, 0); }
   private:
     T *algo_;
   };
@@ -98,11 +108,14 @@ public:
    * heterogeneous devices.
    *
    * The parameter pack is an ordered list of accelerator::Algo*
-   * pointers (that are owned by the calling code). The order of the
-   * algorithms is taken as the preferred order to be tried. I.e. the
-   * code tries to schedule the first algorithm, if that fails (no
-   * device, to be extended) try the next one etc. The CPU version has
-   * to be the last one.
+   * pointers (that are owned by the calling code). The lifetime of
+   * the objects must be (at least) at the end of the
+   * EDModule<ExternalWork> produce() call.
+   *
+   * The order of the algorithms is taken as the preferred order to be
+   * tried. I.e. the code tries to schedule the first algorithm, if
+   * that fails (no device, to be extended) try the next one etc. The
+   * CPU version has to be the last one.
    *
    *
    * TODO: passing the "input" parameter here is a bit boring, but
