@@ -1,13 +1,13 @@
 <lcgdict>
-    <class name="HeterogeneousProduct<unsigned int, unsigned int>" persistent="false"/>
-    <class name="edm::Wrapper<HeterogeneousProduct<unsigned int, unsigned int> >" persistent="false"/>
+    <class name="HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUMockProduct<unsigned int>>" persistent="false"/>
+    <class name="edm::Wrapper<HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUMockProduct<unsigned int>>>" persistent="false"/>
 
-    <class name="HeterogeneousProduct<unsigned int, int*>" persistent="false"/>
-    <class name="edm::Wrapper<HeterogeneousProduct<unsigned int, int*> >" persistent="false"/>
+    <class name="HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUCudaProduct<int*>>" persistent="false"/>
+    <class name="edm::Wrapper<HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUCudaProduct<int*>>>" persistent="false"/>
 
-    <class name="HeterogeneousProduct<unsigned int, float*>" persistent="false"/>
-    <class name="edm::Wrapper<HeterogeneousProduct<unsigned int, float*> >" persistent="false"/>
+    <class name="HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUCudaProduct<float*>>" persistent="false"/>
+    <class name="edm::Wrapper<HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUCudaProduct<float*>>>" persistent="false"/>
 
-    <class name="HeterogeneousProduct<unsigned int, std::pair<float*, float*> >" persistent="false"/>
-    <class name="edm::Wrapper<HeterogeneousProduct<unsigned int, std::pair<float*, float*>> >" persistent="false"/>
+    <class name="HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUCudaProduct<std::pair<float*, float*>>>" persistent="false"/>
+    <class name="edm::Wrapper<HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>, heterogeneous::GPUCudaProduct<std::pair<float*, float*>>>>" persistent="false"/>
 </lcgdict>

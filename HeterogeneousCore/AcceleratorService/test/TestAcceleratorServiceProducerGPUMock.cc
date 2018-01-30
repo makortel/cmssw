@@ -21,7 +21,8 @@ namespace {
   // hack for GPU mock
   tbb::concurrent_vector<std::future<void> > pendingFutures;
 
-  using OutputType = HeterogeneousProduct<unsigned int, unsigned int>;
+  using OutputType = HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>,
+                                          heterogeneous::GPUMockProduct<unsigned int> >;
 
   class TestAlgo {
   public:
@@ -42,7 +43,7 @@ namespace {
       edm::LogPrint("Foo") << "   Task (CPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
       std::this_thread::sleep_for(std::chrono::seconds(1)*dur);
 
-      auto input = input_ ? input_->getCPUProduct() : 0U;
+      auto input = input_ ? input_->getProduct<HeterogeneousDevice::kCPU>() : 0U;
 
       output_ = input + streamId_*100 + eventId_;
     }
@@ -54,7 +55,7 @@ namespace {
       auto dur = dist(gen);
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
       ranOnGPU_ = true;
-      auto input = input_ ? input_->getGPUProduct() : 0U;
+      auto input = input_ ? input_->getProduct<HeterogeneousDevice::kGPUMock>() : 0U;
 
       auto ret = std::async(std::launch::async,
                             [this, dur, input,
@@ -150,12 +151,12 @@ void TestAcceleratorServiceProducerGPUMock::produce(edm::Event& iEvent, const ed
   std::unique_ptr<OutputType> ret;
   unsigned int value = 0;
   if(algo_.ranOnGPU()) {
-    ret = std::make_unique<OutputType>(algo_.getGPUOutput(), algo_.makeTransfer());
-    value = ret->getGPUProduct();
+    ret = std::make_unique<OutputType>(heterogeneous::gpuMockProduct(algo_.getGPUOutput()), algo_.makeTransfer());
+    value = ret->getProduct<HeterogeneousDevice::kGPUMock>();
   }
   else {
-    ret = std::make_unique<OutputType>(algo_.getOutput());
-    value = ret->getCPUProduct();
+    ret = std::make_unique<OutputType>(heterogeneous::cpuProduct(algo_.getOutput()));
+    value = ret->getProduct<HeterogeneousDevice::kCPU>();
   }
 
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
