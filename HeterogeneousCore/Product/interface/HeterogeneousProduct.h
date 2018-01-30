@@ -5,6 +5,7 @@
 
 #include <bitset>
 #include <mutex>
+#include <tuple>
 
 enum class HeterogeneousDevice {
   kCPU = 0,
@@ -38,6 +39,7 @@ namespace heterogeneous {
   class CPUProduct {
   public:
     using DataType = T;
+    static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::kCPU;
     
     CPUProduct() = default;
     CPUProduct(T&& data): data_(std::move(data)) {}
@@ -60,6 +62,7 @@ namespace heterogeneous {
   class GPUMockProduct {
   public:
     using DataType = T;
+    static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::kGPUMock;
     using TransferToCPU = std::function<void(const T&, typename CPUProduct::DataType)>;
     
     GPUMockProduct() = default;
@@ -92,6 +95,7 @@ private:
   class GPUCudaProduct {
   public:
     using DataType = T;
+    static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::kGPUCuda;
     
     GPUCudaProduct() = default;
     GPUCudaProduct(T&& data): data_(std::move(data)) {}
@@ -111,21 +115,49 @@ private:
   template <typename T> auto gpuCudaProduct(T&& data) { return GPUCudaProduct<T>(std::move(data)); }
 
   template <typename ...Args> void call_nop(Args&&... args) {}
+
+  struct Empty {};
+ 
+  template <HeterogeneousDevice device, typename... Types>
+  struct IfInPack;
+
+  template <HeterogeneousDevice device, typename Type, typename... Types>
+  struct IfInPack<device, Type, Types...> {
+    using type = std::conditional_t<device==Type::tag,
+                                    Type,
+                                    typename IfInPack<device, Types...>::type >;
+  };
+  template <HeterogeneousDevice device>
+  struct IfInPack<device> {
+    using type = Empty;
+  };
+
+  template <HeterogeneousDevice device, typename... Types>
+  using ifInPack_t = typename IfInPack<device, Types...>::type;
 }
 
 template <typename CPUProduct, typename... Types>
 class HeterogeneousProduct {
+  using ProductTuple = std::tuple<CPUProduct,
+                                  heterogeneous::ifInPack_t<HeterogeneousDevice::kGPUMock, Types...>,
+                                  heterogeneous::ifInPack_t<HeterogeneousDevice::kGPUCuda, Types...>
+                                  >;
 public:
   HeterogeneousProduct() = default;
   HeterogeneousProduct(CPUProduct&& data) {
-    std::get<CPUProduct>(products_) = std::move(data);
-    location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
+    constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
+    std::get<index>(products_) = std::move(data);
+    location_.set(index);
   }
 
   template <typename H>
   HeterogeneousProduct(H&& data) {
-    std::get<std::remove_reference_t<H>>(products_) = std::move(data);
-    location_.set(static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H>>::value));
+    constexpr const auto index = static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H> >::value);
+    static_assert(!std::is_same<std::tuple_element_t<index, ProductTuple>,
+                                heterogeneous::Empty>::value,
+                  "This HeterogeneousProduct does not support this type");
+    std::get<index>(products_) = std::move(data);
+    location_.set(index);
   }
 
   void swap(HeterogeneousProduct<CPUProduct, Types...>& other) {
@@ -144,13 +176,18 @@ public:
     return location_[static_cast<unsigned int>(loc)];
   }
 
-  template <typename T>
+  template <HeterogeneousDevice device>
   const auto& getProduct() const {
-    if(!isProductOn(heterogeneous::ProductToEnum<T>::value)) {
-      throw cms::Exception("LogicError") << "Called getProduct<T>() for T == " << typeid(T).name() << " but the data is not there! Location bitfield is " << location_.to_string();
+    constexpr const auto index = static_cast<unsigned int>(device);
+    static_assert(!std::is_same<std::tuple_element_t<index, ProductTuple>,
+                                heterogeneous::Empty>::value,
+                  "This HeterogeneousProduct does not support this type");
+    if(!isProductOn(device)) {
+      throw cms::Exception("LogicError") << "Called getProduct() for device " << index << " but the data is not there! Location bitfield is " << location_.to_string();
     }
-    return std::get<T>(products_).product();
+    return std::get<index>(products_).product();
   }
+
 private:
   template <std::size_t ...Is>
   void swapTuple(std::index_sequence<Is...>, std::tuple<Types...>& other) {
@@ -158,7 +195,7 @@ private:
   }
   
   mutable std::mutex mutex_;
-  mutable std::tuple<CPUProduct, Types...> products_;
+  mutable ProductTuple products_;
   mutable std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)> location_;
 };
 
