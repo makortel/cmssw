@@ -10,6 +10,14 @@ namespace edm {
   class ConfigurationDescriptions;
 }
 
+/**
+ * TODO:
+ * - CUDA stream management?
+ *   * Not really needed until we want to pass CUDA stream objects from one module to another
+ *   * Which is not really needed until we want to go for "streaming mode"
+ *   * Until that framework's inter-module synchronization is safe (but not necessarily optimal)
+ * - Management of (preallocated) memory?
+ */
 class CUDAService {
 public:
   CUDAService(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry);
