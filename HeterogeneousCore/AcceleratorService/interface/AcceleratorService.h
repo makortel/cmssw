@@ -5,7 +5,6 @@
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "FWCore/Utilities/interface/propagate_const.h"
 
-#include "HeterogeneousCore/AcceleratorService/interface/AcceleratorTask.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
 #include <memory>
