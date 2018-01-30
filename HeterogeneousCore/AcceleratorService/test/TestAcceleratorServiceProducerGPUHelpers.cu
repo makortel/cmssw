@@ -114,6 +114,18 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 
 TestAcceleratorServiceProducerGPUTask::ResultType
 TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArrays, std::function<void()> callback) {
+  // First make the sanity check
+  if(inputArrays.first != nullptr) {
+    auto h_check = std::make_unique<float[]>(NUM_VALUES);
+    cuda::memory::copy(h_check.get(), inputArrays.first, NUM_VALUES*sizeof(float));
+    for(int i=0; i<NUM_VALUES; ++i) {
+      if(h_check[i] != i) {
+        throw cms::Exception("Assert") << "Sanity check on element " << i << " failed, expected " << i << " got " << h_check[i];
+      }
+    }
+  }
+
+
   h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
 
