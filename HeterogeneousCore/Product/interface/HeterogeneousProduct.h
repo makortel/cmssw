@@ -54,6 +54,7 @@ namespace heterogeneous {
     T data_;
   };
   template <typename T> struct ProductToEnum<CPUProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kCPU; };
+  template <typename T> auto cpuProduct(T&& data) { return CPUProduct<T>(std::move(data)); }
 
   template <typename T, typename CPUProduct>
   class GPUMockProduct {
@@ -81,6 +82,11 @@ private:
     TransferToCPU transferToCPU_;
   };
   template <typename T, typename CPUProduct> struct ProductToEnum<GPUMockProduct<T, CPUProduct>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUMock; };
+  template <typename T, typename CPUProduct>
+  auto gpuMockProduct(T&& data, typename GPUMockProduct<T, CPUProduct>::TransferToCPU transfer) {
+    return GPUMockProduct<T, CPUProduct>(std::move(data), std::move(transfer));
+  }
+    
 
   template <typename T>
   class GPUCudaProduct {
@@ -102,6 +108,7 @@ private:
     T data_;
   };
   template <typename T> struct ProductToEnum<GPUCudaProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUCuda; };
+  template <typename T> auto gpuCudaProduct(T&& data) { return GPUCudaProduct<T>(std::move(data)); }
 
   template <typename ...Args> void call_nop(Args&&... args) {}
 }
@@ -140,7 +147,9 @@ public:
 
   template <typename T>
   const auto& getProduct() const {
-    // TODO: add isProductOn check
+    if(!isProductOn(heterogeneous::ProductToEnum<T>::value)) {
+      throw cms::Exception("LogicError") << "Called getProduct<T>() for T == " << typeid(T).name() << " but the data is not there! Location bitfield is " << location_.to_string();
+    }
     return std::get<T>(deviceProducts_).product();
   }
 private:

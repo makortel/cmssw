@@ -21,6 +21,16 @@ public:
 CPPUNIT_TEST_SUITE_REGISTRATION(testHeterogeneousProduct);
 
 void testHeterogeneousProduct::testDefault() {
+  HeterogeneousProduct<heterogeneous::CPUProduct<int>,
+                       heterogeneous::GPUMockProduct<int, heterogeneous::CPUProduct<int>>
+                       > prod;
+
+  CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kCPU) == false);
+  CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kGPUMock) == false);
+  CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kGPUCuda) == false);
+
+  prod.getProduct<heterogeneous::GPUMockProduct<int, heterogeneous::CPUProduct<int>>>();
+  
   /*
   HeterogeneousProduct<int, int> prod;
   const auto& tmp = prod;
