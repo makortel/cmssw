@@ -22,7 +22,8 @@
 #include <cuda_runtime.h>
 
 namespace {
-  using OutputType = HeterogeneousProduct<unsigned int, TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>;
+  using OutputType = HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>,
+                                          heterogeneous::GPUCudaProduct<TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>>;
 
   class TestAlgo {
   public:
@@ -48,14 +49,14 @@ namespace {
       edm::LogPrint("Foo") << "   Task (CPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
       std::this_thread::sleep_for(std::chrono::seconds(1)*dur);
 
-      auto input = input_ ? input_->getCPUProduct() : 0U;
+      auto input = input_ ? input_->getProduct<HeterogeneousDevice::kCPU>() : 0U;
 
       output_ = input + streamId_*100 + eventId_;
     }
 
     void runGPUCuda(std::function<void()> callback) {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
-      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : std::make_pair(nullptr, nullptr),
+      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
                                      [callback,this](){
                                        edm::LogPrint("Foo") << "    GPU kernel finished (in callback)";
                                        callback();
@@ -72,7 +73,7 @@ namespace {
     }
 
     unsigned int getOutput() const { return output_; }
-    TestAcceleratorServiceProducerGPUTask::ConstResultTypeRaw getGPUOutput() const {
+    TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() {
       gpuAlgo_->release();
       return std::make_pair(gpuOutput_.first.get(), gpuOutput_.second.get());
     }
@@ -155,13 +156,13 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
   std::unique_ptr<OutputType> ret;
   edm::Service<AcceleratorService> acc;
   if(acc->algoExecutionLocation(accToken_, iEvent.streamID()).deviceType() == HeterogeneousDevice::kGPUCuda) {
-    ret = std::make_unique<OutputType>(algo_.getGPUOutput(), algo_.makeTransfer());
+    ret = std::make_unique<OutputType>(heterogeneous::gpuCudaProduct(algo_.getGPUOutput()), algo_.makeTransfer());
   }
   else {
-    ret = std::make_unique<OutputType>(algo_.getOutput());
+    ret = std::make_unique<OutputType>(heterogeneous::cpuProduct(algo_.getOutput()));
   }
 
-  unsigned int value = showResult_ ? ret->getCPUProduct() : 0;
+  unsigned int value = showResult_ ? ret->getProduct<HeterogeneousDevice::kCPU>() : 0;
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
   iEvent.put(std::move(ret));
 }

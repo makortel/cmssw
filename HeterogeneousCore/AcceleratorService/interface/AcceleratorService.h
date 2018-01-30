@@ -135,7 +135,7 @@ private:
                     accelerator::AlgoGPUMock<A> gpuMockAlgo, Args&&... args) {
     bool succeeded = true;
     if(input) {
-      succeeded = input->isProductOn(HeterogeneousLocation::kGPU);
+      succeeded = input->isProductOn(HeterogeneousDevice::kGPUMock);
     }
     if(succeeded) {
       succeeded = scheduleGPUMock(token, streamID, waitingTaskHolder, gpuMockAlgo);
@@ -149,7 +149,7 @@ private:
                     accelerator::AlgoGPUCuda<A> gpuCudaAlgo, Args&&... args) {
     bool succeeded = true;
     if(input) {
-      succeeded = input->isProductOn(HeterogeneousLocation::kGPU);
+      succeeded = input->isProductOn(HeterogeneousDevice::kGPUCuda);
     }
     if(succeeded) {
       succeeded = scheduleGPUCuda(token, streamID, waitingTaskHolder, gpuCudaAlgo);
