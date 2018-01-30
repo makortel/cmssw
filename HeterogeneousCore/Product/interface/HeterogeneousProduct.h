@@ -117,14 +117,14 @@ template <typename CPUProduct, typename... Types>
 class HeterogeneousProduct {
 public:
   HeterogeneousProduct() = default;
-  HeterogeneousProduct(CPUProduct&& data):
-    cpuProduct_(std::move(data)) {
+  HeterogeneousProduct(CPUProduct&& data) {
+    std::get<CPUProduct>(products_) = std::move(data);
     location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
   }
 
   template <typename H, typename... Args>
   HeterogeneousProduct(H&& data, Args&&... args) {
-    std::get<std::remove_reference_t<H>>(deviceProducts_) = H(std::move(data), std::forward<Args>(args)...);
+    std::get<std::remove_reference_t<H>>(products_) = H(std::move(data), std::forward<Args>(args)...);
     location_.set(static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H>>::value));
   }
 
@@ -136,8 +136,7 @@ public:
     std::lock_guard<std::mutex> lk1(mutex_, std::adopt_lock);
     std::lock_guard<std::mutex> lk2(other.mutex_, std::adopt_lock);
 
-    cpuProduct_.swap(other.cpuProduct);
-    swapTuple(std::index_sequence_for<Types...>{}, other.deviceProducts_);
+    swapTuple(std::index_sequence_for<Types...>{}, other.products_);
     std::swap(location_, other.location_);
   }
 
@@ -150,17 +149,16 @@ public:
     if(!isProductOn(heterogeneous::ProductToEnum<T>::value)) {
       throw cms::Exception("LogicError") << "Called getProduct<T>() for T == " << typeid(T).name() << " but the data is not there! Location bitfield is " << location_.to_string();
     }
-    return std::get<T>(deviceProducts_).product();
+    return std::get<T>(products_).product();
   }
 private:
   template <std::size_t ...Is>
   void swapTuple(std::index_sequence<Is...>, std::tuple<Types...>& other) {
-    call_nop(std::get<Is>(deviceProducts_).swap(std::get<Is>(other))...);
+    call_nop(std::get<Is>(products_).swap(std::get<Is>(other))...);
   }
   
   mutable std::mutex mutex_;
-  mutable CPUProduct cpuProduct_;
-  mutable std::tuple<Types...> deviceProducts_;
+  mutable std::tuple<CPUProduct, Types...> products_;
   mutable std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)> location_;
 };
 
