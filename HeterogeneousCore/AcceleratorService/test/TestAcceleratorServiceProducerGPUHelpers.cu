@@ -113,7 +113,19 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 }
 
 TestAcceleratorServiceProducerGPUTask::ResultType
-TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArray, std::function<void()> callback) {
+TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArrays, std::function<void()> callback) {
+  // First make the sanity check
+  if(inputArrays.first != nullptr) {
+    auto h_check = std::make_unique<float[]>(NUM_VALUES);
+    cuda::memory::copy(h_check.get(), inputArrays.first, NUM_VALUES*sizeof(float));
+    for(int i=0; i<NUM_VALUES; ++i) {
+      if(h_check[i] != i) {
+        throw cms::Exception("Assert") << "Sanity check on element " << i << " failed, expected " << i << " got " << h_check[i];
+      }
+    }
+  }
+
+
   h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
 
@@ -123,10 +135,10 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   }
 
   auto current_device = cuda::device::current::get();
-  d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+  auto d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   auto d_c = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
-  if(inputArray != nullptr) {
+  if(inputArrays.second != nullptr) {
     d_d = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   }
 
@@ -143,8 +155,8 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
 
   edm::LogPrint("Foo") << "--- launching kernels";
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
-  if(inputArray != nullptr) {
-    vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(inputArray, d_c.get(), d_d.get(), NUM_VALUES);
+  if(inputArrays.second != nullptr) {
+    vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(inputArrays.second, d_c.get(), d_d.get(), NUM_VALUES);
     std::swap(d_c, d_d);
   }
 
@@ -168,7 +180,7 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
     });
 
   edm::LogPrint("Foo") << "--- finished, returning return pointer";
-  return d_c;
+  return std::make_pair(std::move(d_a), std::move(d_c));
 }
 
 void TestAcceleratorServiceProducerGPUTask::release() {
@@ -176,7 +188,6 @@ void TestAcceleratorServiceProducerGPUTask::release() {
   edm::LogPrint("Foo") << "--- releasing temporary memory";
   h_a.reset();
   h_b.reset();
-  d_a.reset();
   d_b.reset();
   d_d.reset();
   d_ma.reset();
@@ -184,9 +195,9 @@ void TestAcceleratorServiceProducerGPUTask::release() {
   d_mc.reset();
 }
 
-int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_c) {
+int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_ac) {
   auto h_c = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
-  cuda::memory::copy(h_c.get(), d_c, NUM_VALUES*sizeof(int));
+  cuda::memory::copy(h_c.get(), d_ac.second, NUM_VALUES*sizeof(int));
 
   float ret = 0;
   for (auto i=0; i<NUM_VALUES; i++) {

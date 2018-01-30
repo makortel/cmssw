@@ -19,7 +19,7 @@ public:
 private:
   void analyze(edm::StreamID streamID, const edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
 
-  using InputType = HeterogeneousProduct<unsigned int, float *>;
+  using InputType = HeterogeneousProduct<unsigned int, std::pair<float *, float *>>;
   std::string label_;
   std::vector<edm::EDGetTokenT<InputType>> srcTokens_;
 };
