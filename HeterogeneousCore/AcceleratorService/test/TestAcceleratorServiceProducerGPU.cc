@@ -55,10 +55,11 @@ namespace {
 
     void runGPUCuda(std::function<void()> callback) {
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
-      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : nullptr, [callback,this](){
-          edm::LogPrint("Foo") << "    GPU kernel finished (in callback)";
-          callback();
-        });
+      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getGPUProduct() : std::make_pair(nullptr, nullptr),
+                                     [callback,this](){
+                                       edm::LogPrint("Foo") << "    GPU kernel finished (in callback)";
+                                       callback();
+                                     });
       edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " launched";
     }
 
@@ -71,9 +72,9 @@ namespace {
     }
 
     unsigned int getOutput() const { return output_; }
-    const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() const {
+    TestAcceleratorServiceProducerGPUTask::ConstResultTypeRaw getGPUOutput() const {
       gpuAlgo_->release();
-      return gpuOutput_.get();
+      return std::make_pair(gpuOutput_.first.get(), gpuOutput_.second.get());
     }
 
   private:
