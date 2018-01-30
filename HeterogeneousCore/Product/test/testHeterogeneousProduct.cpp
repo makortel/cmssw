@@ -34,16 +34,16 @@ void testHeterogeneousProduct::testDefault() {
 }
 
 void testHeterogeneousProduct::testCPU() {
-  /*
-  HeterogeneousProduct<int, int> prod{5};
-  const auto& tmp = prod;
+  HeterogeneousProduct<heterogeneous::CPUProduct<int>,
+                       heterogeneous::GPUMockProduct<int, heterogeneous::CPUProduct<int>>
+                       > prod{heterogeneous::cpuProduct(5)};
 
-  CPPUNIT_ASSERT(tmp.isProductOn(HeterogeneousDevice::kCPU) == true);
-  CPPUNIT_ASSERT(tmp.isProductOn(HeterogeneousDevice::kGPUMock) == false);
-  CPPUNIT_ASSERT(tmp.isProductOn(HeterogeneousDevice::kGPUCuda) == false);
-  CPPUNIT_ASSERT(tmp.getCPUProduct() == 5);
-  CPPUNIT_ASSERT_THROW(tmp.getGPUProduct(), cms::Exception);
-  */
+  CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kCPU) == true);
+  CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kGPUMock) == false);
+  CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kGPUCuda) == false);
+
+  CPPUNIT_ASSERT(prod.getProduct<HeterogeneousDevice::kCPU>() == 5);
+  CPPUNIT_ASSERT_THROW(prod.getProduct<HeterogeneousDevice::kGPUMock>(), cms::Exception);
 }
 
 void testHeterogeneousProduct::testGPU() {
