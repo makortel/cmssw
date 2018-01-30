@@ -19,7 +19,8 @@ public:
 private:
   void analyze(edm::StreamID streamID, const edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
 
-  using InputType = HeterogeneousProduct<unsigned int, std::pair<float *, float *>>;
+  using InputType = HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>,
+                                         heterogeneous::GPUCudaProduct<std::pair<float *, float *>>>;
   std::string label_;
   std::vector<edm::EDGetTokenT<InputType>> srcTokens_;
 };
@@ -47,7 +48,7 @@ void TestAcceleratorServiceAnalyzer::analyze(edm::StreamID streamID, const edm::
                                                     << " stream " << streamID
                                                     << " label " << label_
                                                     << " coll " << inp
-                                                    << " result " << hinput->getCPUProduct();
+                                                    << " result " << hinput->getProduct<HeterogeneousDevice::kCPU>();
     ++inp;
   }
 }
