@@ -147,6 +147,10 @@ void TestAcceleratorServiceProducerGPU::acquire(const edm::Event& iEvent, const 
 
 void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
+  // TODO: the following if-else structure will be repeated in all
+  // heterogeneous modules. Ideas to move it to system
+  // * algorithms implement "putInEvent()" which takes care of inserting exactly that product to event
+  // * better ideas?
   std::unique_ptr<OutputType> ret;
   edm::Service<AcceleratorService> acc;
   if(acc->algoExecutionLocation(accToken_, iEvent.streamID()).deviceType() == HeterogeneousDevice::kGPUCuda) {
