@@ -30,10 +30,14 @@ namespace accelerator {
   //
   // Want a base class in order to have the per-device calls to be
   // made non-inlined (how necessary is this?)
+  //
+  // Note that virtual destructors are not needed in the base classes
+  // as the pattern is to construct the concrete class in stack and
+  // keep that object around as long as the function call accessing
+  // the object via base class pointer/reference is finished.
   class AlgoCPUBase {
   public:
     AlgoCPUBase() {}
-    virtual ~AlgoCPUBase() = default;
     virtual void runCPU() = 0;
   };
   template <typename T> class AlgoCPU: public AlgoCPUBase {
@@ -49,7 +53,6 @@ namespace accelerator {
   class AlgoGPUMockBase {
   public:
     AlgoGPUMockBase() {}
-    virtual ~AlgoGPUMockBase() = default;
     virtual void runGPUMock(std::function<void()> callback) = 0;
   };
   template <typename T> class AlgoGPUMock: public AlgoGPUMockBase {
@@ -65,7 +68,6 @@ namespace accelerator {
   class AlgoGPUCudaBase {
   public:
     AlgoGPUCudaBase() {}
-    virtual ~AlgoGPUCudaBase() = default;
     virtual void runGPUCuda(std::function<void()> callback) = 0;
   };
   template <typename T> class AlgoGPUCuda: public AlgoGPUCudaBase {
