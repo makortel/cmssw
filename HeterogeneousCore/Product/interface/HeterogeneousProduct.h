@@ -122,9 +122,9 @@ public:
     location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
   }
 
-  template <typename H, typename... Args>
-  HeterogeneousProduct(H&& data, Args&&... args) {
-    std::get<std::remove_reference_t<H>>(products_) = H(std::move(data), std::forward<Args>(args)...);
+  template <typename H>
+  HeterogeneousProduct(H&& data) {
+    std::get<std::remove_reference_t<H>>(products_) = std::move(data);
     location_.set(static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H>>::value));
   }
 
