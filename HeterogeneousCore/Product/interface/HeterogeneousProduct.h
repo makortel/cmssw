@@ -31,6 +31,131 @@ private:
   unsigned int deviceId_;
 };
 
+namespace heterogeneous {
+  template <typename T> struct ProductToEnum {};
+
+  template <typename T>
+  class CPUProduct {
+  public:
+    using DataType = T;
+    
+    CPUProduct() = default;
+    CPUProduct(T&& data): data_(std::move(data)) {}
+
+    void swap(CPUProduct<T>& other) {
+      if(this == &other) return;
+      std::swap(data_, other.data_);
+    }
+
+    const T& product() const {
+      return data_;
+    }
+  private:
+    T data_;
+  };
+  template <typename T> struct ProductToEnum<CPUProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kCPU; };
+
+  template <typename T, typename CPUProduct>
+  class GPUMockProduct {
+  public:
+    using DataType = T;
+    using TransferToCPU = std::function<void(const T&, typename CPUProduct::DataType)>;
+    
+    GPUMockProduct() = default;
+    GPUMockProduct(T&& data, TransferToCPU transfer):
+      data_(std::move(data)),
+      transferToCPU_(std::move(transfer))
+    {}
+
+    void swap(GPUMockProduct<T, CPUProduct>& other) {
+      if(this == &other) return;
+      std::swap(data_, other.data_);
+      std::swap(transferToCPU_, other.transferToCPU_);
+    }
+
+    const T& product() const {
+      return data_;
+    }
+private:
+    T data_;
+    TransferToCPU transferToCPU_;
+  };
+  template <typename T, typename CPUProduct> struct ProductToEnum<GPUMockProduct<T, CPUProduct>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUMock; };
+
+  template <typename T>
+  class GPUCudaProduct {
+  public:
+    using DataType = T;
+    
+    GPUCudaProduct() = default;
+    GPUCudaProduct(T&& data): data_(std::move(data)) {}
+
+    void swap(GPUCudaProduct<T>& other) {
+      if(this == &other) return;
+      std::swap(data_, other.data_);
+    }
+
+    const T& product() const {
+      return data_;
+    }
+private:
+    T data_;
+  };
+  template <typename T> struct ProductToEnum<GPUCudaProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUCuda; };
+
+  template <typename ...Args> void call_nop(Args&&... args) {}
+}
+
+template <typename CPUProduct, typename... Types>
+class HeterogeneousProduct {
+public:
+  HeterogeneousProduct() = default;
+  HeterogeneousProduct(CPUProduct&& data):
+    cpuProduct_(std::move(data)) {
+    location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
+  }
+
+  template <typename H, typename... Args>
+  HeterogeneousProduct(H&& data, Args&&... args) {
+    std::get<std::remove_reference_t<H>>(deviceProducts_) = H(std::move(data), std::forward<Args>(args)...);
+    location_.set(static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H>>::value));
+  }
+
+  void swap(HeterogeneousProduct<CPUProduct, Types...>& other) {
+    if(this == &other)
+      return;
+
+    std::lock(mutex_, other.mutex_);
+    std::lock_guard<std::mutex> lk1(mutex_, std::adopt_lock);
+    std::lock_guard<std::mutex> lk2(other.mutex_, std::adopt_lock);
+
+    cpuProduct_.swap(other.cpuProduct);
+    swapTuple(std::index_sequence_for<Types...>{}, other.deviceProducts_);
+    std::swap(location_, other.location_);
+  }
+
+  bool isProductOn(HeterogeneousDevice loc) const {
+    return location_[static_cast<unsigned int>(loc)];
+  }
+
+  template <typename T>
+  const auto& getProduct() const {
+    // TODO: add isProductOn check
+    return std::get<T>(deviceProducts_).product();
+  }
+private:
+  template <std::size_t ...Is>
+  void swapTuple(std::index_sequence<Is...>, std::tuple<Types...>& other) {
+    call_nop(std::get<Is>(deviceProducts_).swap(std::get<Is>(other))...);
+  }
+  
+  mutable std::mutex mutex_;
+  mutable CPUProduct cpuProduct_;
+  mutable std::tuple<Types...> deviceProducts_;
+  mutable std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)> location_;
+};
+
+/*
 template <typename CPUProduct, typename GPUProduct>
 class HeterogeneousProduct {
 public:
@@ -94,6 +219,6 @@ private:
   mutable std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)> location_;
   TransferCallback transfer_;
 };
-
+*/
 
 #endif

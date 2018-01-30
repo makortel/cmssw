@@ -1,4 +1,5 @@
 <lcgdict>
+  <!--
     <class name="HeterogeneousProduct<unsigned int, unsigned int>" persistent="false"/>
     <class name="edm::Wrapper<HeterogeneousProduct<unsigned int, unsigned int> >" persistent="false"/>
 
@@ -10,4 +11,5 @@
 
     <class name="HeterogeneousProduct<unsigned int, std::pair<float*, float*> >" persistent="false"/>
     <class name="edm::Wrapper<HeterogeneousProduct<unsigned int, std::pair<float*, float*>> >" persistent="false"/>
+  -->
 </lcgdict>
