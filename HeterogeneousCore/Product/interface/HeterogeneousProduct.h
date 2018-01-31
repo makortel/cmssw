@@ -262,6 +262,7 @@ public:
   }
 
   bool isProductOn(HeterogeneousDevice loc) const {
+    // should this be protected with the mutex?
     return location_[static_cast<unsigned int>(loc)];
   }
 
@@ -272,6 +273,8 @@ public:
                                 heterogeneous::Empty>::value,
                   "This HeterogeneousProduct does not support this type");
 
+    // Locking the mutex here is quite "conservative"
+    // Writes happen only if the "device" is CPU and the data is elsewhere
     std::lock_guard<std::mutex> lk(mutex_);
     return heterogeneous::GetOrTransferProduct<device>::getProduct(transfersToCPU_, products_, location_);
   }
