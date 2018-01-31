@@ -137,6 +137,19 @@ private:
   template <typename CPUProduct, typename DeviceProductOrEmpty>
   using CallBackType_t = typename CallBackType<CPUProduct, DeviceProductOrEmpty>::type;
 
+  // Metaprogram to get an element from a tuple, or Empty if out of bounds
+  template <size_t index, typename Tuple, typename Enable=void>
+  struct TupleElement {
+    using type = Empty;
+  };
+  template <size_t index, typename Tuple>
+  struct TupleElement<index, Tuple, typename std::enable_if<(index < std::tuple_size<Tuple>::value)>::type> {
+    using type = std::tuple_element_t<index, Tuple>;
+  };
+  template <size_t index, typename Tuple>
+  using TupleElement_t = typename TupleElement<index, Tuple>::type;
+  
+  
   // Metaprogram to loop over two tuples and a bitset (of equal
   // length), and if bitset is set to true call a function from one of
   // the tuples with arguments from the second tuple
@@ -149,7 +162,7 @@ private:
         return true;
       }
       return CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
-                            std::tuple_element_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
+                            TupleElement_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
     }
   };
   template <typename FunctionTuple, typename ProductTuple, typename BitSet, size_t sizeMinusIndex>
@@ -157,7 +170,7 @@ private:
     static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
       constexpr const auto index = bitSet.size()-sizeMinusIndex;
       return CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
-                            std::tuple_element_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
+                            TupleElement_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
     }
   };
   template <typename FunctionTuple, typename ProductTuple, typename BitSet>
