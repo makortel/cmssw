@@ -274,12 +274,6 @@ public:
 
     std::lock_guard<std::mutex> lk(mutex_);
     return heterogeneous::GetOrTransferProduct<device>::getProduct(transfersToCPU_, products_, location_);
-    /*
-    if(!isProductOn(device)) {
-      throw cms::Exception("LogicError") << "Called getProduct() for device " << index << " but the data is not there! Location bitfield is " << location_.to_string();
-    }
-    return std::get<index>(products_).product();
-    */
   }
 
 private:
@@ -288,99 +282,10 @@ private:
     call_nop(std::get<Is>(products_).swap(std::get<Is>(other))...);
   }
 
-  /*
-  void transferToCPU() const {
-    std::lock_guard<std::mutex> lk(mutex_);
-
-    auto found = heterogeneous::CallFunctionIf<ProductTuple, TransferToCPUTuple, BitSet, location_.size()-1>(products_, transfersToCPU_, location_);
-    if(!found) {
-      throw cms::Exception("LogicError") << "Attempted to transfer data to CPU, but the data is not available anywhere! Location bitfield is " << location_.to_string();
-    }
-    location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
-  }
-  */
-
   mutable std::mutex mutex_;
   mutable ProductTuple products_;
   TransferToCPUTuple transfersToCPU_;
   mutable BitSet location_;
 };
-
-/*
-template <typename CPUProduct, typename... Types>
-template <>
-const auto& HeterogeneousProduct<CPUProduct, Types...>::getProduct<HeterogeneousDevice::kCPU>() const {
-  if(!isProductOn(HeterogeneousDevice::kCPU)) {
-    transferToCPU();
-  }
-  return std::get<0>(products_).product();
-}
-*/
-
-/*
-template <typename CPUProduct, typename GPUProduct>
-class HeterogeneousProduct {
-public:
-  using TransferCallback = std::function<void(const GPUProduct&, CPUProduct&)>;
-
-  HeterogeneousProduct() = default;
-  HeterogeneousProduct(CPUProduct&& data):
-    cpuProduct_(std::move(data)) {
-    location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
-  }
-  HeterogeneousProduct(GPUProduct&& data, TransferCallback transfer):
-    gpuProduct_(std::move(data)),
-    transfer_(std::move(transfer)) {
-    location_.set(static_cast<unsigned int>(HeterogeneousDevice::kGPUCuda));
-  }
-
-
-  void swap(HeterogeneousProduct& other) {
-    if(this == &other)
-      return;
-
-    std::lock(mutex_, other.mutex_);
-    std::lock_guard<std::mutex> lk1(mutex_, std::adopt_lock);
-    std::lock_guard<std::mutex> lk2(other.mutex_, std::adopt_lock);
-
-    std::swap(cpuProduct_, other.cpuProduct_);
-    std::swap(gpuProduct_, other.gpuProduct_);
-    std::swap(location_, other.location_);
-    std::swap(transfer_, other.transfer_);
-  }
-
-  bool isProductOn(HeterogeneousDevice loc) const {
-    return location_[static_cast<unsigned int>(loc)];
-  }
-
-  const CPUProduct& getCPUProduct() const {
-    if(!isProductOn(HeterogeneousDevice::kCPU)) transferToCPU();
-    return cpuProduct_;
-  }
-
-  const GPUProduct& getGPUProduct() const {
-    if(!isProductOn(HeterogeneousDevice::kGPUCuda))
-      throw cms::Exception("LogicError") << "Called getGPUProduct(), but the data is not on GPU! Location bitfield is " << location_.to_string();
-    return gpuProduct_;
-  }
-
-private:
-  void transferToCPU() const {
-    if(!isProductOn(HeterogeneousDevice::kGPUCuda)) {
-      throw cms::Exception("LogicError") << "Called transferToCPU, but the data is not on GPU! Location bitfield is " << location_.to_string();
-    }
-    
-    std::lock_guard<std::mutex> lk(mutex_);
-    transfer_(gpuProduct_, cpuProduct_);
-    location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
-  }
-  
-  mutable std::mutex mutex_;
-  mutable CPUProduct cpuProduct_;
-  GPUProduct gpuProduct_;
-  mutable std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)> location_;
-  TransferCallback transfer_;
-};
-*/
 
 #endif
