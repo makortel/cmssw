@@ -49,47 +49,35 @@ namespace heterogeneous {
       std::swap(data_, other.data_);
     }
 
-    const T& product() const {
-      return data_;
-    }
+    const T& product() const { return data_; }
+    T& product() { return data_; }
   private:
     T data_;
   };
   template <typename T> struct ProductToEnum<CPUProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kCPU; };
   template <typename T> auto cpuProduct(T&& data) { return CPUProduct<T>(std::move(data)); }
 
-  template <typename T, typename CPUProduct>
+  template <typename T>
   class GPUMockProduct {
   public:
     using DataType = T;
     static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::kGPUMock;
-    using TransferToCPU = std::function<void(const T&, typename CPUProduct::DataType)>;
     
     GPUMockProduct() = default;
-    GPUMockProduct(T&& data, TransferToCPU transfer):
-      data_(std::move(data)),
-      transferToCPU_(std::move(transfer))
-    {}
+    GPUMockProduct(T&& data): data_(std::move(data)) {}
 
-    void swap(GPUMockProduct<T, CPUProduct>& other) {
+    void swap(GPUMockProduct<T>& other) {
       if(this == &other) return;
       std::swap(data_, other.data_);
-      std::swap(transferToCPU_, other.transferToCPU_);
     }
 
-    const T& product() const {
-      return data_;
-    }
+    const T& product() const { return data_; }
+    T& product() { return data_; }
 private:
     T data_;
-    TransferToCPU transferToCPU_;
   };
-  template <typename T, typename CPUProduct> struct ProductToEnum<GPUMockProduct<T, CPUProduct>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUMock; };
-  template <typename T, typename CPUProduct>
-  auto gpuMockProduct(T&& data, typename GPUMockProduct<T, CPUProduct>::TransferToCPU transfer) {
-    return GPUMockProduct<T, CPUProduct>(std::move(data), std::move(transfer));
-  }
-    
+  template <typename T> struct ProductToEnum<GPUMockProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUMock; };
+  template <typename T> auto gpuMockProduct(T&& data) { return GPUMockProduct<T>(std::move(data)); }
 
   template <typename T>
   class GPUCudaProduct {
@@ -105,9 +93,8 @@ private:
       std::swap(data_, other.data_);
     }
 
-    const T& product() const {
-      return data_;
-    }
+    const T& product() const { return data_; }
+    T& product() { return data_; }
 private:
     T data_;
   };
@@ -141,11 +128,13 @@ private:
   using IfInPack_t = typename IfInPack<device, Types...>::type;
 
   // Metaprogram to construct the callback function type for device->CPU transfers
-  template <typename CPUProduct, typename DeviceProductOrEmpty>
+  template <typename CPUProduct, typename DeviceProduct>
   struct CallBackType {
-    using type = std::conditional_t<std::is_same<DeviceProductOrEmpty, Empty>::value,
-                                    Empty,
-                                    std::function<void(typename DeviceProductOrEmpty::DataType const&, typename CPUProduct::DataType&)> >;
+    using type = std::function<void(typename DeviceProduct::DataType const&, typename CPUProduct::DataType&)>;
+  };
+  template <typename CPUProduct>
+  struct CallBackType<CPUProduct, Empty> {
+    using type = Empty;
   };
   template <typename CPUProduct, typename DeviceProductOrEmpty>
   using CallBackType_t = typename CallBackType<CPUProduct, DeviceProductOrEmpty>::type;
@@ -158,7 +147,7 @@ private:
     static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
       constexpr const auto index = bitSet.size()-sizeMinusIndex;
       if(bitSet[index]) {
-        std::get<index>(functionTuple)(std::get<index>(productTuple), std::get<0>(productTuple));
+        std::get<index>(functionTuple)(std::get<index>(productTuple).product(), std::get<0>(productTuple).product());
         return true;
       }
       return CallFunctionIf<FunctionTuple, ProductTuple, BitSet, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
@@ -190,7 +179,7 @@ private:
     static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, BitSet& bitSet) {
       constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
       if(!bitSet[index]) {
-        auto found = CallFunctionIf<FunctionTuple, ProductTuple, BitSet, bitSet.size()-1>(functionTuple, productTuple, bitSet);
+        auto found = CallFunctionIf<FunctionTuple, ProductTuple, BitSet, bitSet.size()-1>::call(functionTuple, productTuple, bitSet);
         if(!found) {
           throw cms::Exception("LogicError") << "Attempted to transfer data to CPU, but the data is not available anywhere! Location bitfield is " << bitSet.to_string();
         }

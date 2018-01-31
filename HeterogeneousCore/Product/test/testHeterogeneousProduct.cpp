@@ -22,7 +22,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(testHeterogeneousProduct);
 
 void testHeterogeneousProduct::testDefault() {
   HeterogeneousProduct<heterogeneous::CPUProduct<int>,
-                       heterogeneous::GPUMockProduct<int, heterogeneous::CPUProduct<int>>
+                       heterogeneous::GPUMockProduct<int>
                        > prod;
 
   CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kCPU) == false);
@@ -35,7 +35,7 @@ void testHeterogeneousProduct::testDefault() {
 
 void testHeterogeneousProduct::testCPU() {
   HeterogeneousProduct<heterogeneous::CPUProduct<int>,
-                       heterogeneous::GPUMockProduct<int, heterogeneous::CPUProduct<int>>
+                       heterogeneous::GPUMockProduct<int>
                        > prod{heterogeneous::cpuProduct(5)};
 
   CPPUNIT_ASSERT(prod.isProductOn(HeterogeneousDevice::kCPU) == true);
