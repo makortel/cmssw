@@ -105,9 +105,7 @@ private:
   template <typename ...Args> void call_nop(Args&&... args) {}
 
   // Empty struct for tuple defitionons
-  struct Empty {
-    using DataType = void; // easiest way to get CallBackType metaprogram to compile
-  };
+  struct Empty {};
 
   // Metaprogram to return the *Product<T> type for a given enumerator if it exists in Types... pack
   template <HeterogeneousDevice device, typename... Types>
