@@ -114,10 +114,15 @@ private:
   template <typename T> struct ProductToEnum<GPUCudaProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUCuda; };
   template <typename T> auto gpuCudaProduct(T&& data) { return GPUCudaProduct<T>(std::move(data)); }
 
+  // used below for "parameter pack expansion for function argument" trick
   template <typename ...Args> void call_nop(Args&&... args) {}
 
-  struct Empty {};
- 
+  // Empty struct for tuple defitionons
+  struct Empty {
+    using DataType = void; // easiest way to get CallBackType metaprogram to compile
+  };
+
+  // Metaprogram to return the *Product<T> type for a given enumerator if it exists in Types... pack
   template <HeterogeneousDevice device, typename... Types>
   struct IfInPack;
 
@@ -133,15 +138,88 @@ private:
   };
 
   template <HeterogeneousDevice device, typename... Types>
-  using ifInPack_t = typename IfInPack<device, Types...>::type;
+  using IfInPack_t = typename IfInPack<device, Types...>::type;
+
+  // Metaprogram to construct the callback function type for device->CPU transfers
+  template <typename CPUProduct, typename DeviceProductOrEmpty>
+  struct CallBackType {
+    using type = std::conditional_t<std::is_same<DeviceProductOrEmpty, Empty>::value,
+                                    Empty,
+                                    std::function<void(typename DeviceProductOrEmpty::DataType const&, typename CPUProduct::DataType&)> >;
+  };
+  template <typename CPUProduct, typename DeviceProductOrEmpty>
+  using CallBackType_t = typename CallBackType<CPUProduct, DeviceProductOrEmpty>::type;
+
+  // Metaprogram to loop over two tuples and a bitset (of equal
+  // length), and if bitset is set to true call a function from one of
+  // the tuples with arguments from the second tuple
+  template <typename FunctionTuple, typename ProductTuple, typename BitSet, size_t sizeMinusIndex>
+  struct CallFunctionIf {
+    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
+      constexpr const auto index = bitSet.size()-sizeMinusIndex;
+      if(bitSet[index]) {
+        std::get<index>(functionTuple)(std::get<index>(productTuple), std::get<0>(productTuple));
+        return true;
+      }
+      return CallFunctionIf<FunctionTuple, ProductTuple, BitSet, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
+    }
+  };
+  template <typename FunctionTuple, typename ProductTuple, typename BitSet>
+  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSet, 0> {
+    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
+      return false;
+    }
+  };
+
+  // Metaprogram to specialize getProduct() for CPU
+  template <HeterogeneousDevice device>
+  struct GetOrTransferProduct {
+    template <typename FunctionTuple, typename ProductTuple, typename BitSet>
+    static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
+      constexpr const auto index = static_cast<unsigned int>(device);
+      if(!bitSet[index]) {
+        throw cms::Exception("LogicError") << "Called getProduct() for device " << index << " but the data is not there! Location bitfield is " << bitSet.to_string();
+      }
+      return std::get<index>(productTuple).product();
+    }
+  };
+
+  template <>
+  struct GetOrTransferProduct<HeterogeneousDevice::kCPU> {
+    template <typename FunctionTuple, typename ProductTuple, typename BitSet>
+    static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, BitSet& bitSet) {
+      constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
+      if(!bitSet[index]) {
+        auto found = CallFunctionIf<FunctionTuple, ProductTuple, BitSet, bitSet.size()-1>(functionTuple, productTuple, bitSet);
+        if(!found) {
+          throw cms::Exception("LogicError") << "Attempted to transfer data to CPU, but the data is not available anywhere! Location bitfield is " << bitSet.to_string();
+        }
+      }
+      bitSet.set(index);
+      return std::get<index>(productTuple).product();
+    }
+  };
 }
 
+/**
+ * TODO:
+ * * extend transfers to device->device (within a single device type)
+ */
 template <typename CPUProduct, typename... Types>
 class HeterogeneousProduct {
   using ProductTuple = std::tuple<CPUProduct,
-                                  heterogeneous::ifInPack_t<HeterogeneousDevice::kGPUMock, Types...>,
-                                  heterogeneous::ifInPack_t<HeterogeneousDevice::kGPUCuda, Types...>
+                                  heterogeneous::IfInPack_t<HeterogeneousDevice::kGPUMock, Types...>,
+                                  heterogeneous::IfInPack_t<HeterogeneousDevice::kGPUCuda, Types...>
                                   >;
+  using TransferToCPUTuple = std::tuple<heterogeneous::Empty, // no need to transfer from CPU to CPU
+                                        heterogeneous::CallBackType_t<CPUProduct, std::tuple_element_t<static_cast<unsigned int>(HeterogeneousDevice::kGPUMock), ProductTuple>>,
+                                        heterogeneous::CallBackType_t<CPUProduct, std::tuple_element_t<static_cast<unsigned int>(HeterogeneousDevice::kGPUCuda), ProductTuple>>
+                                        >;
+  using BitSet = std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)>;
+
+  // Some sanity checks
+  static_assert(std::tuple_size<ProductTuple>::value == std::tuple_size<TransferToCPUTuple>::value, "Size mismatch");
+  static_assert(std::tuple_size<ProductTuple>::value == static_cast<unsigned int>(HeterogeneousDevice::kSize), "Size mismatch");
 public:
   HeterogeneousProduct() = default;
   HeterogeneousProduct(CPUProduct&& data) {
@@ -150,13 +228,14 @@ public:
     location_.set(index);
   }
 
-  template <typename H>
-  HeterogeneousProduct(H&& data) {
+  template <typename H, typename F>
+  HeterogeneousProduct(H&& data, F transferToCPU) {
     constexpr const auto index = static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H> >::value);
     static_assert(!std::is_same<std::tuple_element_t<index, ProductTuple>,
                                 heterogeneous::Empty>::value,
                   "This HeterogeneousProduct does not support this type");
     std::get<index>(products_) = std::move(data);
+    std::get<index>(transfersToCPU_) = std::move(transferToCPU);
     location_.set(index);
   }
 
@@ -182,10 +261,15 @@ public:
     static_assert(!std::is_same<std::tuple_element_t<index, ProductTuple>,
                                 heterogeneous::Empty>::value,
                   "This HeterogeneousProduct does not support this type");
+
+    std::lock_guard<std::mutex> lk(mutex_);
+    return heterogeneous::GetOrTransferProduct<device>::getProduct(transfersToCPU_, products_, location_);
+    /*
     if(!isProductOn(device)) {
       throw cms::Exception("LogicError") << "Called getProduct() for device " << index << " but the data is not there! Location bitfield is " << location_.to_string();
     }
     return std::get<index>(products_).product();
+    */
   }
 
 private:
@@ -193,11 +277,35 @@ private:
   void swapTuple(std::index_sequence<Is...>, std::tuple<Types...>& other) {
     call_nop(std::get<Is>(products_).swap(std::get<Is>(other))...);
   }
-  
+
+  /*
+  void transferToCPU() const {
+    std::lock_guard<std::mutex> lk(mutex_);
+
+    auto found = heterogeneous::CallFunctionIf<ProductTuple, TransferToCPUTuple, BitSet, location_.size()-1>(products_, transfersToCPU_, location_);
+    if(!found) {
+      throw cms::Exception("LogicError") << "Attempted to transfer data to CPU, but the data is not available anywhere! Location bitfield is " << location_.to_string();
+    }
+    location_.set(static_cast<unsigned int>(HeterogeneousDevice::kCPU));
+  }
+  */
+
   mutable std::mutex mutex_;
   mutable ProductTuple products_;
-  mutable std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)> location_;
+  TransferToCPUTuple transfersToCPU_;
+  mutable BitSet location_;
 };
+
+/*
+template <typename CPUProduct, typename... Types>
+template <>
+const auto& HeterogeneousProduct<CPUProduct, Types...>::getProduct<HeterogeneousDevice::kCPU>() const {
+  if(!isProductOn(HeterogeneousDevice::kCPU)) {
+    transferToCPU();
+  }
+  return std::get<0>(products_).product();
+}
+*/
 
 /*
 template <typename CPUProduct, typename GPUProduct>
