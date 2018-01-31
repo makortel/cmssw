@@ -140,7 +140,7 @@ private:
   // Metaprogram to loop over two tuples and a bitset (of equal
   // length), and if bitset is set to true call a function from one of
   // the tuples with arguments from the second tuple
-  template <typename FunctionTuple, typename ProductTuple, typename BitSet, size_t sizeMinusIndex>
+  template <typename FunctionTuple, typename ProductTuple, typename BitSet, typename FunctionTupleElement, size_t sizeMinusIndex>
   struct CallFunctionIf {
     static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
       constexpr const auto index = bitSet.size()-sizeMinusIndex;
@@ -148,11 +148,20 @@ private:
         std::get<index>(functionTuple)(std::get<index>(productTuple).product(), std::get<0>(productTuple).product());
         return true;
       }
-      return CallFunctionIf<FunctionTuple, ProductTuple, BitSet, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
+      return CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
+                            std::tuple_element_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
+    }
+  };
+  template <typename FunctionTuple, typename ProductTuple, typename BitSet, size_t sizeMinusIndex>
+  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSet, Empty, sizeMinusIndex> {
+    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
+      constexpr const auto index = bitSet.size()-sizeMinusIndex;
+      return CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
+                            std::tuple_element_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
     }
   };
   template <typename FunctionTuple, typename ProductTuple, typename BitSet>
-  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSet, 0> {
+  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSet, Empty, 0> {
     static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
       return false;
     }
@@ -177,7 +186,8 @@ private:
     static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, BitSet& bitSet) {
       constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
       if(!bitSet[index]) {
-        auto found = CallFunctionIf<FunctionTuple, ProductTuple, BitSet, bitSet.size()-1>::call(functionTuple, productTuple, bitSet);
+        auto found = CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
+                                    std::tuple_element_t<1, FunctionTuple>, bitSet.size()-1>::call(functionTuple, productTuple, bitSet);
         if(!found) {
           throw cms::Exception("LogicError") << "Attempted to transfer data to CPU, but the data is not available anywhere! Location bitfield is " << bitSet.to_string();
         }
