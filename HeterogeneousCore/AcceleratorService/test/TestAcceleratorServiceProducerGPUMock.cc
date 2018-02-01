@@ -40,7 +40,7 @@ namespace {
       std::mt19937 gen(r());
       auto dist = std::uniform_real_distribution<>(1.0, 3.0); 
       auto dur = dist(gen);
-      edm::LogPrint("Foo") << "   Task (CPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
+      edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "   Task (CPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
       std::this_thread::sleep_for(std::chrono::seconds(1)*dur);
 
       auto input = input_ ? input_->getProduct<HeterogeneousDevice::kCPU>() : 0U;
@@ -53,7 +53,7 @@ namespace {
       std::mt19937 gen(r());
       auto dist = std::uniform_real_distribution<>(0.1, 1.0); 
       auto dur = dist(gen);
-      edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
+      edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
       ranOnGPU_ = true;
       auto input = input_ ? input_->getProduct<HeterogeneousDevice::kGPUMock>() : 0U;
 
@@ -70,7 +70,7 @@ namespace {
 
     auto makeTransfer() const {
       return [this](const unsigned int& src, unsigned int& dst) {
-        edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
+        edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
         dst = src;
       };
     }
@@ -137,17 +137,17 @@ void TestAcceleratorServiceProducerGPUMock::acquire(const edm::Event& iEvent, co
 
   algo_.setInput(input, iEvent.id().event(), iEvent.streamID());
 
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " input " << input;
+  edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "TestAcceleratorServiceProducerGPUMock::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " input " << input;
   edm::Service<AcceleratorService> acc;
   acc->schedule(accToken_, iEvent.streamID(), std::move(waitingTaskHolder), input,
                 accelerator::algoGPUMock(&algo_),
                 accelerator::algoCPU(&algo_)
                 );
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
+  edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "TestAcceleratorServiceProducerGPUMock::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
 }
 
 void TestAcceleratorServiceProducerGPUMock::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
+  edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "TestAcceleratorServiceProducerGPUMock::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
   std::unique_ptr<OutputType> ret;
   unsigned int value = 0;
   if(algo_.ranOnGPU()) {
@@ -159,7 +159,7 @@ void TestAcceleratorServiceProducerGPUMock::produce(edm::Event& iEvent, const ed
     value = ret->getProduct<HeterogeneousDevice::kCPU>();
   }
 
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPUMock::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
+  edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "TestAcceleratorServiceProducerGPUMock::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
   iEvent.put(std::move(ret));
 }
 
