@@ -46,7 +46,7 @@ namespace {
       std::mt19937 gen(r());
       auto dist = std::uniform_real_distribution<>(1.0, 3.0); 
       auto dur = dist(gen);
-      edm::LogPrint("Foo") << "   Task (CPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
+      edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (CPU) for event " << eventId_ << " in stream " << streamId_ << " will take " << dur << " seconds";
       std::this_thread::sleep_for(std::chrono::seconds(1)*dur);
 
       auto input = input_ ? input_->getProduct<HeterogeneousDevice::kCPU>() : 0U;
@@ -55,20 +55,20 @@ namespace {
     }
 
     void runGPUCuda(std::function<void()> callback) {
-      edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
+      edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
       gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
                                      [callback,this](){
-                                       edm::LogPrint("Foo") << "    GPU kernel finished (in callback)";
+                                       edm::LogPrint("TestAcceleratorServiceProducerGPU") << "    GPU kernel finished (in callback)";
                                        callback();
                                      });
-      edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " launched";
+      edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " launched";
     }
 
     auto makeTransfer() const {
       return [this](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
-        edm::LogPrint("Foo") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
+        edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
         dst = gpuAlgo_->getResult(src);
-        edm::LogPrint("Foo") << "    GPU result " << dst;
+        edm::LogPrint("TestAcceleratorServiceProducerGPU") << "    GPU result " << dst;
       };
     }
 
@@ -137,18 +137,18 @@ void TestAcceleratorServiceProducerGPU::acquire(const edm::Event& iEvent, const 
 
   algo_.setInput(input, iEvent.id().event(), iEvent.streamID());
   
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " input " << input;
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "TestAcceleratorServiceProducerGPU::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " input " << input;
   edm::Service<AcceleratorService> acc;
   acc->schedule(accToken_, iEvent.streamID(), std::move(waitingTaskHolder), input,
                 accelerator::algoGPUCuda(&algo_),
                 accelerator::algoCPU(&algo_)
                 );
 
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "TestAcceleratorServiceProducerGPU::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
 }
 
 void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "TestAcceleratorServiceProducerGPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
   // TODO: the following if-else structure will be repeated in all
   // heterogeneous modules. Ideas to move it to system
   // * algorithms implement "putInEvent()" which takes care of inserting exactly that product to event
@@ -163,7 +163,7 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
   }
 
   unsigned int value = showResult_ ? ret->getProduct<HeterogeneousDevice::kCPU>() : 0;
-  edm::LogPrint("Foo") << "TestAcceleratorServiceProducerGPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "TestAcceleratorServiceProducerGPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
   iEvent.put(std::move(ret));
 }
 

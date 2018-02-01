@@ -153,7 +153,7 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   int threadsPerBlock {32};
   int blocksPerGrid = (NUM_VALUES + threadsPerBlock - 1) / threadsPerBlock;
 
-  edm::LogPrint("Foo") << "--- launching kernels";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- launching kernels";
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
   if(inputArrays.second != nullptr) {
     vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(inputArrays.second, d_c.get(), d_d.get(), NUM_VALUES);
@@ -174,18 +174,18 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
 
   matrixMulVector<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_mc.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
-  edm::LogPrint("Foo") << "--- kernels launched, enqueueing the callback";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- kernels launched, enqueueing the callback";
   stream.enqueue.callback([callback](cuda::stream::id_t stream_id, cuda::status_t status){
       callback();
     });
 
-  edm::LogPrint("Foo") << "--- finished, returning return pointer";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- finished, returning return pointer";
   return std::make_pair(std::move(d_a), std::move(d_c));
 }
 
 void TestAcceleratorServiceProducerGPUTask::release() {
   // any way to automate the release?
-  edm::LogPrint("Foo") << "--- releasing temporary memory";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- releasing temporary memory";
   h_a.reset();
   h_b.reset();
   d_b.reset();
