@@ -21,8 +21,8 @@ namespace {
   // hack for GPU mock
   tbb::concurrent_vector<std::future<void> > pendingFutures;
 
-  using OutputType = HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>,
-                                          heterogeneous::GPUMockProduct<unsigned int> >;
+  using OutputType = HeterogeneousProductImpl<heterogeneous::CPUProduct<unsigned int>,
+                                              heterogeneous::GPUMockProduct<unsigned int> >;
 
   class TestAlgo {
   public:
@@ -109,7 +109,7 @@ private:
   std::string label_;
   AcceleratorService::Token accToken_;
 
-  edm::EDGetTokenT<OutputType> srcToken_;
+  edm::EDGetTokenT<HeterogeneousProduct> srcToken_;
 
   TestAlgo algo_;
 };
@@ -121,18 +121,18 @@ TestAcceleratorServiceProducerGPUMock::TestAcceleratorServiceProducerGPUMock(con
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
   if(!srcTag.label().empty()) {
-    srcToken_ = consumes<OutputType>(srcTag);
+    srcToken_ = consumes<HeterogeneousProduct>(srcTag);
   }
 
-  produces<OutputType>();
+  produces<HeterogeneousProduct>();
 }
 
 void TestAcceleratorServiceProducerGPUMock::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   const OutputType *input = nullptr;
   if(!srcToken_.isUninitialized()) {
-    edm::Handle<OutputType> hin;
+    edm::Handle<HeterogeneousProduct> hin;
     iEvent.getByToken(srcToken_, hin);
-    input = hin.product();
+    input = &(hin->get<OutputType>());
   }
 
   algo_.setInput(input, iEvent.id().event(), iEvent.streamID());
@@ -148,15 +148,15 @@ void TestAcceleratorServiceProducerGPUMock::acquire(const edm::Event& iEvent, co
 
 void TestAcceleratorServiceProducerGPUMock::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "TestAcceleratorServiceProducerGPUMock::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_;
-  std::unique_ptr<OutputType> ret;
+  std::unique_ptr<HeterogeneousProduct> ret;
   unsigned int value = 0;
   if(algo_.ranOnGPU()) {
-    ret = std::make_unique<OutputType>(heterogeneous::gpuMockProduct(algo_.getGPUOutput()), algo_.makeTransfer());
-    value = ret->getProduct<HeterogeneousDevice::kGPUMock>();
+    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuMockProduct(algo_.getGPUOutput()), algo_.makeTransfer()));
+    value = ret->get<OutputType>().getProduct<HeterogeneousDevice::kGPUMock>();
   }
   else {
-    ret = std::make_unique<OutputType>(heterogeneous::cpuProduct(algo_.getOutput()));
-    value = ret->getProduct<HeterogeneousDevice::kCPU>();
+    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::cpuProduct(algo_.getOutput())));
+    value = ret->get<OutputType>().getProduct<HeterogeneousDevice::kCPU>();
   }
 
   edm::LogPrint("TestAcceleratorServiceProducerGPUMock") << "TestAcceleratorServiceProducerGPUMock::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
