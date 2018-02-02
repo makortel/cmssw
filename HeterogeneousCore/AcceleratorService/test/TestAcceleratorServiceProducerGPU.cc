@@ -22,8 +22,8 @@
 #include <cuda_runtime.h>
 
 namespace {
-  using OutputType = HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>,
-                                          heterogeneous::GPUCudaProduct<TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>>;
+  using OutputType = HeterogeneousProductImpl<heterogeneous::CPUProduct<unsigned int>,
+                                              heterogeneous::GPUCudaProduct<TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>>;
 
   class TestAlgo {
   public:
@@ -107,7 +107,7 @@ private:
   std::string label_;
   AcceleratorService::Token accToken_;
 
-  edm::EDGetTokenT<OutputType> srcToken_;
+  edm::EDGetTokenT<HeterogeneousProduct> srcToken_;
   bool showResult_;
 
   TestAlgo algo_;
@@ -121,18 +121,18 @@ TestAcceleratorServiceProducerGPU::TestAcceleratorServiceProducerGPU(const edm::
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
   if(!srcTag.label().empty()) {
-    srcToken_ = consumes<OutputType>(srcTag);
+    srcToken_ = consumes<HeterogeneousProduct>(srcTag);
   }
 
-  produces<OutputType>();
+  produces<HeterogeneousProduct>();
 }
 
 void TestAcceleratorServiceProducerGPU::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   const OutputType *input = nullptr;
   if(!srcToken_.isUninitialized()) {
-    edm::Handle<OutputType> hin;
+    edm::Handle<HeterogeneousProduct> hin;
     iEvent.getByToken(srcToken_, hin);
-    input = hin.product();
+    input = &(hin->get<OutputType>());
   }
 
   algo_.setInput(input, iEvent.id().event(), iEvent.streamID());
@@ -153,16 +153,16 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
   // heterogeneous modules. Ideas to move it to system
   // * algorithms implement "putInEvent()" which takes care of inserting exactly that product to event
   // * better ideas?
-  std::unique_ptr<OutputType> ret;
+  std::unique_ptr<HeterogeneousProduct> ret;
   edm::Service<AcceleratorService> acc;
   if(acc->algoExecutionLocation(accToken_, iEvent.streamID()).deviceType() == HeterogeneousDevice::kGPUCuda) {
-    ret = std::make_unique<OutputType>(heterogeneous::gpuCudaProduct(algo_.getGPUOutput()), algo_.makeTransfer());
+    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuCudaProduct(algo_.getGPUOutput()), algo_.makeTransfer()));
   }
   else {
-    ret = std::make_unique<OutputType>(heterogeneous::cpuProduct(algo_.getOutput()));
+    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::cpuProduct(algo_.getOutput())));
   }
 
-  unsigned int value = showResult_ ? ret->getProduct<HeterogeneousDevice::kCPU>() : 0;
+  unsigned int value = showResult_ ? ret->get<OutputType>().getProduct<HeterogeneousDevice::kCPU>() : 0;
   edm::LogPrint("TestAcceleratorServiceProducerGPU") << "TestAcceleratorServiceProducerGPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " label " << label_ << " result " << value;
   iEvent.put(std::move(ret));
 }

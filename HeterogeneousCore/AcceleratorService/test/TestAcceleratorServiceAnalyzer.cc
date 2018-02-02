@@ -19,17 +19,17 @@ public:
 private:
   void analyze(edm::StreamID streamID, const edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
 
-  using InputType = HeterogeneousProduct<heterogeneous::CPUProduct<unsigned int>,
-                                         heterogeneous::GPUCudaProduct<std::pair<float *, float *>>>;
+  using InputType = HeterogeneousProductImpl<heterogeneous::CPUProduct<unsigned int>,
+                                             heterogeneous::GPUCudaProduct<std::pair<float *, float *>>>;
   std::string label_;
-  std::vector<edm::EDGetTokenT<InputType>> srcTokens_;
+  std::vector<edm::EDGetTokenT<HeterogeneousProduct>> srcTokens_;
 };
 
 TestAcceleratorServiceAnalyzer::TestAcceleratorServiceAnalyzer(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
   srcTokens_(edm::vector_transform(iConfig.getParameter<std::vector<edm::InputTag> >("src"),
                                    [this](const edm::InputTag& tag) {
-                                     return consumes<InputType>(tag);
+                                     return consumes<HeterogeneousProduct>(tag);
                                    }))
 {}
 
@@ -40,7 +40,7 @@ void TestAcceleratorServiceAnalyzer::fillDescriptions(edm::ConfigurationDescript
 }
 
 void TestAcceleratorServiceAnalyzer::analyze(edm::StreamID streamID, const edm::Event& iEvent, const edm::EventSetup& iSetup) const {
-  edm::Handle<InputType> hinput;
+  edm::Handle<HeterogeneousProduct> hinput;
   int inp=0;
   for(const auto& token: srcTokens_) {
     iEvent.getByToken(token, hinput);
@@ -48,7 +48,7 @@ void TestAcceleratorServiceAnalyzer::analyze(edm::StreamID streamID, const edm::
                                                     << " stream " << streamID
                                                     << " label " << label_
                                                     << " coll " << inp
-                                                    << " result " << hinput->getProduct<HeterogeneousDevice::kCPU>();
+                                                    << " result " << hinput->get<InputType>().getProduct<HeterogeneousDevice::kCPU>();
     ++inp;
   }
 }
