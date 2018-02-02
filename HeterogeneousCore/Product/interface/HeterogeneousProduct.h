@@ -4,6 +4,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include <bitset>
+#include <memory>
 #include <mutex>
 #include <tuple>
 
@@ -247,6 +248,13 @@ private:
   };
 }
 
+// For type erasure to ease dictionary generation
+class HeterogeneousProductBase {
+public:
+  virtual ~HeterogeneousProductBase() = 0;
+  virtual void swap(HeterogeneousProductBase& other) = 0; // not actually needed?
+};
+
 /**
  * Generic data product for holding data on CPU or a heterogeneous
  * device which keeps track where the data is. Data can be
@@ -257,7 +265,7 @@ private:
  * * extend transfers to device->device (within a single device type)
  */
 template <typename CPUProduct, typename... Types>
-class HeterogeneousProduct {
+class HeterogeneousProductImpl: public HeterogeneousProductBase {
   using ProductTuple = std::tuple<CPUProduct,
                                   heterogeneous::IfInPack_t<HeterogeneousDevice::kGPUMock, Types...>,
                                   heterogeneous::IfInPack_t<HeterogeneousDevice::kGPUCuda, Types...>
@@ -272,10 +280,30 @@ class HeterogeneousProduct {
   static_assert(std::tuple_size<ProductTuple>::value == std::tuple_size<TransferToCPUTuple>::value, "Size mismatch");
   static_assert(std::tuple_size<ProductTuple>::value == static_cast<unsigned int>(HeterogeneousDevice::kSize), "Size mismatch");
 public:
-  HeterogeneousProduct() = default;
+  HeterogeneousProductImpl() = default;
+  ~HeterogeneousProductImpl() override = default;
+  HeterogeneousProductImpl(HeterogeneousProductImpl<CPUProduct, Types...>&& other) {
+    std::lock(mutex_, other.mutex_);
+    std::lock_guard<std::mutex> lk1(mutex_, std::adopt_lock);
+    std::lock_guard<std::mutex> lk2(other.mutex_, std::adopt_lock);
+
+    products_ = std::move(other.products_);
+    transfersToCPU_ = std::move(other.transfersToCPU_);
+    location_ = std::move(other.location_);
+  }
+  HeterogeneousProductImpl<CPUProduct, Types...>& operator=(HeterogeneousProductImpl<CPUProduct, Types...>&& other) {
+    std::lock(mutex_, other.mutex_);
+    std::lock_guard<std::mutex> lk1(mutex_, std::adopt_lock);
+    std::lock_guard<std::mutex> lk2(other.mutex_, std::adopt_lock);
+
+    products_ = std::move(other.products_);
+    transfersToCPU_ = std::move(other.transfersToCPU_);
+    location_ = std::move(other.location_);
+    return *this;
+  }
 
   // Constructor for CPU data
-  HeterogeneousProduct(CPUProduct&& data) {
+  HeterogeneousProductImpl(CPUProduct&& data) {
     constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
     std::get<index>(products_) = std::move(data);
     location_.set(index);
@@ -286,7 +314,7 @@ public:
    * data to CPU has to be provided as well.
    */
   template <typename H, typename F>
-  HeterogeneousProduct(H&& data, F transferToCPU) {
+  HeterogeneousProductImpl(H&& data, F transferToCPU) {
     constexpr const auto index = static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H> >::value);
     static_assert(!std::is_same<std::tuple_element_t<index, ProductTuple>,
                                 heterogeneous::Empty>::value,
@@ -296,7 +324,14 @@ public:
     location_.set(index);
   }
 
-  void swap(HeterogeneousProduct<CPUProduct, Types...>& other) {
+  void swap(HeterogeneousProductBase& other) override {
+    if(typeid(*this) != typeid(other)) {
+      throw cms::Exception("LogicError") << "Trying to swap concrete HeterogeneousProductImpl " << typeid(*this).name() << " with " << typeid(other).name();
+    }
+    swap(static_cast<HeterogeneousProductImpl<CPUProduct, Types...>&>(other));
+  }
+  
+  void swap(HeterogeneousProductImpl<CPUProduct, Types...>& other) {
     if(this == &other)
       return;
 
@@ -332,6 +367,45 @@ private:
   mutable ProductTuple products_;
   TransferToCPUTuple transfersToCPU_;
   mutable BitSet location_;
+};
+
+class HeterogeneousProduct {
+public:
+  HeterogeneousProduct() = default;
+
+  template <typename... Args>
+  HeterogeneousProduct(HeterogeneousProductImpl<Args...>&& impl) {
+    //impl_.reset(new HeterogeneousProductImpl<Args...>(std::move(impl)));
+    //std::make_unique<HeterogeneousProductImpl<Args...>>(std::move(impl)))
+    //impl_ = std::make_unique<HeterogeneousProductImpl<Args...>>(std::move(impl));
+    impl_.reset(static_cast<HeterogeneousProductBase *>(new HeterogeneousProductImpl<Args...>(std::move(impl))));
+  }
+
+  HeterogeneousProduct(HeterogeneousProduct&&) = default;
+  HeterogeneousProduct& operator=(HeterogeneousProduct&&) = default;
+
+  ~HeterogeneousProduct() = default;
+
+  void swap(HeterogeneousProduct& other) {
+    std::swap(impl_, other.impl_);
+  }
+
+  bool isNonnull() const { return static_cast<bool>(impl_); }
+  bool isNull() const { return !isNonnull(); }
+  
+  template <typename T>
+  const T& get() const {
+    if(isNull())
+      throw cms::Exception("LogicError") << "HerogeneousProduct is null";
+    
+    const auto& ref = *impl_;
+    if(typeid(T) != typeid(ref)) {
+      throw cms::Exception("LogicError") << "Trying to get HeterogeneousProductImpl " << typeid(T).name() << " but the product contains " << typeid(ref).name();
+    }
+    return static_cast<const T&>(*impl_);
+  }
+private:
+  std::unique_ptr<HeterogeneousProductBase> impl_;
 };
 
 #endif
