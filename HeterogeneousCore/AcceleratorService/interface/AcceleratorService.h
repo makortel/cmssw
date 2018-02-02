@@ -35,6 +35,16 @@ namespace accelerator {
   // as the pattern is to construct the concrete class in stack and
   // keep that object around as long as the function call accessing
   // the object via base class pointer/reference is finished.
+
+  /**
+   * CPU algorithm
+   *
+   * The T can be any class implementing "runCPU(void)" method (return
+   * value is ignored)
+   *
+   * A CPU algorithm is run synchronously in the same TBB task, i.e.
+   * when everything is finished when runCPU() call returns.
+   */
   class AlgoCPUBase {
   public:
     AlgoCPUBase() {}
@@ -49,7 +59,18 @@ namespace accelerator {
   };
   template <typename T> AlgoCPU<T> algoCPU(T *algo) { return AlgoCPU<T>(algo); }
 
-  //
+  /**
+   * GPU mock algorithm
+   *
+   * The T can be any class implementing
+   * "runGPUMock(std::function<void()>)" method (return value is
+   * ignored).
+   *
+   * The implemented method must call the callback function when all
+   * work is finished. If any of the work is asynchronous, it is up to
+   * the algorithm to launch the work asynchronously and ensure that
+   * the callback is called after all asynchronous work is finished.
+   */
   class AlgoGPUMockBase {
   public:
     AlgoGPUMockBase() {}
@@ -64,7 +85,27 @@ namespace accelerator {
   };
   template <typename T> AlgoGPUMock<T> algoGPUMock(T *algo) { return AlgoGPUMock<T>(algo); }
 
-  //
+  /**
+   * GPU CUDA algorithm
+   *
+   * The T can be any class implementing
+   * "runGPUCuda(std::function<void()>)" method (return value is
+   * ignored).
+   *
+   * The implemented method must call the callback function when all
+   * work is finished. If any of the work is asynchronous, it is up to
+   * the algorithm to launch the work asynchronously and ensure that
+   * the callback is called after all asynchronous work is finished.
+   *
+   * For CUDA the above conditions mean using
+   * - CUDA stream
+   * - asynchronous memory transfers
+   * - asynchronous kernel launches
+   * - registering the callback to the stream after all other work has been launched
+   *
+   * Note that the CUDA stream object must live at least as long as
+   * the callback() is called (in practice a tiny bit later).
+   */
   class AlgoGPUCudaBase {
   public:
     AlgoGPUCudaBase() {}
@@ -80,6 +121,26 @@ namespace accelerator {
   template <typename T> AlgoGPUCuda<T> algoGPUCuda(T *algo) { return AlgoGPUCuda<T>(algo); }
 }
 
+/**
+ * Prototype for a service for scheduling heterogeneous algorithms
+ *
+ * It can be that in the end we don't need a Service, but for now the
+ * protyping proceeds with one.
+ *
+ * At the moment the client EDModules must use the ExternalWork extension.
+ *
+ * Client EDModules must first register themselves by calling the
+ * book() method in their constructor and storing the Token object as
+ * member variables.
+ *
+ * In the aqcuire(), the clients must call the schedule() method to
+ * schedule (and possibly run) the algorithms (for more details see
+ * the documentation of the method).
+ *
+ * In the produce(), the clients must check with
+ * algoExecutionLocation() which algorithm was run, fetch the output
+ * of that algorithm, and put it in the Event.
+ */
 class AcceleratorService {
 public:
   class Token {
@@ -99,10 +160,10 @@ public:
    * Schedule the various versions of the algorithm to the available
    * heterogeneous devices.
    *
-   * The parameter pack is an ordered list of accelerator::Algo*
-   * pointers (that are owned by the calling code). The order of the
-   * algorithms is taken as the preferred order to be tried. I.e. the
-   * code tries to schedule the first algorithm, if that fails (no
+   * The parameter pack is an ordered list of accelerator::Algo*<T>
+   * objects (note the helper functions to create them). The order of
+   * the algorithms is taken as the preferred order to be tried. I.e.
+   * the code tries to schedule the first algorithm, if that fails (no
    * device, to be extended) try the next one etc. The CPU version has
    * to be the last one.
    *
