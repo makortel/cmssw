@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import *
 from PhysicsTools.JetMCAlgos.TauGenJets_cfi import tauGenJets
-from PhysicsTools.JetMCAlgos.tauGenJetsDecayModeSelectorAllHadrons_cfi import tauGenJetsSelectorAllHadrons 
+from PhysicsTools.JetMCAlgos.tauGenJetsSelectorAllHadrons_cfi import tauGenJetsSelectorAllHadrons
 
 
 ##################### User floats producers, selectors ##########################
