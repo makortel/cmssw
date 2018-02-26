@@ -30,7 +30,6 @@ AlignmentCSCTrackSelector::~AlignmentCSCTrackSelector()
 
 void AlignmentCSCTrackSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
   // default values are from the hat as there was no example where to get them
-  desc.add<edm::InputTag>("src", edm::InputTag());
   desc.add<int>("stationA", 0);
   desc.add<int>("stationB", 0);
   desc.add<int>("minHitsDT", 0);
