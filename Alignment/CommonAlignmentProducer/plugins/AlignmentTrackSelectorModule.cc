@@ -84,7 +84,7 @@ void AlignmentTrackSelectorModule::fillDescriptions(edm::ConfigurationDescriptio
 
   edm::ParameterSetDescription descTwoBodyDecaySelector;
   AlignmentTwoBodyDecayTrackSelector::fillPSetDescription(descTwoBodyDecaySelector);
-  desc.add<edm::ParameterSetDescription>("TwoBodyDecaySelector", descGlobalSelector)->setComment("Settings for the tow Body Decay TrackSelector");
+  desc.add<edm::ParameterSetDescription>("TwoBodyDecaySelector", descTwoBodyDecaySelector)->setComment("Settings for the tow Body Decay TrackSelector");
 
   descriptions.add("AlignmentTrackSelector", desc);
 }
