@@ -15,7 +15,7 @@ namespace reco {
       }
 
       static void fillPSetDescription(edm::ParameterSetDescription& desc) {
-        desc.add<std::vector<std::string> >("pdgId", std::vector<std::string>{});
+        desc.add<std::vector<int> >("pdgId", std::vector<int>{});
       }
     };
 
