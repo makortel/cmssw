@@ -19,7 +19,7 @@ namespace reco {
   }
 }
 template <>
-reco::modules::GenParticleCustomSelector::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void reco::modules::GenParticleCustomSelector::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   fillPSetSrc(desc, edm::InputTag("genParticles"));
   desc.add<bool>("chargedOnly", true);
