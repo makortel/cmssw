@@ -22,7 +22,7 @@ AlignmentSeedSelector::AlignmentSeedSelector(const edm::ParameterSet & cfg) :
 AlignmentSeedSelector::~AlignmentSeedSelector()
 {}
 
-void fillPSetDescription(edm::ParameterSetDescription& desc) {
+void AlignmentSeedSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
   // default values are from the hat as there was no example where to get them
   desc.add<bool>("applySeedNumber", false);
   desc.add<int>("minNSeeds", 0);
