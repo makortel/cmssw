@@ -24,6 +24,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectronFwd.h"
@@ -45,6 +46,7 @@ class ZElectronsSelector {
 
 public:
   ZElectronsSelector(const edm::ParameterSet&, edm::ConsumesCollector & iC );
+  static void fillPSetDescription(edm::ParameterSetDescription& desc);
   bool operator()(const reco::GsfElectron & ) const;
   void newEvent (const edm::Event&, const edm::EventSetup&);
   const float getEffectiveArea(float eta) const;
@@ -118,6 +120,24 @@ ZElectronsSelector::ZElectronsSelector(const edm::ParameterSet& cfg, edm::Consum
   EInvMinusPInv   = eleIDWP.getParameter<std::vector<double> >("EInverseMinusPInverseCut");
 }
 
+void ZElectronsSelector::fillPSetDescription(edm::ParameterSetDescription& desc) {
+  desc.add<edm::InputTag>("rho", edm::InputTag("fixedGridRhoFastjetCentralCalo"))->setComment("from https://github.com/cms-sw/cmssw/blob/09c3fce6626f70fd04223e7dacebf0b485f73f54/RecoEgamma/ElectronIdentification/python/Identification/cutBasedElectronID_tools.py#L564");
+
+  desc.add<std::vector<double> >("absEtaMin", std::vector<double>{0.0000, 1.0000, 1.4790, 2.0000, 2.2000, 2.3000, 2.4000});
+  desc.add<std::vector<double> >("absEtaMax", std::vector<double>{1.0000,  1.4790, 2.0000,  2.2000, 2.3000, 2.4000, 5.0000});
+  desc.add<std::vector<double> >("effectiveAreaValues", std::vector<double>{0.1703, 0.1715, 0.1213, 0.1230, 0.1635, 0.1937, 0.2393});
+
+  edm::ParameterSetDescription eleID;
+  eleID.add<std::vector<double> >("full5x5_sigmaIEtaIEtaCut" , std::vector<double>{0.0115 ,0.0370});
+  eleID.add<std::vector<double> >("dEtaInSeedCut"            , std::vector<double>{0.00749,0.00895});
+  eleID.add<std::vector<double> >("dPhiInCut"                , std::vector<double>{0.228  ,0.213});
+  eleID.add<std::vector<double> >("hOverECut"                , std::vector<double>{0.356  ,0.211});
+  eleID.add<std::vector<double> >("relCombIsolationWithEACut", std::vector<double>{0.175  ,0.159});
+  eleID.add<std::vector<double> >("EInverseMinusPInverseCut" , std::vector<double>{0.299  ,0.15});
+  eleID.add<std::vector<double> >("missingHitsCut"           , std::vector<double>{2      ,3});
+
+  desc.add<edm::ParameterSetDescription>("eleID", eleID);
+}
 
 
 void  ZElectronsSelector::newEvent(const edm::Event& ev, const edm::EventSetup& ){
