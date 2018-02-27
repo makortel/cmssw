@@ -134,7 +134,7 @@ void ZElectronsSelector::fillPSetDescription(edm::ParameterSetDescription& desc)
   eleID.add<std::vector<double> >("hOverECut"                , std::vector<double>{0.356  ,0.211});
   eleID.add<std::vector<double> >("relCombIsolationWithEACut", std::vector<double>{0.175  ,0.159});
   eleID.add<std::vector<double> >("EInverseMinusPInverseCut" , std::vector<double>{0.299  ,0.15});
-  eleID.add<std::vector<double> >("missingHitsCut"           , std::vector<double>{2      ,3});
+  eleID.add<std::vector<int> >   ("missingHitsCut"           , std::vector<int>   {2      ,3});
 
   desc.add<edm::ParameterSetDescription>("eleID", eleID);
 }
