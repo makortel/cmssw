@@ -27,7 +27,8 @@ siPixelClusters = cms.EDProducer("SiPixelClusterProducer",
     maxNumberOfClusters = cms.int32(-1), # -1 means no limit.
 )
 
-# to ensure reproducibility for CPU<->GPU comparisons
+# *only for the cms-patatrack repository*
+# ensure reproducibility for CPU <--> GPU comparisons
 siPixelClusters.payloadType = "HLT"
 
 # phase1 pixel
