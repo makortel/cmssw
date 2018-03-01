@@ -9,7 +9,7 @@
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/drvapi_error_string.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/getCudaDrvErrorString.h"
 
 int main()
 {
