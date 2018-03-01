@@ -463,37 +463,6 @@ CUDAService::CUDAService(edm::ParameterSet const& iConfig, edm::ActivityRegistry
     edm::LogInfo("CUDAService") << "CUDAService disabled by configuration";
   }
 
-  // First check if we can load the cuda runtime library
-  void *cudaLib = dlopen("libcuda.so", RTLD_NOW);
-  if(cudaLib == nullptr) {
-    edm::LogWarning("CUDAService") << "Failed to load CUDA driver API by calling dlopen libcuda.so: disabling CUDAService";
-    return;
-  }
-  edm::LogInfo("CUDAService") << "Loaded CUDA driver API: found libcuda.so";
-
-  // Find functions
-  auto cuInit = reinterpret_cast<CUresult (*)(unsigned int Flags)>(dlsym(cudaLib, "cuInit"));
-  if(cuInit == nullptr) {
-    edm::LogWarning("CUDAService") << "Failed to instantiate CUDA driver API cuInit function from libcuda.so, disabling CUDAService";
-    return;
-  }
-  edm::LogInfo("CUDAService") << "Found CUDA driver API cuInit function from libcuda.so";
-
-  auto cuDeviceGetCount = reinterpret_cast<CUresult (*)(int *count)>(dlsym(cudaLib, "cuDeviceGetCount"));
-  if(cuDeviceGetCount == nullptr) {
-    edm::LogWarning("CUDAService") << "Failed to instantiate CUDA driver API cuDeviceGetCount function from libcuda.so, disabling CUDAService";
-    return;
-  }
-  edm::LogInfo("CUDAService") << "Found CUDA driver API cuDeviceGetCount function from libcuda.so";
-
-  auto cuDeviceComputeCapability = reinterpret_cast<CUresult (*)(int *major, int *minor, CUdevice dev)>(dlsym(cudaLib, "cuDeviceComputeCapability"));
-  if(cuDeviceComputeCapability == nullptr) {
-    edm::LogWarning("CUDAService") << "Failed to instantiate CUDA driver API cuDeviceComputeCapability function from libcuda.so, disabling CUDAService";
-    return;
-  }
-  edm::LogInfo("CUDAService") << "Found CUDA driver API cuDeviceComputeCapability function from libcuda.so";
-
-  // Then call functions
   auto ret = cuInit(0);
   if(CUDA_SUCCESS != ret) {
     edm::LogWarning("CUDAService") << "Failed to initialize the CUDA driver API by calling cuInit, return value " << ret << " ("<< getCudaDrvErrorString(ret) << "), disabling CUDAService";
