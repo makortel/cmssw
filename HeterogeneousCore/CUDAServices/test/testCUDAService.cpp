@@ -16,59 +16,84 @@ int main()
   try
   {
     edm::ActivityRegistry ar;
+
+    // Test setup: check if a simple CUDA runtime API call fails:
+    // if so, skip the test with the CUDAService enabled
     int deviceCount = 0;
+    bool configEnabled( true );
     auto ret = cudaGetDeviceCount( &deviceCount );
+
+    // Enable the service only if there are CUDA capable GPUs installed
     if( ret != cudaSuccess )
-      throw cms::Exception("Unable to query the CUDA capable devices from the CUDA runtime API.");
-
-    // Enable the service only if there are GPU capable devices installed
-    bool configEnabled( deviceCount );
-    if( !configEnabled )
-      std::cout << "No CUDA capable devices found." << std::endl;
-    edm::ParameterSet ps;
-    ps.addUntrackedParameter( "enabled", configEnabled );
-
-    CUDAService cs(ps, ar);
-
-    // Test that the service is enabled
-    assert( cs.enabled() == configEnabled );
-    std::cout << "The CUDAService is enabled." << std::endl;
-
-    // At this point, we can get, as info, the driver and runtime versions.
-    int driverVersion = 0, runtimeVersion = 0;
-    cudaDriverGetVersion(&driverVersion);
-    cudaRuntimeGetVersion(&runtimeVersion);
-    std::cout << "CUDA Driver Version / Runtime Version: " << driverVersion/1000 << "." << (driverVersion%100)/10 
-	      << " / " << runtimeVersion/1000 << "." << (runtimeVersion%100)/10 << std::endl;
-
-    // Test that the number of devices found by the service
-    // is the same as detected by the CUDA runtime API
-    assert( cs.numberOfDevices() == deviceCount );
-    std::cout << "Detected " << cs.numberOfDevices() << " CUDA Capable device(s)" << std::endl;
-
-    // Test that the compute capabilities of each device
-    // are the same as detected by the CUDA runtime API
-    for( int i=0; i<deviceCount; ++i )
     {
-      cudaDeviceProp deviceProp;
-      cudaGetDeviceProperties(&deviceProp, i);
-      assert(deviceProp.major == cs.computeCapability(i).first);
-      assert(deviceProp.minor == cs.computeCapability(i).second);
-      std::cout << "Device " << i << ": " << deviceProp.name
-		<< "\n CUDA Capability Major/Minor version number: " << deviceProp.major << "." << deviceProp.minor
-		<< std::endl;
-      std::cout << std::endl;
+      std::cout << "=== Test #1: SKIPPED. Unable to query the CUDA capable devices from the CUDA runtime API: ("
+		<< ret << ") " << cudaGetErrorString( ret ) 
+		<< ". Is the host equipped with CUDA capable GPUs? ===" << std::endl;
+    } else
+    {
+      std::cout << "=== Test #1: CUDAService enabled only if there are CUDA capable GPUs installed. ===" << std::endl;
+      // Now all runtime API calls should work:
+      // a CUDA error marks the test as failed.
+      deviceCount = 0;
+      ret = cudaGetDeviceCount( &deviceCount );
+      if( ret != cudaSuccess )
+      {
+	std::ostringstream errstr;
+	errstr << "Unable to query the CUDA capable devices from the CUDA runtime API: ("
+	       << ret << ") " << cudaGetErrorString( ret );
+	throw cms::Exception("CUDAService", errstr.str() );
+      }
+
+      // No need to skip the test if no CUDA capable devices are seen by the runtime API:
+      // in that case, cudaGetDeviceCount returns error code cudaErrorNoDevice.
+      configEnabled = bool( deviceCount );
+      edm::ParameterSet ps;
+      ps.addUntrackedParameter( "enabled", configEnabled );
+      CUDAService cs( ps, ar );
+
+      // Test that the service is enabled
+      assert( cs.enabled() == configEnabled );
+      std::cout << "The CUDAService is enabled." << std::endl;
+
+      // At this point, we can get, as info, the driver and runtime versions.
+      int driverVersion = 0, runtimeVersion = 0;
+      cudaDriverGetVersion( &driverVersion );
+      cudaRuntimeGetVersion( &runtimeVersion );
+      std::cout << "CUDA Driver Version / Runtime Version: " << driverVersion/1000 << "." << (driverVersion%100)/10
+		<< " / " << runtimeVersion/1000 << "." << (runtimeVersion%100)/10 << std::endl;
+
+      // Test that the number of devices found by the service
+      // is the same as detected by the CUDA runtime API
+      assert( cs.numberOfDevices() == deviceCount );
+      std::cout << "Detected " << cs.numberOfDevices() << " CUDA Capable device(s)" << std::endl;
+
+      // Test that the compute capabilities of each device
+      // are the same as detected by the CUDA runtime API
+      for( int i=0; i<deviceCount; ++i )
+      {
+	cudaDeviceProp deviceProp;
+	cudaGetDeviceProperties( &deviceProp, i );
+	assert(deviceProp.major == cs.computeCapability(i).first);
+	assert(deviceProp.minor == cs.computeCapability(i).second);
+	std::cout << "Device " << i << ": " << deviceProp.name
+		  << "\n CUDA Capability Major/Minor version number: " << deviceProp.major << "." << deviceProp.minor
+		  << std::endl;
+	std::cout << std::endl;
+      }
     }
+    std::cout << "=== END Test #1. ===\n" << std::endl;
 
     // Now forcing the service to be disabled...
+    std::cout << "=== Test #2: CUDAService forced to be disabled. ===" << std::endl;
     edm::ParameterSet psf;
     configEnabled = false;
     psf.addUntrackedParameter( "enabled", configEnabled );
-    CUDAService csf(psf, ar);
-    std::cout << "CUDAService disabled by configuration" << std::endl;
+    CUDAService csf( psf, ar );
+    std::cout << "CUDAService disabled by configuration." << std::endl;
 
     // Test that the service is actually disabled
     assert( csf.enabled() == configEnabled );
+    std::cout << "=== END Test #2. ===\n" << std::endl;
 
     //Fake the end-of-job signal.
     ar.postEndJobSignal_();
@@ -76,12 +101,13 @@ int main()
   }
   catch( cms::Exception & exc )
   {
+    std::cerr << "*** CMS Exception caught. ***" << std::endl;
     std::cerr << exc << std::endl;
     rc = 1;
   }
   catch( ... )
   {
-    std::cerr << "Unknown exception caught" << std::endl;
+    std::cerr << "Unknown exception caught." << std::endl;
     rc = 2;
   }
   return rc;
