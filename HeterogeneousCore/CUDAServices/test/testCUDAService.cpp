@@ -41,7 +41,7 @@ int main()
 	std::ostringstream errstr;
 	errstr << "Unable to query the CUDA capable devices from the CUDA runtime API: ("
 	       << ret << ") " << cudaGetErrorString( ret );
-	throw cms::Exception("CUDAService", errstr.str() );
+	throw cms::Exception( "CUDAService", errstr.str() );
       }
 
       // No need to skip the test if no CUDA capable devices are seen by the runtime API:
@@ -57,8 +57,23 @@ int main()
 
       // At this point, we can get, as info, the driver and runtime versions.
       int driverVersion = 0, runtimeVersion = 0;
-      cudaDriverGetVersion( &driverVersion );
-      cudaRuntimeGetVersion( &runtimeVersion );
+      ret = cudaDriverGetVersion( &driverVersion );
+      if( ret != cudaSuccess )
+      {
+	std::ostringstream errstr;
+	errstr << "Unable to query the CUDA driver version from the CUDA runtime API: ("
+	       << ret << ") " << cudaGetErrorString( ret );
+	throw cms::Exception( "CUDAService", errstr.str() );
+      }
+      ret = cudaRuntimeGetVersion( &runtimeVersion );
+      if( ret != cudaSuccess )
+      {
+	std::ostringstream errstr;
+	errstr << "Unable to query the CUDA runtime API version: ("
+	       << ret << ") " << cudaGetErrorString( ret );
+	throw cms::Exception( "CUDAService", errstr.str() );
+      }
+
       std::cout << "CUDA Driver Version / Runtime Version: " << driverVersion/1000 << "." << (driverVersion%100)/10
 		<< " / " << runtimeVersion/1000 << "." << (runtimeVersion%100)/10 << std::endl;
 
@@ -72,7 +87,15 @@ int main()
       for( int i=0; i<deviceCount; ++i )
       {
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties( &deviceProp, i );
+	ret = cudaGetDeviceProperties( &deviceProp, i );
+	if( ret != cudaSuccess )
+	{
+	  std::ostringstream errstr;
+	  errstr << "Unable to query the CUDA properties for device " << i << " from the CUDA runtime API: ("
+		 << ret << ") " << cudaGetErrorString( ret );
+	  throw cms::Exception( "CUDAService", errstr.str() );
+	  }
+
 	assert(deviceProp.major == cs.computeCapability(i).first);
 	assert(deviceProp.minor == cs.computeCapability(i).second);
 	std::cout << "Device " << i << ": " << deviceProp.name
@@ -93,6 +116,7 @@ int main()
 
     // Test that the service is actually disabled
     assert( csf.enabled() == configEnabled );
+    assert( csf.numberOfDevices() == 0 );
     std::cout << "=== END Test #2. ===\n" << std::endl;
 
     //Fake the end-of-job signal.
