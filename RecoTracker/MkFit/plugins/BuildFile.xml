@@ -1,0 +1,8 @@
+<library file="*.cc" name="RecoTrackerMkFitPlugins">
+  <use name="FWCore/Framework"/>
+  <use name="FWCore/MessageLogger"/>
+  <use name="FWCore/ParameterSet"/> 
+  <use name="FWCore/PluginManager"/>
+  <use name="mkFit"/>
+  <flags EDM_PLUGIN="1"/>
+</library>
