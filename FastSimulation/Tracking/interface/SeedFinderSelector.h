@@ -10,6 +10,8 @@ class FastTrackerRecHit;
 class MultiHitGeneratorFromPairAndLayers;
 class HitTripletGeneratorFromPairAndLayers;
 class MeasurementTracker;
+class CAHitTripletGenerator;
+class CAHitQuadrupletGenerator;
 
 namespace edm
 {
@@ -41,7 +43,8 @@ private:
     const edm::EventSetup * eventSetup_;
     const MeasurementTracker * measurementTracker_;
     const std::string measurementTrackerLabel_;
-    
+    std::unique_ptr<CAHitTripletGenerator> CAHitTriplGenerator_;
+    std::unique_ptr<CAHitQuadrupletGenerator> CAHitQuadGenerator_;    
 };
 
 #endif
