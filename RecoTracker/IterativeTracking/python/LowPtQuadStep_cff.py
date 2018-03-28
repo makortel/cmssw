@@ -63,7 +63,18 @@ lowPtQuadStepHitQuadruplets = _caHitQuadrupletEDProducer.clone(
     fitFastCircleChi2Cut = True,
     CAThetaCut = 0.0017,
     CAPhiCut = 0.3,
+    layerList = lowPtQuadStepSeedLayers.layerList.value(),
+    BPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
+    FPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
 )
+fastSim.toModify(lowPtQuadStepHitQuadruplets, isFastSim = True)
+
 trackingPhase2PU140.toModify(lowPtQuadStepHitQuadruplets,CAThetaCut = 0.0015,CAPhiCut = 0.25)
 
 from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsEDProducer_cff import seedCreatorFromRegionConsecutiveHitsEDProducer as _seedCreatorFromRegionConsecutiveHitsEDProducer

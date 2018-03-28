@@ -12,6 +12,8 @@ class HitTripletGeneratorFromPairAndLayers;
 class MeasurementTracker;
 class CAHitTripletGenerator;
 class CAHitQuadrupletGenerator;
+class SeedingLayerSetsHits;
+class SeedingLayerSetsBuilder;
 
 namespace edm
 {
@@ -45,6 +47,8 @@ private:
     const std::string measurementTrackerLabel_;
     std::unique_ptr<CAHitTripletGenerator> CAHitTriplGenerator_;
     std::unique_ptr<CAHitQuadrupletGenerator> CAHitQuadGenerator_;    
+    SeedingLayerSetsBuilder* seedingLayers_;
+    std::unique_ptr<SeedingLayerSetsHits> seedingLayer;
 };
 
 #endif

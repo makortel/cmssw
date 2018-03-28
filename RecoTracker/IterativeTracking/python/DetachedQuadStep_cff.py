@@ -70,7 +70,18 @@ detachedQuadStepHitQuadruplets = _caHitQuadrupletEDProducer.clone(
     fitFastCircleChi2Cut = True,
     CAThetaCut = 0.0011,
     CAPhiCut = 0,
+    layerList = detachedQuadStepSeedLayers.layerList.value(),
+    BPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
+    FPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
 )
+fastSim.toModify(detachedQuadStepHitQuadruplets, isFastSim = True)
+
 from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer_cff import seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer as _seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer
 detachedQuadStepSeeds = _seedCreatorFromRegionConsecutiveHitsTripletOnlyEDProducer.clone(
     seedingHitSets = "detachedQuadStepHitQuadruplets",

@@ -369,6 +369,9 @@ std::unique_ptr<SeedingLayerSetsHits> SeedingLayerSetsBuilder::hits(const edm::E
                                                     &theLayerNames,
                                                     &theLayerDets);
 
+  if(isFastSim)
+    return ret;
+
   for(auto& layer: theLayers) {
     ret->addHits(layer.nameIndex, layer.extractor->hits((const TkTransientTrackingRecHitBuilder &)(*theTTRHBuilders[layer.nameIndex]), ev, es));
   }
