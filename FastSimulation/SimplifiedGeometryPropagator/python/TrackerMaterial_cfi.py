@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 
 # Do not change the order of the interaction models unless you know what you are doing.
 # Not used at the moment: "muonBremsstrahlung", "nuclearInteractionFTF"
@@ -364,5 +365,28 @@ TrackerMaterialBlock = cms.PSet(
             ),
         )
     )
+
+"""
+trackingPhase1.toModify(TrackerMaterialBlock, TrackerMaterial = dict(
+        BarrelLayer = cms.VPSet(
+        #PIXB4                                                                                
+        cms.PSet(
+            #radius = cms.untracked.double(16),                                                             
+            limits = cms.untracked.vdouble(0.0, 28.391),
+            thickness = cms.untracked.vdouble(0.0217),
+            activeLayer = cms.untracked.string("BPix4"),
+            interactionModels = _trackerMaterialInteractionModels
+            ),
+        ),
+        EndcapLayers = cms.VPSet(
+        #PIXD3                                                                                                  
+        cms.PSet(
+            limits = cms.untracked.vdouble(4.823, 16.598),
+            thickness = cms.untracked.vdouble(0.058),
+            activeLayer = cms.untracked.string("FPix3"),
+            interactionModels = _trackerMaterialInteractionModels
+            ),
+        ),
+))    
     
-    
+"""
