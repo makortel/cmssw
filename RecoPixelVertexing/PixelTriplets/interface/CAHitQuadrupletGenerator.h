@@ -135,5 +135,6 @@ private:
     edm::ParameterSetDescription BPix;
     edm::ParameterSetDescription FPix;
     const bool isFastSim;
+    std::vector<unsigned> layerPairs;
 };
 #endif
