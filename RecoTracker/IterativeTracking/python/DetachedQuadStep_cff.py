@@ -79,7 +79,7 @@ detachedQuadStepHitQuadruplets = _caHitQuadrupletEDProducer.clone(
         TTRHBuilder = cms.string('WithoutRefit'),
         HitProducer = cms.string('TrackingRecHitProducer'),
         ),
-    layerPairs = initialStepHitDoublets.layerPairs.value(),
+    layerPairs = detachedQuadStepHitDoublets.layerPairs.value(),
 )
 fastSim.toModify(detachedQuadStepHitQuadruplets, isFastSim = True)
 
