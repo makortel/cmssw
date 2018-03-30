@@ -1,0 +1,64 @@
+#include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousEDProducer.h"
+
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
+
+#include <exception>
+#include <thread>
+#include <random>
+#include <chrono>
+
+namespace heterogeneous {
+  bool CPU::call_launchCPU(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+    std::exception_ptr exc;
+    try {
+      launchCPU();
+      *algoExecutionLocation = HeterogeneousDeviceId(HeterogeneousDevice::kCPU);
+    } catch(...) {
+      exc = std::current_exception();
+    }
+    waitingTaskHolder.doneWaiting(exc);
+    return true;
+  }
+
+  bool GPUMock::call_launchGPUMock(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+    // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions
+    std::random_device r;
+    std::mt19937 gen(r());
+    auto dist1 = std::uniform_int_distribution<>(0, 10); // simulate the scheduler decision
+    if(dist1(gen) == 0) {
+      return false;
+    }
+
+    try {
+      launchGPUMock([waitingTaskHolder = std::move(waitingTaskHolder),
+                     &algoExecutionLocation = *algoExecutionLocation
+                     ]() mutable {
+                      algoExecutionLocation = HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0);
+                      waitingTaskHolder.doneWaiting(nullptr);
+                    });
+    } catch(...) {
+      waitingTaskHolder.doneWaiting(std::current_exception());
+    }
+    return true;
+  }
+
+  bool GPUCuda::call_launchGPUCuda(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+    edm::Service<CUDAService> cudaService;
+    if(!cudaService->enabled()) {
+      return false;
+    }
+
+    try {
+      launchGPUCuda([waitingTaskHolder = std::move(waitingTaskHolder),
+                     &algoExecutionLocation = *algoExecutionLocation
+                     ]() mutable {
+                      algoExecutionLocation = HeterogeneousDeviceId(HeterogeneousDevice::kGPUCuda, 0);
+                      waitingTaskHolder.doneWaiting(nullptr);
+                    });
+    } catch(...) {
+      waitingTaskHolder.doneWaiting(std::current_exception());
+    }
+    return true;
+  }
+}
