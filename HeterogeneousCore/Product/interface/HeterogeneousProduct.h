@@ -27,8 +27,10 @@ enum class HeterogeneousDevice {
  */
 class HeterogeneousDeviceId {
 public:
+  constexpr static auto kInvalidDevice = HeterogeneousDevice::kSize;
+
   HeterogeneousDeviceId():
-    deviceType_(HeterogeneousDevice::kCPU),
+    deviceType_(kInvalidDevice),
     deviceId_(0)
   {}
   explicit HeterogeneousDeviceId(HeterogeneousDevice device, unsigned int id=0):
@@ -232,7 +234,17 @@ private:
 // For type erasure to ease dictionary generation
 class HeterogeneousProductBase {
 public:
+  using BitSet = std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)>;
+
   virtual ~HeterogeneousProductBase() = 0;
+
+  bool isProductOn(HeterogeneousDevice loc) const {
+    // should this be protected with the mutex?
+    return location_[static_cast<unsigned int>(loc)];
+  }
+protected:
+  mutable std::mutex mutex_;
+  mutable BitSet location_;
 };
 
 /**
@@ -254,8 +266,6 @@ class HeterogeneousProductImpl: public HeterogeneousProductBase {
                                         heterogeneous::CallBackType_t<CPUProduct, std::tuple_element_t<static_cast<unsigned int>(HeterogeneousDevice::kGPUMock), ProductTuple>>,
                                         heterogeneous::CallBackType_t<CPUProduct, std::tuple_element_t<static_cast<unsigned int>(HeterogeneousDevice::kGPUCuda), ProductTuple>>
                                         >;
-  using BitSet = std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)>;
-
   // Some sanity checks
   static_assert(std::tuple_size<ProductTuple>::value == std::tuple_size<TransferToCPUTuple>::value, "Size mismatch");
   static_assert(std::tuple_size<ProductTuple>::value == static_cast<unsigned int>(HeterogeneousDevice::kSize), "Size mismatch");
@@ -304,11 +314,6 @@ public:
     location_.set(index);
   }
 
-  bool isProductOn(HeterogeneousDevice loc) const {
-    // should this be protected with the mutex?
-    return location_[static_cast<unsigned int>(loc)];
-  }
-
   template <HeterogeneousDevice device>
   const auto& getProduct() const {
     constexpr const auto index = static_cast<unsigned int>(device);
@@ -323,10 +328,8 @@ public:
   }
 
 private:
-  mutable std::mutex mutex_;
   mutable ProductTuple products_;
   TransferToCPUTuple transfersToCPU_;
-  mutable BitSet location_;
 };
 
 class HeterogeneousProduct {

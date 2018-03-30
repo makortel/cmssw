@@ -1,4 +1,4 @@
-<library file="TestAcceleratorServiceProducerGPUMock.cc TestAcceleratorServiceAnalyzer.cc" name="HeterogeneousCoreAcceleratorServiceTest">
+<library file="TestAcceleratorServiceProducerGPUMock.cc TestAcceleratorServiceProducerGPUMock2.cc TestAcceleratorServiceAnalyzer.cc" name="HeterogeneousCoreAcceleratorServiceTest">
   <flags EDM_PLUGIN="1"/>
   <use name="FWCore/Framework"/>
   <use name="FWCore/PluginManager"/>
@@ -6,7 +6,7 @@
   <use name="HeterogeneousCore/AcceleratorService"/>
   <use name="HeterogeneousCore/Product"/>
 </library>
-<library file="TestAcceleratorServiceProducerGPU.cc TestAcceleratorServiceProducerGPUHelpers.cu" name="HeterogeneousCoreAcceleratorServiceTestGPU">
+<library file="TestAcceleratorServiceProducerGPU.cc TestAcceleratorServiceProducerGPU2.cc TestAcceleratorServiceProducerGPUHelpers.cu" name="HeterogeneousCoreAcceleratorServiceTestGPU">
   <flags EDM_PLUGIN="1"/>
   <use name="FWCore/Framework"/>
   <use name="FWCore/PluginManager"/>
