@@ -9,7 +9,7 @@
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/drvapi_error_string.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/getCudaDrvErrorString.h"
 
 int main()
 {
@@ -27,7 +27,7 @@ int main()
     if( ret != CUDA_SUCCESS )
     {
       std::cout << "=== Test #1: SKIPPED. Unable to initialize the CUDA driver API: ("
-		<< ret << ") " << getCudaDrvErrorString( ret )
+                << ret << ") " << getCudaDrvErrorString( ret )
 		<< ". Is the host equipped with CUDA capable GPUs? ===" << std::endl;
     } else
     {

@@ -6,7 +6,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 
 #include <cuda.h>
-#include "HeterogeneousCore/CUDAUtilities/interface/drvapi_error_string.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/getCudaDrvErrorString.h"
 
 CUDAService::CUDAService(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry) {
   bool configEnabled = iConfig.getUntrackedParameter<bool>("enabled");
