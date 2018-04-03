@@ -1,5 +1,6 @@
 #include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousEDProducer.h"
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
@@ -25,8 +26,9 @@ namespace heterogeneous {
     // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions
     std::random_device r;
     std::mt19937 gen(r());
-    auto dist1 = std::uniform_int_distribution<>(0, 10); // simulate the scheduler decision
+    auto dist1 = std::uniform_int_distribution<>(0, 3); // simulate GPU (in)availability
     if(dist1(gen) == 0) {
+      edm::LogPrint("HeterogeneousEDProducer") << "Mock GPU is not available (by chance)";
       return false;
     }
 

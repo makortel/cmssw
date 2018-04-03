@@ -3,6 +3,7 @@
 
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Utilities/interface/Exception.h"
 
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
@@ -79,7 +80,8 @@ namespace heterogeneous {
         succeeded = input->isProductOn(Mapping<D>::deviceEnum);
       }
       if(succeeded) {
-        succeeded = Mapping<D>::launch(ref, std::forward<Args>(args)...);
+        // may not perfect-forward here in order to be able to forward arguments to next CallLaunch.
+        succeeded = Mapping<D>::launch(ref, args...);
       }
       if(!succeeded) {
         CallLaunch<T, Devices...>::call(ref, input, std::forward<Args>(args)...);
@@ -98,9 +100,13 @@ namespace heterogeneous {
   template <typename T, typename D, typename ...Devices>
   struct CallProduce<T, D, Devices...> {
     template <typename ...Args>
-    static void call(T& ref, Args&&... args) {
-      Mapping<D>::produce(ref, std::forward<Args>(args)...);
-      CallProduce<T, Devices...>::call(ref, std::forward<Args>(args)...);
+    static void call(T& ref, const HeterogeneousDeviceId& algoExecutionLocation, Args&&... args) {
+      if(algoExecutionLocation.deviceType() == Mapping<D>::deviceEnum) {
+        Mapping<D>::produce(ref, std::forward<Args>(args)...);
+      }
+      else {
+        CallProduce<T, Devices...>::call(ref, algoExecutionLocation, std::forward<Args>(args)...);
+      }
     }
   };
   template <typename T>
@@ -119,8 +125,8 @@ namespace heterogeneous {
       CallLaunch<HeterogeneousDevices, Devices...>::call(*this, input, algoExecutionLocation, std::move(waitingTaskHolder));
     }
 
-    void call_produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-      CallProduce<HeterogeneousDevices, Devices...>::call(*this, iEvent, iSetup);
+    void call_produce(const HeterogeneousDeviceId &algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup) {
+      CallProduce<HeterogeneousDevices, Devices...>::call(*this, algoExecutionLocation, iEvent, iSetup);
     }
   };
 }
@@ -129,7 +135,6 @@ template <typename Devices, typename ...Capabilities>
 class HeterogeneousEDProducer: public Devices, public edm::stream::EDProducer<edm::ExternalWork, Capabilities...> {
 public:
   HeterogeneousEDProducer() {}
-
   ~HeterogeneousEDProducer() = default;
 
 protected:
@@ -155,6 +160,11 @@ private:
   }
 
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override final {
+    if(algoExecutionLocation_.deviceType() == HeterogeneousDeviceId::kInvalidDevice) {
+      // eventually fall back to CPU
+      throw cms::Exception("LogicError") << "Trying to produce(), but algorithm was not executed successfully anywhere?";
+    }
+    Devices::call_produce(algoExecutionLocation_, iEvent, iSetup);
   }
 
   const HeterogeneousProductBase *input_;

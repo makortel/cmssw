@@ -26,8 +26,10 @@ enum class HeterogeneousDevice {
  */
 class HeterogeneousDeviceId {
 public:
+  constexpr static auto kInvalidDevice = HeterogeneousDevice::kSize;
+
   HeterogeneousDeviceId():
-    deviceType_(HeterogeneousDevice::kCPU),
+    deviceType_(kInvalidDevice),
     deviceId_(0)
   {}
   explicit HeterogeneousDeviceId(HeterogeneousDevice device, unsigned int id=0):
