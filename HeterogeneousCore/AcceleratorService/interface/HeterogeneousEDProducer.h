@@ -88,10 +88,13 @@ namespace heterogeneous {
       }
     }
   };
+  // break recursion and require CPU to be the last
   template <typename T>
-  struct CallLaunch<T> {
+  struct CallLaunch<T, CPU> {
     template <typename ...Args>
-    static void call(T& ref, const HeterogeneousProductBase *input, Args&&... args) {}
+    static void call(T& ref, const HeterogeneousProductBase *input, Args&&... args) {
+      Mapping<CPU>::launch(ref, std::forward<Args>(args)...);
+    }
   };
 
   ////////////////////
