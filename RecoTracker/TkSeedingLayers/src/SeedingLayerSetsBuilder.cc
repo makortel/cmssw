@@ -185,7 +185,7 @@ SeedingLayerSetsBuilder::SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, 
 {
   std::vector<std::string> namesPset = cfg.getParameter<std::vector<std::string> >("layerList");
   std::vector<std::vector<std::string> > layerNamesInSets = this->layerNamesInSets(namesPset);
-
+  isFastSim = cfg.getParameter<bool>("isFastSim");
   // debug printout of layers
   typedef std::vector<std::string>::const_iterator IS;
   typedef std::vector<std::vector<std::string> >::const_iterator IT;
@@ -368,6 +368,9 @@ std::unique_ptr<SeedingLayerSetsHits> SeedingLayerSetsBuilder::hits(const edm::E
                                                     &theLayerSetIndices,
                                                     &theLayerNames,
                                                     &theLayerDets);
+
+  if(isFastSim)
+    return ret;
 
   for(auto& layer: theLayers) {
     ret->addHits(layer.nameIndex, layer.extractor->hits((const TkTransientTrackingRecHitBuilder &)(*theTTRHBuilders[layer.nameIndex]), ev, es));

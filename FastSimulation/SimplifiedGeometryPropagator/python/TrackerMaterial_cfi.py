@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from Configuration.Eras.Modifier_trackingPhase1_cff import trackingPhase1
 
 # Do not change the order of the interaction models unless you know what you are doing.
 # Not used at the moment: "muonBremsstrahlung", "nuclearInteractionFTF"
@@ -46,7 +47,7 @@ TrackerMaterialBlock = cms.PSet(
                 thickness = cms.untracked.vdouble(0.0024),
                 interactionModels = _trackerMaterialInteractionModels
             ),
-            ########### The Pixel Barrel layers 1-3 ###########
+            ########### The Pixel Barrel layers 1-4 ###########
             #PIXB1
             cms.PSet(
                 #radius = cms.untracked.double(4.425),
@@ -70,6 +71,14 @@ TrackerMaterialBlock = cms.PSet(
                 thickness = cms.untracked.vdouble(0.0217),
                 activeLayer = cms.untracked.string("BPix3"),
                 interactionModels = _trackerMaterialInteractionModels
+            ),
+            #PIXB4                                                                                                                                                          
+            cms.PSet(
+               #radius = cms.untracked.double(16),                                                                                                                             
+               limits = cms.untracked.vdouble(0.0, 28.391),
+               thickness = cms.untracked.vdouble(0.0217),
+               activeLayer = cms.untracked.string("BPix4"),
+               interactionModels = _trackerMaterialInteractionModels
             ),
             ########### Pixel Outside walls and cables (barrel) ###########
             #PIXBOut5
@@ -196,7 +205,7 @@ TrackerMaterialBlock = cms.PSet(
                 thickness = cms.untracked.vdouble(0.012),
                 interactionModels = _trackerMaterialInteractionModels
             ),
-            ########### Pixel Disks 1-2 ###########
+            ########### Pixel Disks 1-3 ###########
             #PIXD1
             cms.PSet(
                 limits = cms.untracked.vdouble(4.825, 16.598),
@@ -209,6 +218,13 @@ TrackerMaterialBlock = cms.PSet(
                 limits = cms.untracked.vdouble(4.823, 16.598),
                 thickness = cms.untracked.vdouble(0.058),
                 activeLayer = cms.untracked.string("FPix2"),
+                interactionModels = _trackerMaterialInteractionModels
+            ),
+            #PIXD3                                                                                                                                                            
+            cms.PSet(
+                limits = cms.untracked.vdouble(4.823, 16.598),
+                thickness = cms.untracked.vdouble(0.058),
+                activeLayer = cms.untracked.string("FPix3"),
                 interactionModels = _trackerMaterialInteractionModels
             ),
             ########### Pixel Endcap outside cables ###########
@@ -349,5 +365,28 @@ TrackerMaterialBlock = cms.PSet(
             ),
         )
     )
+
+"""
+trackingPhase1.toModify(TrackerMaterialBlock, TrackerMaterial = dict(
+        BarrelLayer = cms.VPSet(
+        #PIXB4                                                                                
+        cms.PSet(
+            #radius = cms.untracked.double(16),                                                             
+            limits = cms.untracked.vdouble(0.0, 28.391),
+            thickness = cms.untracked.vdouble(0.0217),
+            activeLayer = cms.untracked.string("BPix4"),
+            interactionModels = _trackerMaterialInteractionModels
+            ),
+        ),
+        EndcapLayers = cms.VPSet(
+        #PIXD3                                                                                                  
+        cms.PSet(
+            limits = cms.untracked.vdouble(4.823, 16.598),
+            thickness = cms.untracked.vdouble(0.058),
+            activeLayer = cms.untracked.string("FPix3"),
+            interactionModels = _trackerMaterialInteractionModels
+            ),
+        ),
+))    
     
-    
+"""
