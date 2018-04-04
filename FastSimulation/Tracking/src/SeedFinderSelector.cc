@@ -17,8 +17,6 @@
 #include "RecoPixelVertexing/PixelTriplets/interface/CAHitTripletGenerator.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/CAHitQuadrupletGenerator.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/OrderedHitSeeds.h"
-#include "FastSimulation/Tracking/interface/CAQuadGeneratorFactory.h"
-#include "FastSimulation/Tracking/interface/CATriGeneratorFactory.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
 
 // data formats
@@ -46,13 +44,13 @@ SeedFinderSelector::SeedFinderSelector(const edm::ParameterSet & cfg,edm::Consum
     if(cfg.exists("CAHitTripletGeneratorFactory"))
     {
         const edm::ParameterSet & tripletConfig = cfg.getParameter<edm::ParameterSet>("CAHitTripletGeneratorFactory");
-	CAHitTriplGenerator_.reset(CATriGeneratorFactory::get()->create(tripletConfig.getParameter<std::string>("ComponentName"),tripletConfig,consumesCollector)); 
+	CAHitTriplGenerator_ = std::make_unique<CAHitTripletGenerator>(tripletConfig,consumesCollector);
     }
 
     if(cfg.exists("CAHitQuadrupletGeneratorFactory"))
     {
         const edm::ParameterSet & quadrupletConfig = cfg.getParameter<edm::ParameterSet>("CAHitQuadrupletGeneratorFactory");
-	CAHitQuadGenerator_.reset(CAQuadGeneratorFactory::get()->create(quadrupletConfig.getParameter<std::string>("ComponentName"),quadrupletConfig,consumesCollector));     
+	CAHitQuadGenerator_ = std::make_unique<CAHitQuadrupletGenerator>(quadrupletConfig, consumesCollector);
 	seedingLayers_ = std::make_unique<SeedingLayerSetsBuilder>(quadrupletConfig, consumesCollector);
 	layerPairs_ = quadrupletConfig.getParameter<std::vector<unsigned>>("layerPairs");
 	impl_ = std::make_unique<IHD::Impl<IHD::DoNothing, IHD::ImplIntermediateHitDoublets>>(quadrupletConfig);
