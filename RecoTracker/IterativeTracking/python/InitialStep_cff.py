@@ -111,9 +111,13 @@ from FastSimulation.Tracking.SeedingMigration import _hitSetProducerToFactoryPSe
 _fastSim_initialStepSeeds = FastSimulation.Tracking.TrajectorySeedProducer_cfi.trajectorySeedProducer.clone(
     layerList = initialStepSeedLayers.layerList.value(),
     trackingRegions = "initialStepTrackingRegions",
-    seedFinderSelector = dict( CAHitQuadrupletGeneratorFactory = _hitSetProducerToFactoryPSet(initialStepHitQuadruplets))
+    seedFinderSelector = dict( pixelTripletGeneratorFactory = _hitSetProducerToFactoryPSet(initialStepHitTriplets))
 )
-_fastSim_initialStepSeeds.seedFinderSelector.CAHitQuadrupletGeneratorFactory.SeedComparitorPSet.ComponentName = "none"
+_fastSim_initialStepSeeds.seedFinderSelector.pixelTripletGeneratorFactory.SeedComparitorPSet.ComponentName = "none"
+trackingPhase1.toModify(_fastSim_initialStepSeeds, seedFinderSelector = dict(
+        pixelTripletGeneratorFactory = None,
+        CAHitQuadrupletGeneratorFactory = _hitSetProducerToFactoryPSet(initialStepHitQuadruplets).clone(dict( SeedComparitorPSet = dict(ComponentName = "none"))))
+)
 fastSim.toReplaceWith(initialStepSeeds,_fastSim_initialStepSeeds)
 
 

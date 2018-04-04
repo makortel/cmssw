@@ -102,15 +102,32 @@ trackingPhase1.toReplaceWith(detachedTripletStepHitTriplets, _caHitTripletEDProd
     CAThetaCut = 0.001,
     CAPhiCut = 0,
     CAHardPtCut = 0.2,
+    layerList = detachedTripletStepSeedLayers.layerList.value(),
+    BPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
+    FPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
+    layerPairs = detachedTripletStepHitDoublets.layerPairs.value(),
 ))
+fastSim.toModify(detachedTripletStepHitTriplets, isFastSim = True)
+
 
 import FastSimulation.Tracking.TrajectorySeedProducer_cfi
 _fastSim_detachedTripletStepSeeds = FastSimulation.Tracking.TrajectorySeedProducer_cfi.trajectorySeedProducer.clone(
     layerList = detachedTripletStepSeedLayers.layerList.value(),
     trackingRegions = "detachedTripletStepTrackingRegions",
     hitMasks = cms.InputTag("detachedTripletStepMasks"),
-    seedFinderSelector = dict( CAHitTripletGeneratorFactory = _hitSetProducerToFactoryPSet(detachedTripletStepHitTriplets) )
+    seedFinderSelector = dict( pixelTripletGeneratorFactory = _hitSetProducerToFactoryPSet(detachedTripletStepHitTriplets))
 )
+trackingPhase1.toModify(_fastSim_detachedTripletStepSeeds, seedFinderSelector = dict(
+        pixelTripletGeneratorFactory = None,
+        CAHitTripletGeneratorFactory = _hitSetProducerToFactoryPSet(detachedTripletStepHitTriplets).clone(dict( SeedComparitorPSet = dict(ComponentName = "none"))))
+)
+
 fastSim.toReplaceWith(detachedTripletStepSeeds,_fastSim_detachedTripletStepSeeds)
 
 # QUALITY CUTS DURING TRACK BUILDING

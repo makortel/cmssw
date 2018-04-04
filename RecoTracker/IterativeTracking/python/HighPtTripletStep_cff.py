@@ -102,7 +102,19 @@ highPtTripletStepHitTriplets = _caHitTripletEDProducer.clone(
     CAThetaCut = 0.004,
     CAPhiCut = 0.07,
     CAHardPtCut = 0.3,
+    layerList = highPtTripletStepSeedLayers.layerList.value(),
+    BPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
+    FPix = cms.PSet(
+        TTRHBuilder = cms.string('WithoutRefit'),
+        HitProducer = cms.string('TrackingRecHitProducer'),
+        ),
+    layerPairs = highPtTripletStepHitDoublets.layerPairs.value(),
 )
+fastSim.toModify(highPtTripletStepHitTriplets, isFastSim = True)
+
 trackingPhase2PU140.toModify(highPtTripletStepHitTriplets,CAThetaCut = 0.003,CAPhiCut = 0.06,CAHardPtCut = 0.5)
 
 from RecoTracker.TkSeedGenerator.seedCreatorFromRegionConsecutiveHitsEDProducer_cff import seedCreatorFromRegionConsecutiveHitsEDProducer as _seedCreatorFromRegionConsecutiveHitsEDProducer
