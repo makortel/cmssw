@@ -27,7 +27,6 @@ SeedFinderSelector::SeedFinderSelector(const edm::ParameterSet & cfg,edm::Consum
     , eventSetup_(nullptr)
     , measurementTracker_(nullptr)
     , measurementTrackerLabel_(cfg.getParameter<std::string>("measurementTracker"))
-    , event_(nullptr)
 {
     if(cfg.exists("pixelTripletGeneratorFactory"))
     {
@@ -53,7 +52,6 @@ SeedFinderSelector::SeedFinderSelector(const edm::ParameterSet & cfg,edm::Consum
 	CAHitQuadGenerator_ = std::make_unique<CAHitQuadrupletGenerator>(quadrupletConfig, consumesCollector);
 	seedingLayers_ = std::make_unique<SeedingLayerSetsBuilder>(quadrupletConfig, consumesCollector);
 	layerPairs_ = quadrupletConfig.getParameter<std::vector<unsigned>>("layerPairs");
-	impl_ = std::make_unique<IHD::Impl<IHD::DoNothing, IHD::ImplIntermediateHitDoublets>>(quadrupletConfig);
     }
 
     if((pixelTripletGenerator_ && multiHitGenerator_) || (CAHitQuadGenerator_ && pixelTripletGenerator_) || (CAHitTriplGenerator_ && multiHitGenerator_))
@@ -72,7 +70,7 @@ SeedFinderSelector::~SeedFinderSelector(){;}
 void SeedFinderSelector::initEvent(const edm::Event & ev,const edm::EventSetup & es)
 {
     eventSetup_ = &es;
-    event_ = const_cast<edm::Event *>(&ev); 
+     
     edm::ESHandle<MeasurementTracker> measurementTrackerHandle;
     es.get<CkfComponentsRecord>().get(measurementTrackerLabel_, measurementTrackerHandle);
     es.get<TrackerTopologyRcd>().get(trackerTopology);
@@ -219,7 +217,6 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	const RecHitsSortedInPhi secondhm(sHits, trackingRegion_->origin(), sLayer);
 	HitDoublets res(firsthm,secondhm);
 	HitPairGeneratorFromLayerPair::doublets(*trackingRegion_,*fLayer,*sLayer,firsthm,secondhm,*eventSetup_,0,res);
-	impl_->produce(layers, pairCandidate, *trackingRegion_, std::move(res), *event_);
       }
 
       // const IntermediateHitDoublets regionDoublets;                                                                                                                         
