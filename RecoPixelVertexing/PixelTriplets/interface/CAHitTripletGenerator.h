@@ -8,7 +8,7 @@
 #include "RecoTracker/TkMSParametrization/interface/PixelRecoUtilities.h"
 #include "RecoTracker/TkMSParametrization/interface/LongitudinalBendingCorrection.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
-#include "CAGraph.h"
+#include "RecoPixelVertexing/PixelTriplets/src/CAGraph.h"
 
 
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"

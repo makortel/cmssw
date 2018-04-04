@@ -11,7 +11,7 @@
 
 
 
-#include "RecoPixelVertexing/PixelTriplets/interface/CellularAutomaton.h"
+#include "CellularAutomaton.h"
 
 #include "CommonTools/Utils/interface/DynArray.h"
 
