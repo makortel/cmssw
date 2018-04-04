@@ -164,8 +164,11 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	throw cms::Exception("FastSimTracking") << "ERROR: SeedingLayers pointer not set";      
 
       SeedingLayerSetsHits & layers = *seedingLayer;
+      IntermediateHitDoublets ihd(&layers);
+      const TrackingRegion& tr_ = *trackingRegion_;
+      auto filler = ihd.beginRegion(&tr_);
 
-      for(int i=0; i<(int)hits.size()-1; i++){
+      for(int i=0; i<3; i++){
         //-----------------determining hit layer---------------                                                                                                                
 	std::string hitlayer[2] = {};
         int layerNo = -1;
@@ -217,15 +220,11 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	const RecHitsSortedInPhi secondhm(sHits, trackingRegion_->origin(), sLayer);
 	HitDoublets res(firsthm,secondhm);
 	HitPairGeneratorFromLayerPair::doublets(*trackingRegion_,*fLayer,*sLayer,firsthm,secondhm,*eventSetup_,0,res);
+	filler.addDoublets(pairCandidate, std::move(res));
       }
-
-      // const IntermediateHitDoublets regionDoublets;                                                                                                                         
-      // std::vector<OrderedHitSeeds> ntuplets;                                                                                                                                
-      // ntuplets.clear();                                                                                                                                                     
-      // OrderedHitSeeds quadrupletresult;                                                                                                                                     
-      // CAHitQuadGenerator_->hitNtuplets(regionDoublets,ntuplets,*eventSetup_,layers);                                                                                        
-      // return ntuplets.size()!=0;  
-      return true;  
+      std::vector<OrderedHitSeeds> quadrupletresult;
+      CAHitQuadGenerator_->hitNtuplets(ihd,quadrupletresult,*eventSetup_,*quadseedingLayer);
+      return !quadrupletresult.empty();  
     }    
 
     return true;
