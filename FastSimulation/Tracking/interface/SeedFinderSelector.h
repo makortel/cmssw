@@ -55,7 +55,7 @@ private:
     const std::string measurementTrackerLabel_;
     std::unique_ptr<CAHitTripletGenerator> CAHitTriplGenerator_;
     std::unique_ptr<CAHitQuadrupletGenerator> CAHitQuadGenerator_;    
-    SeedingLayerSetsBuilder* seedingLayers_;
+    std::unique_ptr<SeedingLayerSetsBuilder> seedingLayers_;
     std::unique_ptr<SeedingLayerSetsHits> seedingLayer;
     std::vector<unsigned> layerPairs_;
     edm::ESHandle<TrackerTopology> trackerTopology;

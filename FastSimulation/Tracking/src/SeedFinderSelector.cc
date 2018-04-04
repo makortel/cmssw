@@ -53,7 +53,7 @@ SeedFinderSelector::SeedFinderSelector(const edm::ParameterSet & cfg,edm::Consum
     {
         const edm::ParameterSet & quadrupletConfig = cfg.getParameter<edm::ParameterSet>("CAHitQuadrupletGeneratorFactory");
 	CAHitQuadGenerator_.reset(CAQuadGeneratorFactory::get()->create(quadrupletConfig.getParameter<std::string>("ComponentName"),quadrupletConfig,consumesCollector));     
-	seedingLayers_ = new SeedingLayerSetsBuilder(quadrupletConfig, consumesCollector);
+	seedingLayers_ = std::make_unique<SeedingLayerSetsBuilder>(quadrupletConfig, consumesCollector);
 	layerPairs_ = quadrupletConfig.getParameter<std::vector<unsigned>>("layerPairs");
 	impl_ = std::make_unique<IHD::Impl<IHD::DoNothing, IHD::ImplIntermediateHitDoublets>>(quadrupletConfig);
     }
