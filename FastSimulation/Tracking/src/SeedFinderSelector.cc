@@ -112,8 +112,8 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
     const DetLayer * firstLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[0]->det()->geographicalId());
     const DetLayer * secondLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[1]->det()->geographicalId());
     
-    std::vector<BaseTrackerRecHit const *> firstHits(1,static_cast<const BaseTrackerRecHit*>(hits[0]));
-    std::vector<BaseTrackerRecHit const *> secondHits(1,static_cast<const BaseTrackerRecHit*>(hits[1]));
+    std::vector<BaseTrackerRecHit const *> firstHits{hits[0]};
+    std::vector<BaseTrackerRecHit const *> secondHits{hits[1]};
     
     const RecHitsSortedInPhi fhm(firstHits, trackingRegion_->origin(), firstLayer);
     const RecHitsSortedInPhi shm(secondHits, trackingRegion_->origin(), secondLayer);
@@ -214,8 +214,9 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	
 	const DetLayer * fLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[i]->det()->geographicalId());
 	const DetLayer * sLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[i+1]->det()->geographicalId());
-	std::vector<BaseTrackerRecHit const *> fHits(1,static_cast<const BaseTrackerRecHit*>(hits[i]));
-	std::vector<BaseTrackerRecHit const *> sHits(1,static_cast<const BaseTrackerRecHit*>(hits[i+1]));
+	std::vector<BaseTrackerRecHit const *> fHits{hits[i]};
+	std::vector<BaseTrackerRecHit const *> sHits{hits[i+1]};
+
 	const RecHitsSortedInPhi firsthm(fHits, trackingRegion_->origin(), fLayer);
 	const RecHitsSortedInPhi secondhm(sHits, trackingRegion_->origin(), sLayer);
 	HitDoublets res(firsthm,secondhm);
