@@ -223,7 +223,7 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	filler.addDoublets(pairCandidate, std::move(res));
       }
       std::vector<OrderedHitSeeds> quadrupletresult;
-      CAHitQuadGenerator_->hitNtuplets(ihd,quadrupletresult,*eventSetup_,*quadseedingLayer);
+      CAHitQuadGenerator_->hitNtuplets(ihd,quadrupletresult,*eventSetup_,*seedingLayer);
       return !quadrupletresult.empty();  
     }    
 
