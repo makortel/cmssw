@@ -40,7 +40,7 @@ public:
     void setTrackingRegion(const TrackingRegion * trackingRegion){trackingRegion_ = trackingRegion;}
     
     bool pass(const std::vector<const FastTrackerRecHit *>& hits) const;
-    std::string LayerName(int layerN, std::string layerside, bool IsPixBarrel) const;    
+    
 private:
     
     std::unique_ptr<HitTripletGeneratorFromPairAndLayers> pixelTripletGenerator_;

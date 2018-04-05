@@ -131,8 +131,8 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	}
 	const DetLayer * thirdLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[2]->det()->geographicalId());
 	std::vector<const DetLayer *> thirdLayerDetLayer(1,thirdLayer);
-	std::vector<BaseTrackerRecHit const *> thirdHits(1,static_cast<const BaseTrackerRecHit*>(hits[2]));
-	const RecHitsSortedInPhi thm(thirdHits,trackingRegion_->origin(), thirdLayer);
+	std::vector<BaseTrackerRecHit const *> thirdHits{hits[2]};
+      	const RecHitsSortedInPhi thm(thirdHits,trackingRegion_->origin(), thirdLayer);
 	const RecHitsSortedInPhi * thmp =&thm;
 	
 	if(pixelTripletGenerator_)
@@ -167,47 +167,58 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
       IntermediateHitDoublets ihd(&layers);
       const TrackingRegion& tr_ = *trackingRegion_;
       auto filler = ihd.beginRegion(&tr_);
-
+      std::vector<SeedingLayerSetsBuilder::SeedingLayerId> hitPair;
       for(int i=0; i<3; i++){
-        //-----------------determining hit layer---------------                                                                                                                
-	std::string hitlayer[2] = {};
-        int layerNo = -1;
-	std::string side;
-        bool IsPixB = false;
+        //-----------------determining hit layer---------------                                                                      
+	hitPair.clear();
+	hitPair.reserve(2);
+     	GeomDetEnumerators::SubDetector subdet = GeomDetEnumerators::invalidDet;
+	TrackerDetSide side = TrackerDetSide::Barrel;
+	int idLayer = 0;
 	SeedingLayerSetsHits::SeedingLayerSet pairCandidate;
-        //hit 1                                                                                                                                                                
+        //hit 1                                                                                                                
         if( (hits[i]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelBarrel){
-          layerNo = (*trackerTopology.product()).pxbLayer(hits[i]->det()->geographicalId());
-          IsPixB = true;
-        }
+	  subdet = GeomDetEnumerators::PixelBarrel;
+          side = TrackerDetSide::Barrel;
+	  idLayer = (*trackerTopology.product()).pxbLayer(hits[i]->det()->geographicalId());
+	}
         else if ((hits[i]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelEndcap){
-          layerNo = (*trackerTopology.product()).pxfDisk(hits[i]->det()->geographicalId());
-          side = (*trackerTopology.product()).pxfSide(hits[i]->det()->geographicalId())==1 ? "_neg" : "_pos";
-          IsPixB = false;
-        }
-        hitlayer[0] = LayerName(layerNo, side, IsPixB);
-        //hit 2                                                                                                                                                                
-        if( (hits[i+1]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelBarrel){
-          layerNo = (*trackerTopology.product()).pxbLayer(hits[i+1]->det()->geographicalId());
-          IsPixB = true;
-        }
+	  subdet = GeomDetEnumerators::PixelEndcap;
+	  idLayer = (*trackerTopology.product()).pxfDisk(hits[i]->det()->geographicalId());
+	  if((*trackerTopology.product()).pxfSide(hits[i]->det()->geographicalId())==1)
+	    side = TrackerDetSide::NegEndcap;
+	  else
+	    side = TrackerDetSide::PosEndcap;
+	}
+	hitPair.emplace_back(subdet, side, idLayer);
+	//hit 2                                                                                                              
+	if( (hits[i+1]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelBarrel){
+	  subdet = GeomDetEnumerators::PixelBarrel;
+          side = TrackerDetSide::Barrel;
+          idLayer = (*trackerTopology.product()).pxbLayer(hits[i+1]->det()->geographicalId());
+	}
         else if ((hits[i+1]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelEndcap){
-          layerNo = (*trackerTopology.product()).pxfDisk(hits[i+1]->det()->geographicalId());
-          side = (*trackerTopology.product()).pxfSide(hits[i+1]->det()->geographicalId())==1 ? "_neg" : "_pos";
-          IsPixB = false;
-        }
-	hitlayer[1] = LayerName(layerNo, side, IsPixB);
+	  subdet = GeomDetEnumerators::PixelEndcap;
+	  idLayer = (*trackerTopology.product()).pxfDisk(hits[i+1]->det()->geographicalId());
+          if((*trackerTopology.product()).pxfSide(hits[i+1]->det()->geographicalId())==1)
+	    side = TrackerDetSide::NegEndcap;
+          else
+            side = TrackerDetSide::PosEndcap;  
+	}
+	hitPair.emplace_back(subdet, side, idLayer);
+	
+	std::vector<SeedingLayerSetsBuilder::SeedingLayerId> layerPair;
         for(SeedingLayerSetsHits::SeedingLayerSet ls : *seedingLayer){
-          for(const auto p : layerPairs_){
+	  for(const auto p : layerPairs_){
             pairCandidate = ls.slice(p,p+2);
-	    std::string layerPair[2] = {};
-            int i=0;
+	    layerPair.clear();
+	    layerPair.reserve(2);
             for(auto layerSet : pairCandidate){
-              layerPair[i] = layerSet.name();
-              i++;
-            }
-            if((layerPair[0] == hitlayer[0] && layerPair[1] == hitlayer[1]))
-              break;
+	      SeedingLayerSetsBuilder::SeedingLayerId lp = SeedingLayerSetsBuilder::nameToEnumId(layerSet.name());
+              layerPair.emplace_back(std::get<0>(lp),std::get<1>(lp),std::get<2>(lp));
+	    }
+	    if(layerPair == hitPair)
+	      break;
           }
         }
 	
@@ -229,28 +240,4 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 
     return true;
     
-}
-
-std::string SeedFinderSelector::LayerName(int layerN, std::string layerside, bool IsPixBarrel) const
-{
-  std::string layerName = "UNKNWN";
-  if(IsPixBarrel){
-    if(layerN == 1)
-      layerName = "BPix1";
-    if(layerN == 2)
-      layerName = "BPix2";
-    if(layerN == 3)
-      layerName = "BPix3";
-    if(layerN == 4)
-      layerName = "BPix4";
-  }
-  else{
-    if(layerN == 1)
-      layerName = "FPix1"+layerside;
-    if(layerN == 2)
-      layerName = "FPix2"+layerside;
-    if(layerN == 3)
-      layerName = "FPix3"+layerside;
-  }
-  return layerName;
 }
