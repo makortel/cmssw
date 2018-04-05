@@ -9,7 +9,7 @@
 #include "RecoTracker/TkMSParametrization/interface/LongitudinalBendingCorrection.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 #include "RecoPixelVertexing/PixelTriplets/src/CAGraph.h"
-
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
 #include "RecoTracker/TkHitPairs/interface/LayerHitMapCache.h"
