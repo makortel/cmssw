@@ -128,7 +128,11 @@ private:
     const float caThetaCut = 0.00125f;
     const float caPhiCut = 1.f;
     const float caHardPtCut = 0.f;
-
+    std::vector<std::string> layerList;
+    edm::ParameterSetDescription BPix;
+    edm::ParameterSetDescription FPix;
+    const bool isFastSim;
+    std::vector<unsigned> layerPairs;
 };
 
 
