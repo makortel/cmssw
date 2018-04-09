@@ -9,6 +9,7 @@
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 #include "RecoTracker/TkHitPairs/interface/IntermediateHitDoublets.h"
+#include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
 
 class TrackingRegion;
 class FastTrackerRecHit;
@@ -17,7 +18,6 @@ class HitTripletGeneratorFromPairAndLayers;
 class MeasurementTracker;
 class CAHitTripletGenerator;
 class CAHitQuadrupletGenerator;
-class SeedingLayerSetsBuilder;
 
 namespace edm
 {
@@ -40,7 +40,7 @@ public:
     void setTrackingRegion(const TrackingRegion * trackingRegion){trackingRegion_ = trackingRegion;}
     
     bool pass(const std::vector<const FastTrackerRecHit *>& hits) const;
-    
+    SeedingLayerSetsBuilder::SeedingLayerId Layer_tuple(const FastTrackerRecHit * hit) const;
 private:
     
     std::unique_ptr<HitTripletGeneratorFromPairAndLayers> pixelTripletGenerator_;
@@ -55,6 +55,7 @@ private:
     std::unique_ptr<SeedingLayerSetsHits> seedingLayer;
     std::vector<unsigned> layerPairs_;
     edm::ESHandle<TrackerTopology> trackerTopology;
+    std::vector<SeedingLayerSetsBuilder::SeedingLayerId> seedingLayerIds;
 };
 
 #endif

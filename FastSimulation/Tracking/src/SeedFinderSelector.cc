@@ -17,7 +17,6 @@
 #include "RecoPixelVertexing/PixelTriplets/interface/CAHitTripletGenerator.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/CAHitQuadrupletGenerator.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/OrderedHitSeeds.h"
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
 
 // data formats
 #include "DataFormats/TrackerRecHit2D/interface/FastTrackerRecHit.h"
@@ -83,6 +82,7 @@ void SeedFinderSelector::initEvent(const edm::Event & ev,const edm::EventSetup &
 
     if(CAHitQuadGenerator_){
       seedingLayer = seedingLayers_->hits(ev, es);
+      seedingLayerIds = seedingLayers_->layers();
       CAHitQuadGenerator_->initEvent(ev,es);
     }    
 }
@@ -90,6 +90,7 @@ void SeedFinderSelector::initEvent(const edm::Event & ev,const edm::EventSetup &
 
 bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits) const
 {
+  //    const TrackerTopology* const tTopo = trackerTopology.product();
     if(!measurementTracker_ || !eventSetup_)
     {
 	throw cms::Exception("FastSimTracking") << "ERROR: event not initialized";
@@ -167,60 +168,26 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
       IntermediateHitDoublets ihd(&layers);
       const TrackingRegion& tr_ = *trackingRegion_;
       auto filler = ihd.beginRegion(&tr_);
-      std::vector<SeedingLayerSetsBuilder::SeedingLayerId> hitPair;
+      
+      std::array<SeedingLayerSetsBuilder::SeedingLayerId,2> hitPair;
       for(int i=0; i<3; i++){
-        //-----------------determining hit layer---------------                                                                      
-	hitPair.clear();
-	hitPair.reserve(2);
-     	GeomDetEnumerators::SubDetector subdet = GeomDetEnumerators::invalidDet;
-	TrackerDetSide side = TrackerDetSide::Barrel;
-	int idLayer = 0;
 	SeedingLayerSetsHits::SeedingLayerSet pairCandidate;
-        //hit 1                                                                                                                
-        if( (hits[i]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelBarrel){
-	  subdet = GeomDetEnumerators::PixelBarrel;
-          side = TrackerDetSide::Barrel;
-	  idLayer = (*trackerTopology.product()).pxbLayer(hits[i]->det()->geographicalId());
-	}
-        else if ((hits[i]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelEndcap){
-	  subdet = GeomDetEnumerators::PixelEndcap;
-	  idLayer = (*trackerTopology.product()).pxfDisk(hits[i]->det()->geographicalId());
-	  if((*trackerTopology.product()).pxfSide(hits[i]->det()->geographicalId())==1)
-	    side = TrackerDetSide::NegEndcap;
-	  else
-	    side = TrackerDetSide::PosEndcap;
-	}
-	hitPair.emplace_back(subdet, side, idLayer);
-	//hit 2                                                                                                              
-	if( (hits[i+1]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelBarrel){
-	  subdet = GeomDetEnumerators::PixelBarrel;
-          side = TrackerDetSide::Barrel;
-          idLayer = (*trackerTopology.product()).pxbLayer(hits[i+1]->det()->geographicalId());
-	}
-        else if ((hits[i+1]->det()->geographicalId()).subdetId() == PixelSubdetector::PixelEndcap){
-	  subdet = GeomDetEnumerators::PixelEndcap;
-	  idLayer = (*trackerTopology.product()).pxfDisk(hits[i+1]->det()->geographicalId());
-          if((*trackerTopology.product()).pxfSide(hits[i+1]->det()->geographicalId())==1)
-	    side = TrackerDetSide::NegEndcap;
-          else
-            side = TrackerDetSide::PosEndcap;  
-	}
-	hitPair.emplace_back(subdet, side, idLayer);
-	
-	std::vector<SeedingLayerSetsBuilder::SeedingLayerId> layerPair;
+	hitPair[0] = Layer_tuple(hits[i]);
+ 	hitPair[1] = Layer_tuple(hits[i+1]);
+       
+	bool found;
         for(SeedingLayerSetsHits::SeedingLayerSet ls : *seedingLayer){
+	  found = false;
 	  for(const auto p : layerPairs_){
-            pairCandidate = ls.slice(p,p+2);
-	    layerPair.clear();
-	    layerPair.reserve(2);
-            for(auto layerSet : pairCandidate){
-	      SeedingLayerSetsBuilder::SeedingLayerId lp = SeedingLayerSetsBuilder::nameToEnumId(layerSet.name());
-              layerPair.emplace_back(std::get<0>(lp),std::get<1>(lp),std::get<2>(lp));
-	    }
-	    if(layerPair == hitPair)
+	    pairCandidate = ls.slice(p,p+2);
+	    if(hitPair[0] == seedingLayerIds[pairCandidate[0].index()] && hitPair[1] == seedingLayerIds[pairCandidate[1].index()]){
+	      found = true;
 	      break;
-          }
-        }
+	    }
+	  }
+	  if(found)
+	    break;
+	}
 	
 	const DetLayer * fLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[i]->det()->geographicalId());
 	const DetLayer * sLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[i+1]->det()->geographicalId());
@@ -240,4 +207,29 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 
     return true;
     
+}
+
+SeedingLayerSetsBuilder::SeedingLayerId SeedFinderSelector::Layer_tuple(const FastTrackerRecHit * hit) const
+{
+  const TrackerTopology* const tTopo = trackerTopology.product();
+  GeomDetEnumerators::SubDetector subdet = GeomDetEnumerators::invalidDet;
+  TrackerDetSide side = TrackerDetSide::Barrel;
+  int idLayer = 0;
+  
+  if( (hit->det()->geographicalId()).subdetId() == PixelSubdetector::PixelBarrel){
+    subdet = GeomDetEnumerators::PixelBarrel;
+    side = TrackerDetSide::Barrel;
+    idLayer = tTopo->pxbLayer(hit->det()->geographicalId());
+  }
+  else if ((hit->det()->geographicalId()).subdetId() == PixelSubdetector::PixelEndcap){
+    subdet = GeomDetEnumerators::PixelEndcap;
+    idLayer = tTopo->pxfDisk(hit->det()->geographicalId());
+    if(tTopo->pxfSide(hit->det()->geographicalId())==1){
+      side = TrackerDetSide::NegEndcap;
+    }
+    else{
+      side = TrackerDetSide::PosEndcap;
+    }
+  }
+  return std::make_tuple(subdet, side, idLayer);
 }
