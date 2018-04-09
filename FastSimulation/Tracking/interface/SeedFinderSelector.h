@@ -10,7 +10,7 @@
 #include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 #include "RecoTracker/TkHitPairs/interface/IntermediateHitDoublets.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
-
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 class TrackingRegion;
 class FastTrackerRecHit;
 class MultiHitGeneratorFromPairAndLayers;
@@ -41,6 +41,7 @@ public:
     
     bool pass(const std::vector<const FastTrackerRecHit *>& hits) const;
     SeedingLayerSetsBuilder::SeedingLayerId Layer_tuple(const FastTrackerRecHit * hit) const;
+
 private:
     
     std::unique_ptr<HitTripletGeneratorFromPairAndLayers> pixelTripletGenerator_;
@@ -56,6 +57,12 @@ private:
     std::vector<unsigned> layerPairs_;
     edm::ESHandle<TrackerTopology> trackerTopology;
     std::vector<SeedingLayerSetsBuilder::SeedingLayerId> seedingLayerIds;
+    const edm::ParameterSet parameterSet_;
+    std::vector<std::string> layerList;
+    const bool isFastSim = false;
+    std::vector<unsigned> layerPairs;
+    edm::ParameterSetDescription BPix;
+    edm::ParameterSetDescription FPix;
 };
 
 #endif
