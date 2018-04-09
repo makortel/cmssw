@@ -11,7 +11,6 @@
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "Geometry/CommonDetUnit/interface/GeomDetEnumerators.h"
 #include "DataFormats/TrackerCommon/interface/TrackerDetSide.h"
-#include "DataFormats/TrackingRecHit/interface/mayown_ptr.h"
 #include "DataFormats/TrackerRecHit2D/interface/FastTrackerRecHit.h"
 #include "DataFormats/TrackerRecHit2D/interface/FastTrackerRecHitCollection.h"
 #include <string>
@@ -43,6 +42,8 @@ public:
   const std::vector<SeedingLayerSetsHits::LayerSetIndex>& layerSetIndices() const { return theLayerSetIndices; }
 
   std::unique_ptr<SeedingLayerSetsHits> hits(const edm::Event& ev, const edm::EventSetup& es);
+  //new function for FastSim
+  std::unique_ptr<SeedingLayerSetsHits> makeSeedingLayerSetsHits(const edm::Event& ev, const edm::EventSetup& es);
 
   static SeedingLayerId nameToEnumId(const std::string& name);
   static std::vector<std::vector<std::string> > layerNamesInSets(const std::vector<std::string> & namesPSet) ;
