@@ -26,7 +26,7 @@ SeedFinderSelector::SeedFinderSelector(const edm::ParameterSet & cfg,edm::Consum
     , eventSetup_(nullptr)
     , measurementTracker_(nullptr)
     , measurementTrackerLabel_(cfg.getParameter<std::string>("measurementTracker"))
-    , parameterSet_(cfg)
+      //    , parameterSet_(cfg)
     // , layerList(parameterSet_.getParameter<std::vector<std::string>>("layerList"))
     // , isFastSim(parameterSet_.getParameter<bool>("isFastSim"))
     // , layerPairs(parameterSet_.getParameter<std::vector<unsigned>>("layerPairs"))
@@ -55,8 +55,8 @@ SeedFinderSelector::SeedFinderSelector(const edm::ParameterSet & cfg,edm::Consum
     {
         const edm::ParameterSet & quadrupletConfig = cfg.getParameter<edm::ParameterSet>("CAHitQuadrupletGeneratorFactory");
 	CAHitQuadGenerator_ = std::make_unique<CAHitQuadrupletGenerator>(quadrupletConfig, consumesCollector);
-	seedingLayers_ = std::make_unique<SeedingLayerSetsBuilder>(parameterSet_, consumesCollector);
-	layerPairs_ = parameterSet_.getParameter<std::vector<unsigned>>("layerPairs");
+	seedingLayers_ = std::make_unique<SeedingLayerSetsBuilder>(quadrupletConfig, consumesCollector);
+	layerPairs_ = quadrupletConfig.getParameter<std::vector<unsigned>>("layerPairs");
     }
 
     if((pixelTripletGenerator_ && multiHitGenerator_) || (CAHitQuadGenerator_ && pixelTripletGenerator_) || (CAHitTriplGenerator_ && multiHitGenerator_))
@@ -87,7 +87,7 @@ void SeedFinderSelector::initEvent(const edm::Event & ev,const edm::EventSetup &
     }
 
     if(CAHitQuadGenerator_){
-      seedingLayer = seedingLayers_->makeSeedingLayerSetsHits(ev, es);
+      seedingLayer = seedingLayers_->makeSeedingLayerSetsHitsforFastSim(ev, es);
       seedingLayerIds = seedingLayers_->layers();
       CAHitQuadGenerator_->initEvent(ev,es);
     }    
@@ -207,6 +207,7 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
       }
       std::vector<OrderedHitSeeds> quadrupletresult;
       CAHitQuadGenerator_->hitNtuplets(ihd,quadrupletresult,*eventSetup_,*seedingLayer);
+      //      std::cout<<"quadrupletresult.size()="<<quadrupletresult.size()<<std::endl;
       return !quadrupletresult.empty();  
     }    
 

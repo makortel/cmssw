@@ -57,12 +57,12 @@ private:
     std::vector<unsigned> layerPairs_;
     edm::ESHandle<TrackerTopology> trackerTopology;
     std::vector<SeedingLayerSetsBuilder::SeedingLayerId> seedingLayerIds;
-    const edm::ParameterSet parameterSet_;
-    std::vector<std::string> layerList;
-    const bool isFastSim = false;
-    std::vector<unsigned> layerPairs;
-    edm::ParameterSetDescription BPix;
-    edm::ParameterSetDescription FPix;
+    /* const edm::ParameterSet parameterSet_; */
+    /* std::vector<std::string> layerList; */
+    /* const bool isFastSim = false; */
+    /* std::vector<unsigned> layerPairs; */
+    /* edm::ParameterSetDescription BPix; */
+    /* edm::ParameterSetDescription FPix; */
 };
 
 #endif
