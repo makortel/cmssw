@@ -182,11 +182,11 @@ std::string SeedingLayerSetsBuilder::LayerSpec::print(const std::vector<std::str
 SeedingLayerSetsBuilder::SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, edm::ConsumesCollector&& iC):
   SeedingLayerSetsBuilder(cfg, iC)
 {}
-SeedingLayerSetsBuilder::SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, edm::ConsumesCollector& iC)
+SeedingLayerSetsBuilder::SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, edm::ConsumesCollector& iC):
+  isFastSim(cfg.getParameter<bool>("isFastSim"))
 {
   std::vector<std::string> namesPset = cfg.getParameter<std::vector<std::string> >("layerList");
   std::vector<std::vector<std::string> > layerNamesInSets = this->layerNamesInSets(namesPset);
-  isFastSim = cfg.getParameter<bool>("isFastSim");
   if(isFastSim)
     fastSimrecHitsToken_ = iC.consumes<FastTrackerRecHitCollection>(edm::InputTag("fastTrackerRecHits"));
   // debug printout of layers
@@ -378,7 +378,8 @@ std::unique_ptr<SeedingLayerSetsHits> SeedingLayerSetsBuilder::hits(const edm::E
   ret->shrink_to_fit();
   return ret;
 }
-std::unique_ptr<SeedingLayerSetsHits> SeedingLayerSetsBuilder::makeSeedingLayerSetsHits(const edm::Event& ev, const edm::EventSetup& es) {
+//new function for FastSim only
+std::unique_ptr<SeedingLayerSetsHits> SeedingLayerSetsBuilder::makeSeedingLayerSetsHitsforFastSim(const edm::Event& ev, const edm::EventSetup& es) {
   updateEventSetup(es);
 
   edm::Handle<FastTrackerRecHitCollection> fastSimrechits_;

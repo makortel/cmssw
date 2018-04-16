@@ -42,8 +42,8 @@ public:
   const std::vector<SeedingLayerSetsHits::LayerSetIndex>& layerSetIndices() const { return theLayerSetIndices; }
 
   std::unique_ptr<SeedingLayerSetsHits> hits(const edm::Event& ev, const edm::EventSetup& es);
-  //new function for FastSim
-  std::unique_ptr<SeedingLayerSetsHits> makeSeedingLayerSetsHits(const edm::Event& ev, const edm::EventSetup& es);
+  //new function for FastSim only
+  std::unique_ptr<SeedingLayerSetsHits> makeSeedingLayerSetsHitsforFastSim(const edm::Event& ev, const edm::EventSetup& es);
 
   static SeedingLayerId nameToEnumId(const std::string& name);
   static std::vector<std::vector<std::string> > layerNamesInSets(const std::vector<std::string> & namesPSet) ;
@@ -80,7 +80,7 @@ private:
   std::vector<const DetLayer *> theLayerDets;
   std::vector<const TransientTrackingRecHitBuilder *> theTTRHBuilders;
   std::vector<LayerSpec> theLayers;
-  bool isFastSim;
+  bool isFastSim = false;
 };
 
 #endif
