@@ -23,7 +23,7 @@ public:
 
   ResultType runAlgo(int input, const ResultTypeRaw inputArrays, std::function<void()> callback);
   void release();
-  int getResult(const ResultTypeRaw& d_ac);
+  static int getResult(const ResultTypeRaw& d_ac);
 
 private:
   std::unique_ptr<cuda::stream_t<>> streamPtr;
