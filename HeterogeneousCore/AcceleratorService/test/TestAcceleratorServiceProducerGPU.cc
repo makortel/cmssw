@@ -67,7 +67,7 @@ namespace {
     auto makeTransfer() const {
       return [this](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
         edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
-        dst = gpuAlgo_->getResult(src);
+        dst = TestAcceleratorServiceProducerGPUTask::getResult(src);
         edm::LogPrint("TestAcceleratorServiceProducerGPU") << "    GPU result " << dst;
       };
     }
