@@ -107,11 +107,6 @@ namespace {
   constexpr int NUM_VALUES = 10000;
 }
 
-TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
-  auto current_device = cuda::device::current::get();
-  streamPtr = std::make_unique<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
-}
-
 TestAcceleratorServiceProducerGPUTask::ResultType
 TestAcceleratorServiceProducerGPUTask::runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, std::function<void()> callback) {
   // First make the sanity check
@@ -124,7 +119,6 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(const std::string& label, int inp
       }
     }
   }
-
 
   h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
@@ -146,6 +140,8 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(const std::string& label, int inp
   d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
   d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
 
+  // Create stream
+  streamPtr = std::make_unique<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
   auto& stream = *streamPtr;
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(float), stream.id());
   cuda::memory::async::copy(d_b.get(), h_b.get(), NUM_VALUES*sizeof(float), stream.id());
@@ -193,6 +189,9 @@ void TestAcceleratorServiceProducerGPUTask::release(const std::string& label) {
   d_ma.reset();
   d_mb.reset();
   d_mc.reset();
+
+  // release also the stream
+  streamPtr.reset();
 }
 
 int TestAcceleratorServiceProducerGPUTask::getResult(const ResultTypeRaw& d_ac) {
