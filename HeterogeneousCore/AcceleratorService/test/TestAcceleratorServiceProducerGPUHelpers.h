@@ -12,7 +12,7 @@ int TestAcceleratorServiceProducerGPUHelpers_simple_kernel(int input);
 
 class TestAcceleratorServiceProducerGPUTask {
 public:
-  TestAcceleratorServiceProducerGPUTask();
+  TestAcceleratorServiceProducerGPUTask() {}
   ~TestAcceleratorServiceProducerGPUTask() = default;
 
   using Ptr = cuda::memory::device::unique_ptr<float[]>;
