@@ -40,6 +40,9 @@ namespace {
       input_ = input;
       eventId_ = eventId;
       streamId_ = streamId;
+
+      gpuOutput_.first.reset();
+      gpuOutput_.second.reset();
     }
     
     void runCPU() {
