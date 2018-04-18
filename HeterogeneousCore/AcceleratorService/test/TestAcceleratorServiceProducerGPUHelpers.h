@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 
 int TestAcceleratorServiceProducerGPUHelpers_simple_kernel(int input);
@@ -21,8 +22,8 @@ public:
   using ResultTypeRaw = std::pair<PtrRaw, PtrRaw>;
   using ConstResultTypeRaw = std::pair<const PtrRaw, const PtrRaw>;
 
-  ResultType runAlgo(int input, const ResultTypeRaw inputArrays, std::function<void()> callback);
-  void release();
+  ResultType runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, std::function<void()> callback);
+  void release(const std::string& label);
   static int getResult(const ResultTypeRaw& d_ac);
 
 private:
