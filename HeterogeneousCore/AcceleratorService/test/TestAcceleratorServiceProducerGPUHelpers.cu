@@ -113,7 +113,7 @@ TestAcceleratorServiceProducerGPUTask::TestAcceleratorServiceProducerGPUTask() {
 }
 
 TestAcceleratorServiceProducerGPUTask::ResultType
-TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw inputArrays, std::function<void()> callback) {
+TestAcceleratorServiceProducerGPUTask::runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, std::function<void()> callback) {
   // First make the sanity check
   if(inputArrays.first != nullptr) {
     auto h_check = std::make_unique<float[]>(NUM_VALUES);
@@ -153,7 +153,7 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
   int threadsPerBlock {32};
   int blocksPerGrid = (NUM_VALUES + threadsPerBlock - 1) / threadsPerBlock;
 
-  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- launching kernels";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "  " << label << " GPU launching kernels";
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
   if(inputArrays.second != nullptr) {
     vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(inputArrays.second, d_c.get(), d_d.get(), NUM_VALUES);
@@ -174,18 +174,18 @@ TestAcceleratorServiceProducerGPUTask::runAlgo(int input, const ResultTypeRaw in
 
   matrixMulVector<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_mc.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
-  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- kernels launched, enqueueing the callback";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "  " << label << " GPU kernels launched, enqueueing the callback";
   stream.enqueue.callback([callback](cuda::stream::id_t stream_id, cuda::status_t status){
       callback();
     });
 
-  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- finished, returning return pointer";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "  " << label << " GPU finished, returning return pointer";
   return std::make_pair(std::move(d_a), std::move(d_c));
 }
 
-void TestAcceleratorServiceProducerGPUTask::release() {
+void TestAcceleratorServiceProducerGPUTask::release(const std::string& label) {
   // any way to automate the release?
-  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "--- releasing temporary memory";
+  edm::LogPrint("TestAcceleratorServiceProducerGPU") << "  " << label << " GPU releasing temporary memory";
   h_a.reset();
   h_b.reset();
   d_b.reset();

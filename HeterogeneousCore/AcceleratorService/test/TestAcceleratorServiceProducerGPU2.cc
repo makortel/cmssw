@@ -116,7 +116,7 @@ void TestAcceleratorServiceProducerGPU2::launchCPU() {
 void TestAcceleratorServiceProducerGPU2::launchGPUCuda(std::function<void()> callback) {
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << " " << label_ << " TestAcceleratorServiceProducerGPU2::launchGPUCuda begin event " << eventId_ << " stream " << streamId_;
 
-  gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
+  gpuOutput_ = gpuAlgo_->runAlgo(label_, 0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
                                  [callback,this](){
                                    edm::LogPrint("TestAcceleratorServiceProducerGPU2") << "  " << label_ << " GPU kernel finished (in callback)";
                                    callback();
@@ -136,7 +136,7 @@ void TestAcceleratorServiceProducerGPU2::produceCPU(edm::Event& iEvent, const ed
 void TestAcceleratorServiceProducerGPU2::produceGPUCuda(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceGPUCuda begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  gpuAlgo_->release();
+  gpuAlgo_->release(label_);
   iEvent.put(std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuCudaProduct(std::make_pair(gpuOutput_.first.get(), gpuOutput_.second.get())),
                                                                                              [this, eventId=iEvent.id().event(), streamId=iEvent.streamID()](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
                                                                                                edm::LogPrint("TestAcceleratorServiceProducerGPU2") << "  " << label_ << " Copying from GPU to CPU for event " << eventId << " in stream " << streamId;
