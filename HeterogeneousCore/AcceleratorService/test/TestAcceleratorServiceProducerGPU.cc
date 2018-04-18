@@ -27,7 +27,8 @@ namespace {
 
   class TestAlgo {
   public:
-    TestAlgo() {
+    explicit TestAlgo(const std::string& label):
+      label_(label) {
       edm::Service<CUDAService> cudaService;
       if(cudaService->enabled()) {
         gpuAlgo_ = std::make_unique<TestAcceleratorServiceProducerGPUTask>();
@@ -56,7 +57,7 @@ namespace {
 
     void runGPUCuda(std::function<void()> callback) {
       edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
-      gpuOutput_ = gpuAlgo_->runAlgo(0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
+      gpuOutput_ = gpuAlgo_->runAlgo(label_, 0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
                                      [callback,this](){
                                        edm::LogPrint("TestAcceleratorServiceProducerGPU") << "    GPU kernel finished (in callback)";
                                        callback();
@@ -74,7 +75,7 @@ namespace {
 
     unsigned int getOutput() const { return output_; }
     TestAcceleratorServiceProducerGPUTask::ResultTypeRaw getGPUOutput() {
-      gpuAlgo_->release();
+      gpuAlgo_->release(label_);
       return std::make_pair(gpuOutput_.first.get(), gpuOutput_.second.get());
     }
 
@@ -83,6 +84,7 @@ namespace {
     const OutputType *input_ = nullptr;
     unsigned int eventId_ = 0;
     unsigned int streamId_ = 0;
+    std::string label_;
 
     // GPU stuff
     std::unique_ptr<TestAcceleratorServiceProducerGPUTask> gpuAlgo_;
@@ -117,7 +119,8 @@ private:
 TestAcceleratorServiceProducerGPU::TestAcceleratorServiceProducerGPU(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
   accToken_(edm::Service<AcceleratorService>()->book()),
-  showResult_(iConfig.getUntrackedParameter<bool>("showResult"))
+  showResult_(iConfig.getUntrackedParameter<bool>("showResult")),
+  algo_(label_)
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
   if(!srcTag.label().empty()) {
