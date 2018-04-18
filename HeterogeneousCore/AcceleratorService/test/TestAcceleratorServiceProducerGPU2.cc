@@ -82,6 +82,9 @@ void TestAcceleratorServiceProducerGPU2::fillDescriptions(edm::ConfigurationDesc
 void TestAcceleratorServiceProducerGPU2::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::acquire event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
+  gpuOutput_.first.reset();
+  gpuOutput_.second.reset();
+
   input_ = nullptr;
   if(!srcToken_.isUninitialized()) {
     edm::Handle<HeterogeneousProduct> hin;
