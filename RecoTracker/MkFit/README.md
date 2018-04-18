@@ -28,6 +28,7 @@ cat <<EOF >mkFit.xml
     <environment name="INCLUDE" default="$MKFIT_BASE"/>
   </client>
   <lib name="MicCore"/>
+  <lib name="MkFit"/>
 </tool>
 EOF
 scram setup mkFit.xml
