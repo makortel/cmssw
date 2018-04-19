@@ -122,11 +122,22 @@ int main()
       std::cout << "Device with most free memory " << dev << std::endl;
       std::cout << "     as given by CUDAService " << cs.deviceWithMostFreeMemory() << std::endl;
       std::cout << "=== END Test #2. ===\n" << std::endl;
+
+      // Test setting the current device
+      std::cout << "=== Test #3: CUDAService set/get device ===" << std::endl;
+      for(int i=0; i<deviceCount; ++i) {
+        cs.setCurrentDevice(i);
+        int device=-1;
+        cudaGetDevice(&device);
+        assert(device == i);
+        assert(device == cs.getCurrentDevice());
+      }
+      std::cout << "=== END Test #3. ===\n" << std::endl;
     }
 
 
     // Now forcing the service to be disabled...
-    std::cout << "=== Test #3: CUDAService forced to be disabled. ===" << std::endl;
+    std::cout << "=== Test #4: CUDAService forced to be disabled. ===" << std::endl;
     edm::ParameterSet psf;
     configEnabled = false;
     psf.addUntrackedParameter( "enabled", configEnabled );
@@ -136,7 +147,7 @@ int main()
     // Test that the service is actually disabled
     assert( csf.enabled() == configEnabled );
     assert( csf.numberOfDevices() == 0 );
-    std::cout << "=== END Test #3. ===\n" << std::endl;
+    std::cout << "=== END Test #4. ===\n" << std::endl;
 
     //Fake the end-of-job signal.
     ar.postEndJobSignal_();
