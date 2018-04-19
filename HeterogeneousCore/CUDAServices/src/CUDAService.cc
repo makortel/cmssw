@@ -80,3 +80,11 @@ int CUDAService::deviceWithMostFreeMemory() const {
   }
   return devId;
 }
+
+void CUDAService::setCurrentDevice(int device) const {
+  cuda::device::current::set(device);
+}
+
+int CUDAService::getCurrentDevice() const {
+  return cuda::device::current::get().id();
+}
