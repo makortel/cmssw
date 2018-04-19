@@ -139,11 +139,14 @@ public:
       for (int j=0;j<vs; ++j) ok[j] = areAlignedRZ(r1[j], z1[j], ro, zo, ptmin, thetaCut);
       for (int j=0;j<vs; ++j) {
 	auto koc = innerCells[i+j];
-	auto & oc =  allCells[koc]; 
+	auto & oc =  allCells[koc];
+        edm::LogPrint("Foo") << "  CACell::checkAlignmentAndAct outer cell " << cellId  << " have similar curvature " << haveSimilarCurvature(oc,ptmin, region_origin_x, region_origin_y,
+                                                                                                                                             region_origin_radius, phiCut, hardPtCut);
 	if (ok[j]&&haveSimilarCurvature(oc,ptmin, region_origin_x, region_origin_y,
 					region_origin_radius, phiCut, hardPtCut)) {
 	  if (foundTriplets) foundTriplets->emplace_back(CACell::CAntuplet{koc,cellId});
 	  else {
+            edm::LogPrint("Foo") << "  CACell::checkAlignmentAndAct outer cell " << cellId << " connected to this";
 	    oc.tagAsOuterNeighbor(cellId);
 	  }
 	}
@@ -208,7 +211,7 @@ public:
     // high pt : just straight
     if(tan_12_13_half_mul_distance_13_squared * ptmin <= 1.0e-4f*distance_13_squared)
       {
-	
+
 	float distance_3_beamspot_squared = (x3-region_origin_x) * (x3-region_origin_x) + (y3-region_origin_y) * (y3-region_origin_y);
 	
 	float dot_bs3_13 = ((x1 - x3)*( region_origin_x - x3) + (y1 - y3) * (region_origin_y-y3));

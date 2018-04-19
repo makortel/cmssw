@@ -179,6 +179,9 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	SeedingLayerSetsHits::SeedingLayerSet pairCandidate;
 	hitPair[0] = Layer_tuple(hits[i]);
  	hitPair[1] = Layer_tuple(hits[i+1]);
+
+        edm::LogPrint("foo") << " FS i " << i << " hitPair " << std::get<0>(hitPair[0]) << "," << static_cast<int>(std::get<1>(hitPair[0])) << "," << std::get<2>(hitPair[0])
+                             << " " << std::get<0>(hitPair[1]) << "," << static_cast<int>(std::get<1>(hitPair[1])) << "," << std::get<2>(hitPair[1]);
        
 	bool found;
         for(SeedingLayerSetsHits::SeedingLayerSet ls : *seedingLayer){
@@ -194,6 +197,9 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	    break;
 	}
 	assert(found == true);
+
+        edm::LogPrint("Foo") << " FS found? " << found << " final pairCandidate " << pairCandidate[0].index() << "," << pairCandidate[1].index();
+	
 	const DetLayer * fLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[i]->det()->geographicalId());
 	const DetLayer * sLayer = measurementTracker_->geometricSearchTracker()->detLayer(hits[i+1]->det()->geographicalId());
 	std::vector<BaseTrackerRecHit const *> fHits{hits[i]};
@@ -206,6 +212,7 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	filler.addDoublets(pairCandidate, std::move(res));
       }
       std::vector<OrderedHitSeeds> quadrupletresult;
+      edm::LogPrint("foo") << "FS calling hitNtuplets()";
       CAHitQuadGenerator_->hitNtuplets(ihd,quadrupletresult,*eventSetup_,*seedingLayer);
       //      std::cout<<"quadrupletresult.size()="<<quadrupletresult.size()<<std::endl;
       return !quadrupletresult.empty();  

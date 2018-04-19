@@ -137,6 +137,7 @@ namespace {
                  CAGraph& g, std::vector<const HitDoublets *>& hitDoublets) {
 	for (unsigned int i = 0; i < layers.size(); i++)
 	{
+          edm::LogPrint("foo") << "fillGraph i " << i;
 		for (unsigned int j = 0; j < 4; ++j)
 		{
 			auto vertexIndex = 0;
@@ -150,6 +151,7 @@ namespace {
 			{
 				vertexIndex = foundVertex - g.theLayers.begin();
 			}
+                        edm::LogPrint("foo") << " fillGraph j " << j << " vertexIndex " << vertexIndex;
 	
 			
 			if (j > 0)
@@ -161,13 +163,16 @@ namespace {
 				CALayerPair tmpInnerLayerPair(innerVertex - g.theLayers.begin(),
 						vertexIndex);
 
+                                edm::LogPrint("foo") << " fillGraph tmpInnerLayerPair " << tmpInnerLayerPair.theLayers[0] << "," << tmpInnerLayerPair.theLayers[1];
 				if (std::find(g.theLayerPairs.begin(), g.theLayerPairs.end(),
 						tmpInnerLayerPair) == g.theLayerPairs.end())
 				{
+                                  edm::LogPrint("Foo") << "  fillGraph found tmpInnerLayerPair";
 					auto found = std::find_if(regionLayerPairs.begin(), regionLayerPairs.end(), [&](const IntermediateHitDoublets::LayerPairHitDoublets& pair) {
 					  return pair.innerLayerIndex() == layers[i][j - 1].index() && pair.outerLayerIndex() == layers[i][j].index();
 					});
                                         if(found != regionLayerPairs.end()) {
+                                          edm::LogPrint("Foo") << "   fillGraph found doublet";
                                           hitDoublets.emplace_back(&(found->doublets()));
                                           g.theLayerPairs.push_back(tmpInnerLayerPair);
                                           g.theLayers[vertexIndex].theInnerLayers.push_back(
@@ -238,6 +243,7 @@ void CAHitQuadrupletGenerator::hitNtuplets(const IntermediateHitDoublets& region
   	std::array<bool, 4> barrels;
 
 	unsigned int numberOfFoundQuadruplets = foundQuadruplets.size();
+        edm::LogPrint("Foo") << " index " << index << " foundQuadruplets " << numberOfFoundQuadruplets;
 
   	// Loop over quadruplets
   	for (unsigned int quadId = 0; quadId < numberOfFoundQuadruplets; ++quadId)

@@ -222,6 +222,7 @@ SeedingLayerSetsBuilder::SeedingLayerSetsBuilder(const edm::ParameterSet & cfg, 
 
         layerIndex = theLayers.size();
         theLayers.emplace_back(theLayerNames.size(), layerName, layerConfig(layerName, cfg), iC);
+        edm::LogPrint("Foo") << "Adding layer " << layerName << " index " << layerIndex;
         theLayerNames.push_back(layerName);
       }
       theLayerSetIndices.push_back(layerIndex);
