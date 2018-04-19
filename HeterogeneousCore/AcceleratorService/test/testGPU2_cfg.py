@@ -23,10 +23,11 @@ process.prod2 = cms.EDProducer('TestAcceleratorServiceProducerGPU2',
 process.prod3 = cms.EDProducer('TestAcceleratorServiceProducerGPU2',
     src = cms.InputTag("prod1"),
 )
+process.prod4 = cms.EDProducer('TestAcceleratorServiceProducerGPU2')
 process.ana = cms.EDAnalyzer("TestAcceleratorServiceAnalyzer",
-    src = cms.VInputTag("prod2", "prod3")
+    src = cms.VInputTag("prod2", "prod3", "prod4")
 )
 
-process.t = cms.Task(process.prod1, process.prod2, process.prod3)
+process.t = cms.Task(process.prod1, process.prod2, process.prod3, process.prod4)
 process.p = cms.Path(process.ana)
 process.p.associate(process.t)

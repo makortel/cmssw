@@ -61,8 +61,7 @@ namespace {
     void runGPUCuda(std::function<void()> callback) {
       edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " running on GPU asynchronously";
       gpuOutput_ = gpuAlgo_->runAlgo(label_, 0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
-                                     [callback,this](){
-                                       edm::LogPrint("TestAcceleratorServiceProducerGPU") << "    GPU kernel finished (in callback)";
+                                     [callback](cuda::device::id_t, cuda::stream::id_t, cuda::status_t) {
                                        callback();
                                      });
       edm::LogPrint("TestAcceleratorServiceProducerGPU") << "   Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " launched";
@@ -162,7 +161,9 @@ void TestAcceleratorServiceProducerGPU::produce(edm::Event& iEvent, const edm::E
   std::unique_ptr<HeterogeneousProduct> ret;
   edm::Service<AcceleratorService> acc;
   if(acc->algoExecutionLocation(accToken_, iEvent.streamID()).deviceType() == HeterogeneousDevice::kGPUCuda) {
-    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuCudaProduct(algo_.getGPUOutput()), algo_.makeTransfer()));
+    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuCudaProduct(algo_.getGPUOutput()),
+                                                            HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0),
+                                                            algo_.makeTransfer()));
   }
   else {
     ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::cpuProduct(algo_.getOutput())));
