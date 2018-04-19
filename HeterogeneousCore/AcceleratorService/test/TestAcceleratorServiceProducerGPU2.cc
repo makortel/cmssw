@@ -36,10 +36,10 @@ private:
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   void launchCPU() override;
-  void launchGPUCuda(std::function<void()> callback) override;
+  void launchGPUCuda(CallbackType callback) override;
 
   void produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
-  void produceGPUCuda(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  void produceGPUCuda(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   std::string label_;
   edm::EDGetTokenT<HeterogeneousProduct> srcToken_;
@@ -116,15 +116,11 @@ void TestAcceleratorServiceProducerGPU2::launchCPU() {
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << " " << label_ << " TestAcceleratorServiceProducerGPU2::launchCPU end event " << eventId_ << " stream " << streamId_;
 }
 
-void TestAcceleratorServiceProducerGPU2::launchGPUCuda(std::function<void()> callback) {
+void TestAcceleratorServiceProducerGPU2::launchGPUCuda(CallbackType callback) {
   edm::Service<CUDAService> cs;
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << " " << label_ << " TestAcceleratorServiceProducerGPU2::launchGPUCuda begin event " << eventId_ << " stream " << streamId_ << " device " << cs->getCurrentDevice();
 
-  gpuOutput_ = gpuAlgo_->runAlgo(label_, 0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr),
-                                 [callback,this](){
-                                   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << "  " << label_ << " GPU kernel finished (in callback)";
-                                   callback();
-                                 });
+  gpuOutput_ = gpuAlgo_->runAlgo(label_, 0, input_ ? input_->getProduct<HeterogeneousDevice::kGPUCuda>() : std::make_pair(nullptr, nullptr), callback);
 
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << " " << label_ << " TestAcceleratorServiceProducerGPU2::launchGPUCuda end event " << eventId_ << " stream " << streamId_ << " device " << cs->getCurrentDevice();
 }
@@ -137,16 +133,17 @@ void TestAcceleratorServiceProducerGPU2::produceCPU(edm::Event& iEvent, const ed
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceCPU end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << output_;
 }
 
-void TestAcceleratorServiceProducerGPU2::produceGPUCuda(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void TestAcceleratorServiceProducerGPU2::produceGPUCuda(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::Service<CUDAService> cs;
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceGPUCuda begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
 
   gpuAlgo_->release(label_);
   iEvent.put(std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuCudaProduct(std::make_pair(gpuOutput_.first.get(), gpuOutput_.second.get())),
-                                                                                             [this, eventId=iEvent.id().event(), streamId=iEvent.streamID()](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
-                                                                                               edm::LogPrint("TestAcceleratorServiceProducerGPU2") << "  " << label_ << " Copying from GPU to CPU for event " << eventId << " in stream " << streamId;
-                                                                                               dst = TestAcceleratorServiceProducerGPUTask::getResult(src);
-                                                                                                 })));
+                                                               location,
+                                                               [this, eventId=iEvent.id().event(), streamId=iEvent.streamID()](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
+                                                                 edm::LogPrint("TestAcceleratorServiceProducerGPU2") << "  " << label_ << " Copying from GPU to CPU for event " << eventId << " in stream " << streamId;
+                                                                 dst = TestAcceleratorServiceProducerGPUTask::getResult(src);
+                                                               })));
 
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceGPUCuda end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
 }

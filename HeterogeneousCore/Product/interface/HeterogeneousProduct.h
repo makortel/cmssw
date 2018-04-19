@@ -4,6 +4,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include <bitset>
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -46,6 +47,18 @@ private:
 };
 
 namespace heterogeneous {
+  constexpr const unsigned int kMaxDevices = 16;
+  using DeviceBitSet = std::bitset<kMaxDevices>;
+
+  template <typename T>
+  std::string bitsetArrayToString(const T& bitsetArray) {
+    std::string ret;
+    for(const auto& bitset: bitsetArray) {
+      ret += bitset.to_string() + " ";
+    }
+    return ret;
+  }
+
   /**
    * The *Product<T> templates are to specify in a generic way which
    * data locations and device-specific types the
@@ -166,14 +179,15 @@ private:
   using TupleElement_t = typename TupleElement<index, Tuple>::type;
 
 
-  // Metaprogram to loop over two tuples and a bitset (of equal
-  // length), and if bitset is set to true call a function from one of
-  // the tuples with arguments from the second tuple
-  template <typename FunctionTuple, typename ProductTuple, typename BitSet, typename FunctionTupleElement, size_t sizeMinusIndex>
+  // Metaprogram to loop over two tuples and an array of bitsets (of
+  // equal length), and if any element of bitset is set to true call a
+  // function from one of the tuples with arguments from the second
+  // tuple
+  template <typename FunctionTuple, typename ProductTuple, typename BitSetArray, typename FunctionTupleElement, size_t sizeMinusIndex>
   struct CallFunctionIf {
-    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
-      constexpr const auto index = bitSet.size()-sizeMinusIndex;
-      if(bitSet[index]) {
+    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSetArray& bitsetArray) {
+      constexpr const auto index = bitsetArray.size()-sizeMinusIndex;
+      if(bitsetArray[index].any()) {
         const auto func = std::get<index>(functionTuple);
         if(!func) {
           throw cms::Exception("Assert") << "Attempted to call transfer-to-CPU function for device " << index << " but the std::function object is not valid!";
@@ -181,21 +195,21 @@ private:
         func(std::get<index>(productTuple).product(), std::get<0>(productTuple).product());
         return true;
       }
-      return CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
-                            TupleElement_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
+      return CallFunctionIf<FunctionTuple, ProductTuple, BitSetArray,
+                            TupleElement_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitsetArray);
     }
   };
-  template <typename FunctionTuple, typename ProductTuple, typename BitSet, size_t sizeMinusIndex>
-  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSet, Empty, sizeMinusIndex> {
-    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
-      constexpr const auto index = bitSet.size()-sizeMinusIndex;
-      return CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
-                            TupleElement_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitSet);
+  template <typename FunctionTuple, typename ProductTuple, typename BitSetArray, size_t sizeMinusIndex>
+  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSetArray, Empty, sizeMinusIndex> {
+    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSetArray& bitsetArray) {
+      constexpr const auto index = bitsetArray.size()-sizeMinusIndex;
+      return CallFunctionIf<FunctionTuple, ProductTuple, BitSetArray,
+                            TupleElement_t<index+1, FunctionTuple>, sizeMinusIndex-1>::call(functionTuple, productTuple, bitsetArray);
     }
   };
-  template <typename FunctionTuple, typename ProductTuple, typename BitSet>
-  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSet, Empty, 0> {
-    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
+  template <typename FunctionTuple, typename ProductTuple, typename BitSetArray>
+  struct CallFunctionIf<FunctionTuple, ProductTuple, BitSetArray, Empty, 0> {
+    static bool call(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSetArray& bitsetArray) {
       return false;
     }
   };
@@ -203,11 +217,11 @@ private:
   // Metaprogram to specialize getProduct() for CPU
   template <HeterogeneousDevice device>
   struct GetOrTransferProduct {
-    template <typename FunctionTuple, typename ProductTuple, typename BitSet>
-    static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSet& bitSet) {
+    template <typename FunctionTuple, typename ProductTuple, typename BitSetArray>
+    static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, const BitSetArray& location) {
       constexpr const auto index = static_cast<unsigned int>(device);
-      if(!bitSet[index]) {
-        throw cms::Exception("LogicError") << "Called getProduct() for device " << index << " but the data is not there! Location bitfield is " << bitSet.to_string();
+      if(!location[index].any()) {
+        throw cms::Exception("LogicError") << "Called getProduct() for device " << index << " but the data is not there! Location bitfield is " << bitsetArrayToString(location);
       }
       return std::get<index>(productTuple).product();
     }
@@ -215,17 +229,17 @@ private:
 
   template <>
   struct GetOrTransferProduct<HeterogeneousDevice::kCPU> {
-    template <typename FunctionTuple, typename ProductTuple, typename BitSet>
-    static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, BitSet& bitSet) {
+    template <typename FunctionTuple, typename ProductTuple, typename BitSetArray>
+    static const auto& getProduct(const FunctionTuple& functionTuple, ProductTuple& productTuple, BitSetArray& location) {
       constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
-      if(!bitSet[index]) {
-        auto found = CallFunctionIf<FunctionTuple, ProductTuple, BitSet,
-                                    std::tuple_element_t<1, FunctionTuple>, bitSet.size()-1>::call(functionTuple, productTuple, bitSet);
+      if(!location[index].any()) {
+        auto found = CallFunctionIf<FunctionTuple, ProductTuple, BitSetArray,
+                                    std::tuple_element_t<1, FunctionTuple>, location.size()-1>::call(functionTuple, productTuple, location);
         if(!found) {
-          throw cms::Exception("LogicError") << "Attempted to transfer data to CPU, but the data is not available anywhere! Location bitfield is " << bitSet.to_string();
+          throw cms::Exception("LogicError") << "Attempted to transfer data to CPU, but the data is not available anywhere! Location bitfield is " << bitsetArrayToString(location);
         }
       }
-      bitSet.set(index);
+      location[index].set(0);
       return std::get<index>(productTuple).product();
     }
   };
@@ -234,17 +248,27 @@ private:
 // For type erasure to ease dictionary generation
 class HeterogeneousProductBase {
 public:
-  using BitSet = std::bitset<static_cast<unsigned int>(HeterogeneousDevice::kSize)>;
+  // TODO: Given we'll likely have the data on one or at most a couple
+  // of devices, storing the information in a "dense" bit pattern may
+  // be overkill. Maybe a "sparse" presentation would be sufficient
+  // and easier to deal with?
+  using BitSet = heterogeneous::DeviceBitSet;
+  using BitSetArray = std::array<BitSet, static_cast<unsigned int>(HeterogeneousDevice::kSize)>;
 
   virtual ~HeterogeneousProductBase() = 0;
 
   bool isProductOn(HeterogeneousDevice loc) const {
     // should this be protected with the mutex?
+    return location_[static_cast<unsigned int>(loc)].any();
+  }
+  BitSet onDevices(HeterogeneousDevice loc) const {
+    // should this be protected with the mutex?
     return location_[static_cast<unsigned int>(loc)];
   }
+
 protected:
   mutable std::mutex mutex_;
-  mutable BitSet location_;
+  mutable BitSetArray location_;
 };
 
 /**
@@ -296,7 +320,7 @@ public:
   HeterogeneousProductImpl(CPUProduct&& data) {
     constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
     std::get<index>(products_) = std::move(data);
-    location_.set(index);
+    location_[index].set(0);
   }
 
   /**
@@ -304,14 +328,15 @@ public:
    * data to CPU has to be provided as well.
    */
   template <typename H, typename F>
-  HeterogeneousProductImpl(H&& data, F transferToCPU) {
+  HeterogeneousProductImpl(H&& data, HeterogeneousDeviceId location, F transferToCPU) {
     constexpr const auto index = static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H> >::value);
     static_assert(!std::is_same<std::tuple_element_t<index, ProductTuple>,
                                 heterogeneous::Empty>::value,
                   "This HeterogeneousProduct does not support this type");
+    assert(static_cast<unsigned int>(location.deviceType()) == index);
     std::get<index>(products_) = std::move(data);
     std::get<index>(transfersToCPU_) = std::move(transferToCPU);
-    location_.set(index);
+    location_[index].set(location.deviceId());
   }
 
   template <HeterogeneousDevice device>

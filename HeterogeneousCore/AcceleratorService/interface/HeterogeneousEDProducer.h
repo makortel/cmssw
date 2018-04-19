@@ -10,6 +10,8 @@
 #include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
+#include <cuda/api_wrappers.h> // TODO: we need to split this file to minimize unnecessary dependencies
+
 namespace heterogeneous {
   template <typename T> struct Mapping;
 }
@@ -28,7 +30,7 @@ namespace heterogeneous {
   class CPU {
   public:
     bool call_launchCPU(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+    void call_produceCPU(const HeterogeneousDeviceId& algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup) {
       produceCPU(iEvent, iSetup);
     }
 
@@ -40,27 +42,27 @@ namespace heterogeneous {
 
   class GPUMock {
   public:
-    bool call_launchGPUMock(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceGPUMock(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-      produceGPUMock(iEvent, iSetup);
+    bool call_launchGPUMock(DeviceBitSet inputLocation, HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
+    void call_produceGPUMock(const HeterogeneousDeviceId& algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup) {
+      produceGPUMock(algoExecutionLocation, iEvent, iSetup);
     }
 
   private:
     virtual void launchGPUMock(std::function<void()> callback) = 0;
-    virtual void produceGPUMock(edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
+    virtual void produceGPUMock(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
   };
   MAKE_MAPPING(GPUMock, HeterogeneousDevice::kGPUMock);
 
   class GPUCuda {
   public:
-    bool call_launchGPUCuda(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceGPUCuda(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-      produceGPUCuda(iEvent, iSetup);
-    }
+    using CallbackType = std::function<void(cuda::device::id_t, cuda::stream::id_t, cuda::status_t)>;
+
+    bool call_launchGPUCuda(DeviceBitSet inputLocation, HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
+    void call_produceGPUCuda(const HeterogeneousDeviceId& algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup);
 
   private:
-    virtual void launchGPUCuda(std::function<void()> callback) = 0;
-    virtual void produceGPUCuda(edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
+    virtual void launchGPUCuda(CallbackType callback) = 0;
+    virtual void produceGPUCuda(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
   };
   MAKE_MAPPING(GPUCuda, HeterogeneousDevice::kGPUCuda);
 }
@@ -76,12 +78,16 @@ namespace heterogeneous {
     template <typename ...Args>
     static void call(T& ref, const HeterogeneousProductBase *input, Args&&... args) {
       bool succeeded = true;
+      DeviceBitSet inputLocation;
       if(input) {
         succeeded = input->isProductOn(Mapping<D>::deviceEnum);
+        if(succeeded) {
+          inputLocation = input->onDevices(Mapping<D>::deviceEnum);
+        }
       }
       if(succeeded) {
         // may not perfect-forward here in order to be able to forward arguments to next CallLaunch.
-        succeeded = Mapping<D>::launch(ref, args...);
+        succeeded = Mapping<D>::launch(ref, inputLocation, args...);
       }
       if(!succeeded) {
         CallLaunch<T, Devices...>::call(ref, input, std::forward<Args>(args)...);
@@ -105,7 +111,7 @@ namespace heterogeneous {
     template <typename ...Args>
     static void call(T& ref, const HeterogeneousDeviceId& algoExecutionLocation, Args&&... args) {
       if(algoExecutionLocation.deviceType() == Mapping<D>::deviceEnum) {
-        Mapping<D>::produce(ref, std::forward<Args>(args)...);
+        Mapping<D>::produce(ref, algoExecutionLocation, std::forward<Args>(args)...);
       }
       else {
         CallProduce<T, Devices...>::call(ref, algoExecutionLocation, std::forward<Args>(args)...);

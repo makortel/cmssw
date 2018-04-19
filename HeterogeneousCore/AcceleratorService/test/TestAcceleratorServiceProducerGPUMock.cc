@@ -151,7 +151,9 @@ void TestAcceleratorServiceProducerGPUMock::produce(edm::Event& iEvent, const ed
   std::unique_ptr<HeterogeneousProduct> ret;
   unsigned int value = 0;
   if(algo_.ranOnGPU()) {
-    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuMockProduct(algo_.getGPUOutput()), algo_.makeTransfer()));
+    ret = std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuMockProduct(algo_.getGPUOutput()),
+                                                            HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0),
+                                                            algo_.makeTransfer()));
     value = ret->get<OutputType>().getProduct<HeterogeneousDevice::kGPUMock>();
   }
   else {
