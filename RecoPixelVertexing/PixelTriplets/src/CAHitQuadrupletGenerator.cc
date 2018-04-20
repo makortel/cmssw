@@ -167,12 +167,13 @@ namespace {
 				if (std::find(g.theLayerPairs.begin(), g.theLayerPairs.end(),
 						tmpInnerLayerPair) == g.theLayerPairs.end())
 				{
-                                  edm::LogPrint("Foo") << "  fillGraph found tmpInnerLayerPair";
+                                  edm::LogPrint("Foo") << "  fillGraph tmpInnerLayerPair notaa yet processed, processing now";
 					auto found = std::find_if(regionLayerPairs.begin(), regionLayerPairs.end(), [&](const IntermediateHitDoublets::LayerPairHitDoublets& pair) {
 					  return pair.innerLayerIndex() == layers[i][j - 1].index() && pair.outerLayerIndex() == layers[i][j].index();
 					});
                                         if(found != regionLayerPairs.end()) {
-                                          edm::LogPrint("Foo") << "   fillGraph found doublet";
+                                          edm::LogPrint("Foo") << "   fillGraph found doublet " << &(found->doublets()) << " size " << found->doublets().size() << " inner rv " << found->doublets().rv(0, HitDoublets::inner) << " z " << found->doublets().z(0, HitDoublets::inner)
+                                                               << " inner layer " << &(found->doublets().innerLayer()) << " outer layer " << &(found->doublets().outerLayer());
                                           hitDoublets.emplace_back(&(found->doublets()));
                                           g.theLayerPairs.push_back(tmpInnerLayerPair);
                                           g.theLayers[vertexIndex].theInnerLayers.push_back(

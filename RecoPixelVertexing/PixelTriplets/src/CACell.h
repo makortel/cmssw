@@ -46,7 +46,9 @@ public:
     theDoublets(doublets), theDoubletId(doubletId)
     ,theInnerR(doublets->rv(doubletId, HitDoublets::inner)) 
     ,theInnerZ(doublets->z(doubletId, HitDoublets::inner))
-  {}
+  {
+    edm::LogPrint("Foo") << "CACell: doubletId " << doubletId << " innerHit " << innerHitId << " outerHit " << outerHitId << " inner r " << theInnerR << " z " << theInnerZ;
+  }
 
    
   

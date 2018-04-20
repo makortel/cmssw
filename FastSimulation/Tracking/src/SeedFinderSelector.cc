@@ -209,6 +209,8 @@ bool SeedFinderSelector::pass(const std::vector<const FastTrackerRecHit *>& hits
 	const RecHitsSortedInPhi secondhm(sHits, trackingRegion_->origin(), sLayer);
 	HitDoublets res(firsthm,secondhm);
 	HitPairGeneratorFromLayerPair::doublets(*trackingRegion_,*fLayer,*sLayer,firsthm,secondhm,*eventSetup_,0,res);
+        edm::LogPrint("Foo") << " FS HitDoublets size " << res.size() << " inner rv " << res.rv(0, HitDoublets::inner) << " z " << res.z(0, HitDoublets::inner)
+                             << " inner layer " << &(res.innerLayer()) << " outer layer " << &(res.outerLayer());
 	filler.addDoublets(pairCandidate, std::move(res));
       }
       std::vector<OrderedHitSeeds> quadrupletresult;
