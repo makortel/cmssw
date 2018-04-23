@@ -39,7 +39,7 @@ private:
   void launchGPUCuda(CallbackType callback) override;
 
   void produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
-  void produceGPUCuda(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
 
   std::string label_;
   edm::EDGetTokenT<HeterogeneousProduct> srcToken_;
@@ -62,7 +62,7 @@ TestAcceleratorServiceProducerGPU2::TestAcceleratorServiceProducerGPU2(edm::Para
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
   if(!srcTag.label().empty()) {
-    srcToken_ = consumes<HeterogeneousProduct>(srcTag);
+    srcToken_ = consumesHeterogeneous(srcTag);
   }
 
   edm::Service<CUDAService> cudaService;
@@ -94,9 +94,6 @@ void TestAcceleratorServiceProducerGPU2::acquire(const edm::Event& iEvent, const
 
   eventId_ = iEvent.id().event();
   streamId_ = iEvent.streamID();
-
-  // I don't like this call but i don't have good ideas for how to get around that...
-  schedule(input_);
 }
 
 void TestAcceleratorServiceProducerGPU2::launchCPU() {
@@ -133,19 +130,18 @@ void TestAcceleratorServiceProducerGPU2::produceCPU(edm::Event& iEvent, const ed
   edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceCPU end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << output_;
 }
 
-void TestAcceleratorServiceProducerGPU2::produceGPUCuda(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void TestAcceleratorServiceProducerGPU2::produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
   edm::Service<CUDAService> cs;
-  edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceGPUCuda begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
+  edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceGPUCuda begin event " << iEvent.event().id().event() << " stream " << iEvent.event().streamID() << " device " << cs->getCurrentDevice();
 
   gpuAlgo_->release(label_);
-  iEvent.put(std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuCudaProduct(std::make_pair(gpuOutput_.first.get(), gpuOutput_.second.get())),
-                                                               location,
-                                                               [this, eventId=iEvent.id().event(), streamId=iEvent.streamID()](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
-                                                                 edm::LogPrint("TestAcceleratorServiceProducerGPU2") << "  " << label_ << " Copying from GPU to CPU for event " << eventId << " in stream " << streamId;
-                                                                 dst = TestAcceleratorServiceProducerGPUTask::getResult(src);
-                                                               })));
+  iEvent.put<OutputType>(std::make_unique<TestAcceleratorServiceProducerGPUTask::ResultTypeRaw>(gpuOutput_.first.get(), gpuOutput_.second.get()),
+                         [this, eventId=iEvent.event().id().event(), streamId=iEvent.event().streamID()](const TestAcceleratorServiceProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
+                           edm::LogPrint("TestAcceleratorServiceProducerGPU2") << "  " << label_ << " Copying from GPU to CPU for event " << eventId << " in stream " << streamId;
+                           dst = TestAcceleratorServiceProducerGPUTask::getResult(src);
+                         });
 
-  edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceGPUCuda end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
+  edm::LogPrint("TestAcceleratorServiceProducerGPU2") << label_ << " TestAcceleratorServiceProducerGPU2::produceGPUCuda end event " << iEvent.event().id().event() << " stream " << iEvent.event().streamID() << " device " << cs->getCurrentDevice();
 }
 
 DEFINE_FWK_MODULE(TestAcceleratorServiceProducerGPU2);

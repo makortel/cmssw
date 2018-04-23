@@ -106,6 +106,8 @@ namespace heterogeneous {
     // TODO: Consider using cuda::device::current::scoped_override_t<>?
     cudaService->setCurrentDevice(algoExecutionLocation.deviceId());
 
-    produceGPUCuda(algoExecutionLocation, iEvent, iSetup);
+    auto eventWrapper = edm::HeterogeneousEvent(&iEvent, algoExecutionLocation);
+
+    produceGPUCuda(eventWrapper, iSetup);
   }
 }

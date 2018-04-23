@@ -20,6 +20,13 @@ enum class HeterogeneousDevice {
   kSize
 };
 
+namespace heterogeneous {
+  template <HeterogeneousDevice Device>
+  struct HeterogeneousDeviceTag {
+    constexpr static HeterogeneousDevice value = Device;
+  };
+}
+
 /**
  * Class to represent an identifier for a heterogeneous device.
  * Contains device type and an integer identifier.
@@ -294,6 +301,13 @@ class HeterogeneousProductImpl: public HeterogeneousProductBase {
   static_assert(std::tuple_size<ProductTuple>::value == std::tuple_size<TransferToCPUTuple>::value, "Size mismatch");
   static_assert(std::tuple_size<ProductTuple>::value == static_cast<unsigned int>(HeterogeneousDevice::kSize), "Size mismatch");
 public:
+  template<HeterogeneousDevice Device, typename Type>
+  struct IsAssignable {
+    static const bool value = std::is_assignable<std::tuple_element_t<static_cast<unsigned int>(Device),
+                                                                      ProductTuple>,
+                                                 Type>::value;
+  };
+
   HeterogeneousProductImpl() = default;
   ~HeterogeneousProductImpl() override = default;
   HeterogeneousProductImpl(HeterogeneousProductImpl<CPUProduct, Types...>&& other) {
@@ -339,6 +353,28 @@ public:
     location_[index].set(location.deviceId());
   }
 
+  // Constructor for CPU data, alternative interface
+  template <HeterogeneousDevice Device, typename D>
+  HeterogeneousProductImpl(heterogeneous::HeterogeneousDeviceTag<Device>, D&& data) {
+    static_assert(Device == HeterogeneousDevice::kCPU, "This overload allows only CPU device");
+    constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
+    std::get<index>(products_) = std::move(data);
+    location_[index].set(0);
+  }
+
+  /**
+   * Alternative interface to generic constructor for device data. A
+   * function to transfer the data to CPU has to be provided as well.
+   */
+  template <HeterogeneousDevice Device, typename D, typename F>
+  HeterogeneousProductImpl(heterogeneous::HeterogeneousDeviceTag<Device>, D&& data, HeterogeneousDeviceId location, F transferToCPU) {
+    constexpr const auto index = static_cast<unsigned int>(Device);
+    assert(location.deviceType() == Device);
+    std::get<index>(products_) = std::move(data);
+    std::get<index>(transfersToCPU_) = std::move(transferToCPU);
+    location_[index].set(location.deviceId());
+  }
+
   template <HeterogeneousDevice device>
   const auto& getProduct() const {
     constexpr const auto index = static_cast<unsigned int>(device);
@@ -376,6 +412,8 @@ public:
 
   bool isNonnull() const { return static_cast<bool>(impl_); }
   bool isNull() const { return !isNonnull(); }
+
+  const HeterogeneousProductBase *getBase() const { return impl_.get(); }
 
   template <typename T>
   const T& get() const {
