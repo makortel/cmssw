@@ -56,7 +56,7 @@ TestAcceleratorServiceProducerGPUMock2::TestAcceleratorServiceProducerGPUMock2(e
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
   if(!srcTag.label().empty()) {
-    srcToken_ = consumes<HeterogeneousProduct>(srcTag);
+    srcToken_ = consumesHeterogeneous(srcTag);
   }
 
   produces<HeterogeneousProduct>();
@@ -80,9 +80,6 @@ void TestAcceleratorServiceProducerGPUMock2::acquire(const edm::Event& iEvent, c
 
   eventId_ = iEvent.id().event();
   streamId_ = iEvent.streamID();
-
-  // I don't like this call but i don't have good ideas for how to get around that...
-  schedule(input_);
 }
 
 void TestAcceleratorServiceProducerGPUMock2::launchCPU() {

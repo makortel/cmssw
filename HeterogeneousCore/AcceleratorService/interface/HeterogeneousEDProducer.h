@@ -5,12 +5,18 @@
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include "DataFormats/Common/interface/Handle.h"
+
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
 #include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include <cuda/api_wrappers.h> // TODO: we need to split this file to minimize unnecessary dependencies
+
+namespace edm {
+  class HeterogeneousEvent;
+}
 
 namespace heterogeneous {
   template <typename T> struct Mapping;
@@ -62,7 +68,7 @@ namespace heterogeneous {
 
   private:
     virtual void launchGPUCuda(CallbackType callback) = 0;
-    virtual void produceGPUCuda(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
+    virtual void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
   MAKE_MAPPING(GPUCuda, HeterogeneousDevice::kGPUCuda);
 }
@@ -138,7 +144,75 @@ namespace heterogeneous {
       CallProduce<HeterogeneousDevices, Devices...>::call(*this, algoExecutionLocation, iEvent, iSetup);
     }
   };
-}
+} // end namespace heterogeneous
+
+namespace edm {
+  class HeterogeneousEvent {
+  public:
+    HeterogeneousEvent(edm::Event *event, HeterogeneousDeviceId location): event_(event), location_(location) {}
+
+    edm::Event& event() { return *event_; }
+    const edm::Event& event() const { return *event_; }
+
+    template <typename Product, typename Token, typename Type>
+    void getByToken(const Token& token, edm::Handle<Type>& handle) const {
+      edm::Handle<HeterogeneousProduct> tmp;
+      event_->getByToken(token, tmp);
+      if(tmp.failedToGet()) {
+        handle = edm::Handle<Type>(tmp.whyFailedFactory());
+        return;
+      }
+      if(tmp.isValid()) {
+        const auto& concrete = tmp->get<Product>();
+        const auto& provenance = tmp.provenance();
+#define CASE(ENUM) case ENUM: handle = edm::Handle<Type>(&(concrete.template getProduct<ENUM>()), provenance); break
+        switch(location_.deviceType()) {
+        CASE(HeterogeneousDevice::kCPU);
+        CASE(HeterogeneousDevice::kGPUMock);
+        CASE(HeterogeneousDevice::kGPUCuda);
+        default:
+          throw cms::Exception("LogicError") << "edm::HeterogeneousEvent::getByToken(): no case statement for device " << static_cast<unsigned int>(location_.deviceType());
+        }
+#undef CASE
+      }
+    }
+
+    template <typename Product, typename Type>
+    void put(std::unique_ptr<Type> product) {
+      assert(location_.deviceType() == HeterogeneousDevice::kCPU);
+      event_->put(std::make_unique<HeterogeneousProduct>(Type(heterogeneous::HeterogeneousDeviceTag<HeterogeneousDevice::kCPU>(), std::move(*product))));
+    }
+
+    template <typename Product, typename Type, typename F>
+    void put(std::unique_ptr<Type> product, F transferToCPU) {
+      std::unique_ptr<HeterogeneousProduct> prod;
+#define CASE(ENUM) case ENUM: this->template make<ENUM, Product>(prod, std::move(product), std::move(transferToCPU), 0); break;
+      switch(location_.deviceType()) {
+      CASE(HeterogeneousDevice::kGPUMock);
+      CASE(HeterogeneousDevice::kGPUCuda);
+      default:
+        throw cms::Exception("LogicError") << "edm::HeterogeneousEvent::put(): no case statement for device " << static_cast<unsigned int>(location_.deviceType());
+      }
+#undef CASE
+      event_->put(std::move(prod));
+    }
+
+  private:
+    template<HeterogeneousDevice Device, typename Product, typename Type, typename F>
+    typename std::enable_if_t<Product::template IsAssignable<Device, Type>::value, void>
+    make(std::unique_ptr<HeterogeneousProduct>& ret, std::unique_ptr<Type> product, F transferToCPU, int) {
+      ret = std::make_unique<HeterogeneousProduct>(Product(heterogeneous::HeterogeneousDeviceTag<Device>(),
+                                                           std::move(*product), location_, std::move(transferToCPU)));
+    }
+    template<HeterogeneousDevice Device, typename Product, typename Type, typename F>
+    void make(std::unique_ptr<HeterogeneousProduct>& ret, std::unique_ptr<Type> product, F transferToCPU, long) {
+      assert(false);
+    }
+
+    edm::Event *event_;
+    HeterogeneousDeviceId location_;
+  };
+} // end namespace edm
 
 template <typename Devices, typename ...Capabilities>
 class HeterogeneousEDProducer: public Devices, public edm::stream::EDProducer<edm::ExternalWork, Capabilities...> {
@@ -147,25 +221,36 @@ public:
   ~HeterogeneousEDProducer() = default;
 
 protected:
-  void schedule(const HeterogeneousProductBase *input) {
-    input_ = input;
-    wasScheduleCalled_ = true;
+  edm::EDGetTokenT<HeterogeneousProduct> consumesHeterogeneous(const edm::InputTag& tag) {
+    tokens_.push_back(this->template consumes<HeterogeneousProduct>(tag));
+    return tokens_.back();
   }
 
 private:
   virtual void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
 
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override final {
-    input_ = nullptr;
-    algoExecutionLocation_ = HeterogeneousDeviceId();
-    wasScheduleCalled_ = false;
-    acquire(iEvent, iSetup);
-    if(!wasScheduleCalled_) {
-      throw cms::Exception("LogicError") << "Call to schedule() is missing from acquire(), please add it.";
-    }
-    Devices::call_launch(input_, &algoExecutionLocation_, std::move(waitingTaskHolder));
+    const HeterogeneousProductBase *input = nullptr;
 
-    input_ = nullptr;
+    std::vector<const HeterogeneousProduct *> products;
+    for(const auto& token: tokens_) {
+      edm::Handle<HeterogeneousProduct> handle;
+      iEvent.getByToken(token, handle);
+      if(handle.isValid()) {
+        // let the user acquire() code to deal with missing products
+        // (and hope they don't mess up the scheduling!)
+        products.push_back(handle.product());
+      }
+    }
+    if(!products.empty()) {
+      // TODO: check all inputs, not just the first one
+      input = products[0]->getBase();
+    }
+
+    acquire(iEvent, iSetup);
+
+    algoExecutionLocation_ = HeterogeneousDeviceId();
+    Devices::call_launch(input, &algoExecutionLocation_, std::move(waitingTaskHolder));
   }
 
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override final {
@@ -176,9 +261,8 @@ private:
     Devices::call_produce(algoExecutionLocation_, iEvent, iSetup);
   }
 
-  const HeterogeneousProductBase *input_;
+  std::vector<edm::EDGetTokenT<HeterogeneousProduct> > tokens_;
   HeterogeneousDeviceId algoExecutionLocation_;
-  bool wasScheduleCalled_;
 };
 
 #endif
