@@ -1,6 +1,7 @@
-#ifndef HeterogeneousCore_AcceleratorService_HeterogeneousEDProducer_h
-#define HeterogeneousCore_AcceleratorService_HeterogeneousEDProducer_h
+#ifndef HeterogeneousCore_HeterogneousEDProducer_HeterogeneousEDProducer_h
+#define HeterogeneousCore_HeterogneousEDProducer_HeterogeneousEDProducer_h
 
+#include "FWCore/Concurrency/interface/WaitingTaskWithArenaHolder.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -8,9 +9,6 @@
 #include "DataFormats/Common/interface/Handle.h"
 
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
-
-#include "HeterogeneousCore/AcceleratorService/interface/AcceleratorService.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include <cuda/api_wrappers.h> // TODO: we need to split this file to minimize unnecessary dependencies
 
