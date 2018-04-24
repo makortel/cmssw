@@ -1,4 +1,4 @@
-#include "HeterogeneousCore/AcceleratorService/interface/HeterogeneousEDProducer.h"
+#include "HeterogeneousCore/Producer/interface/HeterogeneousEDProducer.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"

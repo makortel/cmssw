@@ -14,17 +14,16 @@ process.options = cms.untracked.PSet(
 
 
 #process.Tracer = cms.Service("Tracer")
-process.AcceleratorService = cms.Service("AcceleratorService")
 process.CUDAService = cms.Service("CUDAService")
-process.prod1 = cms.EDProducer('TestAcceleratorServiceProducerGPU2')
-process.prod2 = cms.EDProducer('TestAcceleratorServiceProducerGPU2',
+process.prod1 = cms.EDProducer('TestHeterogeneousEDProducerGPU')
+process.prod2 = cms.EDProducer('TestHeterogeneousEDProducerGPU',
     src = cms.InputTag("prod1"),
 )
-process.prod3 = cms.EDProducer('TestAcceleratorServiceProducerGPU2',
+process.prod3 = cms.EDProducer('TestHeterogeneousEDProducerGPU',
     src = cms.InputTag("prod1"),
 )
-process.prod4 = cms.EDProducer('TestAcceleratorServiceProducerGPU2')
-process.ana = cms.EDAnalyzer("TestAcceleratorServiceAnalyzer",
+process.prod4 = cms.EDProducer('TestHeterogeneousEDProducerGPU')
+process.ana = cms.EDAnalyzer("TestHeterogeneousEDProducerAnalyzer",
     src = cms.VInputTag("prod2", "prod3", "prod4")
 )
 
