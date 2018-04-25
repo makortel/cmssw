@@ -47,8 +47,8 @@ private:
   void launchCPU() override;
   void launchGPUMock(std::function<void()> callback);
 
-  void produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
-  void produceGPUMock(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
+  void produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
 };
 
 TestHeterogeneousEDProducerGPUMock::TestHeterogeneousEDProducerGPUMock(edm::ParameterSet const& iConfig):
@@ -125,23 +125,22 @@ void TestHeterogeneousEDProducerGPUMock::launchGPUMock(std::function<void()> cal
   edm::LogPrint("TestHeterogeneousEDProducerGPUMock") << " " << label_ << " TestHeterogeneousEDProducerGPUMock::launchGPUMock end event " << eventId_ << " stream " << streamId_;
 }
 
-void TestHeterogeneousEDProducerGPUMock::produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void TestHeterogeneousEDProducerGPUMock::produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestHeterogeneousEDProducerGPUMock") << label_ << " TestHeterogeneousEDProducerGPUMock::produceCPU begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  iEvent.put(std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::cpuProduct(std::move(output_)))));
+  iEvent.put<OutputType>(std::make_unique<unsigned int>(output_));
 
   edm::LogPrint("TestHeterogeneousEDProducerGPUMock") << label_ << " TestHeterogeneousEDProducerGPUMock::produceCPU end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << output_;
 }
 
-void TestHeterogeneousEDProducerGPUMock::produceGPUMock(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void TestHeterogeneousEDProducerGPUMock::produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestHeterogeneousEDProducerGPUMock") << label_ << " TestHeterogeneousEDProducerGPUMock::produceGPUMock begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  iEvent.put(std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::gpuMockProduct(std::move(gpuOutput_)),
-                                                               location,
-                                                               [this](const unsigned int& src, unsigned int& dst) {
-                                                                 edm::LogPrint("TestHeterogeneousEDProducerGPUMock") << "  " << label_ << " Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
-                                                                 dst = src;
-                                                               })));
+  iEvent.put<OutputType>(std::make_unique<unsigned int>(gpuOutput_),
+                         [this](const unsigned int& src, unsigned int& dst) {
+                           edm::LogPrint("TestHeterogeneousEDProducerGPUMock") << "  " << label_ << " Task (GPU) for event " << eventId_ << " in stream " << streamId_ << " copying to CPU";
+                           dst = src;
+                         });
 
   edm::LogPrint("TestHeterogeneousEDProducerGPUMock") << label_ << " TestHeterogeneousEDProducerGPUMock::produceGPUMock end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << gpuOutput_;
 }
