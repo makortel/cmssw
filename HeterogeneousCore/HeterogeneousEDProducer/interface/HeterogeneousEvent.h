@@ -11,8 +11,15 @@ namespace edm {
   public:
     HeterogeneousEvent(edm::Event *event, HeterogeneousDeviceId location): event_(event), location_(location) {}
 
+    // Accessors to members
     edm::Event& event() { return *event_; }
     const edm::Event& event() const { return *event_; }
+    const HeterogeneousDeviceId& location() const { return location_; }
+
+    // Delegate to edm::Event
+    auto id() const { return constEvent_->id(); }
+    auto streamID() const { return constEvent_->streamID(); }
+
 
     template <typename Product, typename Token, typename Type>
     void getByToken(const Token& token, edm::Handle<Type>& handle) const {
@@ -40,7 +47,7 @@ namespace edm {
     template <typename Product, typename Type>
     void put(std::unique_ptr<Type> product) {
       assert(location_.deviceType() == HeterogeneousDevice::kCPU);
-      event_->put(std::make_unique<HeterogeneousProduct>(Type(heterogeneous::HeterogeneousDeviceTag<HeterogeneousDevice::kCPU>(), std::move(*product))));
+      event_->put(std::make_unique<HeterogeneousProduct>(Product(heterogeneous::HeterogeneousDeviceTag<HeterogeneousDevice::kCPU>(), std::move(*product))));
     }
 
     template <typename Product, typename Type, typename F>

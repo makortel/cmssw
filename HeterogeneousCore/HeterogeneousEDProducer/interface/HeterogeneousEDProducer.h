@@ -31,26 +31,26 @@ namespace heterogeneous {
   class CPU {
   public:
     bool call_launchCPU(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceCPU(const HeterogeneousDeviceId& algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup) {
+    void call_produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
       produceCPU(iEvent, iSetup);
     }
 
   private:
     virtual void launchCPU() = 0;
-    virtual void produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
+    virtual void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
   MAKE_MAPPING(CPU, HeterogeneousDevice::kCPU);
 
   class GPUMock {
   public:
     bool call_launchGPUMock(DeviceBitSet inputLocation, HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceGPUMock(const HeterogeneousDeviceId& algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup) {
-      produceGPUMock(algoExecutionLocation, iEvent, iSetup);
+    void call_produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
+      produceGPUMock(iEvent, iSetup);
     }
 
   private:
     virtual void launchGPUMock(std::function<void()> callback) = 0;
-    virtual void produceGPUMock(const HeterogeneousDeviceId& location, edm::Event& iEvent, const edm::EventSetup& iSetup) = 0;
+    virtual void produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
   MAKE_MAPPING(GPUMock, HeterogeneousDevice::kGPUMock);
 
@@ -59,7 +59,7 @@ namespace heterogeneous {
     using CallbackType = std::function<void(cuda::device::id_t, cuda::stream::id_t, cuda::status_t)>;
 
     bool call_launchGPUCuda(DeviceBitSet inputLocation, HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceGPUCuda(const HeterogeneousDeviceId& algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup);
+    void call_produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup);
 
   private:
     virtual void launchGPUCuda(CallbackType callback) = 0;
@@ -110,12 +110,12 @@ namespace heterogeneous {
   template <typename T, typename D, typename ...Devices>
   struct CallProduce<T, D, Devices...> {
     template <typename ...Args>
-    static void call(T& ref, const HeterogeneousDeviceId& algoExecutionLocation, Args&&... args) {
-      if(algoExecutionLocation.deviceType() == Mapping<D>::deviceEnum) {
-        Mapping<D>::produce(ref, algoExecutionLocation, std::forward<Args>(args)...);
+    static void call(T& ref, edm::HeterogeneousEvent& iEvent, Args&&... args) {
+      if(iEvent.location().deviceType() == Mapping<D>::deviceEnum) {
+        Mapping<D>::produce(ref, iEvent, std::forward<Args>(args)...);
       }
       else {
-        CallProduce<T, Devices...>::call(ref, algoExecutionLocation, std::forward<Args>(args)...);
+        CallProduce<T, Devices...>::call(ref, iEvent, std::forward<Args>(args)...);
       }
     }
   };
@@ -135,8 +135,8 @@ namespace heterogeneous {
       CallLaunch<HeterogeneousDevices, Devices...>::call(*this, input, algoExecutionLocation, std::move(waitingTaskHolder));
     }
 
-    void call_produce(const HeterogeneousDeviceId &algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup) {
-      CallProduce<HeterogeneousDevices, Devices...>::call(*this, algoExecutionLocation, iEvent, iSetup);
+    void call_produce(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
+      CallProduce<HeterogeneousDevices, Devices...>::call(*this, iEvent, iSetup);
     }
   };
 } // end namespace heterogeneous
@@ -186,7 +186,8 @@ private:
       // TODO: eventually fall back to CPU
       throw cms::Exception("LogicError") << "Trying to produce(), but algorithm was not executed successfully anywhere?";
     }
-    Devices::call_produce(algoExecutionLocation_, iEvent, iSetup);
+    auto eventWrapper = edm::HeterogeneousEvent(&iEvent, algoExecutionLocation_);
+    Devices::call_produce(eventWrapper, iSetup);
   }
 
   std::vector<edm::EDGetTokenT<HeterogeneousProduct> > tokens_;

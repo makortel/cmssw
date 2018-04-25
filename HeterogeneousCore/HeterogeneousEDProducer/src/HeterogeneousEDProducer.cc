@@ -99,15 +99,13 @@ namespace heterogeneous {
     return true;
   }
 
-  void GPUCuda::call_produceGPUCuda(const HeterogeneousDeviceId& algoExecutionLocation, edm::Event& iEvent, const edm::EventSetup& iSetup) {
+  void GPUCuda::call_produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
     // I guess we have to assume that produce() may be called from a different thread than acquire() was run
     // The current CUDA device is a thread-local property, so have to set it here
     edm::Service<CUDAService> cudaService;
     // TODO: Consider using cuda::device::current::scoped_override_t<>?
-    cudaService->setCurrentDevice(algoExecutionLocation.deviceId());
+    cudaService->setCurrentDevice(iEvent.location().deviceId());
 
-    auto eventWrapper = edm::HeterogeneousEvent(&iEvent, algoExecutionLocation);
-
-    produceGPUCuda(eventWrapper, iSetup);
+    produceGPUCuda(iEvent, iSetup);
   }
 }

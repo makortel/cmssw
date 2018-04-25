@@ -38,7 +38,7 @@ private:
   void launchCPU() override;
   void launchGPUCuda(CallbackType callback) override;
 
-  void produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
   void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
 
   std::string label_;
@@ -122,17 +122,17 @@ void TestHeterogeneousEDProducerGPU::launchGPUCuda(CallbackType callback) {
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << " " << label_ << " TestHeterogeneousEDProducerGPU::launchGPUCuda end event " << eventId_ << " stream " << streamId_ << " device " << cs->getCurrentDevice();
 }
 
-void TestHeterogeneousEDProducerGPU::produceCPU(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void TestHeterogeneousEDProducerGPU::produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceCPU begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  iEvent.put(std::make_unique<HeterogeneousProduct>(OutputType(heterogeneous::cpuProduct(std::move(output_)))));
+  iEvent.put<OutputType>(std::make_unique<unsigned int>(output_));
 
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceCPU end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << output_;
 }
 
 void TestHeterogeneousEDProducerGPU::produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
   edm::Service<CUDAService> cs;
-  edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceGPUCuda begin event " << iEvent.event().id().event() << " stream " << iEvent.event().streamID() << " device " << cs->getCurrentDevice();
+  edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceGPUCuda begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
 
   gpuAlgo_->release(label_);
   iEvent.put<OutputType>(std::make_unique<TestHeterogeneousEDProducerGPUTask::ResultTypeRaw>(gpuOutput_.first.get(), gpuOutput_.second.get()),
@@ -141,7 +141,7 @@ void TestHeterogeneousEDProducerGPU::produceGPUCuda(edm::HeterogeneousEvent& iEv
                            dst = TestHeterogeneousEDProducerGPUTask::getResult(src);
                          });
 
-  edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceGPUCuda end event " << iEvent.event().id().event() << " stream " << iEvent.event().streamID() << " device " << cs->getCurrentDevice();
+  edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceGPUCuda end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
 }
 
 DEFINE_FWK_MODULE(TestHeterogeneousEDProducerGPU);
