@@ -7,6 +7,7 @@
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
+#include "HeterogeneousCore/CUDACore/interface/GPUCuda.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
 #include "TestHeterogeneousEDProducerGPUHelpers.h"

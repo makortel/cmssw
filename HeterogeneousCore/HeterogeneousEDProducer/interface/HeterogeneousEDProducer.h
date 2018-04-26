@@ -10,25 +10,7 @@
 
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 #include "HeterogeneousCore/HeterogeneousEDProducer/interface/HeterogeneousEvent.h"
-
-#include <cuda/api_wrappers.h> // TODO: we need to split this file to minimize unnecessary dependencies
-
-namespace heterogeneous {
-  template <typename T> struct Mapping;
-}
-
-#define DEFINE_DEVICE_WRAPPER(DEVICE, ENUM) \
-  template <> \
-  struct Mapping<DEVICE> { \
-    template <typename ...Args> \
-    static void beginStream(DEVICE& algo, Args&&... args) { algo.call_beginStream##DEVICE(std::forward<Args>(args)...); } \
-    template <typename ...Args> \
-    static bool acquire(DEVICE& algo, Args&&... args) { return algo.call_acquire##DEVICE(std::forward<Args>(args)...); } \
-    template <typename ...Args> \
-    static void produce(DEVICE& algo, Args&&... args) { algo.call_produce##DEVICE(std::forward<Args>(args)...); } \
-    static constexpr HeterogeneousDevice deviceEnum = ENUM; \
-  }
-
+#include "HeterogeneousCore/HeterogeneousEDProducer/interface/DeviceWrapper.h"
 
 namespace heterogeneous {
   class CPU {
@@ -64,21 +46,6 @@ namespace heterogeneous {
     virtual void produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
   DEFINE_DEVICE_WRAPPER(GPUMock, HeterogeneousDevice::kGPUMock);
-
-  class GPUCuda {
-  public:
-    using CallbackType = std::function<void(cuda::device::id_t, cuda::stream::id_t, cuda::status_t)>;
-
-    void call_beginStreamGPUCuda(edm::StreamID id);
-    bool call_acquireGPUCuda(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup);
-
-  private:
-    virtual void beginStreamGPUCuda(edm::StreamID id) {};
-    virtual void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, CallbackType callback) = 0;
-    virtual void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
-  };
-  DEFINE_DEVICE_WRAPPER(GPUCuda, HeterogeneousDevice::kGPUCuda);
 }
 
 namespace heterogeneous {
