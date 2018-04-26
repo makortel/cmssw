@@ -249,6 +249,16 @@ private:
       return std::get<index>(productTuple).product();
     }
   };
+
+  // Metaprogram to return DataType or Empty
+  template <typename T>
+  struct DataTypeOrEmpty {
+    using type = typename T::DataType;
+  };
+  template<>
+  struct DataTypeOrEmpty<Empty> {
+    using type = Empty;
+  };
 }
 
 // For type erasure to ease dictionary generation
@@ -300,11 +310,16 @@ class HeterogeneousProductImpl: public HeterogeneousProductBase {
   static_assert(std::tuple_size<ProductTuple>::value == std::tuple_size<TransferToCPUTuple>::value, "Size mismatch");
   static_assert(std::tuple_size<ProductTuple>::value == static_cast<unsigned int>(HeterogeneousDevice::kSize), "Size mismatch");
 public:
+  template <HeterogeneousDevice Device, typename Type>
+  struct CanGet {
+    using FromType = typename heterogeneous::DataTypeOrEmpty<std::tuple_element_t<static_cast<unsigned int>(Device), ProductTuple> >::type;
+    static const bool value = std::is_same<Type, FromType>::value;
+  };
+
   template<HeterogeneousDevice Device, typename Type>
-  struct IsAssignable {
-    static const bool value = std::is_assignable<std::tuple_element_t<static_cast<unsigned int>(Device),
-                                                                      ProductTuple>,
-                                                 Type>::value;
+  struct CanPut {
+    using ToType = typename heterogeneous::DataTypeOrEmpty<std::tuple_element_t<static_cast<unsigned int>(Device), ProductTuple> >::type;
+    static const bool value = std::is_same<ToType, Type>::value;
   };
 
   HeterogeneousProductImpl() = default;
