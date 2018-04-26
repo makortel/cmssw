@@ -49,18 +49,9 @@ namespace heterogeneous {
     }; \
     template <typename T> struct ProductToEnum<ENUM##Product<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::k##ENUM; }
 
-
-  // CPU
   DEFINE_DEVICE_PRODUCT(CPU);
-  template <typename T> auto cpuProduct(T&& data) { return CPUProduct<T>(std::move(data)); }
-
-  // GPU Mock
   DEFINE_DEVICE_PRODUCT(GPUMock);
-  template <typename T> auto gpuMockProduct(T&& data) { return GPUMockProduct<T>(std::move(data)); }
-
-  // GPU Cuda
   DEFINE_DEVICE_PRODUCT(GPUCuda);
-  template <typename T> auto gpuCudaProduct(T&& data) { return GPUCudaProduct<T>(std::move(data)); }
 #undef DEFINE_DEVICE_PRODUCT
 
   /**
@@ -249,29 +240,6 @@ public:
   }
 
   // Constructor for CPU data
-  HeterogeneousProductImpl(CPUProduct&& data) {
-    constexpr const auto index = static_cast<unsigned int>(HeterogeneousDevice::kCPU);
-    std::get<index>(products_) = std::move(data);
-    location_[index].set(0);
-  }
-
-  /**
-   * Generic constructor for device data. A function to transfer the
-   * data to CPU has to be provided as well.
-   */
-  template <typename H, typename F>
-  HeterogeneousProductImpl(H&& data, HeterogeneousDeviceId location, F transferToCPU) {
-    constexpr const auto index = static_cast<unsigned int>(heterogeneous::ProductToEnum<std::remove_reference_t<H> >::value);
-    static_assert(!std::is_same<std::tuple_element_t<index, ProductTuple>,
-                                heterogeneous::Empty>::value,
-                  "This HeterogeneousProduct does not support this type");
-    assert(static_cast<unsigned int>(location.deviceType()) == index);
-    std::get<index>(products_) = std::move(data);
-    std::get<index>(transfersToCPU_) = std::move(transferToCPU);
-    location_[index].set(location.deviceId());
-  }
-
-  // Constructor for CPU data, alternative interface
   template <HeterogeneousDevice Device, typename D>
   HeterogeneousProductImpl(heterogeneous::HeterogeneousDeviceTag<Device>, D&& data) {
     static_assert(Device == HeterogeneousDevice::kCPU, "This overload allows only CPU device");
@@ -281,8 +249,8 @@ public:
   }
 
   /**
-   * Alternative interface to generic constructor for device data. A
-   * function to transfer the data to CPU has to be provided as well.
+   * Generic constructor for device data. A function to transfer the
+   * data to CPU has to be provided as well.
    */
   template <HeterogeneousDevice Device, typename D, typename F>
   HeterogeneousProductImpl(heterogeneous::HeterogeneousDeviceTag<Device>, D&& data, HeterogeneousDeviceId location, F transferToCPU) {
