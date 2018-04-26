@@ -12,11 +12,12 @@
 #include <chrono>
 
 namespace heterogeneous {
-  bool CPU::call_launchCPU(HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  bool CPU::call_acquireCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
     std::exception_ptr exc;
     try {
-      launchCPU();
-      *algoExecutionLocation = HeterogeneousDeviceId(HeterogeneousDevice::kCPU);
+      iEvent.setInputLocation(HeterogeneousDeviceId(HeterogeneousDevice::kCPU));
+      acquireCPU(iEvent, iSetup);
+      iEvent.locationSetter()(HeterogeneousDeviceId(HeterogeneousDevice::kCPU));
     } catch(...) {
       exc = std::current_exception();
     }
@@ -24,7 +25,7 @@ namespace heterogeneous {
     return true;
   }
 
-  bool GPUMock::call_launchGPUMock(DeviceBitSet inputLocation, HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  bool GPUMock::call_acquireGPUMock(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
     // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions
     std::random_device r;
     std::mt19937 gen(r());
@@ -35,19 +36,22 @@ namespace heterogeneous {
     }
 
     try {
-      launchGPUMock([waitingTaskHolder, // copy needed for the catch block
-                     &algoExecutionLocation = *algoExecutionLocation
-                     ]() mutable {
-                      algoExecutionLocation = HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0);
-                      waitingTaskHolder.doneWaiting(nullptr);
-                    });
+      iEvent.setInputLocation(HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0));
+      acquireGPUMock(iEvent, iSetup,
+                     [waitingTaskHolder, // copy needed for the catch block
+                      locationSetter=iEvent.locationSetter(),
+                      location=&(iEvent.location())
+                      ]() mutable {
+                       locationSetter(HeterogeneousDeviceId(HeterogeneousDevice::kGPUMock, 0));
+                       waitingTaskHolder.doneWaiting(nullptr);
+                     });
     } catch(...) {
       waitingTaskHolder.doneWaiting(std::current_exception());
     }
     return true;
   }
 
-  bool GPUCuda::call_launchGPUCuda(DeviceBitSet inputLocation, HeterogeneousDeviceId *algoExecutionLocation, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  bool GPUCuda::call_acquireGPUCuda(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
     edm::Service<CUDAService> cudaService;
     if(!cudaService->enabled()) {
       return false;
@@ -80,19 +84,21 @@ namespace heterogeneous {
     cudaService->setCurrentDevice(device);
 
     try {
-      launchGPUCuda([waitingTaskHolder, // copy needed for the catch block
-                     &algoExecutionLocation = *algoExecutionLocation
-                     ](cuda::device::id_t deviceId, cuda::stream::id_t streamId, cuda::status_t status) mutable {
-                      if(status == cudaSuccess) {
-                        algoExecutionLocation = HeterogeneousDeviceId(HeterogeneousDevice::kGPUCuda, deviceId);
-                        waitingTaskHolder.doneWaiting(nullptr);
-                      }
-                      else {
-                        auto error = cudaGetErrorName(status);
-                        auto message = cudaGetErrorString(status);
-                        waitingTaskHolder.doneWaiting(std::make_exception_ptr(cms::Exception("CUDAError") << "Callback of CUDA stream " << streamId << " in device " << deviceId << " error " << error << ": " << message));
-                      }
-                    });
+      iEvent.setInputLocation(HeterogeneousDeviceId(HeterogeneousDevice::kGPUCuda, 0));
+      acquireGPUCuda(iEvent, iSetup,
+                     [waitingTaskHolder, // copy needed for the catch block
+                      locationSetter = iEvent.locationSetter()
+                      ](cuda::device::id_t deviceId, cuda::stream::id_t streamId, cuda::status_t status) mutable {
+                       if(status == cudaSuccess) {
+                         locationSetter(HeterogeneousDeviceId(HeterogeneousDevice::kGPUCuda, deviceId));
+                         waitingTaskHolder.doneWaiting(nullptr);
+                       }
+                       else {
+                         auto error = cudaGetErrorName(status);
+                         auto message = cudaGetErrorString(status);
+                         waitingTaskHolder.doneWaiting(std::make_exception_ptr(cms::Exception("CUDAError") << "Callback of CUDA stream " << streamId << " in device " << deviceId << " error " << error << ": " << message));
+                       }
+                     });
     } catch(...) {
       waitingTaskHolder.doneWaiting(std::current_exception());
     }
