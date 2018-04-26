@@ -318,9 +318,6 @@ public:
 
   template <typename... Args>
   HeterogeneousProduct(HeterogeneousProductImpl<Args...>&& impl) {
-    //impl_.reset(new HeterogeneousProductImpl<Args...>(std::move(impl)));
-    //std::make_unique<HeterogeneousProductImpl<Args...>>(std::move(impl)))
-    //impl_ = std::make_unique<HeterogeneousProductImpl<Args...>>(std::move(impl));
     impl_.reset(static_cast<HeterogeneousProductBase *>(new HeterogeneousProductImpl<Args...>(std::move(impl))));
   }
 
