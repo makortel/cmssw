@@ -39,59 +39,34 @@ namespace heterogeneous {
   // Mapping from *Product<T> to HeterogeneousDevice enumerator
   template <typename T> struct ProductToEnum {};
 
+#define DEFINE_DEVICE_PRODUCT(ENUM) \
+    template <typename T> \
+    class ENUM##Product { \
+    public: \
+      using DataType = T; \
+      static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::k##ENUM; \
+      ENUM##Product() = default; \
+      ENUM##Product(T&& data): data_(std::move(data)) {} \
+      const T& product() const { return data_; } \
+      T& product() { return data_; } \
+    private: \
+      T data_; \
+    }; \
+    template <typename T> struct ProductToEnum<ENUM##Product<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::k##ENUM; }
+
+
   // CPU
-  template <typename T>
-  class CPUProduct {
-  public:
-    using DataType = T;
-    static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::kCPU;
-
-    CPUProduct() = default;
-    CPUProduct(T&& data): data_(std::move(data)) {}
-
-    const T& product() const { return data_; }
-    T& product() { return data_; }
-  private:
-    T data_;
-  };
-  template <typename T> struct ProductToEnum<CPUProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kCPU; };
+  DEFINE_DEVICE_PRODUCT(CPU);
   template <typename T> auto cpuProduct(T&& data) { return CPUProduct<T>(std::move(data)); }
 
   // GPU Mock
-  template <typename T>
-  class GPUMockProduct {
-  public:
-    using DataType = T;
-    static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::kGPUMock;
-
-    GPUMockProduct() = default;
-    GPUMockProduct(T&& data): data_(std::move(data)) {}
-
-    const T& product() const { return data_; }
-    T& product() { return data_; }
-private:
-    T data_;
-  };
-  template <typename T> struct ProductToEnum<GPUMockProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUMock; };
+  DEFINE_DEVICE_PRODUCT(GPUMock);
   template <typename T> auto gpuMockProduct(T&& data) { return GPUMockProduct<T>(std::move(data)); }
 
   // GPU Cuda
-  template <typename T>
-  class GPUCudaProduct {
-  public:
-    using DataType = T;
-    static constexpr const HeterogeneousDevice tag = HeterogeneousDevice::kGPUCuda;
-
-    GPUCudaProduct() = default;
-    GPUCudaProduct(T&& data): data_(std::move(data)) {}
-
-    const T& product() const { return data_; }
-    T& product() { return data_; }
-private:
-    T data_;
-  };
-  template <typename T> struct ProductToEnum<GPUCudaProduct<T>> { static constexpr const HeterogeneousDevice value = HeterogeneousDevice::kGPUCuda; };
+  DEFINE_DEVICE_PRODUCT(GPUCuda);
   template <typename T> auto gpuCudaProduct(T&& data) { return GPUCudaProduct<T>(std::move(data)); }
+#undef DEFINE_DEVICE_PRODUCT
 
   /**
    * Below are various helpers
