@@ -3,55 +3,14 @@
 
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include "HeterogeneousCore/Product/interface/HeterogeneousDeviceId.h"
+
 #include <bitset>
 #include <cassert>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <tuple>
-
-/**
- * Enumerator for heterogeneous device types
- */
-enum class HeterogeneousDevice {
-  kCPU = 0,
-  kGPUMock,
-  kGPUCuda,
-  kSize
-};
-
-namespace heterogeneous {
-  template <HeterogeneousDevice Device>
-  struct HeterogeneousDeviceTag {
-    constexpr static HeterogeneousDevice value = Device;
-  };
-}
-
-/**
- * Class to represent an identifier for a heterogeneous device.
- * Contains device type and an integer identifier.
- *
- * TODO: actually make use of this class elsewhere.
- */
-class HeterogeneousDeviceId {
-public:
-  constexpr static auto kInvalidDevice = HeterogeneousDevice::kSize;
-
-  HeterogeneousDeviceId():
-    deviceType_(kInvalidDevice),
-    deviceId_(0)
-  {}
-  explicit HeterogeneousDeviceId(HeterogeneousDevice device, unsigned int id=0):
-    deviceType_(device), deviceId_(id)
-  {}
-
-  HeterogeneousDevice deviceType() const { return deviceType_; }
-
-  unsigned int deviceId() const { return deviceId_; }
-private:
-  HeterogeneousDevice deviceType_;
-  unsigned int deviceId_;
-};
 
 namespace heterogeneous {
   constexpr const unsigned int kMaxDevices = 16;

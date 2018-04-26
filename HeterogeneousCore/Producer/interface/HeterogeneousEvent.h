@@ -4,7 +4,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 
-#include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
+#include "HeterogeneousCore/Product/interface/HeterogeneousDeviceId.h"
 
 namespace edm {
   class HeterogeneousEvent {
