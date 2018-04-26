@@ -1,5 +1,5 @@
-#ifndef HeterogeneousCore_Product_interface_HeterogeneousData_h
-#define HeterogeneousCore_Product_interface_HeterogeneousData_h
+#ifndef HeterogeneousCore_Product_HeterogeneousProduct_h
+#define HeterogeneousCore_Product_HeterogeneousProduct_h
 
 #include "FWCore/Utilities/interface/Exception.h"
 
