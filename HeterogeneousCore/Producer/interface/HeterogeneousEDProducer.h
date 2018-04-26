@@ -20,6 +20,8 @@ namespace heterogeneous {
   template <> \
   struct Mapping<DEVICE> { \
     template <typename ...Args> \
+    static void beginStream(DEVICE& algo, Args&&... args) { algo.call_beginStream##DEVICE(std::forward<Args>(args)...); } \
+    template <typename ...Args> \
     static bool acquire(DEVICE& algo, Args&&... args) { return algo.call_acquire##DEVICE(std::forward<Args>(args)...); } \
     template <typename ...Args> \
     static void produce(DEVICE& algo, Args&&... args) { algo.call_produce##DEVICE(std::forward<Args>(args)...); } \
@@ -30,12 +32,16 @@ namespace heterogeneous {
 namespace heterogeneous {
   class CPU {
   public:
+    void call_beginStreamCPU(edm::StreamID id) {
+      beginStreamCPU(id);
+    }
     bool call_acquireCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
     void call_produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
       produceCPU(iEvent, iSetup);
     }
 
   private:
+    virtual void beginStreamCPU(edm::StreamID id) {};
     virtual void acquireCPU(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
     virtual void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
@@ -43,12 +49,16 @@ namespace heterogeneous {
 
   class GPUMock {
   public:
+    void call_beginStreamGPUMock(edm::StreamID id) {
+      beginStreamGPUMock(id);
+    }
     bool call_acquireGPUMock(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
     void call_produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
       produceGPUMock(iEvent, iSetup);
     }
 
   private:
+    virtual void beginStreamGPUMock(edm::StreamID id) {};
     virtual void acquireGPUMock(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, std::function<void()> callback) = 0;
     virtual void produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
@@ -58,10 +68,12 @@ namespace heterogeneous {
   public:
     using CallbackType = std::function<void(cuda::device::id_t, cuda::stream::id_t, cuda::status_t)>;
 
+    void call_beginStreamGPUCuda(edm::StreamID id);
     bool call_acquireGPUCuda(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
     void call_produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup);
 
   private:
+    virtual void beginStreamGPUCuda(edm::StreamID id) {};
     virtual void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, CallbackType callback) = 0;
     virtual void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
@@ -71,6 +83,27 @@ namespace heterogeneous {
 #undef MAKE_MAPPING
 
 namespace heterogeneous {
+  ////////////////////
+  template <typename ...Args>
+  struct CallBeginStream;
+  template <typename T, typename D, typename ...Devices>
+  struct CallBeginStream<T, D, Devices...> {
+    template <typename ...Args>
+    static void call(T& ref, Args&&... args) {
+      // may not perfect-forward here in order to be able to forward arguments to next CallBeginStream.
+      Mapping<D>::beginStream(ref, args...);
+      CallBeginStream<T, Devices...>::call(ref, std::forward<Args>(args)...);
+    }
+  };
+  // break recursion and require CPU to be the last
+  template <typename T>
+  struct CallBeginStream<T, CPU> {
+    template <typename ...Args>
+    static void call(T& ref, Args&&... args) {
+      Mapping<CPU>::beginStream(ref, std::forward<Args>(args)...);
+    }
+  };
+
   ////////////////////
   template <typename ...Args>
   struct CallAcquire;
@@ -129,6 +162,10 @@ namespace heterogeneous {
   template <typename ...Devices>
   class HeterogeneousDevices: public Devices... {
   public:
+    void call_beginStream(edm::StreamID id) {
+      CallBeginStream<HeterogeneousDevices, Devices...>::call(*this, id);
+    }
+
     void call_acquire(const HeterogeneousProductBase *input,
                       edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup,
                       edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
@@ -155,6 +192,10 @@ protected:
   }
 
 private:
+  void beginStream(edm::StreamID id) {
+    Devices::call_beginStream(id);
+  }
+
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override final {
     const HeterogeneousProductBase *input = nullptr;
 
