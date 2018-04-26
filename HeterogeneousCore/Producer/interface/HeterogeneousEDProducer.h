@@ -16,7 +16,8 @@
 namespace heterogeneous {
   template <typename T> struct Mapping;
 }
-#define MAKE_MAPPING(DEVICE, ENUM) \
+
+#define DEFINE_DEVICE_WRAPPER(DEVICE, ENUM) \
   template <> \
   struct Mapping<DEVICE> { \
     template <typename ...Args> \
@@ -45,7 +46,7 @@ namespace heterogeneous {
     virtual void acquireCPU(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
     virtual void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
-  MAKE_MAPPING(CPU, HeterogeneousDevice::kCPU);
+  DEFINE_DEVICE_WRAPPER(CPU, HeterogeneousDevice::kCPU);
 
   class GPUMock {
   public:
@@ -62,7 +63,7 @@ namespace heterogeneous {
     virtual void acquireGPUMock(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, std::function<void()> callback) = 0;
     virtual void produceGPUMock(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
-  MAKE_MAPPING(GPUMock, HeterogeneousDevice::kGPUMock);
+  DEFINE_DEVICE_WRAPPER(GPUMock, HeterogeneousDevice::kGPUMock);
 
   class GPUCuda {
   public:
@@ -77,10 +78,8 @@ namespace heterogeneous {
     virtual void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, CallbackType callback) = 0;
     virtual void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
-  MAKE_MAPPING(GPUCuda, HeterogeneousDevice::kGPUCuda);
+  DEFINE_DEVICE_WRAPPER(GPUCuda, HeterogeneousDevice::kGPUCuda);
 }
-
-#undef MAKE_MAPPING
 
 namespace heterogeneous {
   ////////////////////
