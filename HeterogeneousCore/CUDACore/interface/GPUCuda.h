@@ -22,6 +22,8 @@ namespace heterogeneous {
     virtual void beginStreamGPUCuda(edm::StreamID id) {};
     virtual void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, CallbackType callback) = 0;
     virtual void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
+
+    int deviceId_ = -1; // device assigned to this edm::Stream
   };
   DEFINE_DEVICE_WRAPPER(GPUCuda, HeterogeneousDevice::kGPUCuda);
 }
