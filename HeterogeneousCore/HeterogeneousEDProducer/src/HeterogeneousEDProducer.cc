@@ -51,6 +51,10 @@ namespace heterogeneous {
     return true;
   }
 
+  void GPUCuda::call_beginStreamGPUCuda(edm::StreamID id) {
+    beginStreamGPUCuda(id);
+  }
+
   bool GPUCuda::call_acquireGPUCuda(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
     edm::Service<CUDAService> cudaService;
     if(!cudaService->enabled()) {
