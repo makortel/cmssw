@@ -5,6 +5,7 @@
 #include "DataFormats/Common/interface/Handle.h"
 
 #include "HeterogeneousCore/Product/interface/HeterogeneousDeviceId.h"
+#include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
 namespace edm {
   class HeterogeneousEvent {
