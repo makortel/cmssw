@@ -28,8 +28,8 @@ namespace heterogeneous {
     //   * would probably still need some buffer space/device to hold e.g. conditions data
     //     - for conditions, how to handle multiple lumis per job?
     deviceId_ = id % cudaService->numberOfDevices();
-    // TODO: Consider using cuda::device::current::scoped_override_t<>?
-    cudaService->setCurrentDevice(deviceId_);
+
+    cuda::device::current::scoped_override_t<> setDeviceForThisScope(deviceId_);
 
     // Create the CUDA stream for this module-edm::Stream pair
     auto current_device = cuda::device::current::get();
@@ -44,8 +44,7 @@ namespace heterogeneous {
       return false;
     }
 
-    // TODO: Consider using cuda::device::current::scoped_override_t<>?
-    cudaService->setCurrentDevice(deviceId_);
+    cuda::device::current::scoped_override_t<> setDeviceForThisScope(deviceId_);
 
     try {
       iEvent.setInputLocation(HeterogeneousDeviceId(HeterogeneousDevice::kGPUCuda, 0));
@@ -74,9 +73,7 @@ namespace heterogeneous {
   void GPUCuda::call_produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
     // I guess we have to assume that produce() may be called from a different thread than acquire() was run
     // The current CUDA device is a thread-local property, so have to set it here
-    edm::Service<CUDAService> cudaService;
-    // TODO: Consider using cuda::device::current::scoped_override_t<>?
-    cudaService->setCurrentDevice(iEvent.location().deviceId());
+    cuda::device::current::scoped_override_t<> setDeviceForThisScope(deviceId_);
 
     produceGPUCuda(iEvent, iSetup, *cudaStream_);
   }
