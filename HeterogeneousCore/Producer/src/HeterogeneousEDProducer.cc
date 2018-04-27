@@ -1,6 +1,6 @@
 #include "HeterogeneousCore/Producer/interface/HeterogeneousEDProducer.h"
 
-#include "FWCore/MessageLogger/interface/MessageLogger.h" 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include <exception>
 #include <thread>
