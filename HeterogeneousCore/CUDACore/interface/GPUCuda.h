@@ -9,6 +9,8 @@
 
 #include <cuda/api_wrappers.h>
 
+#include <memory>
+
 namespace heterogeneous {
   class GPUCuda {
   public:
@@ -19,10 +21,11 @@ namespace heterogeneous {
     void call_produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup);
 
   private:
-    virtual void beginStreamGPUCuda(edm::StreamID id) {};
-    virtual void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, CallbackType callback) = 0;
-    virtual void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
+    virtual void beginStreamGPUCuda(edm::StreamID id, cuda::stream_t<>& cudaStream) {};
+    virtual void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) = 0;
+    virtual void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) = 0;
 
+    std::unique_ptr<cuda::stream_t<>> cudaStream_;
     int deviceId_ = -1; // device assigned to this edm::Stream
   };
   DEFINE_DEVICE_WRAPPER(GPUCuda, HeterogeneousDevice::kGPUCuda);

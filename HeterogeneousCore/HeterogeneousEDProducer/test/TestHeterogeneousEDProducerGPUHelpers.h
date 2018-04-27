@@ -22,10 +22,8 @@ public:
   using ResultTypeRaw = std::pair<PtrRaw, PtrRaw>;
   using ConstResultTypeRaw = std::pair<const PtrRaw, const PtrRaw>;
 
-  using CallbackType = std::function<void(cuda::device::id_t, cuda::stream::id_t, cuda::status_t)>;
-
-  ResultType runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, CallbackType callback);
-  void release(const std::string& label);
+  ResultType runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, cuda::stream_t<>& stream);
+  void release(const std::string& label, cuda::stream_t<>& stream);
   static int getResult(const ResultTypeRaw& d_ac);
 
 private:

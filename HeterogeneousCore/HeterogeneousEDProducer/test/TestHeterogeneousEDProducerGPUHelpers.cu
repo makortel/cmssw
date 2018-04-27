@@ -108,7 +108,7 @@ namespace {
 }
 
 TestHeterogeneousEDProducerGPUTask::ResultType
-TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, CallbackType callback) {
+TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, cuda::stream_t<>& stream) {
   // First make the sanity check
   if(inputArrays.first != nullptr) {
     auto h_check = std::make_unique<float[]>(NUM_VALUES);
@@ -141,8 +141,6 @@ TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input,
   d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
 
   // Create stream
-  streamPtr = std::make_unique<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
-  auto& stream = *streamPtr;
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(float), stream.id());
   cuda::memory::async::copy(d_b.get(), h_b.get(), NUM_VALUES*sizeof(float), stream.id());
 
@@ -170,19 +168,13 @@ TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input,
 
   matrixMulVector<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_mc.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
-  edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU kernels launched, enqueueing the callback device " << current_device.id() << " CUDA stream " << stream.id();
-  stream.enqueue.callback([callback, dev=current_device.id(), label](cuda::stream::id_t stream_id, cuda::status_t status){
-      edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU kernel finished (in callback) device " << dev << " CUDA stream " << stream_id;
-      callback(dev, stream_id, status);
-    });
-
-  edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU finished, returning return pointer device " << current_device.id() << " CUDA stream " << stream.id();
+  edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU kernels launched, returning return pointer device " << current_device.id() << " CUDA stream " << stream.id();
   return std::make_pair(std::move(d_a), std::move(d_c));
 }
 
-void TestHeterogeneousEDProducerGPUTask::release(const std::string& label) {
+void TestHeterogeneousEDProducerGPUTask::release(const std::string& label, cuda::stream_t<>& stream) {
   // any way to automate the release?
-  edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU releasing temporary memory device " << cuda::stream::associated_device(streamPtr->id()) << " CUDA stream " << streamPtr->id();
+  edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU releasing temporary memory device " << cuda::stream::associated_device(stream.id()) << " CUDA stream " << stream.id();
   h_a.reset();
   h_b.reset();
   d_b.reset();
@@ -190,9 +182,6 @@ void TestHeterogeneousEDProducerGPUTask::release(const std::string& label) {
   d_ma.reset();
   d_mb.reset();
   d_mc.reset();
-
-  // release also the stream
-  streamPtr.reset();
 }
 
 int TestHeterogeneousEDProducerGPUTask::getResult(const ResultTypeRaw& d_ac) {
