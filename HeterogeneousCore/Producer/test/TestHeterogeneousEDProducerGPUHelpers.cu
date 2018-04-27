@@ -107,6 +107,18 @@ namespace {
   constexpr int NUM_VALUES = 10000;
 }
 
+TestHeterogeneousEDProducerGPUTask::TestHeterogeneousEDProducerGPUTask() {
+  h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
+  h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
+
+  auto current_device = cuda::device::current::get();
+  d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
+
+  d_ma = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+  d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+  d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
+}
+
 TestHeterogeneousEDProducerGPUTask::ResultType
 TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, cuda::stream_t<>& stream) {
   // First make the sanity check
@@ -120,9 +132,6 @@ TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input,
     }
   }
 
-  h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
-  h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
-
   for (auto i=0; i<NUM_VALUES; i++) {
     h_a[i] = i;
     h_b[i] = i*i;
@@ -130,15 +139,10 @@ TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input,
 
   auto current_device = cuda::device::current::get();
   auto d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
-  d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   auto d_c = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   if(inputArrays.second != nullptr) {
     d_d = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
   }
-
-  d_ma = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
-  d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
-  d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
 
   // Create stream
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(float), stream.id());
@@ -175,13 +179,7 @@ TestHeterogeneousEDProducerGPUTask::runAlgo(const std::string& label, int input,
 void TestHeterogeneousEDProducerGPUTask::release(const std::string& label, cuda::stream_t<>& stream) {
   // any way to automate the release?
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU releasing temporary memory device " << cuda::stream::associated_device(stream.id()) << " CUDA stream " << stream.id();
-  h_a.reset();
-  h_b.reset();
-  d_b.reset();
   d_d.reset();
-  d_ma.reset();
-  d_mb.reset();
-  d_mc.reset();
 }
 
 int TestHeterogeneousEDProducerGPUTask::getResult(const ResultTypeRaw& d_ac) {

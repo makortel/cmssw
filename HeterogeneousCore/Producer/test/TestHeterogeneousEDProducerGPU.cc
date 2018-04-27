@@ -34,6 +34,8 @@ private:
   using OutputType = HeterogeneousProductImpl<heterogeneous::CPUProduct<unsigned int>,
                                               heterogeneous::GPUCudaProduct<TestHeterogeneousEDProducerGPUTask::ResultTypeRaw>>;
 
+  void beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) override;
+
   void acquireCPU(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
   void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
 
@@ -59,11 +61,6 @@ TestHeterogeneousEDProducerGPU::TestHeterogeneousEDProducerGPU(edm::ParameterSet
     srcToken_ = consumesHeterogeneous(srcTag);
   }
 
-  edm::Service<CUDAService> cudaService;
-  if(cudaService->enabled()) {
-    gpuAlgo_ = std::make_unique<TestHeterogeneousEDProducerGPUTask>();
-  }
-
   produces<HeterogeneousProduct>();
 }
 
@@ -71,6 +68,16 @@ void TestHeterogeneousEDProducerGPU::fillDescriptions(edm::ConfigurationDescript
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag());
   descriptions.add("testHeterogeneousEDProducerGPU2", desc);
+}
+
+void TestHeterogeneousEDProducerGPU::beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) {
+  edm::Service<CUDAService> cs;
+
+  edm::LogPrint("TestHeterogeneousEDProducerGPU") << " " << label_ << " TestHeterogeneousEDProducerGPU::beginStreamGPUCuda begin stream " << streamId << " device " << cs->getCurrentDevice();
+
+  gpuAlgo_ = std::make_unique<TestHeterogeneousEDProducerGPUTask>();
+
+  edm::LogPrint("TestHeterogeneousEDProducerGPU") << " " << label_ << " TestHeterogeneousEDProducerGPU::beginStreamGPUCuda end stream " << streamId << " device " << cs->getCurrentDevice();
 }
 
 void TestHeterogeneousEDProducerGPU::acquireCPU(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
