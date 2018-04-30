@@ -182,9 +182,10 @@ void TestHeterogeneousEDProducerGPUTask::release(const std::string& label, cuda:
   d_d.reset();
 }
 
-int TestHeterogeneousEDProducerGPUTask::getResult(const ResultTypeRaw& d_ac) {
+int TestHeterogeneousEDProducerGPUTask::getResult(const ResultTypeRaw& d_ac, cuda::stream_t<>& stream) {
   auto h_c = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
-  cuda::memory::copy(h_c.get(), d_ac.second, NUM_VALUES*sizeof(int));
+  cuda::memory::async::copy(h_c.get(), d_ac.second, NUM_VALUES*sizeof(int), stream.id());
+  stream.synchronize();
 
   float ret = 0;
   for (auto i=0; i<NUM_VALUES; i++) {

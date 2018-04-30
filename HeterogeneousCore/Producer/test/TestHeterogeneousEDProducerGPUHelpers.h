@@ -24,7 +24,7 @@ public:
 
   ResultType runAlgo(const std::string& label, int input, const ResultTypeRaw inputArrays, cuda::stream_t<>& stream);
   void release(const std::string& label, cuda::stream_t<>& stream);
-  static int getResult(const ResultTypeRaw& d_ac);
+  static int getResult(const ResultTypeRaw& d_ac, cuda::stream_t<>& stream);
 
 private:
   std::unique_ptr<cuda::stream_t<>> streamPtr;

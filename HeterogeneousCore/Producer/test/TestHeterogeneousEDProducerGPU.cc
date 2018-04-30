@@ -135,9 +135,17 @@ void TestHeterogeneousEDProducerGPU::produceGPUCuda(edm::HeterogeneousEvent& iEv
 
   gpuAlgo_->release(label_, cudaStream);
   iEvent.put<OutputType>(std::make_unique<TestHeterogeneousEDProducerGPUTask::ResultTypeRaw>(gpuOutput_.first.get(), gpuOutput_.second.get()),
-                         [this, eventId=iEvent.event().id().event(), streamId=iEvent.event().streamID()](const TestHeterogeneousEDProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
+                         [this, eventId=iEvent.event().id().event(), streamId=iEvent.event().streamID(),
+                          dev=cs->getCurrentDevice(), &cudaStream
+                          ](const TestHeterogeneousEDProducerGPUTask::ResultTypeRaw& src, unsigned int& dst) {
+                           // TODO: try to abstract both the current device setting and the delivery of cuda::stream to this function
+                           // It needs some further thought so I leave it now as it is
+                           // Maybe "per-thread default stream" would help as they are regular CUDA streams (wrt. to the default stream)?
+                           // Or not, because the current device has to be set correctly.
+                           // Maybe we should initiate the transfer in all cases?
+                           cuda::device::current::scoped_override_t<> setDeviceForThisScope(dev);
                            edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label_ << " Copying from GPU to CPU for event " << eventId << " in stream " << streamId;
-                           dst = TestHeterogeneousEDProducerGPUTask::getResult(src);
+                           dst = TestHeterogeneousEDProducerGPUTask::getResult(src, cudaStream);
                          });
 
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceGPUCuda end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
