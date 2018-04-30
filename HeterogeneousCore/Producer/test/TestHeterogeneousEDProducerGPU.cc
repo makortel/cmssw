@@ -19,7 +19,14 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-
+/**
+ * The purpose of this test is to demonstrate the following
+ * - EDProducer implementing an algorithm for CPU and a CUDA GPU
+ * - How to initialize the GPU algorithm and make once-per-job-per-stream allocations on the device
+ * - How to read heterogeneous product from event
+ * - How to write heterogeneous product to event
+ *   * Especially pointers to device memory
+ */
 class TestHeterogeneousEDProducerGPU: public HeterogeneousEDProducer<heterogeneous::HeterogeneousDevices <
                                                                        heterogeneous::GPUCuda,
                                                                        heterogeneous::CPU

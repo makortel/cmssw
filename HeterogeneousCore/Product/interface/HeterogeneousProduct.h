@@ -280,6 +280,12 @@ private:
   TransferToCPUTuple transfersToCPU_;
 };
 
+/**
+ * The main purpose of the HeterogeneousProduct,
+ * HeterogeneousProductBase, HeterogeneousProductImpl<...> class
+ * hierarchy is to avoid the dictionary generation for the concrete
+ * HeterogeneousProductImpl<...>'s.
+ */
 class HeterogeneousProduct {
 public:
   HeterogeneousProduct() = default;

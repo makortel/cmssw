@@ -12,6 +12,14 @@
 #include <random>
 #include <thread>
 
+/**
+ * The purpose of this test is to demonstrate the following
+ * - EDProducer implementing an algorithm for CPU and a (mock GPU) device
+ *   * The mock device exercises all the structures without a need for actual device
+ * - How to read heterogeneous product from event
+ * - How to read normal product from event
+ * - How to write heterogeneous product to event
+ */
 class TestHeterogeneousEDProducerGPUMock: public HeterogeneousEDProducer<heterogeneous::HeterogeneousDevices<
                                                                            heterogeneous::GPUMock,
                                                                            heterogeneous::CPU
