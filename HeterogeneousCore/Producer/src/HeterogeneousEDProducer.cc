@@ -8,6 +8,8 @@
 #include <chrono>
 
 namespace heterogeneous {
+  CPU::~CPU() noexcept(false) {}
+
   bool CPU::call_acquireCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
     std::exception_ptr exc;
     try {
@@ -20,6 +22,8 @@ namespace heterogeneous {
     waitingTaskHolder.doneWaiting(exc);
     return true;
   }
+
+  GPUMock::~GPUMock() noexcept(false) {}
 
   bool GPUMock::call_acquireGPUMock(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
     // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions

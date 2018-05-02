@@ -9,6 +9,8 @@
 #include <exception>
 
 namespace heterogeneous {
+  GPUCuda::~GPUCuda() noexcept(false) {}
+
   void GPUCuda::call_beginStreamGPUCuda(edm::StreamID id) {
     edm::Service<CUDAService> cudaService;
     if(!cudaService->enabled()) {

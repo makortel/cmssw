@@ -16,6 +16,8 @@ namespace heterogeneous {
   public:
     using CallbackType = std::function<void(cuda::device::id_t, cuda::stream::id_t, cuda::status_t)>;
 
+    virtual ~GPUCuda() noexcept(false);
+
     void call_beginStreamGPUCuda(edm::StreamID id);
     bool call_acquireGPUCuda(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
     void call_produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup);

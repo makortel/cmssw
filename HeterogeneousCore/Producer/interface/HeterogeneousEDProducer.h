@@ -15,6 +15,8 @@
 namespace heterogeneous {
   class CPU {
   public:
+    virtual ~CPU() noexcept(false);
+
     void call_beginStreamCPU(edm::StreamID id) {
       beginStreamCPU(id);
     }
@@ -32,6 +34,8 @@ namespace heterogeneous {
 
   class GPUMock {
   public:
+    virtual ~GPUMock() noexcept(false);
+
     void call_beginStreamGPUMock(edm::StreamID id) {
       beginStreamGPUMock(id);
     }
