@@ -11,12 +11,12 @@ More details can be found from the sub-package specific README files (when they 
 
 ## Sub-packages
 
-* [`CUDACore`](CUDACore) CUDA-specific core components
+* [`CUDACore`](../CUDACore) CUDA-specific core components
   - *TODO:* Do we actually need this separate from `CUDAServices`? Which one to keep?
-* [`CUDAServices`](CUDAServices) Various edm::Services related to CUDA
-* [`CUDAUtilities`](CUDAUtilities) Various utilities for CUDA kernel code
-* [`Producer`](Producer) Core of the mini-framework for code organization: a base EDProducer class with algorithm scheduling to devices
-* [`Product`](Product) Core of the mini-framework for data products
+* [`CUDAServices`](../CUDAServices) Various edm::Services related to CUDA
+* [`CUDAUtilities`](../CUDAUtilities) Various utilities for CUDA kernel code
+* [`Producer`](#heterogeneousedproducer) Core of the mini-framework for code organization: a base EDProducer class with algorithm scheduling to devices
+* [`Product`](../Product) Core of the mini-framework for data products
 
 ## Design goals
 
@@ -114,3 +114,7 @@ particular order).
 * Explore the implementation of these features into the core CMSSW framework
   - E.g. HeterogeneousProduct would likely go to edm::Wrapper
 * Explore how to make core framework/TBB scheduling aware of heterogenous devices
+
+# HeterogeneousEDProducer
+
+To be written.
