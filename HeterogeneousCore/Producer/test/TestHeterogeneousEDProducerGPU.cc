@@ -145,6 +145,9 @@ void TestHeterogeneousEDProducerGPU::produceGPUCuda(edm::HeterogeneousEvent& iEv
                            dst = TestHeterogeneousEDProducerGPUTask::getResult(src, cudaStream);
                          });
 
+  // If, for any reason, you want to disable the automatic GPU->CPU transfer, pass heterogeneous::DisableTransfer{} insteads of the function, i.e.
+  //iEvent.put<OutputType>(std::make_unique<TestHeterogeneousEDProducerGPUTask::ResultTypeRaw>(gpuOutput_.first.get(), gpuOutput_.second.get()), heterogeneous::DisableTransfer{});
+
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << label_ << " TestHeterogeneousEDProducerGPU::produceGPUCuda end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " device " << cs->getCurrentDevice();
 }
 
