@@ -21,13 +21,10 @@ namespace heterogeneous {
       beginStreamCPU(id);
     }
     bool call_acquireCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
-    void call_produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
-      produceCPU(iEvent, iSetup);
-    }
+    void call_produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup);
 
   private:
     virtual void beginStreamCPU(edm::StreamID id) {};
-    virtual void acquireCPU(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
     virtual void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) = 0;
   };
   DEFINE_DEVICE_WRAPPER(CPU, HeterogeneousDevice::kCPU);

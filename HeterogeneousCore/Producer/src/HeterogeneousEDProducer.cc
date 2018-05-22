@@ -11,16 +11,17 @@ namespace heterogeneous {
   CPU::~CPU() noexcept(false) {}
 
   bool CPU::call_acquireCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-    std::exception_ptr exc;
-    try {
-      iEvent.setInputLocation(HeterogeneousDeviceId(HeterogeneousDevice::kCPU));
-      acquireCPU(iEvent, iSetup);
-      iEvent.locationSetter()(HeterogeneousDeviceId(HeterogeneousDevice::kCPU));
-    } catch(...) {
-      exc = std::current_exception();
-    }
-    waitingTaskHolder.doneWaiting(exc);
+    // There is no need for acquire in CPU, everything can be done in produceCPU().
+    iEvent.locationSetter()(HeterogeneousDeviceId(HeterogeneousDevice::kCPU));
+    waitingTaskHolder.doneWaiting(nullptr);
     return true;
+  }
+
+  void CPU::call_produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) {
+    // For CPU we set the heterogeneous input location for produce, because there is no acquire
+    // For other devices this probably doesn't make sense, because the device code is supposed to be launched from acquire.
+    iEvent.setInputLocation(HeterogeneousDeviceId(HeterogeneousDevice::kCPU, 0));
+    produceCPU(iEvent, iSetup);
   }
 
   GPUMock::~GPUMock() noexcept(false) {}
