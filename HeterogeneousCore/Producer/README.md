@@ -90,6 +90,9 @@ particular order).
   - Well-performing allocators are typically highly non-trivial to construct
 * Conditions data on GPU
   - Currently each module takes care of formatting, transferring, and updating the conditions data to GPU
+  - This is probably good-enough for the current prototyping phase, but what about longer term?
+    * How to deal with multiple devices, multiple edm::Streams, and multiple lumi sections in flight?
+    * Do we need to make EventSetup aware of the devices? How much do the details depend on device type?
 * Add possibility to initiate the GPU->CPU transfer before the CPU product is needed
   - This would enable overlapping the GPU->CPU transfer while CPU is busy
     with other work, so the CPU product requestor would not have to wait
