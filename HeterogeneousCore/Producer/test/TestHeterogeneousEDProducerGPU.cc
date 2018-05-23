@@ -70,7 +70,7 @@ TestHeterogeneousEDProducerGPU::TestHeterogeneousEDProducerGPU(edm::ParameterSet
 void TestHeterogeneousEDProducerGPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag());
-  descriptions.add("testHeterogeneousEDProducerGPU2", desc);
+  descriptions.add("testHeterogeneousEDProducerGPU", desc);
 }
 
 void TestHeterogeneousEDProducerGPU::beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) {
