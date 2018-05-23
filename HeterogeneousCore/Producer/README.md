@@ -96,8 +96,8 @@ particular order).
 * Add possibility to initiate the GPU->CPU transfer before the CPU product is needed
   - This would enable overlapping the GPU->CPU transfer while CPU is busy
     with other work, so the CPU product requestor would not have to wait
-* Add configurability
-  - E.g. for preferred device order, force specific algorithms to specific device
+* Improve configurability
+  - E.g. for preferred device order?
 * Add fault tolerance
   - E.g. in a case of a GPU running out of memory continue with CPU
   - Should be configurable

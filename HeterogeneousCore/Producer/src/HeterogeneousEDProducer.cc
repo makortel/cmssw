@@ -24,16 +24,32 @@ namespace heterogeneous {
     produceCPU(iEvent, iSetup);
   }
 
+  GPUMock::GPUMock(const edm::ParameterSet& iConfig):
+    enabled_(iConfig.getUntrackedParameter<bool>("GPUMock")),
+    forced_(iConfig.getUntrackedParameter<std::string>("force") == "GPUMock")
+  {}
+
   GPUMock::~GPUMock() noexcept(false) {}
 
+  void GPUMock::fillPSetDescription(edm::ParameterSetDescription& desc) {
+    desc.addUntracked<bool>("GPUMock", true);
+  }
+
   bool GPUMock::call_acquireGPUMock(DeviceBitSet inputLocation, edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-    // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions
-    std::random_device r;
-    std::mt19937 gen(r());
-    auto dist1 = std::uniform_int_distribution<>(0, 3); // simulate GPU (in)availability
-    if(dist1(gen) == 0) {
-      edm::LogPrint("HeterogeneousEDProducer") << "Mock GPU is not available (by chance)";
+    if(!enabled_) {
+      edm::LogPrint("HeterogeneousEDProducer") << "Mock GPU is not available for this module (disabled in configuration)";
       return false;
+    }
+
+    if(!forced_) {
+      // Decide randomly whether to run on GPU or CPU to simulate scheduler decisions
+      std::random_device r;
+      std::mt19937 gen(r());
+      auto dist1 = std::uniform_int_distribution<>(0, 3); // simulate GPU (in)availability
+      if(dist1(gen) == 0) {
+        edm::LogPrint("HeterogeneousEDProducer") << "Mock GPU is not available (by chance)";
+        return false;
+      }
     }
 
     try {

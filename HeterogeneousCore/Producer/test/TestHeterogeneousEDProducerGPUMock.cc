@@ -50,6 +50,7 @@ private:
 };
 
 TestHeterogeneousEDProducerGPUMock::TestHeterogeneousEDProducerGPUMock(edm::ParameterSet const& iConfig):
+  HeterogeneousEDProducer(iConfig),
   label_(iConfig.getParameter<std::string>("@module_label"))
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
@@ -64,6 +65,7 @@ TestHeterogeneousEDProducerGPUMock::TestHeterogeneousEDProducerGPUMock(edm::Para
 void TestHeterogeneousEDProducerGPUMock::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag());
+  HeterogeneousEDProducer::fillPSetDescription(desc);
   descriptions.add("testHeterogeneousEDProducerGPUMock", desc);
 }
 
