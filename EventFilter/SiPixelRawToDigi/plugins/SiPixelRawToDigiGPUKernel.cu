@@ -87,7 +87,10 @@ namespace pixelgpudetails {
     cudaCheck(cudaMalloc((void**) & error_d,       vsize));
     cudaCheck(cudaMalloc((void**) & data_d,        MAX_ERROR_SIZE));
 
-      // for the clusterizer
+    // for the clusterizer
+    cudaCheck(cudaMallocHost((void**) & gainForHLTonHost_, sizeof(SiPixelGainForHLTonGPU)));
+    cudaCheck(cudaMalloc((void**) & gainForHLTonGPU_, sizeof(SiPixelGainForHLTonGPU)));
+
     cudaCheck(cudaMalloc((void**) & clus_d,        MAX_WORD32_SIZE)); // cluser index in module
 
     cudaCheck(cudaMalloc((void**) & moduleStart_d, (MaxNumModules+1)*sizeof(uint32_t) ));
@@ -103,6 +106,7 @@ namespace pixelgpudetails {
     deallocateCablingMap(cablingMapGPUHost_, cablingMapGPUDevice_);
 
     // free gains device memory
+    cudaCheck(cudaFreeHost(gainForHLTonHost_));
     cudaCheck(cudaFree(gainForHLTonGPU_));
     cudaCheck(cudaFree(gainDataOnGPU_));
 
@@ -674,7 +678,7 @@ namespace pixelgpudetails {
       << " blocks of " << threadsPerBlock << " threads\n";
     */
 
-    uint32_t nModules=0;
+    uint32_t nModules=0; // TODO: this has to be moved to a member variable
     cudaCheck(cudaMemcpyAsync(moduleStart_d, &nModules, sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 
     countModules<<<blocks, threadsPerBlock, 0, stream.id()>>>(moduleInd_d, moduleStart_d, clus_d, wordCounter);
@@ -685,6 +689,7 @@ namespace pixelgpudetails {
     // std::cout << "found " << nModules << " Modules active" << std::endl;
 
     // TODO: I suspect we need a cudaStreamSynchronize before using nModules below
+    // In order to avoid the cudaStreamSynchronize, create a new kernel which launches countModules and findClus.
     
     threadsPerBlock = 256;
     blocks = nModules;
