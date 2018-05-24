@@ -41,11 +41,13 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/PluginManager/interface/ModuleDef.h"
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "HeterogeneousCore/CUDACore/interface/GPUCuda.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/Producer/interface/HeterogeneousEDProducer.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
+#include "RecoLocalTracker/SiPixelClusterizer/interface/PixelThresholdClusterizer.h"
 
 #include "SiPixelRawToDigiGPUKernel.h"
 
@@ -142,6 +144,11 @@ std::unique_ptr<PixelUnpackingRegions> regions_;
   bool convertADCtoElectrons;
   std::string cablingMapLabel;
 
+  // clusterizer
+  PixelThresholdClusterizer clusterizer_;
+  const TrackerGeometry *geom_ = nullptr;
+  const TrackerTopology *ttopo_ = nullptr;
+  
   //  gain calib
   SiPixelGainCalibrationForHLTService  theSiPixelGainCalibration_;
 
@@ -153,12 +160,15 @@ std::unique_ptr<PixelUnpackingRegions> regions_;
 
 SiPixelRawToDigiHeterogeneous::SiPixelRawToDigiHeterogeneous(const edm::ParameterSet& iConfig):
   HeterogeneousEDProducer(iConfig),
+  clusterizer_(iConfig),
   theSiPixelGainCalibration_(iConfig) {
   includeErrors = iConfig.getParameter<bool>("IncludeErrors");
   useQuality = iConfig.getParameter<bool>("UseQualityInfo");
   tkerrorlist = iConfig.getParameter<std::vector<int> > ("ErrorList");
   usererrorlist = iConfig.getParameter<std::vector<int> > ("UserErrorList");
   tFEDRawDataCollection = consumes <FEDRawDataCollection> (iConfig.getParameter<edm::InputTag>("InputLabel"));
+
+  clusterizer_.setSiPixelGainCalibrationService(&theSiPixelGainCalibration_);
 
   // Products
   //produces<HeterogeneousProduct>();
@@ -222,7 +232,20 @@ void SiPixelRawToDigiHeterogeneous::fillDescriptions(edm::ConfigurationDescripti
   desc.add<bool>("UsePhase1",false)->setComment("##  Use phase1");
   desc.add<std::string>("CablingMapLabel","")->setComment("CablingMap label"); //Tav
   desc.addOptional<bool>("CheckPixelOrder");  // never used, kept for back-compatibility
+
   desc.add<bool>("ConvertADCtoElectrons", false)->setComment("## do the calibration ADC-> Electron and apply the threshold, requried for clustering");
+
+  // clusterizer
+  desc.add<int>("ChannelThreshold", 1000);
+  desc.add<int>("SeedThreshold", 1000);
+  desc.add<int>("ClusterThreshold", 4000);
+  desc.add<int>("ClusterThreshold_L1", 4000);
+  desc.add<int>("VCaltoElectronGain", 65);
+  desc.add<int>("VCaltoElectronGain_L1", 65);
+  desc.add<int>("VCaltoElectronOffset", -414);
+  desc.add<int>("VCaltoElectronOffset_L1", -414);
+  desc.addUntracked<bool>("MissCalibrate", true);
+  desc.add<bool>("SplitClusters", false);
 
   HeterogeneousEDProducer::fillPSetDescription(desc);
 
@@ -258,6 +281,15 @@ const FEDRawDataCollection *SiPixelRawToDigiHeterogeneous::initialize(const edm:
     qualityWatcherUpdatedSinceLastTransfer_ = true;
   }
 
+  // tracker geometry: to make sure numbering of DetId is consistent...
+  edm::ESHandle<TrackerGeometry> geom;
+  es.get<TrackerDigiGeometryRecord>().get(geom);
+  geom_ = geom.product();
+
+  edm::ESHandle<TrackerTopology> trackerTopologyHandle;
+  es.get<TrackerTopologyRcd>().get(trackerTopologyHandle);
+  ttopo_ = trackerTopologyHandle.product();
+
   if (regions_) {
     regions_->run(ev, es);
     LogDebug("SiPixelRawToDigi") << "region2unpack #feds: "<<regions_->nFEDs();
@@ -285,6 +317,8 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
   auto tkerror_detidcollection = std::make_unique<DetIdCollection>();
   auto usererror_detidcollection = std::make_unique<DetIdCollection>();
   auto disabled_channelcollection = std::make_unique<edmNew::DetSetVector<PixelFEDChannel> >();
+  // create product (clusters);
+  auto outputClusters = std::make_unique< SiPixelClusterCollectionNew>();
 
 
   PixelDataFormatter formatter(cabling_.get(), usePhase1); // for phase 1 & 0
@@ -388,6 +422,27 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
   }
   if (errorsInEvent) LogDebug("SiPixelRawToDigi") << "Error words were stored in this event";
 
+  // clusterize, originally from SiPixelClusterProducer
+  for(const auto detset: *collection) {
+    const auto detId = DetId(detset.detId());
+
+    std::vector<short> badChannels; // why do we need this?
+
+    // Comment: At the moment the clusterizer depends on geometry
+    // to access information as the pixel topology (number of columns
+    // and rows in a detector module). 
+    // In the future the geometry service will be replaced with
+    // a ES service.
+    const GeomDetUnit      * geoUnit = geom_->idToDetUnit( detId );
+    const PixelGeomDetUnit * pixDet  = dynamic_cast<const PixelGeomDetUnit*>(geoUnit);
+    edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(*outputClusters, detset.detId());
+    clusterizer_.clusterizeDetUnit(detset, pixDet, ttopo_, badChannels, spc);
+    if ( spc.empty() ) {
+      spc.abort();
+    }
+  }
+  outputClusters->shrink_to_fit();
+  
   //send digis and errors back to framework 
   //ev.put<Output>(std::move(output));
   ev.put(std::move(collection));
@@ -397,8 +452,7 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
     ev.put(std::move(usererror_detidcollection), "UserErrorModules");
     ev.put(std::move(disabled_channelcollection));
   }
-
-  // TODO: add clustering
+  ev.put(std::move(outputClusters));
 }
 
 // -----------------------------------------------------------------------------
@@ -416,13 +470,9 @@ void SiPixelRawToDigiHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent
   }
 
   if(recordWatcherUpdatedSinceLastTransfer_) {
-    // tracker geometry: to make sure numbering of DetId is consistent...
-    edm::ESHandle<TrackerGeometry> geom;
-    es.get<TrackerDigiGeometryRecord>().get(geom);
-
     // convert the cabling map to a GPU-friendly version
-    gpuAlgo_->updateCablingMap(*cablingMap_, *geom, badPixelInfo_, modules, cudaStream);
-    gpuAlgo_->updateGainCalibration(theSiPixelGainCalibration_.payload(), *geom, cudaStream);
+    gpuAlgo_->updateCablingMap(*cablingMap_, *geom_, badPixelInfo_, modules, cudaStream);
+    gpuAlgo_->updateGainCalibration(theSiPixelGainCalibration_.payload(), *geom_, cudaStream);
 
     recordWatcherUpdatedSinceLastTransfer_ = false;
   }
@@ -496,11 +546,6 @@ void SiPixelRawToDigiHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent
 }
 
 void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
-
-  edm::ESHandle<TrackerTopology> trackerTopologyHandle;
-  es.get<TrackerTopologyRcd>().get(trackerTopologyHandle);
-  const auto& ttopo = *trackerTopologyHandle;
-
   // create product (digis & errors)
   auto collection = std::make_unique<edm::DetSetVector<PixelDigi>>();
   // collection->reserve(8*1024);
@@ -528,7 +573,7 @@ void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, 
   auto fillClusters = [&](uint32_t detId){
     if (nclus<0) return; // this in reality should never happen
     edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(*outputClusters, detId);
-    auto layer = (DetId(detId).subdetId()==1) ? ttopo.pxbLayer(detId) : 0;
+    auto layer = (DetId(detId).subdetId()==1) ? ttopo_->pxbLayer(detId) : 0;
     auto clusterThreshold = (layer==1) ? 2000 : 4000;
     for (int32_t ic=0; ic<nclus+1;++ic) {
       auto const & acluster = aclusters[ic];
