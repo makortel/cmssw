@@ -8,5 +8,6 @@
   <use name="CalibTracker/SiPixelESProducers"/>
   <use name="HeterogeneousCore/Producer"/>
   <use name="HeterogeneousCore/CUDACore"/>
+  <use name="RecoLocalTracker/SiPixelClusterizer"/>
   <flags EDM_PLUGIN="1"/>
 </library>
