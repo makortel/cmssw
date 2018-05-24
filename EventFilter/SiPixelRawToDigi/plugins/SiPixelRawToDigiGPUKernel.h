@@ -3,7 +3,9 @@
 
 #include <algorithm>
 #include <cuda_runtime.h>
+#include "cuda/api_wrappers.h"
 
+#include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
 #include "SiPixelFedCablingMapGPU.h"
 
@@ -154,10 +156,87 @@ namespace pixelgpudetails {
     { }
   };
 
+
+  class SiPixelRawToDigiGPUKernel {
+  public:
+    SiPixelRawToDigiGPUKernel();
+    ~SiPixelRawToDigiGPUKernel();
+
+    
+    SiPixelRawToDigiGPUKernel(const SiPixelRawToDigiGPUKernel&) = delete;
+    SiPixelRawToDigiGPUKernel(SiPixelRawToDigiGPUKernel&&) = delete;
+    SiPixelRawToDigiGPUKernel& operator=(const SiPixelRawToDigiGPUKernel&) = delete;
+    SiPixelRawToDigiGPUKernel& operator=(SiPixelRawToDigiGPUKernel&&) = delete;
+
+    void updateCablingMap(SiPixelFedCablingMap const& cablingMap,
+                          TrackerGeometry const& trackerGeom,
+                          SiPixelQuality const* badPixelInfo,
+                          std::set<unsigned int> const& modules) {
+      processCablingMap(cablingMap, trackerGeom, cablingMapGPUHost_, cablingMapGPUDevice_, badPixelInfo, modules);
+    }
+
+    void updateGainCalibration(SiPixelGainCalibrationForHLT const& gains,
+                               TrackerGeometry const& trackerGeom) {
+      processGainCalibration(gains, trackerGeom, gainForHLTonGPU_, gainDataOnGPU_);
+    }
+
+    void initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length);
+    
+    // Not really very async yet...
+    void makeClustersAsync(const uint32_t wordCounter, const uint32_t fedCounter, bool convertADCtoElectrons,
+                           bool useQualityInfo, bool includeErrors, bool debug, uint32_t & nModulesActive,
+                           cuda::stream_t<>& stream);
+
+
+    const uint32_t *getPDigi() const { return pdigi_h; }
+    const uint32_t *getRawIdArr() const { return rawIdArr_h; }
+    const int32_t *getClus() const { return clus_h; }
+    const uint16_t *getAdc() const { return adc_h; }
+    const GPU::SimpleVector<pixelgpudetails::error_obj> *getError() const { return error_h; }
+    
+  private:
+    // Conditions
+    SiPixelFedCablingMapGPU *cablingMapGPUHost_ = nullptr;
+    SiPixelFedCablingMapGPU *cablingMapGPUDevice_ = nullptr;
+    //  gain calib
+    SiPixelGainForHLTonGPU  * gainForHLTonGPU_ = nullptr;
+    SiPixelGainForHLTonGPU_DecodingStructure * gainDataOnGPU_ = nullptr;
+
+    // input
+    unsigned int *word = nullptr;        // to hold input for rawtodigi
+    unsigned char *fedId_h = nullptr;    // to hold fed index for each word
+
+    // output
+    uint32_t *pdigi_h = nullptr, *rawIdArr_h = nullptr;                   // host copy of output
+    uint16_t *adc_h = nullptr; int32_t *clus_h = nullptr; // host copy of calib&clus output
+    pixelgpudetails::error_obj *data_h = nullptr;
+    GPU::SimpleVector<pixelgpudetails::error_obj> *error_h = nullptr;
+    GPU::SimpleVector<pixelgpudetails::error_obj> *error_h_tmp = nullptr;
+
+    // scratch memory buffers
+    uint32_t * word_d;
+    uint8_t *  fedId_d;
+    uint32_t * pdigi_d;
+    uint16_t * xx_d;
+    uint16_t * yy_d;
+    uint16_t * adc_d;
+    uint16_t * moduleInd_d;
+    uint32_t * rawIdArr_d;
+
+    GPU::SimpleVector<error_obj> * error_d;
+    error_obj * data_d;
+
+    // these are for the clusterizer (to be moved)
+    uint32_t * moduleStart_d;
+    int32_t *  clus_d;
+    uint32_t * clusInModule_d;
+    uint32_t * moduleId_d;
+    uint32_t * debug_d;
+  };
+
+  
   // configuration and memory buffers alocated on the GPU
   struct context {
-    cudaStream_t stream;
-
     uint32_t * word_d;
     uint8_t *  fedId_d;
     uint32_t * pdigi_d;
