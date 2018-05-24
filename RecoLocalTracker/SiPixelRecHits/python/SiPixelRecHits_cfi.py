@@ -7,8 +7,9 @@ siPixelRecHits = cms.EDProducer("SiPixelRecHitConverter",
     VerboseLevel = cms.untracked.int32(0),
 )
 
-from RecoLocalTracker.SiPixelRecHits.SiPixelRecHitsGPU_cfi import siPixelRecHits as _siPixelRecHitsGPU
-gpu.toReplaceWith(siPixelRecHits, _siPixelRecHitsGPU)
+# Remove GPU customization temporarily
+#from RecoLocalTracker.SiPixelRecHits.SiPixelRecHitsGPU_cfi import siPixelRecHits as _siPixelRecHitsGPU
+#gpu.toReplaceWith(siPixelRecHits, _siPixelRecHitsGPU)
 
 siPixelRecHitsPreSplitting = siPixelRecHits.clone(
     src = 'siPixelClustersPreSplitting'
