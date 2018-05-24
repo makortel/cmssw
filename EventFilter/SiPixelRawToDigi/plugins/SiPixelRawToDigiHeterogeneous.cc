@@ -421,8 +421,8 @@ void SiPixelRawToDigiHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent
     es.get<TrackerDigiGeometryRecord>().get(geom);
 
     // convert the cabling map to a GPU-friendly version
-    gpuAlgo_->updateCablingMap(*cablingMap_, *geom, badPixelInfo_, modules);
-    gpuAlgo_->updateGainCalibration(theSiPixelGainCalibration_.payload(), *geom);
+    gpuAlgo_->updateCablingMap(*cablingMap_, *geom, badPixelInfo_, modules, cudaStream);
+    gpuAlgo_->updateGainCalibration(theSiPixelGainCalibration_.payload(), *geom, cudaStream);
 
     recordWatcherUpdatedSinceLastTransfer_ = false;
   }

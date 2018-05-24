@@ -171,13 +171,15 @@ namespace pixelgpudetails {
     void updateCablingMap(SiPixelFedCablingMap const& cablingMap,
                           TrackerGeometry const& trackerGeom,
                           SiPixelQuality const* badPixelInfo,
-                          std::set<unsigned int> const& modules) {
-      processCablingMap(cablingMap, trackerGeom, cablingMapGPUHost_, cablingMapGPUDevice_, badPixelInfo, modules);
+                          std::set<unsigned int> const& modules,
+                          cuda::stream_t<>& stream) {
+      processCablingMap(cablingMap, trackerGeom, cablingMapGPUHost_, cablingMapGPUDevice_, badPixelInfo, modules, stream);
     }
 
     void updateGainCalibration(SiPixelGainCalibrationForHLT const& gains,
-                               TrackerGeometry const& trackerGeom) {
-      processGainCalibration(gains, trackerGeom, gainForHLTonGPU_, gainDataOnGPU_);
+                               TrackerGeometry const& trackerGeom,
+                               cuda::stream_t<>& stream) {
+      processGainCalibration(gains, trackerGeom, gainForHLTonHost_, gainForHLTonGPU_, gainDataOnGPU_, stream);
     }
 
     void initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length);
@@ -199,7 +201,8 @@ namespace pixelgpudetails {
     SiPixelFedCablingMapGPU *cablingMapGPUHost_ = nullptr;
     SiPixelFedCablingMapGPU *cablingMapGPUDevice_ = nullptr;
     //  gain calib
-    SiPixelGainForHLTonGPU  * gainForHLTonGPU_ = nullptr;
+    SiPixelGainForHLTonGPU * gainForHLTonHost_ = nullptr;
+    SiPixelGainForHLTonGPU * gainForHLTonGPU_ = nullptr;
     SiPixelGainForHLTonGPU_DecodingStructure * gainDataOnGPU_ = nullptr;
 
     // input
