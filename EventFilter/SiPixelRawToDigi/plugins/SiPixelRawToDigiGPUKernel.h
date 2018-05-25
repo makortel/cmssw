@@ -189,13 +189,18 @@ namespace pixelgpudetails {
                            bool useQualityInfo, bool includeErrors, bool debug, uint32_t & nModulesActive,
                            cuda::stream_t<>& stream);
 
-
-    const uint32_t *getPDigi() const { return pdigi_h; }
-    const uint32_t *getRawIdArr() const { return rawIdArr_h; }
-    const int32_t *getClus() const { return clus_h; }
-    const uint16_t *getAdc() const { return adc_h; }
-    const GPU::SimpleVector<pixelgpudetails::error_obj> *getError() const { return error_h; }
+    struct Product {
+      uint32_t const * pdigi_h = nullptr;
+      uint32_t const * rawIdArr_h = nullptr;
+      int32_t const * clus_h = nullptr;
+      uint16_t const * adc_h = nullptr;
+      GPU::SimpleVector<pixelgpudetails::error_obj> const * error_h = nullptr;
+    };
     
+    Product getProduct() const {
+      return Product{pdigi_h, rawIdArr_h, clus_h, adc_h, error_h};
+    }
+
   private:
     // Conditions
     SiPixelFedCablingMapGPU *cablingMapGPUHost_ = nullptr;
