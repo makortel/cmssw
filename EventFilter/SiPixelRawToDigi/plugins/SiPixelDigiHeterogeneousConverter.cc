@@ -27,7 +27,6 @@ SiPixelDigiHeterogeneousConverter::SiPixelDigiHeterogeneousConverter(edm::Parame
   includeErrors_(iConfig.getParameter<bool>("includeErrors"))
 {
   produces<edm::DetSetVector<PixelDigi> >();
-  produces<SiPixelClusterCollectionNew>(); 
   if(includeErrors_) {
     produces< edm::DetSetVector<SiPixelRawDataError> >();
     produces<DetIdCollection>();
@@ -64,7 +63,6 @@ void SiPixelDigiHeterogeneousConverter::produce(edm::StreamID, edm::Event& iEven
   const auto& input = hinput->get<siPixelRawToDigiHeterogeneousProduct::HeterogeneousDigiCluster>().getProduct<HeterogeneousDevice::kCPU>();
 
   iEvent.put(copy_unique(input.collection));
-  iEvent.put(copy_unique(input.outputClusters));
   if(includeErrors_) {
     iEvent.put(copy_unique(input.errorcollection));
     iEvent.put(copy_unique(input.tkerror_detidcollection));

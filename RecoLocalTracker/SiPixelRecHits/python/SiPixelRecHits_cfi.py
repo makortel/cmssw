@@ -14,4 +14,3 @@ siPixelRecHits = cms.EDProducer("SiPixelRecHitConverter",
 siPixelRecHitsPreSplitting = siPixelRecHits.clone(
     src = 'siPixelClustersPreSplitting'
 )
-gpu.toModify(siPixelRecHitsPreSplitting, src = 'siPixelDigis')
