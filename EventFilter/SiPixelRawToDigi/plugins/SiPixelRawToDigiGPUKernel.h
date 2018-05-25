@@ -8,6 +8,7 @@
 #include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
 #include "SiPixelFedCablingMapGPU.h"
+#include "siPixelRawToDigiHeterogeneousProduct.h"
 
 namespace pixelgpudetails {
 
@@ -141,20 +142,7 @@ namespace pixelgpudetails {
            (adc << thePacking.adc_shift);
   }
 
-  struct error_obj {
-    uint32_t rawId;
-    uint32_t word;
-    unsigned char errorType;
-    unsigned char fedId;
-
-    __host__ __device__
-    error_obj(uint32_t a, uint32_t b, unsigned char c, unsigned char d):
-      rawId(a),
-      word(b),
-      errorType(c),
-      fedId(d)
-    { }
-  };
+  using error_obj = siPixelRawToDigiHeterogeneousProduct::error_obj;
 
 
   class SiPixelRawToDigiGPUKernel {
@@ -189,16 +177,8 @@ namespace pixelgpudetails {
                            bool useQualityInfo, bool includeErrors, bool debug, uint32_t & nModulesActive,
                            cuda::stream_t<>& stream);
 
-    struct Product {
-      uint32_t const * pdigi_h = nullptr;
-      uint32_t const * rawIdArr_h = nullptr;
-      int32_t const * clus_h = nullptr;
-      uint16_t const * adc_h = nullptr;
-      GPU::SimpleVector<pixelgpudetails::error_obj> const * error_h = nullptr;
-    };
-    
-    Product getProduct() const {
-      return Product{pdigi_h, rawIdArr_h, clus_h, adc_h, error_h};
+    auto getProduct() const {
+      return siPixelRawToDigiHeterogeneousProduct::GPUProduct{pdigi_h, rawIdArr_h, clus_h, adc_h, error_h};
     }
 
   private:
