@@ -13,4 +13,3 @@ gpu.toReplaceWith(siPixelRecHits, _siPixelRecHitsGPU)
 siPixelRecHitsPreSplitting = siPixelRecHits.clone(
     src = 'siPixelClustersPreSplitting'
 )
-gpu.toModify(siPixelRecHitsPreSplitting, src = 'siPixelDigis')
