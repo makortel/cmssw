@@ -96,10 +96,10 @@ public:
     DetIdCollection tkerror_detidcollection;
     DetIdCollection usererror_detidcollection;
     edmNew::DetSetVector<PixelFEDChannel> disabled_channelcollection;
+    SiPixelClusterCollectionNew outputClusters;
   };
 
-  struct GPUProduct {
-  };
+  using GPUProduct = pixelgpudetails::SiPixelRawToDigiGPUKernel::Product;
 
   using Output = HeterogeneousProductImpl<heterogeneous::CPUProduct<CPUProduct>,
                                           heterogeneous::GPUCudaProduct<GPUProduct> >;
@@ -117,6 +117,7 @@ private:
   void beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) override;
   void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
   void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
+  void convertGPUtoCPU(const GPUProduct& gpu, CPUProduct& cpu) const;
 
   // Commonalities
   const FEDRawDataCollection *initialize(const edm::Event& ev, const edm::EventSetup& es);
@@ -171,18 +172,7 @@ SiPixelRawToDigiHeterogeneous::SiPixelRawToDigiHeterogeneous(const edm::Paramete
   clusterizer_.setSiPixelGainCalibrationService(&theSiPixelGainCalibration_);
 
   // Products
-  //produces<HeterogeneousProduct>();
-  produces< edm::DetSetVector<PixelDigi> >();
-  produces<SiPixelClusterCollectionNew>(); 
-  if (includeErrors) {
-    produces< edm::DetSetVector<SiPixelRawDataError> >();
-    produces<DetIdCollection>();
-    produces<DetIdCollection>("UserErrorModules");
-    produces<edmNew::DetSetVector<PixelFEDChannel> >();
-  }
-
-  // GPU "product"
-  produces<std::vector<unsigned long long>>();
+  produces<HeterogeneousProduct>();
 
   // regions
   if(!iConfig.getParameter<edm::ParameterSet>("Regions").getParameterNames().empty()) {
@@ -308,17 +298,8 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
   const auto buffers = initialize(ev.event(), es);
 
   // create product (digis & errors)
-  //auto output = std::make_unique<CPUProduct>();
+  auto output = std::make_unique<CPUProduct>();
   // output->collection.reserve(8*1024);
-  // create product (digis & errors)
-  auto collection = std::make_unique<edm::DetSetVector<PixelDigi>>();
-  // collection->reserve(8*1024);
-  auto errorcollection = std::make_unique<edm::DetSetVector<SiPixelRawDataError>>();
-  auto tkerror_detidcollection = std::make_unique<DetIdCollection>();
-  auto usererror_detidcollection = std::make_unique<DetIdCollection>();
-  auto disabled_channelcollection = std::make_unique<edmNew::DetSetVector<PixelFEDChannel> >();
-  // create product (clusters);
-  auto outputClusters = std::make_unique< SiPixelClusterCollectionNew>();
 
 
   PixelDataFormatter formatter(cabling_.get(), usePhase1); // for phase 1 & 0
@@ -347,7 +328,7 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
     const FEDRawData& fedRawData = buffers->FEDData( fedId );
 
     //convert data to digi and strip off errors
-    formatter.interpretRawData( errorsInEvent, fedId, fedRawData, *collection, errors);
+    formatter.interpretRawData( errorsInEvent, fedId, fedRawData, output->collection, errors);
 
     //pack errors into collection
     if(includeErrors) {
@@ -357,7 +338,7 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
 	if (errordetid==dummydetid) {           // errors given dummy detId must be sorted by Fed
 	  nodeterrors.insert( nodeterrors.end(), errors[errordetid].begin(), errors[errordetid].end() );
 	} else {
-	  edm::DetSet<SiPixelRawDataError>& errorDetSet = errorcollection->find_or_insert(errordetid);
+	  edm::DetSet<SiPixelRawDataError>& errorDetSet = output->errorcollection.find_or_insert(errordetid);
 	  errorDetSet.data.insert(errorDetSet.data.end(), is->second.begin(), is->second.end());
 	  // Fill detid of the detectors where there is error AND the error number is listed
 	  // in the configurable error list in the job option cfi.
@@ -390,25 +371,25 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
 	    } else {
 	      // fill list of detIds to be turned off by tracking
 	      if(!tkerrorlist.empty()) {
-		std::vector<int>::iterator it_find = find(tkerrorlist.begin(), tkerrorlist.end(), aPixelError.getType());
+		auto it_find = std::find(tkerrorlist.begin(), tkerrorlist.end(), aPixelError.getType());
 		if(it_find != tkerrorlist.end()){
-		  tkerror_detidcollection->push_back(errordetid);
+		  output->tkerror_detidcollection.push_back(errordetid);
 		}
 	      }
 	    }
 
 	    // fill list of detIds with errors to be studied
 	    if(!usererrorlist.empty()) {
-	      std::vector<int>::iterator it_find = find(usererrorlist.begin(), usererrorlist.end(), aPixelError.getType());
+	      auto it_find = std::find(usererrorlist.begin(), usererrorlist.end(), aPixelError.getType());
 	      if(it_find != usererrorlist.end()){
-		usererror_detidcollection->push_back(errordetid);
+		output->usererror_detidcollection.push_back(errordetid);
 	      }
 	    }
 
 	  } // loop on DetSet of errors
 
 	  if (!disabledChannelsDetSet.empty()) {
-	    disabled_channelcollection->insert(errordetid, disabledChannelsDetSet.data(), disabledChannelsDetSet.size());
+	    output->disabled_channelcollection.insert(errordetid, disabledChannelsDetSet.data(), disabledChannelsDetSet.size());
 	  }
 
 	} // if error assigned to a real DetId
@@ -417,13 +398,13 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
   } // loop on FED data to be unpacked
 
   if(includeErrors) {
-    edm::DetSet<SiPixelRawDataError>& errorDetSet = errorcollection->find_or_insert(dummydetid);
+    edm::DetSet<SiPixelRawDataError>& errorDetSet = output->errorcollection.find_or_insert(dummydetid);
     errorDetSet.data = nodeterrors;
   }
   if (errorsInEvent) LogDebug("SiPixelRawToDigi") << "Error words were stored in this event";
 
   // clusterize, originally from SiPixelClusterProducer
-  for(const auto detset: *collection) {
+  for(const auto detset: output->collection) {
     const auto detId = DetId(detset.detId());
 
     std::vector<short> badChannels; // why do we need this?
@@ -435,24 +416,16 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
     // a ES service.
     const GeomDetUnit      * geoUnit = geom_->idToDetUnit( detId );
     const PixelGeomDetUnit * pixDet  = dynamic_cast<const PixelGeomDetUnit*>(geoUnit);
-    edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(*outputClusters, detset.detId());
+    edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(output->outputClusters, detset.detId());
     clusterizer_.clusterizeDetUnit(detset, pixDet, ttopo_, badChannels, spc);
     if ( spc.empty() ) {
       spc.abort();
     }
   }
-  outputClusters->shrink_to_fit();
+  output->outputClusters.shrink_to_fit();
   
   //send digis and errors back to framework 
-  //ev.put<Output>(std::move(output));
-  ev.put(std::move(collection));
-  if(includeErrors){
-    ev.put(std::move(errorcollection));
-    ev.put(std::move(tkerror_detidcollection));
-    ev.put(std::move(usererror_detidcollection), "UserErrorModules");
-    ev.put(std::move(disabled_channelcollection));
-  }
-  ev.put(std::move(outputClusters));
+  ev.put<Output>(std::move(output));
 }
 
 // -----------------------------------------------------------------------------
@@ -546,22 +519,20 @@ void SiPixelRawToDigiHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent
 }
 
 void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
-  // create product (digis & errors)
-  auto collection = std::make_unique<edm::DetSetVector<PixelDigi>>();
-  // collection->reserve(8*1024);
-  auto errorcollection = std::make_unique<edm::DetSetVector<SiPixelRawDataError>>();
-  auto tkerror_detidcollection = std::make_unique<DetIdCollection>();
-  auto usererror_detidcollection = std::make_unique<DetIdCollection>();
-  auto disabled_channelcollection = std::make_unique<edmNew::DetSetVector<PixelFEDChannel> >();
-  // create product (clusters);
-  auto outputClusters = std::make_unique< SiPixelClusterCollectionNew>();
+  auto output = std::make_unique<GPUProduct>(gpuAlgo_->getProduct());
+  ev.put<Output>(std::move(output), [this](const GPUProduct& gpu, CPUProduct& cpu) {
+      this->convertGPUtoCPU(gpu, cpu);
+    });
+}
 
-  const auto pdigi_h = gpuAlgo_->getPDigi();
-  const auto rawIdArr_h = gpuAlgo_->getRawIdArr();
+void SiPixelRawToDigiHeterogeneous::convertGPUtoCPU(const SiPixelRawToDigiHeterogeneous::GPUProduct& gpu,
+                                                    SiPixelRawToDigiHeterogeneous::CPUProduct& cpu) const {
+  // TODO: add the transfers here as well?
+
   edm::DetSet<PixelDigi> * detDigis=nullptr;
   for (uint32_t i = 0; i < wordCounterGPU; i++) {
-    if (pdigi_h[i]==0) continue;
-    detDigis = &(*collection).find_or_insert(rawIdArr_h[i]);
+    if (gpu.pdigi_h[i]==0) continue;
+    detDigis = &(cpu.collection).find_or_insert(gpu.rawIdArr_h[i]);
     if ( (*detDigis).empty() ) (*detDigis).data.reserve(32); // avoid the first relocations
     break;
   }
@@ -572,7 +543,7 @@ void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, 
 
   auto fillClusters = [&](uint32_t detId){
     if (nclus<0) return; // this in reality should never happen
-    edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(*outputClusters, detId);
+    edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(cpu.outputClusters, detId);
     auto layer = (DetId(detId).subdetId()==1) ? ttopo_->pxbLayer(detId) : 0;
     auto clusterThreshold = (layer==1) ? 2000 : 4000;
     for (int32_t ic=0; ic<nclus+1;++ic) {
@@ -590,32 +561,30 @@ void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, 
     // sort by row (x)
     std::sort_heap(spc.begin(),spc.end(),[](SiPixelCluster const & cl1,SiPixelCluster const & cl2) { return cl1.minPixelRow() < cl2.minPixelRow();});
     if ( spc.empty() ) spc.abort();
-   };
+  };
 
-  const auto clus_h = gpuAlgo_->getClus();
-  const auto adc_h = gpuAlgo_->getAdc();
   for (uint32_t i = 0; i < wordCounterGPU; i++) {
-    if (pdigi_h[i]==0) continue;
-    assert(rawIdArr_h[i] > 109999);
-    if ( (*detDigis).detId() != rawIdArr_h[i])
-    {
-      fillClusters((*detDigis).detId());
-      assert(nclus==-1);
-      detDigis = &(*collection).find_or_insert(rawIdArr_h[i]);
-      if ( (*detDigis).empty() )
-        (*detDigis).data.reserve(32); // avoid the first relocations
-      else { std::cout << "Problem det present twice in input! " << (*detDigis).detId() << std::endl; }
-    }
-    (*detDigis).data.emplace_back(pdigi_h[i]);
+    if (gpu.pdigi_h[i]==0) continue;
+    assert(gpu.rawIdArr_h[i] > 109999);
+    if ( (*detDigis).detId() != gpu.rawIdArr_h[i])
+      {
+        fillClusters((*detDigis).detId());
+        assert(nclus==-1);
+        detDigis = &(cpu.collection).find_or_insert(gpu.rawIdArr_h[i]);
+        if ( (*detDigis).empty() )
+          (*detDigis).data.reserve(32); // avoid the first relocations
+        else { std::cout << "Problem det present twice in input! " << (*detDigis).detId() << std::endl; }
+      }
+    (*detDigis).data.emplace_back(gpu.pdigi_h[i]);
     auto const & dig = (*detDigis).data.back();
     // fill clusters
-    assert(clus_h[i]>=0);
-    assert(clus_h[i]<256);
-    nclus = std::max(clus_h[i],nclus);
+    assert(gpu.clus_h[i]>=0);
+    assert(gpu.clus_h[i]<256);
+    nclus = std::max(gpu.clus_h[i],nclus);
     auto row = dig.row();
     auto col = dig.column();
     SiPixelCluster::PixelPos pix(row,col);
-    aclusters[clus_h[i]].add(pix,adc_h[i]);
+    aclusters[gpu.clus_h[i]].add(pix,gpu.adc_h[i]);
   }
 
   // fill final clusters
@@ -623,15 +592,15 @@ void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, 
   //std::cout << "filled " << totCluseFilled << " clusters" << std::endl;
 
   PixelDataFormatter formatter(cabling_.get(), usePhase1); // for phase 1 & 0
+  auto errors = errors_; // make a copy
   PixelDataFormatter::DetErrors nodeterrors;
 
-  const auto error_h = gpuAlgo_->getError();
-  auto size = error_h->size();
+  auto size = gpu.error_h->size();
   for (auto i = 0; i < size; i++) {
-    pixelgpudetails::error_obj err = (*error_h)[i];
+    pixelgpudetails::error_obj err = (*gpu.error_h)[i];
     if (err.errorType != 0) {
-        SiPixelRawDataError error(err.word, err.errorType, err.fedId + 1200);
-        errors_[err.rawId].push_back(error);
+      SiPixelRawDataError error(err.word, err.errorType, err.fedId + 1200);
+      errors[err.rawId].push_back(error);
     }
   }
 
@@ -639,14 +608,14 @@ void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, 
   if (includeErrors) {
 
     typedef PixelDataFormatter::Errors::iterator IE;
-    for (IE is = errors_.begin(); is != errors_.end(); is++) {
+    for (IE is = errors.begin(); is != errors.end(); is++) {
 
       uint32_t errordetid = is->first;
       if (errordetid == dummydetid) {// errors given dummy detId must be sorted by Fed
-        nodeterrors.insert( nodeterrors.end(), errors_[errordetid].begin(), errors_[errordetid].end() );
+        nodeterrors.insert( nodeterrors.end(), errors[errordetid].begin(), errors[errordetid].end() );
       }
       else {
-        edm::DetSet<SiPixelRawDataError>& errorDetSet = errorcollection->find_or_insert(errordetid);
+        edm::DetSet<SiPixelRawDataError>& errorDetSet = cpu.errorcollection.find_or_insert(errordetid);
         errorDetSet.data.insert(errorDetSet.data.end(), is->second.begin(), is->second.end());
         // Fill detid of the detectors where there is error AND the error number is listed
         // in the configurable error list in the job option cfi.
@@ -680,25 +649,25 @@ void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, 
           else {
             // fill list of detIds to be turned off by tracking
             if (!tkerrorlist.empty()) {
-              std::vector<int>::iterator it_find = find(tkerrorlist.begin(), tkerrorlist.end(), aPixelError.getType());
+              auto it_find = std::find(tkerrorlist.begin(), tkerrorlist.end(), aPixelError.getType());
               if (it_find != tkerrorlist.end()) {
-                tkerror_detidcollection->push_back(errordetid);
+                cpu.tkerror_detidcollection.push_back(errordetid);
               }
             }
           }
 
           // fill list of detIds with errors to be studied
           if (!usererrorlist.empty()) {
-            std::vector<int>::iterator it_find = find(usererrorlist.begin(), usererrorlist.end(), aPixelError.getType());
+            auto it_find = std::find(usererrorlist.begin(), usererrorlist.end(), aPixelError.getType());
             if (it_find != usererrorlist.end()) {
-              usererror_detidcollection->push_back(errordetid);
+              cpu.usererror_detidcollection.push_back(errordetid);
             }
           }
 
         } // loop on DetSet of errors
 
         if (!disabledChannelsDetSet.empty()) {
-          disabled_channelcollection->insert(errordetid, disabledChannelsDetSet.data(), disabledChannelsDetSet.size());
+          cpu.disabled_channelcollection.insert(errordetid, disabledChannelsDetSet.data(), disabledChannelsDetSet.size());
         }
 
       } // if error assigned to a real DetId
@@ -706,22 +675,11 @@ void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, 
   } // if errors to be included in the event
 
   if (includeErrors) {
-    edm::DetSet<SiPixelRawDataError>& errorDetSet = errorcollection->find_or_insert(dummydetid);
+    edm::DetSet<SiPixelRawDataError>& errorDetSet = cpu.errorcollection.find_or_insert(dummydetid);
     errorDetSet.data = nodeterrors;
   }
-
-  // send digis clusters and errors back to framework
-  // std::cout << "Number of Clusters from GPU to CPU " << (*outputClusters).data().size() << std::endl;
-  ev.put(std::move(collection));
-  ev.put(std::move(outputClusters));
-  if (includeErrors) {
-    ev.put(std::move(errorcollection));
-    ev.put(std::move(tkerror_detidcollection));
-    ev.put(std::move(usererror_detidcollection), "UserErrorModules");
-    ev.put(std::move(disabled_channelcollection));
-  }
-  errors_.clear();
 }
+
 
 // define as framework plugin
 DEFINE_FWK_MODULE(SiPixelRawToDigiHeterogeneous);
