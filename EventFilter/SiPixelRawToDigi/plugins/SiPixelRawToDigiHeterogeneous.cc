@@ -50,6 +50,7 @@
 #include "RecoLocalTracker/SiPixelClusterizer/interface/PixelThresholdClusterizer.h"
 
 #include "SiPixelRawToDigiGPUKernel.h"
+#include "siPixelRawToDigiHeterogeneousProduct.h"
 
 namespace {
   struct AccretionCluster {
@@ -90,19 +91,9 @@ class SiPixelRawToDigiHeterogeneous: public HeterogeneousEDProducer<heterogeneou
                                                                       heterogeneous::CPU
                                                                       > > {
 public:
-  struct CPUProduct {
-    edm::DetSetVector<PixelDigi> collection;
-    edm::DetSetVector<SiPixelRawDataError> errorcollection;
-    DetIdCollection tkerror_detidcollection;
-    DetIdCollection usererror_detidcollection;
-    edmNew::DetSetVector<PixelFEDChannel> disabled_channelcollection;
-    SiPixelClusterCollectionNew outputClusters;
-  };
-
-  using GPUProduct = pixelgpudetails::SiPixelRawToDigiGPUKernel::Product;
-
-  using Output = HeterogeneousProductImpl<heterogeneous::CPUProduct<CPUProduct>,
-                                          heterogeneous::GPUCudaProduct<GPUProduct> >;
+  using CPUProduct = siPixelRawToDigiHeterogeneousProduct::CPUProduct;
+  using GPUProduct = siPixelRawToDigiHeterogeneousProduct::GPUProduct;
+  using Output = siPixelRawToDigiHeterogeneousProduct::HeterogeneousDigiCluster;
 
   explicit SiPixelRawToDigiHeterogeneous(const edm::ParameterSet& iConfig);
   ~SiPixelRawToDigiHeterogeneous() override = default;
@@ -239,7 +230,7 @@ void SiPixelRawToDigiHeterogeneous::fillDescriptions(edm::ConfigurationDescripti
 
   HeterogeneousEDProducer::fillPSetDescription(desc);
 
-  descriptions.add("siPixelRawToDigiHeterogeneous",desc);
+  descriptions.add("siPixelDigisHeterogeneousDefault",desc);
 }
 
 const FEDRawDataCollection *SiPixelRawToDigiHeterogeneous::initialize(const edm::Event& ev, const edm::EventSetup& es) {
