@@ -49,8 +49,8 @@
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 #include "RecoLocalTracker/SiPixelClusterizer/interface/PixelThresholdClusterizer.h"
 
-#include "SiPixelRawToDigiGPUKernel.h"
-#include "siPixelRawToDigiHeterogeneousProduct.h"
+#include "SiPixelRawToClusterGPUKernel.h"
+#include "siPixelRawToClusterHeterogeneousProduct.h"
 
 namespace {
   struct AccretionCluster {
@@ -86,17 +86,17 @@ namespace {
   constexpr uint32_t dummydetid = 0xffffffff;
 }
 
-class SiPixelRawToDigiHeterogeneous: public HeterogeneousEDProducer<heterogeneous::HeterogeneousDevices <
+class SiPixelRawToClusterHeterogeneous: public HeterogeneousEDProducer<heterogeneous::HeterogeneousDevices <
                                                                       heterogeneous::GPUCuda,
                                                                       heterogeneous::CPU
                                                                       > > {
 public:
-  using CPUProduct = siPixelRawToDigiHeterogeneousProduct::CPUProduct;
-  using GPUProduct = siPixelRawToDigiHeterogeneousProduct::GPUProduct;
-  using Output = siPixelRawToDigiHeterogeneousProduct::HeterogeneousDigiCluster;
+  using CPUProduct = siPixelRawToClusterHeterogeneousProduct::CPUProduct;
+  using GPUProduct = siPixelRawToClusterHeterogeneousProduct::GPUProduct;
+  using Output = siPixelRawToClusterHeterogeneousProduct::HeterogeneousDigiCluster;
 
-  explicit SiPixelRawToDigiHeterogeneous(const edm::ParameterSet& iConfig);
-  ~SiPixelRawToDigiHeterogeneous() override = default;
+  explicit SiPixelRawToClusterHeterogeneous(const edm::ParameterSet& iConfig);
+  ~SiPixelRawToClusterHeterogeneous() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -145,12 +145,11 @@ std::unique_ptr<PixelUnpackingRegions> regions_;
   SiPixelGainCalibrationForHLTService  theSiPixelGainCalibration_;
 
   // GPU algo
-  std::unique_ptr<pixelgpudetails::SiPixelRawToDigiGPUKernel> gpuAlgo_;
-  unsigned int wordCounterGPU = 0;
+  std::unique_ptr<pixelgpudetails::SiPixelRawToClusterGPUKernel> gpuAlgo_;
   PixelDataFormatter::Errors errors_;
 };
 
-SiPixelRawToDigiHeterogeneous::SiPixelRawToDigiHeterogeneous(const edm::ParameterSet& iConfig):
+SiPixelRawToClusterHeterogeneous::SiPixelRawToClusterHeterogeneous(const edm::ParameterSet& iConfig):
   HeterogeneousEDProducer(iConfig),
   clusterizer_(iConfig),
   theSiPixelGainCalibration_(iConfig) {
@@ -172,11 +171,11 @@ SiPixelRawToDigiHeterogeneous::SiPixelRawToDigiHeterogeneous(const edm::Paramete
 
   // Control the usage of pilot-blade data, FED=40
   usePilotBlade = iConfig.getParameter<bool> ("UsePilotBlade");
-  if(usePilotBlade) edm::LogInfo("SiPixelRawToDigi")  << " Use pilot blade data (FED 40)";
+  if(usePilotBlade) edm::LogInfo("SiPixelRawToCluster")  << " Use pilot blade data (FED 40)";
 
   // Control the usage of phase1
   usePhase1 = iConfig.getParameter<bool> ("UsePhase1");
-  if(usePhase1) edm::LogInfo("SiPixelRawToDigi")  << " Using phase1";
+  if(usePhase1) edm::LogInfo("SiPixelRawToCluster")  << " Using phase1";
 
   //CablingMap could have a label //Tav
   cablingMapLabel = iConfig.getParameter<std::string> ("CablingMapLabel");
@@ -184,7 +183,7 @@ SiPixelRawToDigiHeterogeneous::SiPixelRawToDigiHeterogeneous(const edm::Paramete
   convertADCtoElectrons = iConfig.getParameter<bool>("ConvertADCtoElectrons");
 }
 
-void SiPixelRawToDigiHeterogeneous::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void SiPixelRawToClusterHeterogeneous::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<bool>("IncludeErrors",true);
   desc.add<bool>("UseQualityInfo",false);
@@ -233,7 +232,7 @@ void SiPixelRawToDigiHeterogeneous::fillDescriptions(edm::ConfigurationDescripti
   descriptions.add("siPixelDigisHeterogeneousDefault",desc);
 }
 
-const FEDRawDataCollection *SiPixelRawToDigiHeterogeneous::initialize(const edm::Event& ev, const edm::EventSetup& es) {
+const FEDRawDataCollection *SiPixelRawToClusterHeterogeneous::initialize(const edm::Event& ev, const edm::EventSetup& es) {
   debug = edm::MessageDrop::instance()->debugEnabled;
 
   // setup gain calibration service
@@ -273,8 +272,8 @@ const FEDRawDataCollection *SiPixelRawToDigiHeterogeneous::initialize(const edm:
 
   if (regions_) {
     regions_->run(ev, es);
-    LogDebug("SiPixelRawToDigi") << "region2unpack #feds: "<<regions_->nFEDs();
-    LogDebug("SiPixelRawToDigi") << "region2unpack #modules (BPIX,EPIX,total): "<<regions_->nBarrelModules()<<" "<<regions_->nForwardModules()<<" "<<regions_->nModules();
+    LogDebug("SiPixelRawToCluster") << "region2unpack #feds: "<<regions_->nFEDs();
+    LogDebug("SiPixelRawToCluster") << "region2unpack #modules (BPIX,EPIX,total): "<<regions_->nBarrelModules()<<" "<<regions_->nForwardModules()<<" "<<regions_->nModules();
   }
 
   edm::Handle<FEDRawDataCollection> buffers;
@@ -284,7 +283,7 @@ const FEDRawDataCollection *SiPixelRawToDigiHeterogeneous::initialize(const edm:
 
 
 // -----------------------------------------------------------------------------
-void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, const edm::EventSetup& es)
+void SiPixelRawToClusterHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, const edm::EventSetup& es)
 {
   const auto buffers = initialize(ev.event(), es);
 
@@ -311,7 +310,7 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
 
     if (regions_ && !regions_->mayUnpackFED(fedId)) continue;
 
-    if(debug) LogDebug("SiPixelRawToDigi")<< " PRODUCE DIGI FOR FED: " <<  fedId;
+    if(debug) LogDebug("SiPixelRawToCluster")<< " PRODUCE DIGI FOR FED: " <<  fedId;
 
     PixelDataFormatter::Errors errors;
 
@@ -392,7 +391,7 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
     edm::DetSet<SiPixelRawDataError>& errorDetSet = output->errorcollection.find_or_insert(dummydetid);
     errorDetSet.data = nodeterrors;
   }
-  if (errorsInEvent) LogDebug("SiPixelRawToDigi") << "Error words were stored in this event";
+  if (errorsInEvent) LogDebug("SiPixelRawToCluster") << "Error words were stored in this event";
 
   // clusterize, originally from SiPixelClusterProducer
   for(const auto detset: output->collection) {
@@ -420,12 +419,12 @@ void SiPixelRawToDigiHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, cons
 }
 
 // -----------------------------------------------------------------------------
-void SiPixelRawToDigiHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) {
+void SiPixelRawToClusterHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) {
   // Allocate GPU resources here
-  gpuAlgo_ = std::make_unique<pixelgpudetails::SiPixelRawToDigiGPUKernel>();
+  gpuAlgo_ = std::make_unique<pixelgpudetails::SiPixelRawToClusterGPUKernel>();
 }
 
-void SiPixelRawToDigiHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
+void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
   const auto buffers = initialize(ev.event(), es);
 
   std::set<unsigned int> modules;
@@ -444,7 +443,7 @@ void SiPixelRawToDigiHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent
   errors_.clear();
 
   // GPU specific: Data extraction for RawToDigi GPU
-  wordCounterGPU = 0;
+  unsigned int wordCounterGPU = 0;
   unsigned int fedCounter = 0;
   bool errorsInEvent = false;
 
@@ -504,24 +503,23 @@ void SiPixelRawToDigiHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent
 
   } // end of for loop
 
-  uint32_t nModulesActive=0;
   gpuAlgo_->makeClustersAsync(wordCounterGPU, fedCounter, convertADCtoElectrons,
-                              useQuality, includeErrors, debug, nModulesActive, cudaStream);
+                              useQuality, includeErrors, debug, cudaStream);
 }
 
-void SiPixelRawToDigiHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
+void SiPixelRawToClusterHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
   auto output = std::make_unique<GPUProduct>(gpuAlgo_->getProduct());
   ev.put<Output>(std::move(output), [this](const GPUProduct& gpu, CPUProduct& cpu) {
       this->convertGPUtoCPU(gpu, cpu);
     });
 }
 
-void SiPixelRawToDigiHeterogeneous::convertGPUtoCPU(const SiPixelRawToDigiHeterogeneous::GPUProduct& gpu,
-                                                    SiPixelRawToDigiHeterogeneous::CPUProduct& cpu) const {
+void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(const SiPixelRawToClusterHeterogeneous::GPUProduct& gpu,
+                                                       SiPixelRawToClusterHeterogeneous::CPUProduct& cpu) const {
   // TODO: add the transfers here as well?
 
   edm::DetSet<PixelDigi> * detDigis=nullptr;
-  for (uint32_t i = 0; i < wordCounterGPU; i++) {
+  for (uint32_t i = 0; i < gpu.nDigis; i++) {
     if (gpu.pdigi_h[i]==0) continue;
     detDigis = &(cpu.collection).find_or_insert(gpu.rawIdArr_h[i]);
     if ( (*detDigis).empty() ) (*detDigis).data.reserve(32); // avoid the first relocations
@@ -554,7 +552,7 @@ void SiPixelRawToDigiHeterogeneous::convertGPUtoCPU(const SiPixelRawToDigiHetero
     if ( spc.empty() ) spc.abort();
   };
 
-  for (uint32_t i = 0; i < wordCounterGPU; i++) {
+  for (uint32_t i = 0; i < gpu.nDigis; i++) {
     if (gpu.pdigi_h[i]==0) continue;
     assert(gpu.rawIdArr_h[i] > 109999);
     if ( (*detDigis).detId() != gpu.rawIdArr_h[i])
@@ -673,4 +671,4 @@ void SiPixelRawToDigiHeterogeneous::convertGPUtoCPU(const SiPixelRawToDigiHetero
 
 
 // define as framework plugin
-DEFINE_FWK_MODULE(SiPixelRawToDigiHeterogeneous);
+DEFINE_FWK_MODULE(SiPixelRawToClusterHeterogeneous);

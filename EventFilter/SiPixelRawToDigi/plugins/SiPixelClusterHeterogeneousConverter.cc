@@ -6,7 +6,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
-#include "siPixelRawToDigiHeterogeneousProduct.h"
+#include "siPixelRawToClusterHeterogeneousProduct.h"
 
 class SiPixelClusterHeterogeneousConverter: public edm::global::EDProducer<> {
 public:
@@ -46,7 +46,7 @@ void SiPixelClusterHeterogeneousConverter::produce(edm::StreamID, edm::Event& iE
   edm::Handle<HeterogeneousProduct> hinput;
   iEvent.getByToken(token_, hinput);
 
-  const auto& input = hinput->get<siPixelRawToDigiHeterogeneousProduct::HeterogeneousDigiCluster>().getProduct<HeterogeneousDevice::kCPU>();
+  const auto& input = hinput->get<siPixelRawToClusterHeterogeneousProduct::HeterogeneousDigiCluster>().getProduct<HeterogeneousDevice::kCPU>();
 
   iEvent.put(copy_unique(input.outputClusters));
 }

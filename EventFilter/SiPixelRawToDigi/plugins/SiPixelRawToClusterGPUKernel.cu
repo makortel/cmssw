@@ -1,6 +1,6 @@
 /* Sushil Dubey, Shashi Dugad, TIFR, July 2017
  *
- * File Name: RawToDigiGPU.cu
+ * File Name: RawToClusterGPU.cu
  * Description: It converts Raw data into Digi Format on GPU
  * then it converts adc -> electron and
  * applies the adc threshold to needed for clustering
@@ -34,11 +34,11 @@
 
 // local includes
 #include "SiPixelFedCablingMapGPU.h"
-#include "SiPixelRawToDigiGPUKernel.h"
+#include "SiPixelRawToClusterGPUKernel.h"
 
 namespace pixelgpudetails {
 
-  SiPixelRawToDigiGPUKernel::SiPixelRawToDigiGPUKernel() {
+  SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel() {
     // device copy of GPU friendly cabling map
     allocateCablingMap(cablingMapGPUHost_, cablingMapGPUDevice_);
 
@@ -101,7 +101,7 @@ namespace pixelgpudetails {
   }
 
  
-  SiPixelRawToDigiGPUKernel::~SiPixelRawToDigiGPUKernel() {
+  SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
     // release device memory for cabling map
     deallocateCablingMap(cablingMapGPUHost_, cablingMapGPUDevice_);
 
@@ -131,7 +131,7 @@ namespace pixelgpudetails {
     cudaCheck(cudaFree(debug_d));
   }
 
-  void SiPixelRawToDigiGPUKernel::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
+  void SiPixelRawToClusterGPUKernel::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
     std::memcpy(word+wordCounterGPU, src, sizeof(cms_uint32_t)*length);
     std::memset(fedId_h+wordCounterGPU/2, fedId - 1200, length/2);
   }
@@ -603,12 +603,14 @@ namespace pixelgpudetails {
 
 
   // Interface to outside
-  void SiPixelRawToDigiGPUKernel::makeClustersAsync(
+  void SiPixelRawToClusterGPUKernel::makeClustersAsync(
       const uint32_t wordCounter, const uint32_t fedCounter,
       bool convertADCtoElectrons, 
-      bool useQualityInfo, bool includeErrors, bool debug, uint32_t & nModulesActive,
+      bool useQualityInfo, bool includeErrors, bool debug,
       cuda::stream_t<>& stream)
   {
+    nDigis = wordCounter;
+
     const int threadsPerBlock = 512;
     const int blocks = (wordCounter + threadsPerBlock-1) /threadsPerBlock; // fill it all
 
@@ -678,21 +680,21 @@ namespace pixelgpudetails {
       << " blocks of " << threadsPerBlock << " threads\n";
     */
 
-    uint32_t nModules=0; // TODO: this has to be moved to a member variable
-    cudaCheck(cudaMemcpyAsync(moduleStart_d, &nModules, sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
+    nModulesActive = 0;
+    cudaCheck(cudaMemcpyAsync(moduleStart_d, &nModulesActive, sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 
     countModules<<<blocks, threadsPerBlock, 0, stream.id()>>>(moduleInd_d, moduleStart_d, clus_d, wordCounter);
     cudaCheck(cudaGetLastError());
 
-    cudaCheck(cudaMemcpyAsync(&nModules, moduleStart_d, sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(&nModulesActive, moduleStart_d, sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 
-    // std::cout << "found " << nModules << " Modules active" << std::endl;
+    // std::cout << "found " << nModulesActive << " Modules active" << std::endl;
 
     // TODO: I suspect we need a cudaStreamSynchronize before using nModules below
     // In order to avoid the cudaStreamSynchronize, create a new kernel which launches countModules and findClus.
     
     threadsPerBlock = 256;
-    blocks = nModules;
+    blocks = nModulesActive;
 
     /*
     std::cout
@@ -718,8 +720,6 @@ namespace pixelgpudetails {
 
     cudaStreamSynchronize(stream.id());
     cudaCheck(cudaGetLastError());
-
-    nModulesActive = nModules;
 
    } // end clusterizer scope
 
