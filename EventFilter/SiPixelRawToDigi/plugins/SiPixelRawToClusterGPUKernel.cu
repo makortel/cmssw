@@ -1,6 +1,6 @@
 /* Sushil Dubey, Shashi Dugad, TIFR, July 2017
  *
- * File Name: RawToDigiGPU.cu
+ * File Name: RawToClusterGPU.cu
  * Description: It converts Raw data into Digi Format on GPU
  * then it converts adc -> electron and
  * applies the adc threshold to needed for clustering
@@ -34,11 +34,11 @@
 
 // local includes
 #include "SiPixelFedCablingMapGPU.h"
-#include "SiPixelRawToDigiGPUKernel.h"
+#include "SiPixelRawToClusterGPUKernel.h"
 
 namespace pixelgpudetails {
 
-  SiPixelRawToDigiGPUKernel::SiPixelRawToDigiGPUKernel() {
+  SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel() {
     // device copy of GPU friendly cabling map
     allocateCablingMap(cablingMapGPUHost_, cablingMapGPUDevice_);
 
@@ -101,7 +101,7 @@ namespace pixelgpudetails {
   }
 
  
-  SiPixelRawToDigiGPUKernel::~SiPixelRawToDigiGPUKernel() {
+  SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
     // release device memory for cabling map
     deallocateCablingMap(cablingMapGPUHost_, cablingMapGPUDevice_);
 
@@ -131,7 +131,7 @@ namespace pixelgpudetails {
     cudaCheck(cudaFree(debug_d));
   }
 
-  void SiPixelRawToDigiGPUKernel::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
+  void SiPixelRawToClusterGPUKernel::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
     std::memcpy(word+wordCounterGPU, src, sizeof(cms_uint32_t)*length);
     std::memset(fedId_h+wordCounterGPU/2, fedId - 1200, length/2);
   }
@@ -603,7 +603,7 @@ namespace pixelgpudetails {
 
 
   // Interface to outside
-  void SiPixelRawToDigiGPUKernel::makeClustersAsync(
+  void SiPixelRawToClusterGPUKernel::makeClustersAsync(
       const uint32_t wordCounter, const uint32_t fedCounter,
       bool convertADCtoElectrons, 
       bool useQualityInfo, bool includeErrors, bool debug, uint32_t & nModulesActive,

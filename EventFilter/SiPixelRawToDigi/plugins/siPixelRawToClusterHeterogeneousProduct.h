@@ -1,5 +1,5 @@
-#ifndef EventFilter_SiPixelRawToDigi_siPixelRawToDigiHeterogeneousProduct_h
-#define EventFilter_SiPixelRawToDigi_siPixelRawToDigiHeterogeneousProduct_h
+#ifndef EventFilter_SiPixelRawToDigi_siPixelRawToClusterHeterogeneousProduct_h
+#define EventFilter_SiPixelRawToDigi_siPixelRawToClusterHeterogeneousProduct_h
 
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
@@ -11,7 +11,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 
-namespace siPixelRawToDigiHeterogeneousProduct {
+namespace siPixelRawToClusterHeterogeneousProduct {
   struct CPUProduct {
     edm::DetSetVector<PixelDigi> collection;
     edm::DetSetVector<SiPixelRawDataError> errorcollection;

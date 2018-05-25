@@ -1,5 +1,5 @@
-#ifndef EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToDigiGPUKernel_h
-#define EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToDigiGPUKernel_h
+#ifndef EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToClusterGPUKernel_h
+#define EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToClusterGPUKernel_h
 
 #include <algorithm>
 #include <cuda_runtime.h>
@@ -8,7 +8,7 @@
 #include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
 #include "SiPixelFedCablingMapGPU.h"
-#include "siPixelRawToDigiHeterogeneousProduct.h"
+#include "siPixelRawToClusterHeterogeneousProduct.h"
 
 namespace pixelgpudetails {
 
@@ -142,19 +142,19 @@ namespace pixelgpudetails {
            (adc << thePacking.adc_shift);
   }
 
-  using error_obj = siPixelRawToDigiHeterogeneousProduct::error_obj;
+  using error_obj = siPixelRawToClusterHeterogeneousProduct::error_obj;
 
 
-  class SiPixelRawToDigiGPUKernel {
+  class SiPixelRawToClusterGPUKernel {
   public:
-    SiPixelRawToDigiGPUKernel();
-    ~SiPixelRawToDigiGPUKernel();
+    SiPixelRawToClusterGPUKernel();
+    ~SiPixelRawToClusterGPUKernel();
 
     
-    SiPixelRawToDigiGPUKernel(const SiPixelRawToDigiGPUKernel&) = delete;
-    SiPixelRawToDigiGPUKernel(SiPixelRawToDigiGPUKernel&&) = delete;
-    SiPixelRawToDigiGPUKernel& operator=(const SiPixelRawToDigiGPUKernel&) = delete;
-    SiPixelRawToDigiGPUKernel& operator=(SiPixelRawToDigiGPUKernel&&) = delete;
+    SiPixelRawToClusterGPUKernel(const SiPixelRawToClusterGPUKernel&) = delete;
+    SiPixelRawToClusterGPUKernel(SiPixelRawToClusterGPUKernel&&) = delete;
+    SiPixelRawToClusterGPUKernel& operator=(const SiPixelRawToClusterGPUKernel&) = delete;
+    SiPixelRawToClusterGPUKernel& operator=(SiPixelRawToClusterGPUKernel&&) = delete;
 
     void updateCablingMap(SiPixelFedCablingMap const& cablingMap,
                           TrackerGeometry const& trackerGeom,
@@ -178,7 +178,7 @@ namespace pixelgpudetails {
                            cuda::stream_t<>& stream);
 
     auto getProduct() const {
-      return siPixelRawToDigiHeterogeneousProduct::GPUProduct{pdigi_h, rawIdArr_h, clus_h, adc_h, error_h};
+      return siPixelRawToClusterHeterogeneousProduct::GPUProduct{pdigi_h, rawIdArr_h, clus_h, adc_h, error_h};
     }
 
   private:
@@ -276,4 +276,4 @@ namespace pixelgpudetails {
 
 }
 
-#endif // EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToDigiGPUKernel_h
+#endif // EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToClusterGPUKernel_h

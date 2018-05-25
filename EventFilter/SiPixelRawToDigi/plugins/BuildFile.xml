@@ -2,7 +2,7 @@
 <library file="SiPixelDigiToRaw.cc SiPixelRawToDigi.cc" name="EventFilterSiPixelRawToDigiPlugins">
   <flags EDM_PLUGIN="1"/>
 </library>
-<library file="SiPixelRawToDigiHeterogeneous.cc SiPixelFedCablingMapGPU.cc SiPixelRawToDigiGPUKernel.cu SiPixelDigiHeterogeneousConverter.cc SiPixelClusterHeterogeneousConverter.cc" name="EventFilterSiPixelRawToDigiGPUPlugins">
+<library file="SiPixelRawToClusterHeterogeneous.cc SiPixelFedCablingMapGPU.cc SiPixelRawToClusterGPUKernel.cu SiPixelDigiHeterogeneousConverter.cc SiPixelClusterHeterogeneousConverter.cc" name="EventFilterSiPixelRawToDigiGPUPlugins">
   <use name="cuda"/>
   <use name="cuda-api-wrappers"/>
   <use name="CalibTracker/SiPixelESProducers"/>
