@@ -1,15 +1,19 @@
 #ifndef RecoLocalTracker_SiPixelRecHits_PixelCPEFast_h
 #define RecoLocalTracker_SiPixelRecHits_PixelCPEFast_h
 
+#include <mutex>
 #include <utility>
 #include <vector>
 
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelCPEGenericDBErrorParametrization.h"
+#include "FWCore/Utilities/interface/thread_safety_macros.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAHostAllocator.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/PixelCPEBase.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/SiPixelGenError.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/SiPixelTemplate.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/pixelCPEforGPU.h"
+
+#include <cuda/api_wrappers.h>
 
 class MagneticField;
 class PixelCPEFast final : public PixelCPEBase
@@ -41,6 +45,10 @@ public:
    
    ~PixelCPEFast();
 
+    // The return value can only be used safely in kernels launched on
+    // the same cudaStream, or after cudaStreamSynchronize.
+    const pixelCPEforGPU::ParamsOnGPU *getGPUProductAsync(cuda::stream_t<>& cudaStream) const;
+
 private:
    ClusterParam * createClusterParam(const SiPixelCluster & cl) const override;
    
@@ -71,15 +79,20 @@ private:
    //--- DB Error Parametrization object, new light templates 
    std::vector< SiPixelGenErrorStore > thePixelGenError_;
 
-
-public :
-   void fillParamsForGpu();
-
-   // not needed if not used on CPU...
    std::vector<pixelCPEforGPU::DetParams, CUDAHostAllocator<pixelCPEforGPU::DetParams>> m_detParamsGPU;
    pixelCPEforGPU::CommonParams m_commonParamsGPU;     
-   pixelCPEforGPU::ParamsOnGPU h_paramsOnGPU;
-   pixelCPEforGPU::ParamsOnGPU * d_paramsOnGPU;  // copy of the above on the Device  
+
+   struct GPUDataPerDevice {
+     ~GPUDataPerDevice();
+     mutable std::mutex m_mutex; // protect the GPU transfer
+     // not needed if not used on CPU...
+     CMS_THREAD_GUARD(m_mutex) mutable pixelCPEforGPU::ParamsOnGPU h_paramsOnGPU;
+     CMS_THREAD_GUARD(m_mutex) mutable pixelCPEforGPU::ParamsOnGPU * d_paramsOnGPU = nullptr;  // copy of the above on the Device
+   };
+   std::vector<GPUDataPerDevice> gpuDataPerDevice_;
+
+   void fillParamsForGpu();
+   void copyParamsToGpuAsync(const GPUDataPerDevice& data, cuda::stream_t<>& cudaStream) const;
 };
 
 #endif // RecoLocalTracker_SiPixelRecHits_PixelCPEFast_h

@@ -150,12 +150,11 @@ void SiPixelRecHitHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& i
   if (!fcpe) {
     throw cms::Exception("Configuration") << "too bad, not a fast cpe gpu processing not possible....";
   }
-  assert(fcpe->d_paramsOnGPU);
 
   edm::Handle<siPixelRawToClusterHeterogeneousProduct::GPUProduct> hinput;
   iEvent.getByToken<Input>(token_, hinput);
 
-  gpuAlgo_->makeHitsAsync(*hinput, fcpe->d_paramsOnGPU, cudaStream);
+  gpuAlgo_->makeHitsAsync(*hinput, fcpe->getGPUProductAsync(cudaStream), cudaStream);
 }
 
 void SiPixelRecHitHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) {

@@ -18,11 +18,18 @@
 #include <cuda_runtime.h>
 
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
 #include <iostream>
 
 namespace {
    constexpr float micronsToCm = 1.0e-4;
+
+  int numberOfCUDADevices() {
+    edm::Service<CUDAService> cs;
+    return cs->enabled() ? cs->numberOfDevices() : 0;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -35,7 +42,8 @@ PixelCPEFast::PixelCPEFast(edm::ParameterSet const & conf,
                                  const SiPixelLorentzAngle * lorentzAngle,
                                  const SiPixelGenErrorDBObject * genErrorDBObject,
                                  const SiPixelLorentzAngle * lorentzAngleWidth) :
-  PixelCPEBase(conf, mag, geom, ttopo, lorentzAngle, genErrorDBObject, nullptr, lorentzAngleWidth, 0)
+  PixelCPEBase(conf, mag, geom, ttopo, lorentzAngle, genErrorDBObject, nullptr, lorentzAngleWidth, 0),
+  gpuDataPerDevice_(numberOfCUDADevices())
 {
    EdgeClusterErrorX_ = conf.getParameter<double>("EdgeClusterErrorX");
    EdgeClusterErrorY_ = conf.getParameter<double>("EdgeClusterErrorY");
@@ -67,6 +75,47 @@ PixelCPEFast::PixelCPEFast(edm::ParameterSet const & conf,
       yerr_endcap_def_=0.00075;
 
    fillParamsForGpu();   
+}
+
+const pixelCPEforGPU::ParamsOnGPU *PixelCPEFast::getGPUProductAsync(cuda::stream_t<>& cudaStream) const {
+  edm::Service<CUDAService> cs;
+  auto device = cs->getCurrentDevice();
+
+  // I'm sure the following synchronization logic could be improved...
+  // - if mutex is locked, another thread is already transferring the data, so we try to lock it as well
+  // - if mutex is not locked, need to check d_paramsOnGPU (we're locking the mutex)
+  //   * if nullptr, initiate transfer, enqueue a callback releasing the mutex
+  //   * if set, transfer has already been completed, so release the mutex
+
+  auto& data = gpuDataPerDevice_[device];
+
+  if(data.m_mutex.try_lock()) {
+    LogTrace("PixelCPEFast") << "Locked mutex";
+    // mutex was free, is now locked
+    if(data.d_paramsOnGPU == nullptr) {
+      LogTrace("PixelCPEFast") << "Starting transfer";
+      copyParamsToGpuAsync(data, cudaStream);
+      cudaStream.enqueue.callback([&mutex = data.m_mutex](cuda::stream::id_t streamId, cuda::status_t status) mutable {
+          LogTrace("PixelCPEFast") << "Transfer completed, unlocking mutex";
+          mutex.unlock();
+        });
+    }
+    else {
+      LogTrace("PixelCPEFast") << "Data already transferred, unlocking mutex";
+      // data already transferred
+      data.m_mutex.unlock();
+    }
+  }
+  else {
+    LogTrace("PixelCPEFast") << "Data transfer ongoing, locking mutex";
+    // data transfer going on, we only need to lock the mutex
+    // when mutex is unlocked, we're good to go
+    std::lock_guard<std::mutex> lock(data.m_mutex);
+    LogTrace("PixelCPEFast") << "Ongoing data transfer ongoing finished, unlocking mutex";
+  }
+  assert(data.d_paramsOnGPU);
+  LogTrace("PixelCPEFast") << "Returning product";
+  return data.d_paramsOnGPU;
 }
 
 void PixelCPEFast::fillParamsForGpu() {
@@ -115,22 +164,27 @@ void PixelCPEFast::fillParamsForGpu() {
     auto rr = pixelCPEforGPU::Rotation(p.theDet->surface().rotation());
     g.frame = pixelCPEforGPU::Frame(vv.x(),vv.y(),vv.z(),rr);
   }
-
-  // and now copy to device...
-  cudaCheck(cudaMalloc((void**) & h_paramsOnGPU.m_commonParams, sizeof(pixelCPEforGPU::CommonParams)));
-  cudaCheck(cudaMalloc((void**) & h_paramsOnGPU.m_detParams, m_detParamsGPU.size()*sizeof(pixelCPEforGPU::DetParams)));
-  cudaCheck(cudaMalloc((void**) & d_paramsOnGPU, sizeof(pixelCPEforGPU::ParamsOnGPU)));
-
-  cudaCheck(cudaMemcpy(d_paramsOnGPU, &h_paramsOnGPU, sizeof(pixelCPEforGPU::ParamsOnGPU), cudaMemcpyDefault));
-  cudaCheck(cudaMemcpy(h_paramsOnGPU.m_commonParams, &m_commonParamsGPU, sizeof(pixelCPEforGPU::CommonParams), cudaMemcpyDefault));
-  cudaCheck(cudaMemcpy(h_paramsOnGPU.m_detParams, m_detParamsGPU.data(), m_detParamsGPU.size()*sizeof(pixelCPEforGPU::DetParams), cudaMemcpyDefault));
-  cudaDeviceSynchronize();
 }
 
-PixelCPEFast::~PixelCPEFast() {
-  cudaFree(h_paramsOnGPU.m_commonParams);
-  cudaFree(h_paramsOnGPU.m_detParams);
-  cudaFree(d_paramsOnGPU);
+void PixelCPEFast::copyParamsToGpuAsync(const GPUDataPerDevice& data, cuda::stream_t<>& cudaStream) const {
+  // and now copy to device...
+  cudaCheck(cudaMalloc((void**) & data.h_paramsOnGPU.m_commonParams, sizeof(pixelCPEforGPU::CommonParams)));
+  cudaCheck(cudaMalloc((void**) & data.h_paramsOnGPU.m_detParams, m_detParamsGPU.size()*sizeof(pixelCPEforGPU::DetParams)));
+  cudaCheck(cudaMalloc((void**) & data.d_paramsOnGPU, sizeof(pixelCPEforGPU::ParamsOnGPU)));
+
+  cudaCheck(cudaMemcpyAsync(data.d_paramsOnGPU, &data.h_paramsOnGPU, sizeof(pixelCPEforGPU::ParamsOnGPU), cudaMemcpyDefault, cudaStream.id()));
+  cudaCheck(cudaMemcpyAsync(data.h_paramsOnGPU.m_commonParams, &m_commonParamsGPU, sizeof(pixelCPEforGPU::CommonParams), cudaMemcpyDefault, cudaStream.id()));
+  cudaCheck(cudaMemcpyAsync(data.h_paramsOnGPU.m_detParams, m_detParamsGPU.data(), m_detParamsGPU.size()*sizeof(pixelCPEforGPU::DetParams), cudaMemcpyDefault, cudaStream.id()));
+}
+
+PixelCPEFast::~PixelCPEFast() {}
+
+PixelCPEFast::GPUDataPerDevice::~GPUDataPerDevice() {
+  if(d_paramsOnGPU != nullptr) {
+    cudaFree(h_paramsOnGPU.m_commonParams);
+    cudaFree(h_paramsOnGPU.m_detParams);
+    cudaFree(d_paramsOnGPU);
+  }
 }
 
 PixelCPEBase::ClusterParam* PixelCPEFast::createClusterParam(const SiPixelCluster & cl) const
