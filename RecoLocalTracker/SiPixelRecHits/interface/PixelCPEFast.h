@@ -89,7 +89,6 @@ private:
    CUDAESProduct<GPUData> gpuData_;
 
    void fillParamsForGpu();
-   void copyParamsToGpuAsync(const GPUData& data, cuda::stream_t<>& cudaStream) const;
 };
 
 #endif // RecoLocalTracker_SiPixelRecHits_PixelCPEFast_h
