@@ -1,5 +1,8 @@
 <use   name="boost_serialization"/>
 <use   name="RecoLocalTracker/SiPixelClusterizer"/>
+<use   name="RecoTracker/Record"/>
+<use   name="cuda"/>
+<use   name="cuda-api-wrappers"/>
 <library   file="*.cc" name="RecoLocalTrackerSiPixelClusterizerPlugins">
   <flags   EDM_PLUGIN="1"/>
 </library>

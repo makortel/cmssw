@@ -31,17 +31,14 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/gpuCalibPixel.h"
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/gpuClustering.h"
+#include "RecoLocalTracker/SiPixelClusterizer/interface/SiPixelFedCablingMapGPU.h"
 
 // local includes
-#include "SiPixelFedCablingMapGPU.h"
 #include "SiPixelRawToClusterGPUKernel.h"
 
 namespace pixelgpudetails {
 
   SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel() {
-    // device copy of GPU friendly cabling map
-    allocateCablingMap(cablingMapGPUHost_, cablingMapGPUDevice_);
-
     int WSIZE = MAX_FED * pixelgpudetails::MAX_WORD * sizeof(unsigned int);
     cudaMallocHost(&word,       sizeof(unsigned int)*WSIZE);
     cudaMallocHost(&fedId_h,    sizeof(unsigned char)*WSIZE);
@@ -102,9 +99,6 @@ namespace pixelgpudetails {
 
  
   SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
-    // release device memory for cabling map
-    deallocateCablingMap(cablingMapGPUHost_, cablingMapGPUDevice_);
-
     // free gains device memory
     cudaCheck(cudaFreeHost(gainForHLTonHost_));
     cudaCheck(cudaFree(gainForHLTonGPU_));
@@ -482,7 +476,8 @@ namespace pixelgpudetails {
 
 
   // Kernel to perform Raw to Digi conversion
-  __global__ void RawToDigi_kernel(const SiPixelFedCablingMapGPU *Map, const uint32_t wordCounter, const uint32_t *Word, const uint8_t *fedIds,
+  __global__ void RawToDigi_kernel(const SiPixelFedCablingMapGPU *Map, const unsigned char *modToUnp,
+                                   const uint32_t wordCounter, const uint32_t *Word, const uint8_t *fedIds,
                                    uint16_t * XX, uint16_t * YY, uint16_t * ADC,
                                    uint32_t * pdigi, uint32_t *rawIdArr, uint16_t * moduleId,
                                    GPU::SimpleVector<pixelgpudetails::error_obj> *err,
@@ -538,7 +533,7 @@ namespace pixelgpudetails {
             if (skipROC) continue;
 
         }
-        skipROC = Map->modToUnp[index];
+        skipROC = modToUnp[index];
         if (skipROC) continue;
 
         uint32_t layer = 0;//, ladder =0;
@@ -604,6 +599,8 @@ namespace pixelgpudetails {
 
   // Interface to outside
   void SiPixelRawToClusterGPUKernel::makeClustersAsync(
+      const SiPixelFedCablingMapGPU *cablingMap,
+      const unsigned char *modToUnp,
       const uint32_t wordCounter, const uint32_t fedCounter,
       bool convertADCtoElectrons, 
       bool useQualityInfo, bool includeErrors, bool debug,
@@ -626,7 +623,8 @@ namespace pixelgpudetails {
       
     // Launch rawToDigi kernel
     RawToDigi_kernel<<<blocks, threadsPerBlock, 0, stream.id()>>>(
-        cablingMapGPUDevice_,
+        cablingMap,
+        modToUnp,
         wordCounter,
         word_d,
         fedId_d,
