@@ -1,12 +1,10 @@
 #ifndef RecoLocalTracker_SiPixelRecHits_PixelCPEFast_h
 #define RecoLocalTracker_SiPixelRecHits_PixelCPEFast_h
 
-#include <mutex>
 #include <utility>
-#include <vector>
 
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelCPEGenericDBErrorParametrization.h"
-#include "FWCore/Utilities/interface/thread_safety_macros.h"
+#include "HeterogeneousCore/CUDACore/interface/CUDAESProduct.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAHostAllocator.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/PixelCPEBase.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/SiPixelGenError.h"
@@ -82,17 +80,16 @@ private:
    std::vector<pixelCPEforGPU::DetParams, CUDAHostAllocator<pixelCPEforGPU::DetParams>> m_detParamsGPU;
    pixelCPEforGPU::CommonParams m_commonParamsGPU;     
 
-   struct GPUDataPerDevice {
-     ~GPUDataPerDevice();
-     mutable std::mutex m_mutex; // protect the GPU transfer
+   struct GPUData {
+     ~GPUData();
      // not needed if not used on CPU...
-     CMS_THREAD_GUARD(m_mutex) mutable pixelCPEforGPU::ParamsOnGPU h_paramsOnGPU;
-     CMS_THREAD_GUARD(m_mutex) mutable pixelCPEforGPU::ParamsOnGPU * d_paramsOnGPU = nullptr;  // copy of the above on the Device
+     pixelCPEforGPU::ParamsOnGPU h_paramsOnGPU;
+     pixelCPEforGPU::ParamsOnGPU * d_paramsOnGPU = nullptr;  // copy of the above on the Device
    };
-   std::vector<GPUDataPerDevice> gpuDataPerDevice_;
+   CUDAESProduct<GPUData> gpuData_;
 
    void fillParamsForGpu();
-   void copyParamsToGpuAsync(const GPUDataPerDevice& data, cuda::stream_t<>& cudaStream) const;
+   void copyParamsToGpuAsync(const GPUData& data, cuda::stream_t<>& cudaStream) const;
 };
 
 #endif // RecoLocalTracker_SiPixelRecHits_PixelCPEFast_h
