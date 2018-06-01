@@ -7,10 +7,10 @@
 
 #include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
-#include "SiPixelFedCablingMapGPU.h"
 #include "siPixelRawToClusterHeterogeneousProduct.h"
 
 class SiPixelFedCablingMapGPU;
+class SiPixelGainForHLTonGPU;
 
 namespace pixelgpudetails {
 
@@ -158,16 +158,11 @@ namespace pixelgpudetails {
     SiPixelRawToClusterGPUKernel& operator=(const SiPixelRawToClusterGPUKernel&) = delete;
     SiPixelRawToClusterGPUKernel& operator=(SiPixelRawToClusterGPUKernel&&) = delete;
 
-    void updateGainCalibration(SiPixelGainCalibrationForHLT const& gains,
-                               TrackerGeometry const& trackerGeom,
-                               cuda::stream_t<>& stream) {
-      processGainCalibration(gains, trackerGeom, gainForHLTonHost_, gainForHLTonGPU_, gainDataOnGPU_, stream);
-    }
-
     void initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length);
     
     // Not really very async yet...
     void makeClustersAsync(const SiPixelFedCablingMapGPU *cablingMap, const unsigned char *modToUnp,
+                           const SiPixelGainForHLTonGPU *gains,
                            const uint32_t wordCounter, const uint32_t fedCounter, bool convertADCtoElectrons,
                            bool useQualityInfo, bool includeErrors, bool debug,
                            cuda::stream_t<>& stream);
@@ -181,11 +176,6 @@ namespace pixelgpudetails {
     }
 
   private:
-    //  gain calib
-    SiPixelGainForHLTonGPU * gainForHLTonHost_ = nullptr;
-    SiPixelGainForHLTonGPU * gainForHLTonGPU_ = nullptr;
-    SiPixelGainForHLTonGPU_DecodingStructure * gainDataOnGPU_ = nullptr;
-
     // input
     unsigned int *word = nullptr;        // to hold input for rawtodigi
     unsigned char *fedId_h = nullptr;    // to hold fed index for each word

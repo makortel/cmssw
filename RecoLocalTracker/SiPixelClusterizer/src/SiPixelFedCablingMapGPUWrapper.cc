@@ -17,21 +17,12 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "RecoLocalTracker/SiPixelClusterizer/interface/SiPixelFedCablingMapGPUWrapper.h"
 
-namespace {
-  // Maximum fed for phase1 is 150 but not all of them are filled
-  // Update the number FED based on maximum fed found in the cabling map
-  constexpr unsigned int MAX_FED  = 150;
-  constexpr unsigned int MAX_LINK =  48;  // maximum links/channels for Phase 1
-  constexpr unsigned int MAX_ROC  =   8;
-  constexpr unsigned int MAX_SIZE = MAX_FED * MAX_LINK * MAX_ROC;
-  constexpr unsigned int MAX_SIZE_BYTE_INT  = MAX_SIZE * sizeof(unsigned int);
-  constexpr unsigned int MAX_SIZE_BYTE_BOOL = MAX_SIZE * sizeof(unsigned char);
-}
-
 SiPixelFedCablingMapGPUWrapper::SiPixelFedCablingMapGPUWrapper(SiPixelFedCablingMap const& cablingMap,
                                                                TrackerGeometry const& trackerGeom,
                                                                SiPixelQuality const *badPixelInfo):
-  fedMap(MAX_SIZE), linkMap(MAX_SIZE), rocMap(MAX_SIZE), RawId(MAX_SIZE), rocInDet(MAX_SIZE), moduleId(MAX_SIZE), badRocs(MAX_SIZE),
+  fedMap(pixelgpudetails::MAX_SIZE), linkMap(pixelgpudetails::MAX_SIZE), rocMap(pixelgpudetails::MAX_SIZE),
+  RawId(pixelgpudetails::MAX_SIZE), rocInDet(pixelgpudetails::MAX_SIZE), moduleId(pixelgpudetails::MAX_SIZE),
+  badRocs(pixelgpudetails::MAX_SIZE),
   hasQuality_(badPixelInfo != nullptr)
 {
   std::vector<unsigned int> const& fedIds = cablingMap.fedIds();
@@ -44,8 +35,8 @@ SiPixelFedCablingMapGPUWrapper::SiPixelFedCablingMapGPUWrapper(SiPixelFedCabling
   int index = 1;
 
   for (unsigned int fed = startFed; fed <= endFed; fed++) {
-    for (unsigned int link = 1; link <= MAX_LINK; link++) {
-      for (unsigned int roc = 1; roc <= MAX_ROC; roc++) {
+    for (unsigned int link = 1; link <= pixelgpudetails::MAX_LINK; link++) {
+      for (unsigned int roc = 1; roc <= pixelgpudetails::MAX_ROC; roc++) {
         path = {fed, link, roc};
         const sipixelobjects::PixelROC* pixelRoc = cabling->findItem(path);
         fedMap[index] = fed;
@@ -110,13 +101,13 @@ const SiPixelFedCablingMapGPU *SiPixelFedCablingMapGPUWrapper::getGPUProductAsyn
       // allocate
       cudaCheck(cudaMallocHost((void**) & data.cablingMapHost, sizeof(SiPixelFedCablingMapGPU)));
       cudaCheck(cudaMalloc((void**) & data.cablingMapDevice, sizeof(SiPixelFedCablingMapGPU)));
-      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->fed,      MAX_SIZE_BYTE_INT));
-      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->link,     MAX_SIZE_BYTE_INT));
-      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->roc,      MAX_SIZE_BYTE_INT));
-      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->RawId,    MAX_SIZE_BYTE_INT));
-      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->rocInDet, MAX_SIZE_BYTE_INT));
-      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->moduleId, MAX_SIZE_BYTE_INT));
-      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->badRocs,  MAX_SIZE_BYTE_BOOL));
+      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->fed,      pixelgpudetails::MAX_SIZE_BYTE_INT));
+      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->link,     pixelgpudetails::MAX_SIZE_BYTE_INT));
+      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->roc,      pixelgpudetails::MAX_SIZE_BYTE_INT));
+      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->RawId,    pixelgpudetails::MAX_SIZE_BYTE_INT));
+      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->rocInDet, pixelgpudetails::MAX_SIZE_BYTE_INT));
+      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->moduleId, pixelgpudetails::MAX_SIZE_BYTE_INT));
+      cudaCheck(cudaMalloc((void**) & data.cablingMapHost->badRocs,  pixelgpudetails::MAX_SIZE_BYTE_BOOL));
 
       // transfer
       data.cablingMapHost->size = this->size;
@@ -133,8 +124,8 @@ const SiPixelFedCablingMapGPU *SiPixelFedCablingMapGPUWrapper::getGPUProductAsyn
 }
 
 SiPixelFedCablingMapGPUWrapper::ModulesToUnpack::ModulesToUnpack():
-  modToUnpDevice(cuda::memory::device::make_unique<unsigned char[]>(cuda::device::current::get().id(), MAX_SIZE)),
-  modToUnpHost(MAX_SIZE)
+  modToUnpDevice(cuda::memory::device::make_unique<unsigned char[]>(cuda::device::current::get().id(), pixelgpudetails::MAX_SIZE)),
+  modToUnpHost(pixelgpudetails::MAX_SIZE)
 {
 }
 
@@ -149,8 +140,8 @@ void SiPixelFedCablingMapGPUWrapper::ModulesToUnpack::fillAsync(SiPixelFedCablin
   int index = 1;
 
   for (unsigned int fed = startFed; fed <= endFed; fed++) {
-    for (unsigned int link = 1; link <= MAX_LINK; link++) {
-      for (unsigned int roc = 1; roc <= MAX_ROC; roc++) {
+    for (unsigned int link = 1; link <= pixelgpudetails::MAX_LINK; link++) {
+      for (unsigned int roc = 1; roc <= pixelgpudetails::MAX_ROC; roc++) {
         path = {fed, link, roc};
         const sipixelobjects::PixelROC* pixelRoc = cabling->findItem(path);
         if (pixelRoc != nullptr) {

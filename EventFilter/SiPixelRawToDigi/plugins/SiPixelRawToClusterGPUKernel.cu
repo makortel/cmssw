@@ -39,7 +39,7 @@
 namespace pixelgpudetails {
 
   SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel() {
-    int WSIZE = MAX_FED * pixelgpudetails::MAX_WORD * sizeof(unsigned int);
+    int WSIZE = pixelgpudetails::MAX_FED * pixelgpudetails::MAX_WORD * sizeof(unsigned int);
     cudaMallocHost(&word,       sizeof(unsigned int)*WSIZE);
     cudaMallocHost(&fedId_h,    sizeof(unsigned char)*WSIZE);
 
@@ -85,9 +85,6 @@ namespace pixelgpudetails {
     cudaCheck(cudaMalloc((void**) & data_d,        MAX_ERROR_SIZE));
 
     // for the clusterizer
-    cudaCheck(cudaMallocHost((void**) & gainForHLTonHost_, sizeof(SiPixelGainForHLTonGPU)));
-    cudaCheck(cudaMalloc((void**) & gainForHLTonGPU_, sizeof(SiPixelGainForHLTonGPU)));
-
     cudaCheck(cudaMalloc((void**) & clus_d,        MAX_WORD32_SIZE)); // cluser index in module
 
     cudaCheck(cudaMalloc((void**) & moduleStart_d, (MaxNumModules+1)*sizeof(uint32_t) ));
@@ -99,11 +96,6 @@ namespace pixelgpudetails {
 
  
   SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
-    // free gains device memory
-    cudaCheck(cudaFreeHost(gainForHLTonHost_));
-    cudaCheck(cudaFree(gainForHLTonGPU_));
-    cudaCheck(cudaFree(gainDataOnGPU_));
-
     // free device memory used for RawToDigi on GPU
     // free the GPU memory
     cudaCheck(cudaFree(word_d));
@@ -601,6 +593,7 @@ namespace pixelgpudetails {
   void SiPixelRawToClusterGPUKernel::makeClustersAsync(
       const SiPixelFedCablingMapGPU *cablingMap,
       const unsigned char *modToUnp,
+      const SiPixelGainForHLTonGPU *gains,
       const uint32_t wordCounter, const uint32_t fedCounter,
       bool convertADCtoElectrons, 
       bool useQualityInfo, bool includeErrors, bool debug,
@@ -659,11 +652,10 @@ namespace pixelgpudetails {
     int blocks = (wordCounter + threadsPerBlock - 1) / threadsPerBlock;
 
 
-    assert(gainForHLTonGPU_);
     gpuCalibPixel::calibDigis<<<blocks, threadsPerBlock, 0, stream.id()>>>(
                  moduleInd_d,
                  xx_d, yy_d, adc_d,
-                 gainForHLTonGPU_,
+                 gains,
                  wordCounter
                );
 

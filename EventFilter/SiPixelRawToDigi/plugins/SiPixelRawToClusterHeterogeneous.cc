@@ -9,6 +9,8 @@
 #include <cuda_runtime.h>
 
 // CMSSW includes
+#include "CalibTracker/Records/interface/SiPixelGainCalibrationForHLTGPURcd.h"
+#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationForHLTGPU.h"
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationForHLTService.h"
 #include "CondFormats/DataRecord/interface/SiPixelFedCablingMapRcd.h"
 #include "CondFormats/DataRecord/interface/SiPixelQualityRcd.h"
@@ -449,12 +451,8 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
   // get the GPU product already here so that the async transfer can begin
   const auto *gpuMap = hgpuMap->getGPUProductAsync(cudaStream);
 
-  if(recordWatcherUpdatedSinceLastTransfer_) {
-    // convert the cabling map to a GPU-friendly version
-    gpuAlgo_->updateGainCalibration(theSiPixelGainCalibration_.payload(), *geom_, cudaStream);
-
-    recordWatcherUpdatedSinceLastTransfer_ = false;
-  }
+  edm::ESHandle<SiPixelGainCalibrationForHLTGPU> hgains;
+  es.get<SiPixelGainCalibrationForHLTGPURcd>().get(hgains);
 
   errors_.clear();
 
@@ -519,7 +517,8 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
 
   } // end of for loop
 
-  gpuAlgo_->makeClustersAsync(gpuMap, gpuModulesToUnpack_->get(), wordCounterGPU, fedCounter, convertADCtoElectrons,
+  gpuAlgo_->makeClustersAsync(gpuMap, gpuModulesToUnpack_->get(), hgains->getGPUProductAsync(cudaStream),
+                              wordCounterGPU, fedCounter, convertADCtoElectrons,
                               useQuality, includeErrors, debug, cudaStream);
 }
 
