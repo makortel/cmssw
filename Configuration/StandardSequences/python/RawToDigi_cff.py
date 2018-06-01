@@ -6,6 +6,7 @@ import FWCore.ParameterSet.Config as cms
 from EventFilter.SiPixelRawToDigi.SiPixelRawToDigi_cfi import *
 from EventFilter.SiPixelRawToDigi.siPixelDigisHeterogeneous_cfi import *
 from RecoLocalTracker.SiPixelClusterizer.siPixelFedCablingMapGPUWrapper_cfi import *
+from CalibTracker.SiPixelESProducers.siPixelGainCalibrationForHLTGPU_cfi import *
 
 from EventFilter.SiStripRawToDigi.SiStripDigis_cfi import *
 
