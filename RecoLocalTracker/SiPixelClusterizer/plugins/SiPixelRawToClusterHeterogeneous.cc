@@ -49,13 +49,13 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/Producer/interface/HeterogeneousEDProducer.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
-#include "RecoLocalTracker/SiPixelClusterizer/interface/PixelThresholdClusterizer.h"
 
 #include "RecoLocalTracker/SiPixelClusterizer/interface/SiPixelFedCablingMapGPUWrapper.h"
 #include "RecoTracker/Record/interface/CkfComponentsRecord.h"
 
 #include "SiPixelRawToClusterGPUKernel.h"
 #include "siPixelRawToClusterHeterogeneousProduct.h"
+#include "PixelThresholdClusterizer.h"
 
 namespace {
   struct AccretionCluster {
