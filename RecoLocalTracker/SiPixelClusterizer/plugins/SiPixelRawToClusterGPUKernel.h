@@ -1,5 +1,5 @@
-#ifndef EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToClusterGPUKernel_h
-#define EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToClusterGPUKernel_h
+#ifndef RecoLocalTracker_SiPixelClusterizer_plugins_SiPixelRawToClusterGPUKernel_h
+#define RecoLocalTracker_SiPixelClusterizer_plugins_SiPixelRawToClusterGPUKernel_h
 
 #include <algorithm>
 #include <cuda_runtime.h>
@@ -265,4 +265,4 @@ namespace pixelgpudetails {
 
 }
 
-#endif // EventFilter_SiPixelRawToDigi_plugins_SiPixelRawToClusterGPUKernel_h
+#endif // RecoLocalTracker_SiPixelClusterizer_plugins_SiPixelRawToClusterGPUKernel_h

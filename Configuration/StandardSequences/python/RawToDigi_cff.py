@@ -4,7 +4,7 @@ import FWCore.ParameterSet.Config as cms
 # scenarios. In this case it makes changes for Run 2.
 
 from EventFilter.SiPixelRawToDigi.SiPixelRawToDigi_cfi import *
-from EventFilter.SiPixelRawToDigi.siPixelDigisHeterogeneous_cfi import *
+from RecoLocalTracker.SiPixelClusterizer.siPixelDigisHeterogeneous_cfi import *
 from RecoLocalTracker.SiPixelClusterizer.siPixelFedCablingMapGPUWrapper_cfi import *
 from CalibTracker.SiPixelESProducers.siPixelGainCalibrationForHLTGPU_cfi import *
 

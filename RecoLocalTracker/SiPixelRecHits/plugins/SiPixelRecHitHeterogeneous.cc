@@ -19,7 +19,7 @@
 #include "RecoLocalTracker/SiPixelRecHits/interface/PixelCPEFast.h"
 #include "RecoLocalTracker/Records/interface/TkPixelCPERecord.h"
 
-#include "EventFilter/SiPixelRawToDigi/plugins/siPixelRawToClusterHeterogeneousProduct.h" // TODO: we need a proper place for this header...
+#include "RecoLocalTracker/SiPixelClusterizer/plugins/siPixelRawToClusterHeterogeneousProduct.h" // TODO: we need a proper place for this header...
 
 #include "PixelRecHits.h"
 
