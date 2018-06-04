@@ -205,7 +205,7 @@ void SiPixelRawToClusterHeterogeneous::fillDescriptions(edm::ConfigurationDescri
     temp1.push_back(40);
     desc.add<std::vector<int> >("UserErrorList",temp1)->setComment("## UserErrorList: list of error codes used by Pixel experts for investigation");
   }
-  desc.add<edm::InputTag>("InputLabel",edm::InputTag("siPixelRawData"));
+  desc.add<edm::InputTag>("InputLabel",edm::InputTag("rawDataCollector"));
   {
     edm::ParameterSetDescription psd0;
     psd0.addOptional<std::vector<edm::InputTag>>("inputs");

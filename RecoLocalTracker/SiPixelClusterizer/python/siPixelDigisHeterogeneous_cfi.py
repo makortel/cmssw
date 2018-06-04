@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-from EventFilter.SiPixelRawToDigi.siPixelDigisHeterogeneousDefault_cfi import siPixelDigisHeterogeneousDefault as _siPixelDigisHeterogeneousDefault
+from RecoLocalTracker.SiPixelClusterizer.siPixelDigisHeterogeneousDefault_cfi import siPixelDigisHeterogeneousDefault as _siPixelDigisHeterogeneousDefault
 siPixelDigisHeterogeneous = _siPixelDigisHeterogeneousDefault.clone()
 
 # following copied from SiPixelRawToDigi_cfi
