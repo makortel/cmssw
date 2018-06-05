@@ -235,7 +235,7 @@ void SiPixelRawToClusterHeterogeneous::fillDescriptions(edm::ConfigurationDescri
 
   HeterogeneousEDProducer::fillPSetDescription(desc);
 
-  descriptions.add("siPixelDigisHeterogeneousDefault",desc);
+  descriptions.add("siPixelClustersHeterogeneousDefault",desc);
 }
 
 const FEDRawDataCollection *SiPixelRawToClusterHeterogeneous::initialize(const edm::Event& ev, const edm::EventSetup& es) {

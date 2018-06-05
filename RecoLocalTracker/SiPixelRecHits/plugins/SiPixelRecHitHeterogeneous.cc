@@ -75,7 +75,7 @@ SiPixelRecHitHeterogeneous::SiPixelRecHitHeterogeneous(const edm::ParameterSet& 
 void SiPixelRecHitHeterogeneous::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
 
-  desc.add<edm::InputTag>("heterogeneousSrc", edm::InputTag("siPixelDigisHeterogeneous"));
+  desc.add<edm::InputTag>("heterogeneousSrc", edm::InputTag("siPixelClustersHeterogeneous"));
   desc.add<edm::InputTag>("src", edm::InputTag("siPixelClusters"));
   desc.add<std::string>("CPE", "PixelCPEFast");
 
