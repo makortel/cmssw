@@ -22,7 +22,7 @@ siPixelDigis.CablingMapLabel = cms.string("")
 from Configuration.Eras.Modifier_phase1Pixel_cff import phase1Pixel
 phase1Pixel.toModify(siPixelDigis, UsePhase1=True)
 
-_siPixelDigis_gpu = EventFilter.SiPixelRawToDigi.siPixelDigiHeterogeneousConverter_cfi.siPixelDigiHeterogeneousConverter.clone()
+_siPixelDigis_gpu = RecoLocalTracker.SiPixelClusterizer.siPixelDigiHeterogeneousConverter_cfi.siPixelDigiHeterogeneousConverter.clone()
 _siPixelDigis_gpu.includeErrors = cms.bool(True)
 
 from Configuration.ProcessModifiers.gpu_cff import gpu
