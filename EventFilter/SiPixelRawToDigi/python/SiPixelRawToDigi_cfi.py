@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 import EventFilter.SiPixelRawToDigi.siPixelRawToDigi_cfi
-import EventFilter.SiPixelRawToDigi.siPixelDigiHeterogeneousConverter_cfi
+import RecoLocalTracker.SiPixelClusterizer.siPixelDigiHeterogeneousConverter_cfi
 
 siPixelDigis = EventFilter.SiPixelRawToDigi.siPixelRawToDigi_cfi.siPixelRawToDigi.clone()
 siPixelDigis.Timing = cms.untracked.bool(False)
