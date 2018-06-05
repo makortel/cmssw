@@ -17,13 +17,13 @@ pixeltrackerlocalreco = cms.Sequence(siPixelClustersPreSplitting*siPixelRecHitsP
 striptrackerlocalreco = cms.Sequence(siStripZeroSuppression*siStripClusters*siStripMatchedRecHits)
 trackerlocalreco = cms.Sequence(pixeltrackerlocalreco*striptrackerlocalreco*clusterSummaryProducer)
 
-from RecoLocalTracker.SiPixelClusterizer.siPixelDigisHeterogeneous_cfi import *
+from RecoLocalTracker.SiPixelClusterizer.siPixelClustersHeterogeneous_cfi import *
 from RecoLocalTracker.SiPixelClusterizer.siPixelFedCablingMapGPUWrapper_cfi import *
 from CalibTracker.SiPixelESProducers.siPixelGainCalibrationForHLTGPU_cfi import *
 
 from Configuration.ProcessModifiers.gpu_cff import gpu
 _pixeltrackerlocalreco_gpu = pixeltrackerlocalreco.copy()
-_pixeltrackerlocalreco_gpu.replace(siPixelClustersPreSplitting, siPixelDigisHeterogeneous+siPixelClustersPreSplitting)
+_pixeltrackerlocalreco_gpu.replace(siPixelClustersPreSplitting, siPixelClustersHeterogeneous+siPixelClustersPreSplitting)
 gpu.toReplaceWith(pixeltrackerlocalreco, _pixeltrackerlocalreco_gpu)
 
 
