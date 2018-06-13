@@ -134,7 +134,6 @@ std::unique_ptr<PixelUnpackingRegions> regions_;
   edm::ESWatcher<SiPixelFedCablingMapRcd> recordWatcher;
   edm::ESWatcher<SiPixelQualityRcd> qualityWatcher;
   bool recordWatcherUpdatedSinceLastTransfer_ = false;
-  bool qualityWatcherUpdatedSinceLastTransfer_ = false;
 
   bool usePilotBlade;
   bool usePhase1;
@@ -264,7 +263,6 @@ const FEDRawDataCollection *SiPixelRawToClusterHeterogeneous::initialize(const e
     if (!badPixelInfo_) {
       edm::LogError("SiPixelQualityNotPresent")<<" Configured to use SiPixelQuality, but SiPixelQuality not present";
     }
-    qualityWatcherUpdatedSinceLastTransfer_ = true;
   }
 
   // tracker geometry: to make sure numbering of DetId is consistent...
