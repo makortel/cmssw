@@ -80,10 +80,8 @@ SiPixelGainCalibrationForHLTGPU::~SiPixelGainCalibrationForHLTGPU() {
 }
 
 SiPixelGainCalibrationForHLTGPU::GPUData::~GPUData() {
-  if(gainForHLTonGPU != nullptr) {
-    cudaCheck(cudaFree(gainForHLTonGPU));
-    cudaCheck(cudaFree(gainDataOnGPU));
-  }
+  cudaCheck(cudaFree(gainForHLTonGPU));
+  cudaCheck(cudaFree(gainDataOnGPU));
 }
 
 const SiPixelGainForHLTonGPU *SiPixelGainCalibrationForHLTGPU::getGPUProductAsync(cuda::stream_t<>& cudaStream) const {

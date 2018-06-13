@@ -167,7 +167,7 @@ SiPixelFedCablingMapGPUWrapper::GPUData::~GPUData() {
     cudaCheck(cudaFree(cablingMapHost->rocInDet));
     cudaCheck(cudaFree(cablingMapHost->moduleId));
     cudaCheck(cudaFree(cablingMapHost->badRocs));
-    cudaCheck(cudaFree(cablingMapDevice));
     cudaCheck(cudaFreeHost(cablingMapHost));
   }
+  cudaCheck(cudaFree(cablingMapDevice));
 }
