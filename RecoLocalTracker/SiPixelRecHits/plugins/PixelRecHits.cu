@@ -71,10 +71,13 @@ namespace pixelgpudetails {
 
    cudaCheck(cudaMemcpyAsync(gpu_.bs_d, bs, 3*sizeof(float), cudaMemcpyDefault, stream.id()));
 
-    thrust::exclusive_scan(thrust::cuda::par.on(stream.id()),
+    // Set first the first element to 0
+    cudaCheck(cudaMemsetAsync(gpu_.hitsModuleStart_d, 0, sizeof(uint32_t), stream.id()));
+    // Then use inclusive_scan to get the partial sum to the rest
+    thrust::inclusive_scan(thrust::cuda::par.on(stream.id()),
                            input.clusInModule_d,
-                           input.clusInModule_d + gpuClustering::MaxNumModules + 1,
-                           gpu_.hitsModuleStart_d);
+                           input.clusInModule_d + gpuClustering::MaxNumModules,
+                           &gpu_.hitsModuleStart_d[1]);
   
     int threadsPerBlock = 256;
     int blocks = input.nModules; // active modules (with digis)
