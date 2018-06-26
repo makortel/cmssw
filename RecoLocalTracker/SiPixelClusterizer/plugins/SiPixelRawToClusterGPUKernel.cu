@@ -680,8 +680,8 @@ namespace pixelgpudetails {
 
     // std::cout << "found " << nModulesActive << " Modules active" << std::endl;
 
-    // TODO: I suspect we need a cudaStreamSynchronize before using nModules below
     // In order to avoid the cudaStreamSynchronize, create a new kernel which launches countModules and findClus.
+    cudaStreamSynchronize(stream.id());
     
     threadsPerBlock = 256;
     blocks = nModulesActive;
