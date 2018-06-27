@@ -39,7 +39,7 @@
 namespace pixelgpudetails {
 
   SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel() {
-    int WSIZE = pixelgpudetails::MAX_FED * pixelgpudetails::MAX_WORD * sizeof(unsigned int);
+    int WSIZE = pixelgpudetails::MAX_FED * pixelgpudetails::MAX_WORD;
     cudaMallocHost(&word,       sizeof(unsigned int)*WSIZE);
     cudaMallocHost(&fedId_h,    sizeof(unsigned char)*WSIZE);
 
