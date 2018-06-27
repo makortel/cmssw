@@ -373,6 +373,7 @@ void CAHitQuadrupletGeneratorGPU::deallocateOnGPU()
 
   cudaFree(d_indices_);
   cudaFree(d_doublets_);
+  cudaFree(d_layers_);
   cudaFree(d_x_);
   cudaFree(d_y_);
   cudaFree(d_z_);

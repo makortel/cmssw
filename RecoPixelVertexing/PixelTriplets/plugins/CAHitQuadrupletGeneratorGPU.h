@@ -165,8 +165,8 @@ private:
     float *h_x_=nullptr, *h_y_=nullptr, *h_z_=nullptr;
     float *d_x_=nullptr, *d_y_=nullptr, *d_z_=nullptr;
     unsigned int* d_rootLayerPairs_ = nullptr;
-    GPULayerHits* d_layers_;
-    GPULayerDoublets* d_doublets_;
+    GPULayerHits* d_layers_ = nullptr;
+    GPULayerDoublets* d_doublets_ = nullptr;
     unsigned int* d_indices_ = nullptr;
     unsigned int* h_rootLayerPairs_ = nullptr;
     std::vector<GPU::SimpleVector<Quadruplet>*> h_foundNtupletsVec_;
