@@ -39,6 +39,7 @@ namespace pixelgpudetails {
     cudaCheck(cudaMalloc((void**) & gpu_.hist_d, 10*sizeof(HitsOnGPU::Hist)));
 
     cudaCheck(cudaMalloc((void**) & gpu_d, sizeof(HitsOnGPU)));
+    gpu_.me_d = gpu_d;
     cudaCheck(cudaMemcpyAsync(gpu_d, &gpu_, sizeof(HitsOnGPU), cudaMemcpyDefault,cudaStream.id()));
 
   }

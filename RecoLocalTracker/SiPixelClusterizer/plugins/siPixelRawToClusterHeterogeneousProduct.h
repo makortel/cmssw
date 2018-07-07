@@ -36,6 +36,7 @@ namespace siPixelRawToClusterHeterogeneousProduct {
     { }
   };
 
+  // FIXME split in two 
   struct GPUProduct {
     // Needed for digi and cluster CPU output
     uint32_t const * pdigi_h = nullptr;
@@ -43,6 +44,8 @@ namespace siPixelRawToClusterHeterogeneousProduct {
     int32_t const * clus_h = nullptr;
     uint16_t const * adc_h = nullptr;
     GPU::SimpleVector<error_obj> const * error_h = nullptr;
+
+    GPUProduct const * me_d = nullptr;
 
     // Needed for GPU rechits
     uint32_t nDigis;
