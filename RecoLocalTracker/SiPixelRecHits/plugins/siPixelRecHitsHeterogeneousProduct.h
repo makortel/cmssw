@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <vector>
 
-// #include "HeterogeneousCore/CUDAUtilities/interface/HistoContainer.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/HistoContainer.h"
 
 
 namespace siPixelRecHitsHeterogeneousProduct {
@@ -31,8 +31,8 @@ namespace siPixelRecHitsHeterogeneousProduct {
      uint16_t * mr_d;
      uint16_t * mc_d;
 
-     // using Hist = HistoContainer<int16_t,7,8>;
-     // Hist * hist_d;
+     using Hist = HistoContainer<int16_t,7,8>;
+     Hist * hist_d;
   };
 
 
