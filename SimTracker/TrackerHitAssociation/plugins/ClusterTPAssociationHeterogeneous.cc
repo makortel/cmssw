@@ -72,7 +72,7 @@ ClusterSLGPU::zero(cudaStream_t stream) {
    cudaCheck(cudaMemsetAsync(n2_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
 }
 
-class ClusterTPAssociationHeterogeneous : : public HeterogeneousEDProducer<heterogeneous::HeterogeneousDevices<
+class ClusterTPAssociationHeterogeneous : public HeterogeneousEDProducer<heterogeneous::HeterogeneousDevices<
           heterogeneous::GPUCuda, heterogeneous::CPU>>
 {
 public:
@@ -82,7 +82,7 @@ public:
   using PixelRecHitsH = siPixelRecHitsHeterogeneousProduct::HeterogeneousPixelRecHit;
 
   explicit ClusterTPAssociationHeterogeneous(const edm::ParameterSet&);
-  ~ClusterTPAssociationHeterogeneous() override;
+  ~ClusterTPAssociationHeterogeneous() = default;;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -129,13 +129,10 @@ ClusterTPAssociationHeterogeneous::ClusterTPAssociationHeterogeneous(const edm::
     stripClustersToken_(consumes<edmNew::DetSetVector<SiStripCluster> >(cfg.getParameter<edm::InputTag>("stripClusterSrc"))),
     phase2OTClustersToken_(consumes<edmNew::DetSetVector<Phase2TrackerCluster1D> >(cfg.getParameter<edm::InputTag>("phase2OTClusterSrc"))),
     trackingParticleToken_(consumes<TrackingParticleCollection>(cfg.getParameter<edm::InputTag>("trackingParticleSrc"))),
-    tGpuDigis(consumesHeterogeneous(iConfig.getParameter<edm::InputTag>("heterogeneousPixelDigiClusterSrc"))),
-    tGpuHits(consumesHeterogeneous(iConfig.getParameter<edm::InputTag>("heterogeneousPixelRecHitSrc"))),
+    tGpuDigis(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelDigiClusterSrc"))),
+    tGpuHits(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelRecHitSrc")))
 {
   produces<ClusterTPAssociation>();
-}
-
-ClusterTPAssociationHeterogeneous::~ClusterTPAssociationHeterogeneous() {
 }
 
 void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -235,14 +232,14 @@ void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEve
     std::cout << "In tpsimlink " << mapping.size() << std::endl;
 
     edm::Handle<siPixelRawToClusterHeterogeneousProduct::GPUProduct> gd;
-    edm::Handle<siPixelRecHitHeterogeneousProduct::GPUProduct> gd;
+    edm::Handle<siPixelRecHitsHeterogeneousProduct::GPUProduct> gh;
     iEvent.getByToken(tGpuDigis, gd);  
     iEvent.getByToken(tGpuHits, gh);
     auto const & gDigis = *gd;
     auto const & gHits = *gh;
-    auto const & dcont = * gDigis.gpu_d;
+    auto const & dcont = * gDigis.me_d;
     auto const & hh = *gHits.gpu_d;
-    auto ndigis = gDigis.ndigis;
+    auto ndigis = gDigis.nDigis;
     auto nhits = gHits.nhits;
 
     uint32_t nn=0, ng=0, ng10=0;
