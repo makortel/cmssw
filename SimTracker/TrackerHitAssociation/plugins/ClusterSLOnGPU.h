@@ -1,33 +1,41 @@
-// gpu
+#ifndef SimTrackerTrackerHitAssociationClusterSLOnGPU_H
+#define SimTrackerTrackerHitAssociationClusterSLOnGPU_H
+
 #include <cuda_runtime.h>
 #include <cuda/api_wrappers.h>
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
+
+#include "trackerHitAssociationHeterogeneousProduct.h"
+
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/siPixelRawToClusterHeterogeneousProduct.h"
 #include "RecoLocalTracker/SiPixelRecHits/plugins/siPixelRecHitsHeterogeneousProduct.h"
 
-struct ClusterSLGPU {
- ClusterSLGPU(){alloc();}
- void alloc();
- void zero(cudaStream_t stream);
 
- ClusterSLGPU * me_d;
- std::array<uint32_t,4> * links_d;
- uint32_t * tkId_d;
- uint32_t * tkId2_d;
- uint32_t * n1_d;
- uint32_t * n2_d;
 
- static constexpr uint32_t MAX_DIGIS = 2000*150;
- static constexpr uint32_t MaxNumModules = 2000;
-
-};
 
 namespace clusterSLOnGPU {
+
+  using ClusterSLGPU = trackerHitAssociationHeterogeneousProduct::ClusterSLGPU;
+  using GPUProduct = trackerHitAssociationHeterogeneousProduct::GPUProduct;
 
   using DigisOnGPU = siPixelRawToClusterHeterogeneousProduct::GPUProduct;
   using HitsOnGPU = siPixelRecHitsHeterogeneousProduct::HitsOnGPU;
   using HitsOnCPU = siPixelRecHitsHeterogeneousProduct::HitsOnCPU;
-  void wrapper(DigisOnGPU const & dd, uint32_t ndigis, HitsOnCPU const & hh, uint32_t nhits, ClusterSLGPU const & sl, uint32_t n, cuda::stream_t<>& stream);
 
+
+  class Kernel {
+  public:
+    void algo(DigisOnGPU const & dd, uint32_t ndigis, HitsOnCPU const & hh, uint32_t nhits, uint32_t n, cuda::stream_t<>& stream);
+    GPUProduct getProduct() { retun GPUProduct{slgpu.me_d};}
+    
+  private:
+     void alloc(cuda::stream_t<>& stream);
+     void zero(cudaStream_t stream);
+  private:
+     ClusterSLGPU slgpu; 
+
+  };
 }
+
+#endif

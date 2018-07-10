@@ -48,41 +48,22 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "ClusterSLOnGPU.h"
 
-void
-ClusterSLGPU::alloc() {
-   cudaCheck(cudaMalloc((void**) & links_d,(MAX_DIGIS)*sizeof(std::array<uint32_t,4>)));
-
-   cudaCheck(cudaMalloc((void**) & tkId_d,(MaxNumModules*256)*sizeof(uint32_t)));
-   cudaCheck(cudaMalloc((void**) & tkId2_d,(MaxNumModules*256)*sizeof(uint32_t)));
-   cudaCheck(cudaMalloc((void**) & n1_d,(MaxNumModules*256)*sizeof(uint32_t)));
-   cudaCheck(cudaMalloc((void**) & n2_d,(MaxNumModules*256)*sizeof(uint32_t)));
-
-
-   cudaCheck(cudaMalloc((void**) & me_d, sizeof(ClusterSLGPU)));
-   cudaCheck(cudaMemcpy(me_d, this, sizeof(ClusterSLGPU), cudaMemcpyDefault));
-   cudaCheck(cudaDeviceSynchronize());
-
-}
-
-void
-ClusterSLGPU::zero(cudaStream_t stream) {
-   cudaCheck(cudaMemsetAsync(tkId_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
-   cudaCheck(cudaMemsetAsync(tkId2_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
-   cudaCheck(cudaMemsetAsync(n1_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
-   cudaCheck(cudaMemsetAsync(n2_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
-}
-
 class ClusterTPAssociationHeterogeneous : public HeterogeneousEDProducer<heterogeneous::HeterogeneousDevices<
           heterogeneous::GPUCuda, heterogeneous::CPU>>
 {
 public:
   typedef std::vector<OmniClusterRef> OmniClusterCollection;
 
+  using ClusterSLGPU = trackerHitAssociationHeterogeneousProduct::ClusterSLGPU;
+  using GPUProduct = trackerHitAssociationHeterogeneousProduct::GPUProduct;
+  using CPUProduct = trackerHitAssociationHeterogeneousProduct::CPUProduct;
+  using Output = trackerHitAssociationHeterogeneousProduct::ClusterTPAHeterogeneousProduct;
+
   using PixelDigiClustersH = siPixelRawToClusterHeterogeneousProduct::HeterogeneousDigiCluster;
   using PixelRecHitsH = siPixelRecHitsHeterogeneousProduct::HeterogeneousPixelRecHit;
 
   explicit ClusterTPAssociationHeterogeneous(const edm::ParameterSet&);
-  ~ClusterTPAssociationHeterogeneous() = default;;
+  ~ClusterTPAssociationHeterogeneous() = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -118,7 +99,7 @@ private:
   edm::EDGetTokenT<HeterogeneousProduct> tGpuDigis;
   edm::EDGetTokenT<HeterogeneousProduct> tGpuHits;
 
-  ClusterSLGPU slGPU;
+  std::unique_ptr<clusterSLGPU::Kernel> gpuAlgo;
 
   std::map<std::pair<size_t, EncodedEventId>, TrackingParticleRef> mapping;
  
@@ -160,6 +141,8 @@ void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescr
 
 void ClusterTPAssociationHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId,
                           cuda::stream_t<> &cudaStream) {
+
+   gpuAlgo = std::make_unique<clusterSLGPU::Kernel>(cudaStream);
 
 }
 
@@ -246,8 +229,7 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
     std::cout << "In tpsimlink found " << nn << " valid link out of " << ng << '/' << ng10 << ' ' << digi2tp.size() << std::endl;
 
     cudaCheck(cudaMemcpyAsync(slGPU.links_d, digi2tp.data(), sizeof(std::array<uint32_t,4>)*digi2tp.size(), cudaMemcpyDefault, cudaStream.id()));
-    slGPU.zero(cudaStream.id());
-    clusterSLOnGPU::wrapper(gDigis, ndigis, gHits, nhits, slGPU, digi2tp.size(),cudaStream);
+    gpuAlgo->algo(gDigis, ndigis, gHits, nhits, digi2tp.size(),cudaStream);
 
   //  end gpu stuff ---------------------
 
@@ -257,6 +239,8 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
 void ClusterTPAssociationHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent &iEvent,
                       const edm::EventSetup &iSetup,
                       cuda::stream_t<> &cudaStream) {
+     auto output = std::make_unique<GPUProduct>(gpuAlgo->getProduct());
+
 
 }
  
@@ -265,6 +249,12 @@ void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEve
 
 
    makeMap(iEvent);
+   iEvent.put(std::move(produceLegacy(iEvent,es)));
+
+}
+
+std::unique_ptr<CPUProduct> ClusterTPAssociationHeterogeneous::produceLegacy(edm::HeterogeneousEvent &iEvent, const edm::EventSetup& es) {
+
 
   // Pixel DigiSimLink
   edm::Handle<edm::DetSetVector<PixelDigiSimLink> > sipixelSimLinks;
@@ -295,7 +285,8 @@ void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEve
   edm::Handle<TrackingParticleCollection>  TPCollectionH;
   iEvent.getByToken(trackingParticleToken_,TPCollectionH);
 
-  auto clusterTPList = std::make_unique<ClusterTPAssociation>(TPCollectionH);
+  auto output = std::make_unique<CPUProduct>(TPCollectionH);
+  auto & clusterTPList = output.collection;
 
   if ( foundPixelClusters ) {
     // Pixel Clusters 
@@ -406,7 +397,8 @@ void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEve
 
 
   clusterTPList->sortAndUnique();
-  iEvent.put(std::move(clusterTPList));
+
+  return output;
   mapping.clear();
 }
 

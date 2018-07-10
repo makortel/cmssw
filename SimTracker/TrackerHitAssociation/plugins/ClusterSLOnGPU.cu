@@ -146,8 +146,37 @@ namespace clusterSLOnGPU {
 
   std::atomic<int> evId(0);
 
-  void wrapper(DigisOnGPU const & dd, uint32_t ndigis, HitsOnCPU const & hh, uint32_t nhits, ClusterSLGPU const & sl, uint32_t n, cuda::stream_t<>& stream) {
-    
+
+  void
+  Kernel::alloc(cuda::stream_t<>& stream) {
+   cudaCheck(cudaMalloc((void**) & slgpu.links_d,(MAX_DIGIS)*sizeof(std::array<uint32_t,4>)));
+
+   cudaCheck(cudaMalloc((void**) & slgpu.tkId_d,(MaxNumModules*256)*sizeof(uint32_t)));
+   cudaCheck(cudaMalloc((void**) & slgpu.tkId2_d,(MaxNumModules*256)*sizeof(uint32_t)));
+   cudaCheck(cudaMalloc((void**) & slgpu.n1_d,(MaxNumModules*256)*sizeof(uint32_t)));
+   cudaCheck(cudaMalloc((void**) & slgpu.n2_d,(MaxNumModules*256)*sizeof(uint32_t)));
+
+
+   cudaCheck(cudaMalloc((void**) & slgpu.me_d, sizeof(ClusterSLGPU)));
+   cudaCheck(cudaMemcpyAsync(slgpu.me_d, slgpu, sizeof(ClusterSLGPU), cudaMemcpyDefault, stream.id()));
+   cudaCheck(cudaDeviceSynchronize());
+
+  }
+
+  void
+  Kernel::zero(cudaStream_t stream) {
+   cudaCheck(cudaMemsetAsync(slgpu.tkId_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.tkId2_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.n1_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.n2_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
+  }
+
+
+  void 
+  Kernel::algo(DigisOnGPU const & dd, uint32_t ndigis, HitsOnCPU const & hh, uint32_t nhits, uint32_t n, cuda::stream_t<>& stream) {
+
+    ClusterSLGPU const & sl = slgpu;
+
     int ev = ++evId;
     int threadsPerBlock = 256;
     int blocks = (ndigis + threadsPerBlock - 1) / threadsPerBlock;
