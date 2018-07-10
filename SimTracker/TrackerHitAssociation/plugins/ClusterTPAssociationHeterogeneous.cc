@@ -100,6 +100,8 @@ private:
   void produceCPU(edm::HeterogeneousEvent &iEvent,
                   const edm::EventSetup &iSetup) override;
 
+  void makeMap(const edm::HeterogeneousEvent &iEvent);
+
 
   template <typename T>
   std::vector<std::pair<uint32_t, EncodedEventId> >
@@ -118,6 +120,8 @@ private:
 
   ClusterSLGPU slGPU;
 
+  std::map<std::pair<size_t, EncodedEventId>, TrackingParticleRef> mapping;
+ 
 };
 
 ClusterTPAssociationHeterogeneous::ClusterTPAssociationHeterogeneous(const edm::ParameterSet & cfg)
@@ -150,7 +154,7 @@ void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescr
 
   HeterogeneousEDProducer::fillPSetDescription(desc);
 
-  descriptions.add("tpClusterProducerDefault", desc);
+  descriptions.add("tpClusterProducerHeterogeneousDefault", desc);
 }
 
 
@@ -159,9 +163,94 @@ void ClusterTPAssociationHeterogeneous::beginStreamGPUCuda(edm::StreamID streamI
 
 }
 
+void ClusterTPAssociationHeterogeneous::makeMap(const edm::HeterogeneousEvent &iEvent) {
+    // TrackingParticle
+    edm::Handle<TrackingParticleCollection>  TPCollectionH;
+    iEvent.getByToken(trackingParticleToken_,TPCollectionH);
+
+
+    // prepare temporary map between SimTrackId and TrackingParticle index
+    mapping.clear();
+    for (TrackingParticleCollection::size_type itp = 0;
+                                             itp < TPCollectionH.product()->size(); ++itp) {
+      TrackingParticleRef trackingParticle(TPCollectionH, itp);
+
+      // SimTracks inside TrackingParticle
+      EncodedEventId eid(trackingParticle->eventId());
+      for (auto itrk  = trackingParticle->g4Track_begin();
+                itrk != trackingParticle->g4Track_end(); ++itrk) {
+        std::pair<uint32_t, EncodedEventId> trkid(itrk->trackId(), eid);
+        //std::cout << "creating map for id: " << trkid.first << " with tp: " << trackingParticle.key() << std::endl;
+        mapping.insert(std::make_pair(trkid, trackingParticle));
+      }
+    }
+
+
+}
+
+
 void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent &iEvent,
                       const edm::EventSetup &iSetup,
                       cuda::stream_t<> &cudaStream) {
+
+    edm::ESHandle<TrackerGeometry> geom;
+    iSetup.get<TrackerDigiGeometryRecord>().get( geom );
+
+    // Pixel DigiSimLink
+    edm::Handle<edm::DetSetVector<PixelDigiSimLink> > sipixelSimLinks;
+    //  iEvent.getByLabel(_pixelSimLinkSrc, sipixelSimLinks);
+    iEvent.getByToken(sipixelSimLinksToken_,sipixelSimLinks);
+
+    // TrackingParticle
+    edm::Handle<TrackingParticleCollection>  TPCollectionH;
+    iEvent.getByToken(trackingParticleToken_,TPCollectionH);
+
+    makeMap(iEvent);
+   
+    //  gpu stuff ------------------------
+
+    std::cout << "In tpsimlink " << mapping.size() << std::endl;
+
+    edm::Handle<siPixelRawToClusterHeterogeneousProduct::GPUProduct> gd;
+    edm::Handle<siPixelRecHitsHeterogeneousProduct::GPUProduct> gh;
+    iEvent.getByToken(tGpuDigis, gd);
+    iEvent.getByToken(tGpuHits, gh);
+    auto const & gDigis = *gd;
+    auto const & gHits = *gh;
+    auto ndigis = gDigis.nDigis;
+    auto nhits = gHits.nHits;
+
+    uint32_t nn=0, ng=0, ng10=0;
+    std::vector<std::array<uint32_t,4>> digi2tp;
+    {std::array<uint32_t,4> a{{0,0,0,0}}; digi2tp.push_back(a);} // put at 0 0
+    for (auto const & links : *sipixelSimLinks) {
+      DetId detId(links.detId());
+      const GeomDetUnit * genericDet = geom->idToDetUnit(detId);
+      uint32_t gind = genericDet->index();
+      for (auto const & link : links) {
+        ++ng;
+           if (link.fraction() > 0.3f) ++ng10;
+        if (link.fraction() < 0.5f) continue;
+        auto tkid = std::make_pair(link.SimTrackId(), link.eventId());
+        auto ipos = mapping.find(tkid);
+          if (ipos != mapping.end()) {
+            uint32_t pt = 1000*(*ipos).second->pt();
+            ++nn;
+            std::array<uint32_t,4> a{{gind,uint32_t(link.channel()),(*ipos).second.key(),pt}};
+            digi2tp.push_back(a);
+          }
+      }
+    }
+    std::sort(digi2tp.begin(),digi2tp.end());
+
+    std::cout << "In tpsimlink found " << nn << " valid link out of " << ng << '/' << ng10 << ' ' << digi2tp.size() << std::endl;
+
+    cudaCheck(cudaMemcpyAsync(slGPU.links_d, digi2tp.data(), sizeof(std::array<uint32_t,4>)*digi2tp.size(), cudaMemcpyDefault, cudaStream.id()));
+    slGPU.zero(cudaStream.id());
+    clusterSLOnGPU::wrapper(gDigis, ndigis, gHits, nhits, slGPU, digi2tp.size(),cudaStream);
+
+  //  end gpu stuff ---------------------
+
 
 }
 
@@ -174,10 +263,8 @@ void ClusterTPAssociationHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent &
 		
 void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEvent, const edm::EventSetup& es) {
 
-    edm::ESHandle<TrackerGeometry> geom;
-    es.get<TrackerDigiGeometryRecord>().get( geom );
 
-
+   makeMap(iEvent);
 
   // Pixel DigiSimLink
   edm::Handle<edm::DetSetVector<PixelDigiSimLink> > sipixelSimLinks;
@@ -209,72 +296,6 @@ void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEve
   iEvent.getByToken(trackingParticleToken_,TPCollectionH);
 
   auto clusterTPList = std::make_unique<ClusterTPAssociation>(TPCollectionH);
-
-  // prepare temporary map between SimTrackId and TrackingParticle index
-  std::map<std::pair<size_t, EncodedEventId>, TrackingParticleRef> mapping;
-  for (TrackingParticleCollection::size_type itp = 0;
-                                             itp < TPCollectionH.product()->size(); ++itp) {
-    TrackingParticleRef trackingParticle(TPCollectionH, itp);
-
-    // SimTracks inside TrackingParticle
-    EncodedEventId eid(trackingParticle->eventId());
-    //size_t index = 0;
-    for (std::vector<SimTrack>::const_iterator itrk  = trackingParticle->g4Track_begin(); 
-                                               itrk != trackingParticle->g4Track_end(); ++itrk) {
-      std::pair<uint32_t, EncodedEventId> trkid(itrk->trackId(), eid);
-      //std::cout << "creating map for id: " << trkid.first << " with tp: " << trackingParticle.key() << std::endl;
-      mapping.insert(std::make_pair(trkid, trackingParticle));
-    }
-  }
-
-  //  gpu stuff ------------------------
-
-    std::cout << "In tpsimlink " << mapping.size() << std::endl;
-
-    edm::Handle<siPixelRawToClusterHeterogeneousProduct::GPUProduct> gd;
-    edm::Handle<siPixelRecHitsHeterogeneousProduct::GPUProduct> gh;
-    iEvent.getByToken(tGpuDigis, gd);  
-    iEvent.getByToken(tGpuHits, gh);
-    auto const & gDigis = *gd;
-    auto const & gHits = *gh;
-    auto const & dcont = * gDigis.me_d;
-    auto const & hh = *gHits.gpu_d;
-    auto ndigis = gDigis.nDigis;
-    auto nhits = gHits.nhits;
-
-    uint32_t nn=0, ng=0, ng10=0;
-    std::vector<std::array<uint32_t,4>> digi2tp;
-    {std::array<uint32_t,4> a{{0,0,0,0}}; digi2tp.push_back(a);} // put at 0 0
-    for (auto const & links : *sipixelSimLinks) {
-      DetId detId(links.detId());
-      const GeomDetUnit * genericDet = geom->idToDetUnit(detId);
-      uint32_t gind = genericDet->index();
-      for (auto const & link : links) {
-        ++ng;
-             if (link.fraction() > 0.3f) ++ng10;
-        if (link.fraction() < 0.5f) continue;
-        auto tkid = std::make_pair(link.SimTrackId(), link.eventId());
-        auto ipos = mapping.find(tkid);
-          if (ipos != mapping.end()) {
-            uint32_t pt = 1000*(*ipos).second->pt();
-            ++nn;
-            std::array<uint32_t,4> a{{gind,uint32_t(link.channel()),(*ipos).second.key(),pt}};
-            digi2tp.push_back(a);
-          }
-      }
-    }
-    std::sort(digi2tp.begin(),digi2tp.end());
-
-    std::cout << "In tpsimlink found " << nn << " valid link out of " << ng << '/' << ng10 << ' ' << digi2tp.size() << std::endl;
-
-    cudaCheck(cudaMemcpyAsync(slGPU.links_d, digi2tp.data(), sizeof(std::array<uint32_t,4>)*digi2tp.size(), cudaMemcpyDefault, dcont.stream));
-    slGPU.zero(dcont.stream);
-    clusterSLOnGPU::wrapper(dcont, ndigis, hh, nhits, slGPU, digi2tp.size());
-
-  //  end gpu stuff ---------------------
-
-
-
 
   if ( foundPixelClusters ) {
     // Pixel Clusters 
@@ -382,8 +403,11 @@ void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEve
     }
 
   }
+
+
   clusterTPList->sortAndUnique();
   iEvent.put(std::move(clusterTPList));
+  mapping.clear();
 }
 
 template <typename T>
