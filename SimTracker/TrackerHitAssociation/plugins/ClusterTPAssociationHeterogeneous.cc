@@ -239,8 +239,12 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
 void ClusterTPAssociationHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent &iEvent,
                       const edm::EventSetup &iSetup,
                       cuda::stream_t<> &cudaStream) {
-     auto output = std::make_unique<GPUProduct>(gpuAlgo->getProduct());
 
+  auto output = std::make_unique<GPUProduct>(gpuAlgo->getProduct());
+
+  iEvent.put<Output>(std::move(output), [this, &iEvent, &iSetup](const GPUProduct& hits, CPUProduct& cpu) {
+                       cpu = *(this->produceLegacy(iEvent,iSetup));
+                     });
 
 }
  
