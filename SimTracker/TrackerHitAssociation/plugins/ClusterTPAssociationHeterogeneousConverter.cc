@@ -36,7 +36,7 @@ void ClusterTPAssociationHeterogeneousConverter::fillDescriptions(edm::Configura
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag("tpClusterProducerHeterogeneos"));
 
-  descriptions.addWithDefaultLabel(desc);
+  descriptions.add("tpClusterHeterogeneousConverter",desc);
 }
 
 namespace {
