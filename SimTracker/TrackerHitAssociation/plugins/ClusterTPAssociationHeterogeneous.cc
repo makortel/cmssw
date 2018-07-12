@@ -82,7 +82,7 @@ private:
                   const edm::EventSetup &iSetup) override;
 
   void makeMap(const edm::HeterogeneousEvent &iEvent);
-
+  std::unique_ptr<CPUProduct> produceLegacy(edm::HeterogeneousEvent &iEvent, const edm::EventSetup& es);
 
   template <typename T>
   std::vector<std::pair<uint32_t, EncodedEventId> >
@@ -99,7 +99,7 @@ private:
   edm::EDGetTokenT<HeterogeneousProduct> tGpuDigis;
   edm::EDGetTokenT<HeterogeneousProduct> tGpuHits;
 
-  std::unique_ptr<clusterSLGPU::Kernel> gpuAlgo;
+  std::unique_ptr<clusterSLOnGPU::Kernel> gpuAlgo;
 
   std::map<std::pair<size_t, EncodedEventId>, TrackingParticleRef> mapping;
  
@@ -142,7 +142,7 @@ void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescr
 void ClusterTPAssociationHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId,
                           cuda::stream_t<> &cudaStream) {
 
-   gpuAlgo = std::make_unique<clusterSLGPU::Kernel>(cudaStream);
+   gpuAlgo = std::make_unique<clusterSLOnGPU::Kernel>(cudaStream);
 
 }
 
@@ -228,7 +228,7 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
 
     std::cout << "In tpsimlink found " << nn << " valid link out of " << ng << '/' << ng10 << ' ' << digi2tp.size() << std::endl;
 
-    cudaCheck(cudaMemcpyAsync(slGPU.links_d, digi2tp.data(), sizeof(std::array<uint32_t,4>)*digi2tp.size(), cudaMemcpyDefault, cudaStream.id()));
+    cudaCheck(cudaMemcpyAsync(gpuAlgo->slgpu.links_d, digi2tp.data(), sizeof(std::array<uint32_t,4>)*digi2tp.size(), cudaMemcpyDefault, cudaStream.id()));
     gpuAlgo->algo(gDigis, ndigis, gHits, nhits, digi2tp.size(),cudaStream);
 
   //  end gpu stuff ---------------------
@@ -247,13 +247,13 @@ void ClusterTPAssociationHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent &
 		
 void ClusterTPAssociationHeterogeneous::produceCPU(edm::HeterogeneousEvent &iEvent, const edm::EventSetup& es) {
 
-
    makeMap(iEvent);
    iEvent.put(std::move(produceLegacy(iEvent,es)));
 
 }
 
-std::unique_ptr<CPUProduct> ClusterTPAssociationHeterogeneous::produceLegacy(edm::HeterogeneousEvent &iEvent, const edm::EventSetup& es) {
+std::unique_ptr<ClusterTPAssociationHeterogeneous::CPUProduct> 
+ClusterTPAssociationHeterogeneous::produceLegacy(edm::HeterogeneousEvent &iEvent, const edm::EventSetup& es) {
 
 
   // Pixel DigiSimLink
@@ -286,7 +286,7 @@ std::unique_ptr<CPUProduct> ClusterTPAssociationHeterogeneous::produceLegacy(edm
   iEvent.getByToken(trackingParticleToken_,TPCollectionH);
 
   auto output = std::make_unique<CPUProduct>(TPCollectionH);
-  auto & clusterTPList = output.collection;
+  auto & clusterTPList = output->collection;
 
   if ( foundPixelClusters ) {
     // Pixel Clusters 
@@ -315,7 +315,7 @@ std::unique_ptr<CPUProduct> ClusterTPAssociationHeterogeneous::produceLegacy(edm
 	  auto ipos = mapping.find(*iset);
 	  if (ipos != mapping.end()) {
 	    //std::cout << "cluster in detid: " << detid << " from tp: " << ipos->second.key() << " " << iset->first << std::endl;
-	    clusterTPList->emplace_back(OmniClusterRef(c_ref), ipos->second);
+	    clusterTPList.emplace_back(OmniClusterRef(c_ref), ipos->second);
 	  }
 	}
       }
@@ -350,7 +350,7 @@ std::unique_ptr<CPUProduct> ClusterTPAssociationHeterogeneous::produceLegacy(edm
 	  auto ipos = mapping.find(*iset);
 	  if (ipos != mapping.end()) {
 	    //std::cout << "cluster in detid: " << detid << " from tp: " << ipos->second.key() << " " << iset->first << std::endl;
-	    clusterTPList->emplace_back(OmniClusterRef(c_ref), ipos->second);
+	    clusterTPList.emplace_back(OmniClusterRef(c_ref), ipos->second);
 	  } 
 	}
       } 
@@ -386,7 +386,7 @@ std::unique_ptr<CPUProduct> ClusterTPAssociationHeterogeneous::produceLegacy(edm
                                                                               iset != simTkIds.end(); iset++) {
             auto ipos = mapping.find(*iset);
             if (ipos != mapping.end()) {
-              clusterTPList->emplace_back(OmniClusterRef(c_ref), ipos->second);
+              clusterTPList.emplace_back(OmniClusterRef(c_ref), ipos->second);
             }
           }
         }
@@ -396,7 +396,7 @@ std::unique_ptr<CPUProduct> ClusterTPAssociationHeterogeneous::produceLegacy(edm
   }
 
 
-  clusterTPList->sortAndUnique();
+  clusterTPList.sortAndUnique();
 
   return output;
   mapping.clear();

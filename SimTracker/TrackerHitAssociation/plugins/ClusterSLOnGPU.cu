@@ -47,6 +47,7 @@ ForwardIt lowerBound(ForwardIt first, ForwardIt last, const T& value, Compare co
 }
 
 
+using ClusterSLGPU = trackerHitAssociationHeterogeneousProduct::ClusterSLGPU;
 
 __global__
 void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLOnGPU::HitsOnGPU const * hhp, ClusterSLGPU const * slp, uint32_t n) {
@@ -149,26 +150,26 @@ namespace clusterSLOnGPU {
 
   void
   Kernel::alloc(cuda::stream_t<>& stream) {
-   cudaCheck(cudaMalloc((void**) & slgpu.links_d,(MAX_DIGIS)*sizeof(std::array<uint32_t,4>)));
+   cudaCheck(cudaMalloc((void**) & slgpu.links_d,(ClusterSLGPU::MAX_DIGIS)*sizeof(std::array<uint32_t,4>)));
 
-   cudaCheck(cudaMalloc((void**) & slgpu.tkId_d,(MaxNumModules*256)*sizeof(uint32_t)));
-   cudaCheck(cudaMalloc((void**) & slgpu.tkId2_d,(MaxNumModules*256)*sizeof(uint32_t)));
-   cudaCheck(cudaMalloc((void**) & slgpu.n1_d,(MaxNumModules*256)*sizeof(uint32_t)));
-   cudaCheck(cudaMalloc((void**) & slgpu.n2_d,(MaxNumModules*256)*sizeof(uint32_t)));
+   cudaCheck(cudaMalloc((void**) & slgpu.tkId_d,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t)));
+   cudaCheck(cudaMalloc((void**) & slgpu.tkId2_d,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t)));
+   cudaCheck(cudaMalloc((void**) & slgpu.n1_d,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t)));
+   cudaCheck(cudaMalloc((void**) & slgpu.n2_d,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t)));
 
 
    cudaCheck(cudaMalloc((void**) & slgpu.me_d, sizeof(ClusterSLGPU)));
-   cudaCheck(cudaMemcpyAsync(slgpu.me_d, slgpu, sizeof(ClusterSLGPU), cudaMemcpyDefault, stream.id()));
+   cudaCheck(cudaMemcpyAsync(slgpu.me_d, &slgpu, sizeof(ClusterSLGPU), cudaMemcpyDefault, stream.id()));
    cudaCheck(cudaDeviceSynchronize());
 
   }
 
   void
   Kernel::zero(cudaStream_t stream) {
-   cudaCheck(cudaMemsetAsync(slgpu.tkId_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
-   cudaCheck(cudaMemsetAsync(slgpu.tkId2_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
-   cudaCheck(cudaMemsetAsync(slgpu.n1_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
-   cudaCheck(cudaMemsetAsync(slgpu.n2_d,0,(MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.tkId_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.tkId2_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.n1_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.n2_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
   }
 
 

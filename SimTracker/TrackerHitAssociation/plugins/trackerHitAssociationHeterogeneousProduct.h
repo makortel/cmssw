@@ -1,12 +1,23 @@
 #ifndef SimTrackerTrackerHitAssociationClusterHeterogeneousProduct_H
 #define SimTrackerTrackerHitAssociationClusterHeterogeneousProduct_H
 
+#ifndef	__NVCC__
+#include "SimTracker/TrackerHitAssociation/interface/ClusterTPAssociation.h"
+#endif
+
+#include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
+
 
 namespace trackerHitAssociationHeterogeneousProduct {
 
+#ifndef __NVCC__
   struct CPUProduct {
+    CPUProduct() = default;
+    template<typename T> 
+    explicit CPUProduct(T const & t) : collection(t){}
     ClusterTPAssociation collection;
-  }
+  };
+#endif
 
   struct ClusterSLGPU {
 
@@ -26,8 +37,10 @@ namespace trackerHitAssociationHeterogeneousProduct {
      ClusterSLGPU *  gpu_d=nullptr;
   };
 
+#ifndef	__NVCC__
    using ClusterTPAHeterogeneousProduct = HeterogeneousProductImpl<heterogeneous::CPUProduct<CPUProduct>,
                                                                    heterogeneous::GPUCudaProduct<GPUProduct> >;
+#endif
 
 }
 
