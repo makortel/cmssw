@@ -21,8 +21,8 @@ class CUDA {
 public:
   CUDA() = default;
 
-  template <typename Token>
-  explicit CUDA(T data, const Token& token):
+  template <typename TokenOrContext>
+  explicit CUDA(T data, const TokenOrContext& token):
     stream_(&token.stream()),
     event_(cuda::event::create(token.device(),
                                cuda::event::sync_by_busy_waiting,  // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
