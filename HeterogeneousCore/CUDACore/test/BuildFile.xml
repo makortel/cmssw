@@ -1,0 +1,16 @@
+<bin file="test*.cc test*.cu" name="testHeterogeneousCoreCUDACore">
+  <use name="FWCore/TestProcessor"/>
+  <use name="HeterogeneousCore/CUDACore"/>
+  <use name="catch2"/>
+  <use name="cuda"/>
+</bin>
+
+<library file="TestCUDAProducerGPUFirst.cc TestCUDAProducerGPU.cc TestCUDAProducerGPUEW.cc TestCUDAProducerGPUtoCPU.cc TestCUDAProducerCPU.cc TestCUDAProducerFallback.cc TestCUDAProducerGPUKernel.cu" name="HeterogeneousCoreCUDACoreTestPlugins">
+  <flags EDM_PLUGIN="1"/>
+  <use name="FWCore/Framework"/>
+  <use name="FWCore/PluginManager"/>
+  <use name="FWCore/ParameterSet"/>
+  <use name="HeterogeneousCore/CUDACore"/>
+  <use name="cuda"/>
+  <use name="cuda-api-wrappers"/>
+</library>

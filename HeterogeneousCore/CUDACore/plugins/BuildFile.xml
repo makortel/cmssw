@@ -1,0 +1,17 @@
+#Skip building plugins by dropping all files for none-AMD64 build
+<architecture match="!_amd64_">
+  <flags SKIP_FILES="*"/>
+</architecture>
+
+<use name="FWCore/MessageLogger"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/PluginManager"/>
+<use name="FWCore/ServiceRegistry"/>
+<use name="FWCore/Framework"/>
+<use name="HeterogeneousCore/CUDACore"/>
+<use name="HeterogeneousCore/CUDAServices"/>
+<use name="cuda"/>
+<use name="cuda-api-wrappers"/>
+<library file="*.cc" name="HeterogeneousCoreCUDACorePlugins">
+  <flags EDM_PLUGIN="1"/>
+</library>
