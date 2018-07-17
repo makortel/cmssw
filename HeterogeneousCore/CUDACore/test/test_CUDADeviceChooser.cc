@@ -65,6 +65,7 @@ process.moduleToTest(process.toTest)
     WARN("Unable to query the CUDA capable devices from the CUDA runtime API: ("
          << ret << ") " << cudaGetErrorString( ret ) 
          << ". Ignoring tests requiring device to be present.");
+    return;
   }
 
   SECTION("CUDAToken") {
