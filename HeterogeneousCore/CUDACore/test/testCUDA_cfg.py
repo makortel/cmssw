@@ -18,9 +18,17 @@ from HeterogeneousCore.CUDACore.cudaDeviceChooser_cfi import cudaDeviceChooser
 
 process.testDevice = cudaDeviceChooser.clone()
 
+process.out = cms.OutputModule("AsciiOutputModule",
+    outputCommands = cms.untracked.vstring(
+#        "keep *_testDevice_*_*"
+    ),
+    verbosity = cms.untracked.uint32(0),
+)
+
 process.t = cms.Task(process.testDevice)
 process.p = cms.Path()
 process.p.associate(process.t)
+process.ep = cms.EndPath(process.out)
 
 # Example of limiting the number of EDM streams per device
 #process.CUDAService.numberOfStreamsPerDevice = 1

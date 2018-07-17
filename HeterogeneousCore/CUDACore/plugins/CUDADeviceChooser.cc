@@ -68,7 +68,7 @@ std::unique_ptr<::DeviceCache> CUDADeviceChooser::beginStream(edm::StreamID id) 
   //     - for conditions, how to handle multiple lumis per job?
   ret->device = id % cudaService->numberOfDevices();
 
-  edm::LogWarning("CUDADeviceChooser") << "EDM stream " << id << " set to CUDA device " << ret->device;
+  LogDebug("CUDADeviceChooser") << "EDM stream " << id << " set to CUDA device " << ret->device;
 
   return ret;
 }
@@ -79,7 +79,9 @@ void CUDADeviceChooser::produce(edm::StreamID id, edm::Event& iEvent, const edm:
     return;
   }
 
-  iEvent.put(std::make_unique<CUDAToken>(cache->device)); // TODO: replace with Event::emplace() once we get there
+  auto ret = std::make_unique<CUDAToken>(cache->device);
+  LogDebug("CUDADeviceChooser") << "EDM stream " << id << " CUDA device " << ret->device() << " with CUDA stream " << ret->stream().id();
+  iEvent.put(std::move(ret));
 }
 
 

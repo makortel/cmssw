@@ -9,6 +9,10 @@
  * The purpose of this class is to deliver the device and CUDA stream
  * information from CUDADeviceChooser to the EDModules with CUDA
  * implementation.
+ *
+ * Currently the class is declared as transient in the dictionary, but
+ * in principle (for debugging purposes) it could be possible to
+ * persist it by marking only the CUDA stream as transient.
  */
 class CUDAToken {
 public:
