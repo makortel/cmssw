@@ -14,7 +14,6 @@
 
 namespace {
   struct DeviceCache {
-    std::unique_ptr<cuda::stream_t<>> cudaStream;
     int device;
     bool enabled;
   };
@@ -62,19 +61,14 @@ std::unique_ptr<::DeviceCache> CUDADeviceChooser::beginStream(edm::StreamID id) 
   // (and even then there is no load balancing).
   //
   // TODO: improve. Possible ideas include
-  // - allocate M (< N(edm::Streams)) buffers per device per module, choose dynamically which (buffer, device) to use
-  //   * the first module of a chain dictates the device for the rest of the chain
+  // - allocate M (< N(edm::Streams)) buffers per device per "chain of modules", choose dynamically which (buffer, device) to use
   // - our own CUDA memory allocator
   //   * being able to cheaply allocate+deallocate scratch memory allows to make the execution fully dynamic e.g. based on current load
   //   * would probably still need some buffer space/device to hold e.g. conditions data
   //     - for conditions, how to handle multiple lumis per job?
   ret->device = id % cudaService->numberOfDevices();
 
-  cuda::device::current::scoped_override_t<> setDeviceForThisScope(ret->device);
-
-  // Create the CUDA stream for this module-edm::Stream pair
-  auto current_device = cuda::device::current::get();
-  ret->cudaStream = std::make_unique<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
+  edm::LogWarning("CUDADeviceChooser") << "EDM stream " << id << " set to CUDA device " << ret->device;
 
   return ret;
 }
@@ -85,7 +79,7 @@ void CUDADeviceChooser::produce(edm::StreamID id, edm::Event& iEvent, const edm:
     return;
   }
 
-  iEvent.put(std::make_unique<CUDAToken>(cache->device, cache->cudaStream->id())); // TODO: replace with Event::emplace() once we get there
+  iEvent.put(std::make_unique<CUDAToken>(cache->device)); // TODO: replace with Event::emplace() once we get there
 }
 
 
