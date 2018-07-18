@@ -196,8 +196,8 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
 
     edm::Handle<siPixelRawToClusterHeterogeneousProduct::GPUProduct> gd;
     edm::Handle<siPixelRecHitsHeterogeneousProduct::GPUProduct> gh;
-    iEvent.getByToken(tGpuDigis, gd);
-    iEvent.getByToken(tGpuHits, gh);
+    iEvent.getByToken<siPixelRawToClusterHeterogeneousProduct::HeterogeneousDigiCluster>(tGpuDigis, gd);
+    iEvent.getByToken<siPixelRecHitsHeterogeneousProduct::HeterogeneousPixelRecHit>(tGpuHits, gh);
     auto const & gDigis = *gd;
     auto const & gHits = *gh;
     auto ndigis = gDigis.nDigis;
@@ -242,8 +242,10 @@ void ClusterTPAssociationHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent &
 
   auto output = std::make_unique<GPUProduct>(gpuAlgo->getProduct());
 
-  iEvent.put<Output>(std::move(output), [this, &iEvent, &iSetup](const GPUProduct& hits, CPUProduct& cpu) {
-                       cpu = *(this->produceLegacy(iEvent,iSetup));
+  auto legacy = produceLegacy(iEvent,iSetup).release();
+
+  iEvent.put<Output>(std::move(output), [legacy](const GPUProduct& hits, CPUProduct& cpu) {
+                       cpu = *legacy; delete legacy;
                      });
 
 }
