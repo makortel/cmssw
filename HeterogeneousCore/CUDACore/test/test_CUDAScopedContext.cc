@@ -5,10 +5,19 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
 
 #include "TestCUDA.h"
+#include "test_CUDAScopedContextKernels.h"
 
-static constexpr auto s_tag = "[CUDAScopedContext]";
+namespace {
+  std::unique_ptr<CUDA<int *> > produce(const CUDAToken& token, int *d, int *h) {
+    auto ctx = CUDAScopedContext(token);
 
-TEST_CASE("Single CUDA stream", s_tag) {
+    cuda::memory::async::copy(d, h, sizeof(int), ctx.stream().id());
+    testCUDAScopedContextKernels_single(d, ctx.stream());
+    return ctx.wrap(d);
+  }
+}
+
+TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
   int deviceCount = 0;
   auto ret = cudaGetDeviceCount( &deviceCount );
   if( ret != cudaSuccess ) {
@@ -43,7 +52,43 @@ TEST_CASE("Single CUDA stream", s_tag) {
     REQUIRE(dataPtr->device() == ctx.device());
     REQUIRE(dataPtr->stream().id() == ctx.stream().id());
   }
-}
 
-TEST_CASE("Joining multiple CUDA streams", s_tag) {
+  SECTION("Joining multiple CUDA streams") {
+    cuda::device::current::scoped_override_t<> setDeviceForThisScope(defaultDevice);
+    auto current_device = cuda::device::current::get();
+
+    // Mimick a producer on the second CUDA stream
+    int h_a1 = 1;
+    auto d_a1 = cuda::memory::device::make_unique<int>(current_device);
+    auto wprod1 = produce(token, d_a1.get(), &h_a1);
+
+    // Mimick a producer on the second CUDA stream
+    auto token2 = CUDAToken(defaultDevice);
+    REQUIRE(token.stream().id() != token2.stream().id());
+    int h_a2 = 2;
+    auto d_a2 = cuda::memory::device::make_unique<int>(current_device);
+    auto wprod2 = produce(token2, d_a2.get(), &h_a2);
+
+    // Mimick a third producer "joining" the two streams
+    auto ctx = CUDAScopedContext(token);
+
+    auto prod1 = ctx.get(*wprod1);
+    auto prod2 = ctx.get(*wprod2);
+
+    auto d_a3 = cuda::memory::device::make_unique<int>(current_device);
+    testCUDAScopedContextKernels_join(prod1, prod2, d_a3.get(), ctx.stream());
+    ctx.stream().synchronize();
+    REQUIRE(wprod2->event().has_occurred());
+
+    h_a1 = 0;
+    h_a2 = 0;
+    int h_a3 = 0;
+    cuda::memory::async::copy(&h_a1, d_a1.get(), sizeof(int), ctx.stream().id());
+    cuda::memory::async::copy(&h_a2, d_a2.get(), sizeof(int), ctx.stream().id());
+    cuda::memory::async::copy(&h_a3, d_a3.get(), sizeof(int), ctx.stream().id());
+
+    REQUIRE(h_a1 == 2);
+    REQUIRE(h_a2 == 4);
+    REQUIRE(h_a3 == 6);
+  }
 }
