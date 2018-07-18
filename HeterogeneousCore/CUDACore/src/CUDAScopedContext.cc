@@ -4,19 +4,18 @@
 
 CUDAScopedContext::~CUDAScopedContext() {
   if(waitingTaskHolder_.has_value()) {
-    // TODO: I really need to understand whether all these functions of cuda-api-wrappers could be made const
-    const_cast<cuda::stream_t<> *>(stream_)->enqueue.callback([device=currentDevice_,
-                                                               waitingTaskHolder=*waitingTaskHolder_]
-                                                              (cuda::stream::id_t streamId, cuda::status_t status) mutable {
-                                                                if(cuda::is_success(status)) {
-                                                                  LogTrace("CUDAScopedContext") << " GPU kernel finished (in callback) device " << device << " CUDA stream " << streamId;
-                                                                  waitingTaskHolder.doneWaiting(nullptr);
-                                                                }
-                                                                else {
-                                                                  auto error = cudaGetErrorName(status);
-                                                                  auto message = cudaGetErrorString(status);
-                                                                  waitingTaskHolder.doneWaiting(std::make_exception_ptr(cms::Exception("CUDAError") << "Callback of CUDA stream " << streamId << " in device " << device << " error " << error << ": " << message));
-                                                                }
-                                                              });
+    stream_.enqueue.callback([device=currentDevice_,
+                              waitingTaskHolder=*waitingTaskHolder_]
+                             (cuda::stream::id_t streamId, cuda::status_t status) mutable {
+                               if(cuda::is_success(status)) {
+                                 LogTrace("CUDAScopedContext") << " GPU kernel finished (in callback) device " << device << " CUDA stream " << streamId;
+                                 waitingTaskHolder.doneWaiting(nullptr);
+                               }
+                               else {
+                                 auto error = cudaGetErrorName(status);
+                                 auto message = cudaGetErrorString(status);
+                                 waitingTaskHolder.doneWaiting(std::make_exception_ptr(cms::Exception("CUDAError") << "Callback of CUDA stream " << streamId << " in device " << device << " error " << error << ": " << message));
+                               }
+                             });
   }
 }

@@ -18,14 +18,14 @@ public:
   explicit CUDAScopedContext(const CUDAToken& token):
     currentDevice_(token.device()),
     setDeviceForThisScope_(currentDevice_),
-    stream_(&token.stream())
+    stream_(token.stream())
   {}
 
   template<typename T>
   explicit CUDAScopedContext(const CUDA<T>& data):
     currentDevice_(data.device()),
     setDeviceForThisScope_(currentDevice_),
-    stream_(&data.stream())
+    stream_(data.stream())
   {}
 
   explicit CUDAScopedContext(const CUDAToken& token, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
@@ -43,7 +43,7 @@ public:
 
   ~CUDAScopedContext();
 
-  const cuda::stream_t<>& stream() const { return *stream_; }
+  cuda::stream_t<>& stream() { return stream_; }
 
   template <typename T>
   const T& get(const CUDA<T>& data) {
@@ -53,7 +53,7 @@ public:
       throw cms::Exception("LogicError") << "Handling data from multiple devices is not yet supported";
     }
 
-    if(data.stream().id() != stream_->id()) {
+    if(data.stream().id() != stream_.id()) {
       // Different streams, need to synchronize
       if(!data.event().has_occurred()) {
         // Event not yet occurred, so need to add synchronization
@@ -61,7 +61,7 @@ public:
         // wait for an event, so all subsequent work in the stream
         // will run only after the event has occurred (i.e. data
         // product became available).
-        auto ret = cudaStreamWaitEvent(stream_->id(), data.event().id(), 0);
+        auto ret = cudaStreamWaitEvent(stream_.id(), data.event().id(), 0);
         cuda::throw_if_error(ret, "Failed to make a stream to wait for an event");
       }
     }
@@ -69,11 +69,18 @@ public:
     return data.data_;
   }
 
+  template <typename T>
+  std::unique_ptr<CUDA<T> > wrap(T data) {
+    auto ret = std::make_unique<CUDA<T> >(std::move(data), *this);
+    ret->event().record(stream_.id());
+    return ret;
+  }
+
 private:
   int currentDevice_;
   std::optional<edm::WaitingTaskWithArenaHolder> waitingTaskHolder_;
   cuda::device::current::scoped_override_t<> setDeviceForThisScope_;
-  const cuda::stream_t<> *stream_;
+  cuda::stream_t<> stream_;
 };
 
 #endif

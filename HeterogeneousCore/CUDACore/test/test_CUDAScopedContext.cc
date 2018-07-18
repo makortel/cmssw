@@ -4,6 +4,7 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
 
+#include "TestCUDA.h"
 
 TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
   int deviceCount = 0;
@@ -21,14 +22,14 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
   SECTION("From CUDAToken") {
     auto ctx = CUDAScopedContext(token);
     REQUIRE(cuda::device::current::get().id() == token.device());
-    REQUIRE(&ctx.stream() == &token.stream());
+    REQUIRE(ctx.stream().id() == token.stream().id());
   }
 
   SECTION("From CUDA<T>") {
-    const auto data = CUDA<int>(10, token);
+    const CUDA<int> data = TestCUDA::create(10, token);
 
     auto ctx = CUDAScopedContext(data);
     REQUIRE(cuda::device::current::get().id() == data.device());
-    REQUIRE(&ctx.stream() == &data.stream());
+    REQUIRE(ctx.stream().id() == data.stream().id());
   }
 }

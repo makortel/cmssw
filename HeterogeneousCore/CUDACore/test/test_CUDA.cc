@@ -3,6 +3,8 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
 
+#include "TestCUDA.h"
+
 #include <cuda_runtime_api.h>
 
 TEST_CASE("Use of CUDA template", "[CUDACore]") {
@@ -25,10 +27,10 @@ TEST_CASE("Use of CUDA template", "[CUDACore]") {
     constexpr int defaultDevice = 0;
     auto token = CUDAToken(defaultDevice);
 
-    auto data = CUDA<int>(10, token);
+    CUDA<int> data = TestCUDA::create(10, token);
 
     REQUIRE(data.device() == defaultDevice);
-    REQUIRE(&data.stream() == &token.stream());
+    REQUIRE(data.stream().id() == token.stream().id());
     REQUIRE(&data.event() != nullptr);
   }
 }
