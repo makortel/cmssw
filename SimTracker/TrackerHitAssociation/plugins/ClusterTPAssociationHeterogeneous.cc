@@ -117,7 +117,7 @@ ClusterTPAssociationHeterogeneous::ClusterTPAssociationHeterogeneous(const edm::
     tGpuDigis(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelDigiClusterSrc"))),
     tGpuHits(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelRecHitSrc")))
 {
-  produces<ClusterTPAssociation>();
+  produces<HeterogeneousProduct>();
 }
 
 void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
