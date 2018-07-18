@@ -43,7 +43,10 @@ public:
 
   ~CUDAScopedContext();
 
+  int device() const { return currentDevice_; }
+
   cuda::stream_t<>& stream() { return stream_; }
+  const cuda::stream_t<>& stream() const { return stream_; }
 
   template <typename T>
   const T& get(const CUDA<T>& data) {
@@ -71,7 +74,8 @@ public:
 
   template <typename T>
   std::unique_ptr<CUDA<T> > wrap(T data) {
-    auto ret = std::make_unique<CUDA<T> >(std::move(data), *this);
+    // make_unique doesn't work because of private constructor
+    auto ret = std::unique_ptr<CUDA<T> >(new CUDA<T>(std::move(data), *this));
     ret->event().record(stream_.id());
     return ret;
   }

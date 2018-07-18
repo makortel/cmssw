@@ -6,7 +6,9 @@
 
 #include "TestCUDA.h"
 
-TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
+static constexpr auto s_tag = "[CUDAScopedContext]";
+
+TEST_CASE("Single CUDA stream", s_tag) {
   int deviceCount = 0;
   auto ret = cudaGetDeviceCount( &deviceCount );
   if( ret != cudaSuccess ) {
@@ -32,4 +34,16 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
     REQUIRE(cuda::device::current::get().id() == data.device());
     REQUIRE(ctx.stream().id() == data.stream().id());
   }
+
+  SECTION("Wrap T to CUDA<T>") {
+    auto ctx = CUDAScopedContext(token);
+
+    std::unique_ptr<CUDA<int> > dataPtr = ctx.wrap(10);
+    REQUIRE(dataPtr.get() != nullptr);
+    REQUIRE(dataPtr->device() == ctx.device());
+    REQUIRE(dataPtr->stream().id() == ctx.stream().id());
+  }
+}
+
+TEST_CASE("Joining multiple CUDA streams", s_tag) {
 }
