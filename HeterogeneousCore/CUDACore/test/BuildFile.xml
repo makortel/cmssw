@@ -4,3 +4,15 @@
   <use name="catch2"/>
   <use name="cuda"/>
 </bin>
+
+<!--
+<library file="TestCUDAProducerGPUFirst.cc TestCUDAProducerGPUKernel.cu" name="HeterogeneousCoreCUDACoreTest">
+  <flags EDM_PLUGIN="1"/>
+  <use name="FWCore/Framework"/>
+  <use name="FWCore/PluginManager"/>
+  <use name="FWCore/ParameterSet"/>
+  <use name="HeterogeneousCore/CUDACore"/>
+  <use name="cuda"/>
+  <use name="cuda-api-wrappers"/>
+</library>
+-->
