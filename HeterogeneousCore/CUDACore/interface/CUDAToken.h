@@ -25,6 +25,13 @@ public:
   CUDAToken() = default;
   explicit CUDAToken(int device);
 
+  ~CUDAToken();
+
+  CUDAToken(const CUDAToken&) = delete;
+  CUDAToken& operator=(const CUDAToken&) = delete;
+  CUDAToken(CUDAToken&&) = default;
+  CUDAToken& operator=(CUDAToken&&) = default;
+
   int device() const { return device_; }
   const cuda::stream_t<>& stream() const { return *stream_; }
   

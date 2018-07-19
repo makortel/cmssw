@@ -12,3 +12,12 @@ CUDAToken::CUDAToken(int device):
   stream_(make_stream(device)),
   device_(device)
 {}
+
+CUDAToken::~CUDAToken() {
+  if(stream_) {
+    // The current memory allocation model (large blocks) requires the
+    // CUDA stream to be synchronized before moving on to the next
+    // event in the EDM stream in order to avoid race conditions.
+    stream_->synchronize();
+  }
+}

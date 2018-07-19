@@ -53,7 +53,7 @@ namespace {
 }
 
 namespace {
-  constexpr int NUM_VALUES = 10000;
+  constexpr int NUM_VALUES = 4000;
 }
 
 TestCUDAProducerGPUKernel::TestCUDAProducerGPUKernel() {
