@@ -42,7 +42,7 @@ CUDADeviceChooser::CUDADeviceChooser(const edm::ParameterSet& iConfig):
 
 void CUDADeviceChooser::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<bool>("enabled", true);
+  desc.add<bool>("enabled", true)->setComment("This parameter is intended for debugging purposes only. If disabling some CUDA chains is needed for production, it is better to remove the CUDA modules altogether from the configuration.");
   descriptions.addWithDefaultLabel(desc);
 }
 

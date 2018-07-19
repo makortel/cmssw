@@ -5,8 +5,7 @@
   <use name="cuda"/>
 </bin>
 
-<!--
-<library file="TestCUDAProducerGPUFirst.cc TestCUDAProducerGPUKernel.cu" name="HeterogeneousCoreCUDACoreTest">
+<library file="TestCUDAProducerGPUFirst.cc TestCUDAProducerGPUKernel.cu" name="HeterogeneousCoreCUDACoreTestPlugins">
   <flags EDM_PLUGIN="1"/>
   <use name="FWCore/Framework"/>
   <use name="FWCore/PluginManager"/>
@@ -15,4 +14,3 @@
   <use name="cuda"/>
   <use name="cuda-api-wrappers"/>
 </library>
--->

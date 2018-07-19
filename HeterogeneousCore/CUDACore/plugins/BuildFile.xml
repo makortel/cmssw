@@ -12,6 +12,6 @@
 <use name="HeterogeneousCore/CUDAServices"/>
 <use name="cuda"/>
 <use name="cuda-api-wrappers"/>
-<library file="*.cc" name="HeterogeneousCoreCUDACorePlugnis">
+<library file="*.cc" name="HeterogeneousCoreCUDACorePlugins">
   <flags EDM_PLUGIN="1"/>
 </library>
