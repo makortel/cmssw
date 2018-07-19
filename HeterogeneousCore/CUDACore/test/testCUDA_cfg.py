@@ -21,6 +21,8 @@ process.options = cms.untracked.PSet(
 #   2  4
 #   |
 #   5
+#
+# CPU producers
 from HeterogeneousCore.CUDACore.testCUDAProducerCPU_cfi import testCUDAProducerCPU
 process.prod1cpu = testCUDAProducerCPU.clone()
 process.prod2cpu = testCUDAProducerCPU.clone(src = "prod1cpu")
@@ -28,20 +30,32 @@ process.prod3cpu = testCUDAProducerCPU.clone(src = "prod2cpu")
 process.prod4cpu = testCUDAProducerCPU.clone(src = "prod1cpu")
 process.prod5cpu = testCUDAProducerCPU.clone()
 
+# Module to decide whether the chain of CUDA modules are run
 from HeterogeneousCore.CUDACore.cudaDeviceChooser_cfi import cudaDeviceChooser
 process.testDevice = cudaDeviceChooser.clone()
 
+# Filter to disable a Path in case we don't run on CUDA
 from HeterogeneousCore.CUDACore.cudaDeviceFilter_cfi import cudaDeviceFilter
 process.testDeviceFilter = cudaDeviceFilter.clone(src = "testDevice")
 
 from HeterogeneousCore.CUDACore.testCUDAProducerGPUFirst_cfi import testCUDAProducerGPUFirst
 from HeterogeneousCore.CUDACore.testCUDAProducerGPU_cfi import testCUDAProducerGPU
+from HeterogeneousCore.CUDACore.testCUDAProducerGPUtoCPU_cfi import testCUDAProducerGPUtoCPU
 
+# GPU producers
 process.prod1gpu = testCUDAProducerGPUFirst.clone(src = "testDevice")
 process.prod2gpu = testCUDAProducerGPU.clone(src = "prod1gpu")
 process.prod3gpu = testCUDAProducerGPU.clone(src = "prod2gpu")
 process.prod4gpu = testCUDAProducerGPU.clone(src = "prod1gpu")
 process.prod5gpu = testCUDAProducerGPUFirst.clone(src = "testDevice")
+
+# Modules to copy data from GPU to CPU (as "on demand" as any other
+# EDProducer, i.e. according to consumes() and prefetching)
+process.prod1gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod1gpu")
+process.prod2gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod2gpu")
+process.prod3gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod3gpu")
+process.prod4gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod4gpu")
+process.prod5gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod5gpu")
 
 process.out = cms.OutputModule("AsciiOutputModule",
     outputCommands = cms.untracked.vstring(
@@ -73,7 +87,8 @@ process.prodCUDA5 = cms.Path(
 process.t = cms.Task(
     process.testDevice,
     process.prod2cpu, process.prod3cpu, process.prod4cpu,
-    process.prod2gpu, process.prod3gpu, process.prod4gpu
+    process.prod2gpu, process.prod3gpu, process.prod4gpu,
+    process.prod1gpuOnCpu, process.prod2gpuOnCpu, process.prod3gpuOnCpu, process.prod4gpuOnCpu, process.prod5gpuOnCpu,
 )
 process.p = cms.Path()
 process.p.associate(process.t)

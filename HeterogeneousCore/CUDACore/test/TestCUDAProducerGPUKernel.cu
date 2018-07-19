@@ -52,10 +52,6 @@ namespace {
   }
 }
 
-namespace {
-  constexpr int NUM_VALUES = 4000;
-}
-
 TestCUDAProducerGPUKernel::TestCUDAProducerGPUKernel() {
   h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
   h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);

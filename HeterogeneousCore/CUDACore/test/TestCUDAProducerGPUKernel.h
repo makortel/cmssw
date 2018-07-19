@@ -5,6 +5,8 @@
 
 class TestCUDAProducerGPUKernel {
 public:
+  static constexpr int NUM_VALUES = 4000;
+
   TestCUDAProducerGPUKernel();
   ~TestCUDAProducerGPUKernel() = default;
 
