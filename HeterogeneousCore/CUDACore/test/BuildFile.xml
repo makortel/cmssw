@@ -5,7 +5,7 @@
   <use name="cuda"/>
 </bin>
 
-<library file="TestCUDAProducerGPUFirst.cc TestCUDAProducerGPUKernel.cu" name="HeterogeneousCoreCUDACoreTestPlugins">
+<library file="TestCUDAProducerGPUFirst.cc TestCUDAProducerGPU.cc TestCUDAProducerCPU.cc TestCUDAProducerGPUKernel.cu" name="HeterogeneousCoreCUDACoreTestPlugins">
   <flags EDM_PLUGIN="1"/>
   <use name="FWCore/Framework"/>
   <use name="FWCore/PluginManager"/>
