@@ -57,22 +57,38 @@ process.prod3gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod3gpu")
 process.prod4gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod4gpu")
 process.prod5gpuOnCpu = testCUDAProducerGPUtoCPU.clone(src = "prod5gpu")
 
+# These ones are to provide backwards compatibility to the downstream
+# clients. To be replaced with an enhanced version of EDAlias (with an
+# ordered fallback mechanism).
+from HeterogeneousCore.CUDACore.testCUDAProducerFallback_cfi import testCUDAProducerFallback
+process.prod1 = testCUDAProducerFallback.clone(src = ["prod1gpuOnCpu", "prod1cpu"])
+process.prod2 = testCUDAProducerFallback.clone(src = ["prod2gpuOnCpu", "prod2cpu"])
+process.prod3 = testCUDAProducerFallback.clone(src = ["prod3gpuOnCpu", "prod3cpu"])
+process.prod4 = testCUDAProducerFallback.clone(src = ["prod4gpuOnCpu", "prod4cpu"])
+process.prod5 = testCUDAProducerFallback.clone(src = ["prod5gpuOnCpu", "prod5cpu"])
+
 process.out = cms.OutputModule("AsciiOutputModule",
     outputCommands = cms.untracked.vstring(
-#        "keep *_prod3cpu_*_*",
-#        "keep *_prod4cpu_*_*",
-#        "keep *_prod5cpu_*_*",
+        "keep *_prod3_*_*",
+        "keep *_prod4_*_*",
+        "keep *_prod5_*_*",
     ),
     verbosity = cms.untracked.uint32(0),
 )
 
 process.prodCPU1 = cms.Path(
     ~process.testDeviceFilter +
-    process.prod1cpu
+    process.prod1cpu +
+    process.prod2cpu +
+    process.prod3cpu +
+    process.prod4cpu
 )
 process.prodCUDA1 = cms.Path(
     process.testDeviceFilter +
-    process.prod1gpu
+    process.prod1gpu +
+    process.prod2gpu +
+    process.prod3gpu +
+    process.prod4gpu
 )
 
 process.prodCPU5 = cms.Path(
@@ -86,13 +102,14 @@ process.prodCUDA5 = cms.Path(
 
 process.t = cms.Task(
     process.testDevice,
-    process.prod2cpu, process.prod3cpu, process.prod4cpu,
-    process.prod2gpu, process.prod3gpu, process.prod4gpu,
+#    process.prod2cpu, process.prod3cpu, process.prod4cpu,
+#    process.prod2gpu, process.prod3gpu, process.prod4gpu,
     process.prod1gpuOnCpu, process.prod2gpuOnCpu, process.prod3gpuOnCpu, process.prod4gpuOnCpu, process.prod5gpuOnCpu,
+    process.prod1, process.prod2, process.prod3, process.prod4, process.prod5,
 )
 process.p = cms.Path()
 process.p.associate(process.t)
-#process.ep = cms.EndPath(process.out)
+process.ep = cms.EndPath(process.out)
 
 # Example of limiting the number of EDM streams per device
 #process.CUDAService.numberOfStreamsPerDevice = 1
