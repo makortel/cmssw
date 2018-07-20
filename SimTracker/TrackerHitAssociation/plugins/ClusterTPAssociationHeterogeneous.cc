@@ -212,16 +212,16 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
       uint32_t gind = genericDet->index();
       for (auto const & link : links) {
         ++ng;
-           if (link.fraction() > 0.3f) ++ng10;
+        if (link.fraction() > 0.3f) ++ng10;
         if (link.fraction() < 0.5f) continue;
         auto tkid = std::make_pair(link.SimTrackId(), link.eventId());
         auto ipos = mapping.find(tkid);
-          if (ipos != mapping.end()) {
+        if (ipos != mapping.end()) {
             uint32_t pt = 1000*(*ipos).second->pt();
             ++nn;
             std::array<uint32_t,4> a{{gind,uint32_t(link.channel()),(*ipos).second.key(),pt}};
             digi2tp.push_back(a);
-          }
+        }
       }
     }
     std::sort(digi2tp.begin(),digi2tp.end());

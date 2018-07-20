@@ -3,27 +3,9 @@
 // for the "packing"
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/SiPixelRawToClusterGPUKernel.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudastdAlgorithm.h"
+#include <limits>
 #include<cassert>
 #include<atomic>
-
-/*
-struct ClusterSLGPU {
- ClusterSLGPU(){alloc();}
- void alloc();
-
- ClusterSLGPU * me_d;
- std::array<uint32_t,4> * links_d;
- uint32_t * tkId_d;
- uint32_t * tkId2_d;
- uint32_t * n1_d;
- uint32_t * n2_d;
-
- static constexpr uint32_t MAX_DIGIS = 2000*150;
- static constexpr uint32_t MaxNumModules = 2000;
-
-};
-*/
-
 
 template<class ForwardIt, class T, class Compare>
 __device__
@@ -52,6 +34,9 @@ using ClusterSLGPU = trackerHitAssociationHeterogeneousProduct::ClusterSLGPU;
 __global__
 void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLOnGPU::HitsOnGPU const * hhp, ClusterSLGPU const * slp, uint32_t n) {
 
+
+  constexpr int32_t invTK = 0; // std::numeric_limits<int32_t>::max();
+ 
   constexpr uint16_t InvId=9999; // must be > MaxNumModules
   
   auto const & dd = *ddp;
@@ -70,7 +55,7 @@ void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLO
   auto cl = first + dd.clus_d[i];
   assert(cl<256*2000);
   
-  const std::array<uint32_t,4> me{{id,ch,0}};
+  const std::array<uint32_t,4> me{{id,ch,0,0}};
 
   auto less = [](std::array<uint32_t,4> const & a, std::array<uint32_t,4> const & b)->bool {
      return a[0]<b[0] || ( !(b[0]<a[0]) && a[1]<b[1]); // in this context we do not care of [2] 
@@ -87,16 +72,21 @@ void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLO
   auto p = lowerBound(b,e,me,less);
   auto j = p-sl.links_d;
   assert(j>=0);
+
+  auto getTK = [&](int i) { auto const & l = sl.links_d[i]; return l[2];};
+
   j = std::min(int(j),int(n-1));
   if (equal(me,sl.links_d[j])) {
-    //auto const & l = sl.links_d[j];
-    auto const tk = j; // l[2];
-    auto old = atomicCAS(&sl.tkId_d[cl],0,tk);
-    if (0==old ||tk==old) atomicAdd(&sl.n1_d[cl],1);
-    else {
-      auto old = atomicCAS(&sl.tkId2_d[cl],0,tk);
-      if (0==old ||tk==old) atomicAdd(&sl.n2_d[cl],1);
-    }    
+    auto const itk = j;
+    auto const tk = getTK(j);
+    auto old = atomicCAS(&sl.tkId_d[cl],invTK,itk);
+    if (invTK==old || tk==getTK(old)) { 
+       atomicAdd(&sl.n1_d[cl],1);
+    } else {
+      auto old = atomicCAS(&sl.tkId2_d[cl],invTK,itk);
+      if (invTK==old || tk==getTK(old)) atomicAdd(&sl.n2_d[cl],1);
+    }
+    // if (3==tk) printf("TK3: %d %d %d  %d: %d,%d\n",j,cl,id, i, dd.xx_d[i], dd.yy_d[i]);
   } 
   /*
   else {
@@ -133,6 +123,8 @@ void dumpLink(int ev, clusterSLOnGPU::HitsOnGPU const * hhp, uint32_t nhits, Clu
 
 namespace clusterSLOnGPU {
 
+ constexpr uint32_t invTK = 0; // std::numeric_limits<int32_t>::max();
+
   struct CSVHeader {
      CSVHeader() {
       printf("HIT: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n", "ev", "ind",
@@ -166,8 +158,8 @@ namespace clusterSLOnGPU {
 
   void
   Kernel::zero(cudaStream_t stream) {
-   cudaCheck(cudaMemsetAsync(slgpu.tkId_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
-   cudaCheck(cudaMemsetAsync(slgpu.tkId2_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.tkId_d,invTK,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
+   cudaCheck(cudaMemsetAsync(slgpu.tkId2_d,invTK,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
    cudaCheck(cudaMemsetAsync(slgpu.n1_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
    cudaCheck(cudaMemsetAsync(slgpu.n2_d,0,(ClusterSLGPU::MaxNumModules*256)*sizeof(uint32_t), stream));
   }
@@ -175,6 +167,8 @@ namespace clusterSLOnGPU {
 
   void 
   Kernel::algo(DigisOnGPU const & dd, uint32_t ndigis, HitsOnCPU const & hh, uint32_t nhits, uint32_t n, cuda::stream_t<>& stream) {
+
+    zero(stream.id());
 
     ClusterSLGPU const & sl = slgpu;
 
