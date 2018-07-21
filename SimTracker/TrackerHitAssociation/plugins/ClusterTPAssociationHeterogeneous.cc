@@ -103,6 +103,8 @@ private:
 
   std::map<std::pair<size_t, EncodedEventId>, TrackingParticleRef> mapping;
  
+  std::vector<std::array<uint32_t,4>> digi2tp;
+
 };
 
 ClusterTPAssociationHeterogeneous::ClusterTPAssociationHeterogeneous(const edm::ParameterSet & cfg)
@@ -204,7 +206,7 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
     auto nhits = gHits.nHits;
 
     uint32_t nn=0, ng=0, ng10=0;
-    std::vector<std::array<uint32_t,4>> digi2tp;
+    digi2tp.clear();
     {std::array<uint32_t,4> a{{0,0,0,0}}; digi2tp.push_back(a);} // put at 0 0
     for (auto const & links : *sipixelSimLinks) {
       DetId detId(links.detId());

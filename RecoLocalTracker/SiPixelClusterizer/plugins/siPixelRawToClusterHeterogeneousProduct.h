@@ -48,8 +48,6 @@ namespace siPixelRawToClusterHeterogeneousProduct {
     GPUProduct const * me_d = nullptr;
 
     // Needed for GPU rechits
-    uint32_t nDigis;
-    uint32_t nModules;
     uint16_t const * xx_d;
     uint16_t const * yy_d;
     uint16_t const * adc_d;
@@ -58,6 +56,10 @@ namespace siPixelRawToClusterHeterogeneousProduct {
     int32_t const *  clus_d;
     uint32_t const * clusInModule_d;
     uint32_t const * moduleId_d;
+
+    uint32_t nDigis;
+    uint32_t nModules;
+
   };
 
   using HeterogeneousDigiCluster = HeterogeneousProductImpl<heterogeneous::CPUProduct<CPUProduct>,

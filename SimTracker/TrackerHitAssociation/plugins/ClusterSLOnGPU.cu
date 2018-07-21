@@ -34,6 +34,7 @@ using ClusterSLGPU = trackerHitAssociationHeterogeneousProduct::ClusterSLGPU;
 __global__
 void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLOnGPU::HitsOnGPU const * hhp, ClusterSLGPU const * slp, uint32_t n) {
 
+  assert(slp==slp->me_d);
 
   constexpr int32_t invTK = 0; // std::numeric_limits<int32_t>::max();
  
@@ -70,7 +71,7 @@ void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLO
 
   // auto p = cuda_std::lower_bound(b,e,me,less);
   auto p = lowerBound(b,e,me,less);
-  auto j = p-sl.links_d;
+  int32_t j = p-sl.links_d;
   assert(j>=0);
 
   auto getTK = [&](int i) { auto const & l = sl.links_d[i]; return l[2];};
@@ -82,11 +83,12 @@ void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLO
     auto old = atomicCAS(&sl.tkId_d[cl],invTK,itk);
     if (invTK==old || tk==getTK(old)) { 
        atomicAdd(&sl.n1_d[cl],1);
+//         sl.n1_d[cl] = tk;
     } else {
       auto old = atomicCAS(&sl.tkId2_d[cl],invTK,itk);
       if (invTK==old || tk==getTK(old)) atomicAdd(&sl.n2_d[cl],1);
     }
-    // if (3==tk) printf("TK3: %d %d %d  %d: %d,%d\n",j,cl,id, i, dd.xx_d[i], dd.yy_d[i]);
+//    if (92==tk) printf("TK3: %d %d %d  %d: %d,%d ?%d?%d\n", j, cl, id, i, dd.xx_d[i], dd.yy_d[i], hh.mr_d[cl], hh.mc_d[cl]);
   } 
   /*
   else {
@@ -98,10 +100,30 @@ void simLink(clusterSLOnGPU::DigisOnGPU const * ddp, uint32_t ndigis, clusterSLO
 
 }
 
+__global__
+void verifyZero(int ev, clusterSLOnGPU::DigisOnGPU const * ddp, clusterSLOnGPU::HitsOnGPU const * hhp, uint32_t nhits, ClusterSLGPU const * slp) {
+  auto i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (i>nhits) return;
+
+  auto const & dd = *ddp;
+  auto const & hh = *hhp;
+  auto const & sl = *slp;
+
+  assert(sl.tkId_d[i]==0);
+  auto const & tk = sl.links_d[0];
+  assert(tk[0]==0);
+  assert(tk[1]==0);
+  assert(tk[2]==0);
+  assert(tk[3]==0);
+
+  if (i==0) printf("xx_d gpu %x\n",dd.xx_d);
+
+}
+
 
 __global__
-void dumpLink(int ev, clusterSLOnGPU::HitsOnGPU const * hhp, uint32_t nhits, ClusterSLGPU const * slp) {
-  auto i = blockIdx.x*blockDim.x + threadIdx.x;
+void dumpLink(int first, int ev, clusterSLOnGPU::HitsOnGPU const * hhp, uint32_t nhits, ClusterSLGPU const * slp) {
+  auto i = first + blockIdx.x*blockDim.x + threadIdx.x;
   if (i>nhits) return;
 
   auto const & hh = *hhp;
@@ -167,6 +189,11 @@ namespace clusterSLOnGPU {
 
   void 
   Kernel::algo(DigisOnGPU const & dd, uint32_t ndigis, HitsOnCPU const & hh, uint32_t nhits, uint32_t n, cuda::stream_t<>& stream) {
+    
+    size_t pfs = 16*1024*1024;
+    // cudaDeviceSetLimit(cudaLimitPrintfFifoSize,pfs);
+    cudaDeviceGetLimit(&pfs,cudaLimitPrintfFifoSize);
+    std::cout << "cudaLimitPrintfFifoSize " << pfs << std::endl;
 
     zero(stream.id());
 
@@ -174,12 +201,23 @@ namespace clusterSLOnGPU {
 
     int ev = ++evId;
     int threadsPerBlock = 256;
-    int blocks = (ndigis + threadsPerBlock - 1) / threadsPerBlock;
+
+    int blocks = (nhits + threadsPerBlock - 1) / threadsPerBlock;
+    verifyZero<<<blocks, threadsPerBlock, 0, stream.id()>>>(ev, dd.me_d, hh.gpu_d, nhits, sl.me_d);
+
+
+    blocks = (ndigis + threadsPerBlock - 1) / threadsPerBlock;
 
     assert(sl.me_d);
     simLink<<<blocks, threadsPerBlock, 0, stream.id()>>>(dd.me_d,ndigis, hh.gpu_d, sl.me_d,n);
-    blocks = (nhits + threadsPerBlock - 1) / threadsPerBlock;
-    dumpLink<<<blocks, threadsPerBlock, 0, stream.id()>>>(ev, hh.gpu_d, nhits, sl.me_d);
+    cudaStreamSynchronize(stream.id());
+
+    // one line == 200B so each kernel can print only 5K lines....
+    blocks = 16; // (nhits + threadsPerBlock - 1) / threadsPerBlock;
+    for (int first=0; first<int(nhits); first+=blocks*threadsPerBlock) {
+      dumpLink<<<blocks, threadsPerBlock, 0, stream.id()>>>(first, ev, hh.gpu_d, nhits, sl.me_d);
+      cudaStreamSynchronize(stream.id());
+    }
     cudaCheck(cudaGetLastError());
 
   }

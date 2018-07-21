@@ -181,8 +181,8 @@ namespace pixelgpudetails {
       return siPixelRawToClusterHeterogeneousProduct::GPUProduct{
         pdigi_h, rawIdArr_h, clus_h, adc_h, error_h,
         gpuProduct_d,
-        nDigis, nModulesActive,
-        xx_d, yy_d, adc_d, moduleInd_d, moduleStart_d,clus_d, clusInModule_d, moduleId_d
+        xx_d, yy_d, adc_d, moduleInd_d, moduleStart_d,clus_d, clusInModule_d, moduleId_d,
+        nDigis, nModulesActive
       };
     }
 

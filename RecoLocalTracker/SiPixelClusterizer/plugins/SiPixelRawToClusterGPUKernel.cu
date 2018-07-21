@@ -96,6 +96,7 @@ namespace pixelgpudetails {
       
     cudaCheck(cudaMemcpyAsync(gpuProduct_d, &gpuProduct, sizeof(GPUProduct), cudaMemcpyDefault,cudaStream.id()));
 
+    std::cout << "xx_d " << xx_d <<' ' << gpuProduct.xx_d << std::endl;
   }
 
   SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
