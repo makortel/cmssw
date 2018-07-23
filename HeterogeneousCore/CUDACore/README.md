@@ -259,7 +259,7 @@ process.fooTask = cms.Task(
 )
 ...
 ```
-For more complete example, see [here](test/testCUDA_cfg.py).
+For a more complete example, see [here](test/testCUDA_cfg.py).
 
 # Extension to other devices
 
@@ -267,7 +267,7 @@ The C++ side extends in a straightforward way. One has to add classes
 similar to `CUDAToken`, `CUDA<T>`, and `CUDAScopedContext`. Of course,
 much depends on the exact details. The python configuration side
 extends as well, one "just" has to add more modules there. Also the
-device choosing logic is extendable
+device choosing logic is also extendable
 ```python
 process.fooCUDADevice = ...
 process.fooFPGADevice = ...
