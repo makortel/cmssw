@@ -35,8 +35,9 @@ TestCUDAProducerCPU::TestCUDAProducerCPU(const edm::ParameterSet& iConfig):
 
 void TestCUDAProducerCPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag());
+  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Optional source of another TestCUDAProducerCPU.");
   descriptions.addWithDefaultLabel(desc);
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a CPU algorithm.");
 }
 
 void TestCUDAProducerCPU::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {

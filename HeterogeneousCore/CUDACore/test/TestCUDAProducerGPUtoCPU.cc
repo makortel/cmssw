@@ -36,8 +36,9 @@ TestCUDAProducerGPUtoCPU::TestCUDAProducerGPUtoCPU(const edm::ParameterSet& iCon
 
 void TestCUDAProducerGPUtoCPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag());
+  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source for CUDA<float *>.");
   descriptions.addWithDefaultLabel(desc);
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models the GPU->CPU data transfer and formatting of the data to legacy data format. Produces int, to be compatible with TestCUDAProducerCPU.");
 }
 
 void TestCUDAProducerGPUtoCPU::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {

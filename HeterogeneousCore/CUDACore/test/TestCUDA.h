@@ -3,6 +3,10 @@
 
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 
+/**
+ * This class is intended only for testing purposes. It allows to
+ * construct CUDA<T> and get the T from CUDA<T> without CUDAScopedContext.
+ */
 class TestCUDA {
 public:
   template <typename T, typename ...Args>

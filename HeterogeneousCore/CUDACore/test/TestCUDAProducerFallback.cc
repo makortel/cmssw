@@ -6,11 +6,6 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/transform.h"
 
-/**
- * This class acts as an enhanced EDAlias with a defined order of
- * inputs. I.e. if first input is available, copy that. If not, try
- * the next one etc.
- */
 class TestCUDAProducerFallback: public edm::global::EDProducer<> {
 public:
   explicit TestCUDAProducerFallback(const edm::ParameterSet& iConfig);
@@ -37,8 +32,9 @@ TestCUDAProducerFallback::TestCUDAProducerFallback(const edm::ParameterSet& iCon
 
 void TestCUDAProducerFallback::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<std::vector<edm::InputTag>>("src", std::vector<edm::InputTag>{});
+  desc.add<std::vector<edm::InputTag>>("src", std::vector<edm::InputTag>{})->setComment("Ordered list of input 'int' inputs.");
   descriptions.addWithDefaultLabel(desc);
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It acts as an enhanced EDAlias with a defined order of inputs. I.e. if first input is available, copy that. If not, try the next one etc. If no inputs are available, throw an exception. To be replaced with an EDAlias-style feature in the framework.");
 }
 
 void TestCUDAProducerFallback::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {

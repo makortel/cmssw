@@ -44,6 +44,7 @@ void CUDADeviceChooser::fillDescriptions(edm::ConfigurationDescriptions& descrip
   edm::ParameterSetDescription desc;
   desc.add<bool>("enabled", true)->setComment("This parameter is intended for debugging purposes only. If disabling some CUDA chains is needed for production, it is better to remove the CUDA modules altogether from the configuration.");
   descriptions.addWithDefaultLabel(desc);
+  descriptions.setComment("This EDProducer chooses whether a chain of CUDA EDModules depending on it should run or not. The decision is communicated downstream by the existence of a 'CUDAToken' event product. Intended to be used with CUDADeviceFilter.");
 }
 
 std::unique_ptr<::DeviceCache> CUDADeviceChooser::beginStream(edm::StreamID id) const {

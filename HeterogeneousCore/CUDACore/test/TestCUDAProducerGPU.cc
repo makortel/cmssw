@@ -35,8 +35,9 @@ TestCUDAProducerGPU::TestCUDAProducerGPU(const edm::ParameterSet& iConfig):
 
 void TestCUDAProducerGPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag());
+  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source of CUDA<float *>.");
   descriptions.addWithDefaultLabel(desc);
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this is not the first algorithm in the chain of the GPU EDProducers. Produces CUDA<float *>.");
 }
 
 void TestCUDAProducerGPU::beginStreamCUDA(edm::StreamID id) {

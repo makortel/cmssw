@@ -36,8 +36,9 @@ TestCUDAProducerGPUFirst::TestCUDAProducerGPUFirst(const edm::ParameterSet& iCon
 
 void TestCUDAProducerGPUFirst::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag());
+  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source of CUDAToken.");
   descriptions.addWithDefaultLabel(desc);
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this the first algorithm in the chain of the GPU EDProducers, so it reads a CUDAToken. Produces CUDA<float *>.");
 }
 
 void TestCUDAProducerGPUFirst::beginStreamCUDA(edm::StreamID id) {

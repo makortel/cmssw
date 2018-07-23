@@ -54,7 +54,7 @@ private:
   // Using unique_ptr to support the default constructor. Tried
   // std::optional, but cuda::stream_t and cuda::event_t have their
   // move assignment operators deleted. Use a struct to save one
-  // memory allocation
+  // memory allocation.
 public: // need to be public for ROOT dicrionary generation?
   struct StreamEvent {
     template <typename TokenOrContext>

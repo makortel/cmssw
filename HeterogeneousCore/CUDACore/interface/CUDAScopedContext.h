@@ -9,9 +9,11 @@
 #include <optional>
 
 /**
- * The aim of this class is to do necessary per-event "initialization"
- * (like setting the current device, synchronizing between CUDA
- * streams etc), and enforce that those get done in a proper way in RAII fashion.
+ * The aim of this class is to do necessary per-event "initialization":
+ * - setting the current device
+ * - calling edm::WaitingTaskWithArenaHolder::doneWaiting() when necessary
+ * - synchronizing between CUDA streams if necessary
+ * and enforce that those get done in a proper way in RAII fashion.
  */
 class CUDAScopedContext {
 public:
@@ -62,7 +64,7 @@ public:
         // Event not yet occurred, so need to add synchronization
         // here. Sychronization is done by making the CUDA stream to
         // wait for an event, so all subsequent work in the stream
-        // will run only after the event has occurred (i.e. data
+        // will run only after the event has "occurred" (i.e. data
         // product became available).
         auto ret = cudaStreamWaitEvent(stream_.id(), data.event().id(), 0);
         cuda::throw_if_error(ret, "Failed to make a stream to wait for an event");
@@ -76,6 +78,9 @@ public:
   std::unique_ptr<CUDA<T> > wrap(T data) {
     // make_unique doesn't work because of private constructor
     auto ret = std::unique_ptr<CUDA<T> >(new CUDA<T>(std::move(data), *this));
+    // Record CUDA event to the CUDA stream. The event will become
+    // "occurred" after all work queued to the stream before this
+    // point has been finished.
     ret->event().record(stream_.id());
     return ret;
   }

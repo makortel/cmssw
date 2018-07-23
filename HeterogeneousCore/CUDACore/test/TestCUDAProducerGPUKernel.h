@@ -3,6 +3,15 @@
 
 #include <cuda/api_wrappers.h>
 
+/**
+ * This class models the actual CUDA implementation of an algorithm.
+ * It follows RAII, i.e. does all memory allocations in its
+ * constructor.
+ *
+ * The algorithm is intended to waste time with large matrix
+ * operations so that the asynchronous nature of the CUDA integration
+ * becomes visible with debug prints.
+ */
 class TestCUDAProducerGPUKernel {
 public:
   static constexpr int NUM_VALUES = 4000;
