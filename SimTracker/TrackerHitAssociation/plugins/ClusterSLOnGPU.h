@@ -26,7 +26,7 @@ namespace clusterSLOnGPU {
 
   class Kernel {
   public:
-    Kernel(cuda::stream_t<>& stream) {alloc(stream);}
+    Kernel(cuda::stream_t<>& stream, bool doDump) {alloc(stream);}
     void algo(DigisOnGPU const & dd, uint32_t ndigis, HitsOnCPU const & hh, uint32_t nhits, uint32_t n, cuda::stream_t<>& stream);
     GPUProduct getProduct() { return GPUProduct{slgpu.me_d};}
     
@@ -35,7 +35,7 @@ namespace clusterSLOnGPU {
      void zero(cudaStream_t stream);
   public:
      ClusterSLGPU slgpu; 
-
+     bool doDump;
   };
 }
 

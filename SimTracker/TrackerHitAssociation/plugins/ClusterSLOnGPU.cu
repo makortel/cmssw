@@ -116,7 +116,7 @@ void verifyZero(int ev, clusterSLOnGPU::DigisOnGPU const * ddp, clusterSLOnGPU::
   assert(tk[2]==0);
   assert(tk[3]==0);
 
-  if (i==0) printf("xx_d gpu %x\n",dd.xx_d);
+  // if (i==0) printf("xx_d gpu %x\n",dd.xx_d);
 
 }
 
@@ -212,11 +212,13 @@ namespace clusterSLOnGPU {
     simLink<<<blocks, threadsPerBlock, 0, stream.id()>>>(dd.me_d,ndigis, hh.gpu_d, sl.me_d,n);
     cudaStreamSynchronize(stream.id());
 
-    // one line == 200B so each kernel can print only 5K lines....
-    blocks = 16; // (nhits + threadsPerBlock - 1) / threadsPerBlock;
-    for (int first=0; first<int(nhits); first+=blocks*threadsPerBlock) {
-      dumpLink<<<blocks, threadsPerBlock, 0, stream.id()>>>(first, ev, hh.gpu_d, nhits, sl.me_d);
-      cudaStreamSynchronize(stream.id());
+    if (doDump) {
+      // one line == 200B so each kernel can print only 5K lines....
+      blocks = 16; // (nhits + threadsPerBlock - 1) / threadsPerBlock;
+      for (int first=0; first<int(nhits); first+=blocks*threadsPerBlock) {
+        dumpLink<<<blocks, threadsPerBlock, 0, stream.id()>>>(first, ev, hh.gpu_d, nhits, sl.me_d);
+        cudaStreamSynchronize(stream.id());
+      }
     }
     cudaCheck(cudaGetLastError());
 

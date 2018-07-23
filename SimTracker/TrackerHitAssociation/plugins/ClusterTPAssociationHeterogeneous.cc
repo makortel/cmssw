@@ -105,6 +105,8 @@ private:
  
   std::vector<std::array<uint32_t,4>> digi2tp;
 
+  bool doDump;
+
 };
 
 ClusterTPAssociationHeterogeneous::ClusterTPAssociationHeterogeneous(const edm::ParameterSet & cfg)
@@ -117,7 +119,8 @@ ClusterTPAssociationHeterogeneous::ClusterTPAssociationHeterogeneous(const edm::
     phase2OTClustersToken_(consumes<edmNew::DetSetVector<Phase2TrackerCluster1D> >(cfg.getParameter<edm::InputTag>("phase2OTClusterSrc"))),
     trackingParticleToken_(consumes<TrackingParticleCollection>(cfg.getParameter<edm::InputTag>("trackingParticleSrc"))),
     tGpuDigis(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelDigiClusterSrc"))),
-    tGpuHits(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelRecHitSrc")))
+    tGpuHits(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelRecHitSrc"))),
+    doDump(cfg.getParameter<bool>("dumpCSV"))
 {
   produces<HeterogeneousProduct>();
 }
@@ -135,6 +138,8 @@ void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescr
   desc.add<edm::InputTag>("heterogeneousPixelDigiClusterSrc", edm::InputTag("siPixelClustersHeterogeneous"));
   desc.add<edm::InputTag>("heterogeneousPixelRecHitSrc", edm::InputTag("siPixelRecHitHeterogeneous"));
 
+  desc.add<bool>("dumpCSV",false);
+
   HeterogeneousEDProducer::fillPSetDescription(desc);
 
   descriptions.add("tpClusterProducerHeterogeneousDefault", desc);
@@ -144,7 +149,7 @@ void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescr
 void ClusterTPAssociationHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId,
                           cuda::stream_t<> &cudaStream) {
 
-   gpuAlgo = std::make_unique<clusterSLOnGPU::Kernel>(cudaStream);
+   gpuAlgo = std::make_unique<clusterSLOnGPU::Kernel>(cudaStream,doDump);
 
 }
 
