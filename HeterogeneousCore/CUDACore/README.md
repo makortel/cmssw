@@ -13,7 +13,7 @@ to extend to other devices. It will be extended if/when it gets
 deployed and `HeterogeneousEDProducer` retired.
 
 ## Sub-packages
-* `CUDACore` CUDA-specific core components
+* [`CUDACore`](#cuda-integration) CUDA-specific core components
 * [`CUDAServices`](../CUDAServices) Various edm::Services related to CUDA
 * [`CUDAUtilities`](../CUDAUtilities) Various utilities for CUDA kernel code
 
@@ -61,7 +61,7 @@ event, the data is wrapped to `CUDA<T>` template, which holds
 * the GPU data
   * must be movable, but no other restrictions (except need to be able to generate ROOT dictionaries from it)
 * the current device where the data was produced, and the CUDA stream the data was produced with
-* CUDA event for synchronization between multiple CUDA streams
+* [CUDA event for synchronization between multiple CUDA streams](#synchronizing-between-cuda-streams)
 
 Note that the `CUDA<T>` wrapper can be constructed only with
 `CUDAScopedContext::wrap()`, and the data `T` can be obtained from it
@@ -118,7 +118,7 @@ auto ctx = CUDAScopedContext(*handle);
 * Sets the current device (for the scope) from `CUDAToken`/`CUDA<T>`
 * Gives access to the CUDA stream the algorithm should use to queue asynchronous work
 * Calls `edm::WaitingTaskWithArenaHolder::doneWaiting()` when necessary
-* Synchronizes between CUDA streams if necessary
+* [Synchronizes between CUDA streams if necessary](#synchronizing-between-cuda-streams)
 * Needed to get/put `CUDA<T>` from/to the event
 
 In case of multiple input products, from possibly different CUDA
@@ -208,7 +208,7 @@ the `ExternalWork` needs to be used along
 * In `acquire()`
   * (allocate CPU memory buffers)
   * Queue all GPU->CPU transfers asynchronously
-* In `procuce()`
+* In `produce()`
   * If needed, read additional CPU products (e.g. from `edm::Ref`s)
   * Reformat data back to legacy data formats
   * Note: `CUDAScopedContext` is **not** needed in in `produce()`
@@ -222,7 +222,7 @@ with `HeterogeneousEDProducer`). Here this synchronization is achieved
 with CUDA events.
 
 Each `CUDA<T>` constains also a CUDA event object. The call to
-`CUDAScopedContext::wrap() will *record* the event in the CUDA stream.
+`CUDAScopedContext::wrap()` will *record* the event in the CUDA stream.
 This means that when all work queued to the CUDA stream up to that
 point has been finished, the CUDA event becomes *occurred*. Then, in
 `CUDAScopedContext::get()`, if the `CUDA<T>` to get from has a
