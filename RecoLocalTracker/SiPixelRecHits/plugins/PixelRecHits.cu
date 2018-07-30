@@ -5,9 +5,8 @@
 // CUDA runtime
 #include <cuda_runtime.h>
 
-// thrust heders
-#include <thrust/scan.h>
-#include <thrust/system/cuda/execution_policy.h>
+// headers
+#include <cub/cub.cuh>
 
 // CMSSW headers
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/SiPixelRawToClusterGPUKernel.h"
@@ -40,6 +39,10 @@ namespace pixelgpudetails {
     cudaCheck(cudaMalloc((void**) & gpu_d, sizeof(HitsOnGPU)));
     gpu_.me_d = gpu_d;
     cudaCheck(cudaMemcpyAsync(gpu_d, &gpu_, sizeof(HitsOnGPU), cudaMemcpyDefault,cudaStream.id()));
+
+    uint32_t *tmp = nullptr;
+    cudaCheck(cub::DeviceScan::InclusiveSum(nullptr, tempScanStorageSize_, tmp, tmp, gpuClustering::MaxNumModules));
+    cudaCheck(cudaMalloc(&tempScanStorage_, tempScanStorageSize_));
   }
 
   PixelRecHitGPUKernel::~PixelRecHitGPUKernel() {
@@ -60,6 +63,8 @@ namespace pixelgpudetails {
     cudaCheck(cudaFree(gpu_.mc_d));
     cudaCheck(cudaFree(gpu_.hist_d));
     cudaCheck(cudaFree(gpu_d));
+
+    cudaCheck(cudaFree(tempScanStorage_));
   }
 
   void PixelRecHitGPUKernel::makeHitsAsync(const siPixelRawToClusterHeterogeneousProduct::GPUProduct& input,
@@ -72,10 +77,9 @@ namespace pixelgpudetails {
     // Set first the first element to 0
     cudaCheck(cudaMemsetAsync(gpu_.hitsModuleStart_d, 0, sizeof(uint32_t), stream.id()));
     // Then use inclusive_scan to get the partial sum to the rest
-    thrust::inclusive_scan(thrust::cuda::par.on(stream.id()),
-                           input.clusInModule_d,
-                           input.clusInModule_d + gpuClustering::MaxNumModules,
-                           &gpu_.hitsModuleStart_d[1]);
+    cudaCheck(cub::DeviceScan::InclusiveSum(tempScanStorage_, tempScanStorageSize_,
+                                            input.clusInModule_d, &gpu_.hitsModuleStart_d[1], gpuClustering::MaxNumModules,
+                                            stream.id()));
 
     int threadsPerBlock = 256;
     int blocks = input.nModules; // active modules (with digis)

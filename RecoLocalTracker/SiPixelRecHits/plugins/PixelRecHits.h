@@ -41,6 +41,8 @@ namespace pixelgpudetails {
   private:
     HitsOnGPU * gpu_d;  // copy of the structure on the gpu itself: this is the "Product" 
     HitsOnGPU gpu_;
+    void *tempScanStorage_ = nullptr;
+    size_t tempScanStorageSize_ = 0;
     uint32_t hitsModuleStart_[gpuClustering::MaxNumModules+1];
     uint32_t hitsLayerStart_[11];
   };
