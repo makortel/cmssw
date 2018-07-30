@@ -43,6 +43,7 @@ namespace pixelgpudetails {
     HitsOnGPU gpu_;
     void *tempScanStorage_ = nullptr;
     size_t tempScanStorageSize_ = 0;
+    uint32_t *d_phase1TopologyLayerStart_ = nullptr;
     uint32_t hitsModuleStart_[gpuClustering::MaxNumModules+1];
     uint32_t hitsLayerStart_[11];
   };
