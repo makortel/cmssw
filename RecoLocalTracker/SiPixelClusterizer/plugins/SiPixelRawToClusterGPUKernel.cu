@@ -623,10 +623,19 @@ namespace pixelgpudetails {
 
     if (includeErrors) {
       cudaCheck(cudaMemcpyAsync(error_h, error_d, vsize, cudaMemcpyDefault, stream.id()));
-      cudaCheck(cudaStreamSynchronize(stream.id()));
-      error_h->set_data(data_h);
-      int size = error_h->size();
-      cudaCheck(cudaMemcpyAsync(data_h, data_d, size*esize, cudaMemcpyDefault, stream.id()));
+      cudaCheck(cudaMemcpyAsync(data_h, data_d, MAX_FED*pixelgpudetails::MAX_WORD*esize, cudaMemcpyDefault, stream.id()));
+      // If we want to transfer only the minimal amount of data, we
+      // need a synchronization point. A single ExternalWork (of
+      // SiPixelRawToClusterHeterogeneous) does not help because it is
+      // already used to synchronize the data movement. So we'd need
+      // two ExternalWorks (or explicit use of TBB tasks). The
+      // prototype of #100 would allow this easily (as there would be
+      // two ExternalWorks).
+      //
+      //error_h->set_data(data_h);
+      //cudaCheck(cudaStreamSynchronize(stream.id()));
+      //int size = error_h->size();
+      //cudaCheck(cudaMemcpyAsync(data_h, data_d, size*esize, cudaMemcpyDefault, stream.id()));
     }
     // End  of Raw2Digi and passing data for cluserisation
 

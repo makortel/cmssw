@@ -170,14 +170,14 @@ namespace pixelgpudetails {
 
     void initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length);
 
-    // Not really very async yet...
     void makeClustersAsync(const SiPixelFedCablingMapGPU *cablingMap, const unsigned char *modToUnp,
                            const SiPixelGainForHLTonGPU *gains,
                            const uint32_t wordCounter, const uint32_t fedCounter, bool convertADCtoElectrons,
                            bool useQualityInfo, bool includeErrors, bool debug,
                            cuda::stream_t<>& stream);
 
-    auto getProduct() const {
+    auto getProduct() {
+      error_h->set_data(data_h);
       return siPixelRawToClusterHeterogeneousProduct::GPUProduct{
         pdigi_h, rawIdArr_h, clus_h, adc_h, error_h,
         gpuProduct_d,
