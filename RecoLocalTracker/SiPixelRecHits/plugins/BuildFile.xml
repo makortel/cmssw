@@ -8,6 +8,5 @@
 <library file="*.cc *.cu" name="RecoLocalTrackerSiPixelRecHitsPlugins">
   <use name="cuda"/>
   <use name="cuda-api-wrappers"/>
-  <use name="cub"/>
   <flags EDM_PLUGIN="1"/>
 </library>
