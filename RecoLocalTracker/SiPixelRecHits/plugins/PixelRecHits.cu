@@ -105,7 +105,9 @@ namespace pixelgpudetails {
     // needed only if hits on CPU are required...
     cudaCheck(cudaMemcpyAsync(hitsModuleStart_, gpu_.hitsModuleStart_d, (gpuClustering::MaxNumModules+1) * sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 
-    // to be moved to gpu?
+    cudaStreamSynchronize(stream.id());
+
+    // to be moved to gpu? YES, to get rid of the cudaStreamSynchronize above...
     auto nhits = hitsModuleStart_[gpuClustering::MaxNumModules];
     for (int i=0;i<10;++i) hitsLayerStart_[i]=hitsModuleStart_[phase1PixelTopology::layerStart[i]];
     hitsLayerStart_[10]=nhits;
