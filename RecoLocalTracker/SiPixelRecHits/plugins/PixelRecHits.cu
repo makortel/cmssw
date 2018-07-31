@@ -83,6 +83,8 @@ namespace pixelgpudetails {
                                            pixelCPEforGPU::ParamsOnGPU const * cpeParams,
                                            cuda::stream_t<>& stream) {
    cudaCheck(cudaMemcpyAsync(gpu_.bs_d, bs, 3*sizeof(float), cudaMemcpyDefault, stream.id()));
+   gpu_.hitsModuleStart_d = input.clusModuleStart_d;
+   cudaCheck(cudaMemcpyAsync(gpu_d, &gpu_, sizeof(HitsOnGPU), cudaMemcpyDefault, stream.id()));
 
     int threadsPerBlock = 256;
     int blocks = input.nModules; // active modules (with digis)
@@ -95,7 +97,7 @@ namespace pixelgpudetails {
       input.clusInModule_d, input.moduleId_d,
       input.clus_d,
       input.nDigis,
-      input.clusModuleStart_d,
+      gpu_.hitsModuleStart_d,
       gpu_.charge_d,
       gpu_.detInd_d,
       gpu_.xg_d, gpu_.yg_d, gpu_.zg_d, gpu_.rg_d,
@@ -106,10 +108,10 @@ namespace pixelgpudetails {
     );
 
     // assuming full warp of threads is better than a smaller number...
-    setHitsLayerStart<<<1, 32, 0, stream.id()>>>(input.clusModuleStart_d, d_phase1TopologyLayerStart_, gpu_.hitsLayerStart_d);
+    setHitsLayerStart<<<1, 32, 0, stream.id()>>>(gpu_.hitsModuleStart_d, d_phase1TopologyLayerStart_, gpu_.hitsLayerStart_d);
 
     // needed only if hits on CPU are required...
-    cudaCheck(cudaMemcpyAsync(hitsModuleStart_, input.clusModuleStart_d, (gpuClustering::MaxNumModules+1) * sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(hitsModuleStart_, gpu_.hitsModuleStart_d, (gpuClustering::MaxNumModules+1) * sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
     cudaCheck(cudaMemcpyAsync(hitsLayerStart_, gpu_.hitsLayerStart_d, 11*sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
     auto nhits = input.nClusters;
     cpu_ = std::make_unique<HitsOnCPU>(nhits);
