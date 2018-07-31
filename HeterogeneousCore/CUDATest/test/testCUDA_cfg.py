@@ -17,22 +17,20 @@ process.options = cms.untracked.PSet(
 # Flow diagram of the modules
 #
 #     1   5
-#    / \
-#   2  4
+#    / \  |
+#   2  4  6
 #   |
 #   3
-#
+
+process.load("HeterogeneousCore.CUDATest.prod1_cff")
+process.load("HeterogeneousCore.CUDATest.prod5_cff")
+process.load("HeterogeneousCore.CUDATest.prod6_cff")
+
 # CPU producers
 from HeterogeneousCore.CUDATest.testCUDAProducerCPU_cfi import testCUDAProducerCPU
-process.prod1CPU = testCUDAProducerCPU.clone()
 process.prod2CPU = testCUDAProducerCPU.clone(src = "prod1CPU")
 process.prod3CPU = testCUDAProducerCPU.clone(src = "prod2CPU")
 process.prod4CPU = testCUDAProducerCPU.clone(src = "prod1CPU")
-process.prod5CPU = testCUDAProducerCPU.clone()
-
-# Module to decide whether the chain of CUDA modules are run, and to disable a Path in case we don't run on CUDA
-from HeterogeneousCore.CUDACore.cudaDeviceChooserFilter_cfi import cudaDeviceChooserFilter
-process.prodCUDADeviceFilter = cudaDeviceChooserFilter.clone()
 
 from HeterogeneousCore.CUDATest.testCUDAProducerGPUFirst_cfi import testCUDAProducerGPUFirst
 from HeterogeneousCore.CUDATest.testCUDAProducerGPU_cfi import testCUDAProducerGPU
@@ -40,29 +38,23 @@ from HeterogeneousCore.CUDATest.testCUDAProducerGPUEW_cfi import testCUDAProduce
 from HeterogeneousCore.CUDATest.testCUDAProducerGPUtoCPU_cfi import testCUDAProducerGPUtoCPU
 
 # GPU producers
-process.prod1CUDA = testCUDAProducerGPUFirst.clone(src = "prodCUDADeviceFilter")
 process.prod2CUDA = testCUDAProducerGPU.clone(src = "prod1CUDA")
 process.prod3CUDA = testCUDAProducerGPU.clone(src = "prod2CUDA")
 process.prod4CUDA = testCUDAProducerGPUEW.clone(src = "prod1CUDA")
-process.prod5CUDA = testCUDAProducerGPUFirst.clone(src = "prodCUDADeviceFilter")
 
 # Modules to copy data from GPU to CPU (as "on demand" as any other
 # EDProducer, i.e. according to consumes() and prefetching)
-process.prod1FromCUDA = testCUDAProducerGPUtoCPU.clone(src = "prod1CUDA")
 process.prod2FromCUDA = testCUDAProducerGPUtoCPU.clone(src = "prod2CUDA")
 process.prod3FromCUDA = testCUDAProducerGPUtoCPU.clone(src = "prod3CUDA")
 process.prod4FromCUDA = testCUDAProducerGPUtoCPU.clone(src = "prod4CUDA")
-process.prod5FromCUDA = testCUDAProducerGPUtoCPU.clone(src = "prod5CUDA")
 
 # These ones are to provide backwards compatibility to the downstream
 # clients. To be replaced with an enhanced version of EDAlias (with an
 # ordered fallback mechanism).
 from HeterogeneousCore.CUDATest.testCUDAProducerFallback_cfi import testCUDAProducerFallback
-process.prod1 = testCUDAProducerFallback.clone(src = ["prod1FromCUDA", "prod1CPU"])
 process.prod2 = testCUDAProducerFallback.clone(src = ["prod2FromCUDA", "prod2CPU"])
 process.prod3 = testCUDAProducerFallback.clone(src = ["prod3FromCUDA", "prod3CPU"])
 process.prod4 = testCUDAProducerFallback.clone(src = ["prod4FromCUDA", "prod4CPU"])
-process.prod5 = testCUDAProducerFallback.clone(src = ["prod5FromCUDA", "prod5CPU"])
 
 process.out = cms.OutputModule("AsciiOutputModule",
     outputCommands = cms.untracked.vstring(
@@ -74,27 +66,16 @@ process.out = cms.OutputModule("AsciiOutputModule",
 )
 
 process.prodCPU1 = cms.Path(
-    ~process.prodCUDADeviceFilter +
-    process.prod1CPU +
+    ~process.prod1CUDADeviceFilter +
     process.prod2CPU +
     process.prod3CPU +
     process.prod4CPU
 )
 process.prodCUDA1 = cms.Path(
-    process.prodCUDADeviceFilter +
-    process.prod1CUDA +
+    process.prod1CUDADeviceFilter +
     process.prod2CUDA +
     process.prod3CUDA +
     process.prod4CUDA
-)
-
-process.prodCPU5 = cms.Path(
-    ~process.prodCUDADeviceFilter +
-    process.prod5CPU
-)
-process.prodCUDA5 = cms.Path(
-    process.prodCUDADeviceFilter +
-    process.prod5CUDA
 )
 
 process.t = cms.Task(
@@ -104,8 +85,9 @@ process.t = cms.Task(
 #    process.prod2CPU, process.prod3CPU, process.prod4CPU,
 #    process.prod2CUDA, process.prod3CUDA, process.prod4CUDA,
 
-    process.prod1FromCUDA, process.prod2FromCUDA, process.prod3FromCUDA, process.prod4FromCUDA, process.prod5FromCUDA,
-    process.prod1, process.prod2, process.prod3, process.prod4, process.prod5,
+    process.prod2FromCUDA, process.prod3FromCUDA, process.prod4FromCUDA,
+    process.prod2, process.prod3, process.prod4,
+    process.prod1Task, process.prod5Task, process.prod6Task
 )
 process.p = cms.Path()
 process.p.associate(process.t)
