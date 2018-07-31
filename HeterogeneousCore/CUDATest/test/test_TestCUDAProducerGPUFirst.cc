@@ -5,7 +5,7 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
 
-#include "TestCUDA.h"
+#include "HeterogeneousCore/CUDACore/test/TestCUDA.h" // ugly...
 
 #include <iostream>
 
