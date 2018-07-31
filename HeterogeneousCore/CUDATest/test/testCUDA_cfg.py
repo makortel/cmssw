@@ -23,7 +23,7 @@ process.options = cms.untracked.PSet(
 #   3
 #
 # CPU producers
-from HeterogeneousCore.CUDACore.testCUDAProducerCPU_cfi import testCUDAProducerCPU
+from HeterogeneousCore.CUDATest.testCUDAProducerCPU_cfi import testCUDAProducerCPU
 process.prod1CPU = testCUDAProducerCPU.clone()
 process.prod2CPU = testCUDAProducerCPU.clone(src = "prod1CPU")
 process.prod3CPU = testCUDAProducerCPU.clone(src = "prod2CPU")
@@ -34,10 +34,10 @@ process.prod5CPU = testCUDAProducerCPU.clone()
 from HeterogeneousCore.CUDACore.cudaDeviceChooserFilter_cfi import cudaDeviceChooserFilter
 process.prodCUDADeviceFilter = cudaDeviceChooserFilter.clone()
 
-from HeterogeneousCore.CUDACore.testCUDAProducerGPUFirst_cfi import testCUDAProducerGPUFirst
-from HeterogeneousCore.CUDACore.testCUDAProducerGPU_cfi import testCUDAProducerGPU
-from HeterogeneousCore.CUDACore.testCUDAProducerGPUEW_cfi import testCUDAProducerGPUEW
-from HeterogeneousCore.CUDACore.testCUDAProducerGPUtoCPU_cfi import testCUDAProducerGPUtoCPU
+from HeterogeneousCore.CUDATest.testCUDAProducerGPUFirst_cfi import testCUDAProducerGPUFirst
+from HeterogeneousCore.CUDATest.testCUDAProducerGPU_cfi import testCUDAProducerGPU
+from HeterogeneousCore.CUDATest.testCUDAProducerGPUEW_cfi import testCUDAProducerGPUEW
+from HeterogeneousCore.CUDATest.testCUDAProducerGPUtoCPU_cfi import testCUDAProducerGPUtoCPU
 
 # GPU producers
 process.prod1CUDA = testCUDAProducerGPUFirst.clone(src = "prodCUDADeviceFilter")
@@ -57,12 +57,12 @@ process.prod5FromCUDA = testCUDAProducerGPUtoCPU.clone(src = "prod5CUDA")
 # These ones are to provide backwards compatibility to the downstream
 # clients. To be replaced with an enhanced version of EDAlias (with an
 # ordered fallback mechanism).
-from HeterogeneousCore.CUDACore.testCUDAProducerFallback_cfi import testCUDAProducerFallback
-process.prod1 = testCUDAProducerFallback.clone(src = ["prod1FromCUDA", "prod1cpu"])
-process.prod2 = testCUDAProducerFallback.clone(src = ["prod2FromCUDA", "prod2cpu"])
-process.prod3 = testCUDAProducerFallback.clone(src = ["prod3FromCUDA", "prod3cpu"])
-process.prod4 = testCUDAProducerFallback.clone(src = ["prod4FromCUDA", "prod4cpu"])
-process.prod5 = testCUDAProducerFallback.clone(src = ["prod5FromCUDA", "prod5cpu"])
+from HeterogeneousCore.CUDATest.testCUDAProducerFallback_cfi import testCUDAProducerFallback
+process.prod1 = testCUDAProducerFallback.clone(src = ["prod1FromCUDA", "prod1CPU"])
+process.prod2 = testCUDAProducerFallback.clone(src = ["prod2FromCUDA", "prod2CPU"])
+process.prod3 = testCUDAProducerFallback.clone(src = ["prod3FromCUDA", "prod3CPU"])
+process.prod4 = testCUDAProducerFallback.clone(src = ["prod4FromCUDA", "prod4CPU"])
+process.prod5 = testCUDAProducerFallback.clone(src = ["prod5FromCUDA", "prod5CPU"])
 
 process.out = cms.OutputModule("AsciiOutputModule",
     outputCommands = cms.untracked.vstring(
