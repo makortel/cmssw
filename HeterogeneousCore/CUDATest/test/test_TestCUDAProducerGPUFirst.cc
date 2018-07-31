@@ -5,7 +5,7 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
 
-#include "TestCUDA.h"
+#include "HeterogeneousCore/CUDACore/test/TestCUDA.h" // ugly...
 
 #include <iostream>
 
@@ -28,7 +28,7 @@ process.moduleToTest(process.toTest)
   
   SECTION("No event data") {
     edm::test::TestProcessor tester(config);
-    
+
     REQUIRE_THROWS_AS(tester.test(), cms::Exception);
     //If the module does not throw when given no data, substitute 
     //REQUIRE_NOTHROW for REQUIRE_THROWS_AS
@@ -36,7 +36,7 @@ process.moduleToTest(process.toTest)
   
   SECTION("beginJob and endJob only") {
     edm::test::TestProcessor tester(config);
-    
+
     REQUIRE_NOTHROW(tester.testBeginAndEndJobOnly());
   }
 
