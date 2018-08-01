@@ -716,6 +716,7 @@ tpClusterProducerHeterogeneousPixelTrackingOnly = tpClusterProducerHeterogeneous
 tpClusterProducerPixelTrackingOnly = tpClusterProducer.clone()
 # Need to use the modifier to customize because the exact EDProducer type depends on the modifier
 gpu.toModify(tpClusterProducerPixelTrackingOnly, src = "tpClusterProducerHeterogeneousPixelTrackingOnly")
+(~gpu).toModify(tpClusterProducerPixelTrackingOnly, pixelClusterSrc = "siPixelClustersPreSplitting")
 
 quickTrackAssociatorByHitsPixelTrackingOnly = quickTrackAssociatorByHits.clone(
     cluster2TPSrc = "tpClusterProducerPixelTrackingOnly"
