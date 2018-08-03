@@ -51,6 +51,7 @@ int main() {
   int numThreadsPerBlock = 256;
   vector_pushback<<<numBlocks, numThreadsPerBlock>>>(d_obj_ptr);
   cudaCheck(cudaGetLastError());
+  cudaCheck(cudaDeviceSynchronize());
 
   cudaCheck(cudaMemcpy(obj_ptr, d_obj_ptr, sizeof(GPU::SimpleVector<int>), cudaMemcpyDefault));
 
@@ -59,6 +60,7 @@ int main() {
                                  : maxN));
   vector_reset<<<numBlocks, numThreadsPerBlock>>>(d_obj_ptr);
   cudaCheck(cudaGetLastError());
+  cudaCheck(cudaDeviceSynchronize());
 
   cudaCheck(cudaMemcpy(obj_ptr, d_obj_ptr, sizeof(GPU::SimpleVector<int>), cudaMemcpyDefault));
 
@@ -66,6 +68,7 @@ int main() {
 
   vector_emplace_back<<<numBlocks, numThreadsPerBlock>>>(d_obj_ptr);
   cudaCheck(cudaGetLastError());
+  cudaCheck(cudaDeviceSynchronize());
 
   cudaCheck(cudaMemcpy(obj_ptr, d_obj_ptr, sizeof(GPU::SimpleVector<int>), cudaMemcpyDefault));
 
