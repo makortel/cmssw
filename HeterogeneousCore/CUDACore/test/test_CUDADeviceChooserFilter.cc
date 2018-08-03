@@ -6,14 +6,14 @@
 
 #include <cuda_runtime_api.h>
 
-static constexpr auto s_tag = "[CUDADeviceChooser]";
+static constexpr auto s_tag = "[CUDADeviceChooserFilter]";
 
-TEST_CASE("Standard checks of CUDADeviceChooser", s_tag) {
+TEST_CASE("Standard checks of CUDADeviceChooserFilter", s_tag) {
   const std::string baseConfig{
 R"_(from FWCore.TestProcessor.TestProcess import *
 process = TestProcess()
 process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
-process.toTest = cms.EDProducer("CUDADeviceChooser")
+process.toTest = cms.EDFilter("CUDADeviceChooserFilter")
 process.moduleToTest(process.toTest)
 )_"
   };
@@ -49,12 +49,12 @@ process.moduleToTest(process.toTest)
 
 }
 
-TEST_CASE("CUDADeviceChooser enabled", s_tag) {
+TEST_CASE("CUDADeviceChooserFilter enabled", s_tag) {
   const std::string config{
 R"_(from FWCore.TestProcessor.TestProcess import *
 process = TestProcess()
 process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
-process.toTest = cms.EDProducer("CUDADeviceChooser")
+process.toTest = cms.EDFilter("CUDADeviceChooserFilter")
 process.moduleToTest(process.toTest)
 )_"
   };
@@ -77,12 +77,12 @@ process.moduleToTest(process.toTest)
   }
 }
 
-TEST_CASE("CUDADeviceChooser disabled", s_tag) {
+TEST_CASE("CUDADeviceChooserFilter disabled", s_tag) {
   const std::string config{
 R"_(from FWCore.TestProcessor.TestProcess import *
 process = TestProcess()
 process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
-process.toTest = cms.EDProducer("CUDADeviceChooser", enabled=cms.bool(False))
+process.toTest = cms.EDFilter("CUDADeviceChooserFilter", enabled=cms.bool(False))
 process.moduleToTest(process.toTest)
 )_"
   };

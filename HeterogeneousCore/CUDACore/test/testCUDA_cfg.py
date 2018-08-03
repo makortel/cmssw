@@ -30,13 +30,9 @@ process.prod3CPU = testCUDAProducerCPU.clone(src = "prod2CPU")
 process.prod4CPU = testCUDAProducerCPU.clone(src = "prod1CPU")
 process.prod5CPU = testCUDAProducerCPU.clone()
 
-# Module to decide whether the chain of CUDA modules are run
-from HeterogeneousCore.CUDACore.cudaDeviceChooser_cfi import cudaDeviceChooser
-process.prodCUDADevice = cudaDeviceChooser.clone()
-
-# Filter to disable a Path in case we don't run on CUDA
-from HeterogeneousCore.CUDACore.cudaDeviceFilter_cfi import cudaDeviceFilter
-process.prodCUDADeviceFilter = cudaDeviceFilter.clone(src = "prodCUDADevice")
+# Module to decide whether the chain of CUDA modules are run, and to disable a Path in case we don't run on CUDA
+from HeterogeneousCore.CUDACore.cudaDeviceChooserFilter_cfi import cudaDeviceChooserFilter
+process.prodCUDADeviceFilter = cudaDeviceChooserFilter.clone()
 
 from HeterogeneousCore.CUDACore.testCUDAProducerGPUFirst_cfi import testCUDAProducerGPUFirst
 from HeterogeneousCore.CUDACore.testCUDAProducerGPU_cfi import testCUDAProducerGPU
@@ -44,11 +40,11 @@ from HeterogeneousCore.CUDACore.testCUDAProducerGPUEW_cfi import testCUDAProduce
 from HeterogeneousCore.CUDACore.testCUDAProducerGPUtoCPU_cfi import testCUDAProducerGPUtoCPU
 
 # GPU producers
-process.prod1CUDA = testCUDAProducerGPUFirst.clone(src = "prodCUDADevice")
+process.prod1CUDA = testCUDAProducerGPUFirst.clone(src = "prodCUDADeviceFilter")
 process.prod2CUDA = testCUDAProducerGPU.clone(src = "prod1CUDA")
 process.prod3CUDA = testCUDAProducerGPU.clone(src = "prod2CUDA")
 process.prod4CUDA = testCUDAProducerGPUEW.clone(src = "prod1CUDA")
-process.prod5CUDA = testCUDAProducerGPUFirst.clone(src = "prodCUDADevice")
+process.prod5CUDA = testCUDAProducerGPUFirst.clone(src = "prodCUDADeviceFilter")
 
 # Modules to copy data from GPU to CPU (as "on demand" as any other
 # EDProducer, i.e. according to consumes() and prefetching)
@@ -102,8 +98,6 @@ process.prodCUDA5 = cms.Path(
 )
 
 process.t = cms.Task(
-    process.prodCUDADevice,
-
     # Eventually the goal is to specify these as part of a Task,
     # but (at least) as long as the fallback mechanism is implemented
     # with an EDProducer, they must be in a Path.

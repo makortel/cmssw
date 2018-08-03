@@ -21,37 +21,41 @@ deployed and `HeterogeneousEDProducer` retired.
 
 ## Choosing device
 
-The device choosing logic is split to an EDProducer, an EDFilter, and
-use of Paths in the configuration.
+### Dynamically between GPU and CPU
 
-First, a `CUDADeviceChooser` EDProducer is run. It has the logic to
-device whether the following chain of EDModules should run on a CUDA
-device or not, and if yes, on which CUDA device. If it decides "yes",
-it produces a `CUDAToken`, which contains the device id and a CUDA
-stream. If it decides "no", it does not produce anything.
+The device choosing (CPU vs. GPU, which GPU) logic is done by an
+EDFilter and using Paths in the configuration.
 
-Next step is a `CUDADeviceFilter` EDFilter. It checks whether the
-`CUDADeviceChooser` produced a product or not. If "yes", it returns
-`true`, and if "no", it returns `false`.
+First, a `CUDADeviceChooserFilter` EDFilter is run. It has the logic
+to device whether the following chain of EDModules should run on a
+CUDA device or not, and if yes, on which CUDA device. If it decides
+"yes", it returns `true` and produces a `CUDAToken`, which contains
+the device id and a CUDA stream. If it decides "no", it returns
+`false` and does not produce anything.
 
-Finally, the pieces need to be put together in the configuration. The
-`CUDADeviceChooser` can be "anywhere", but the `CUDADeviceFilter`
-should be the first module on a `cms.Path`, followed by the CUDA
-EDProducers (in the future it may become sufficient to have only the
-first EDProducer of a chain in the `Path`).
+Then, the pieces need to be put together in the configuration. The
+`CUDADeviceChooserFilter` should be put as the first module on a
+`cms.Path`, followed by the CUDA EDProducers (in the future it may
+become sufficient to have only the first EDProducer of a chain in the
+`Path`).
 ```python
-process.fooCUDADevice = cms.EDProducer("CUDADeviceChooser")
-process.fooCUDADeviceFilter = cms.EDFilter("CUDADeviceFilter",
+process.fooCUDADeviceFilter = cms.EDFilter("CUDADeviceChooserFilter",
     src = cms.InputTag("fooCUDADevice")
 )
 process.fooCUDA = cms.EDProducer("FooProducerCUDA")
 process.fooPathCUDA = cms.Path(
     process.fooCUDADeviceFilter + process.fooCUDA
 )
-process.fooTask = cms.Task(
-    process.fooDevice
-)
 ```
+
+### Always on GPU
+
+In case the chain of modules should always be run on a GPU, the
+EDFilter and Paths are not needed. In this case, a
+`CUDADeviceChooserProducer` should be used to produce the `CUDAToken`.
+If the machine has no GPUs or `CUDAService` is disabled, the producer
+throws an exception.
+
 
 ## Data model
 
