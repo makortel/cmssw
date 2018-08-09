@@ -92,9 +92,14 @@ namespace pixelgpudetails {
                                            float const * bs,
                                            pixelCPEforGPU::ParamsOnGPU const * cpeParams,
                                            cuda::stream_t<>& stream) {
-   cudaCheck(cudaMemcpyAsync(gpu_.bs_d, bs, 3 * sizeof(float), cudaMemcpyDefault, stream.id()));
-   gpu_.hitsModuleStart_d = input.clusModuleStart_d;
-   cudaCheck(cudaMemcpyAsync(gpu_d, &gpu_, sizeof(HitsOnGPU), cudaMemcpyDefault, stream.id()));
+    // memory allocation needs to be first to not to device-synchronize in between
+    // even better would be to avoid the allocation...
+    const auto nhits = input.nClusters;
+    cpu_ = std::make_unique<HitsOnCPU>(nhits);
+
+    cudaCheck(cudaMemcpyAsync(gpu_.bs_d, bs, 3 * sizeof(float), cudaMemcpyDefault, stream.id()));
+    gpu_.hitsModuleStart_d = input.clusModuleStart_d;
+    cudaCheck(cudaMemcpyAsync(gpu_d, &gpu_, sizeof(HitsOnGPU), cudaMemcpyDefault, stream.id()));
 
     int threadsPerBlock = 256;
     int blocks = input.nModules; // active modules (with digis)
@@ -127,8 +132,6 @@ namespace pixelgpudetails {
 #ifdef GPU_DEBUG
     cudaCheck(cudaMemcpyAsync(h_hitsLayerStart_, gpu_.hitsLayerStart_d, 11 * sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 #endif
-    auto nhits = input.nClusters;
-    cpu_ = std::make_unique<HitsOnCPU>(nhits);
     cudaCheck(cudaMemcpyAsync(cpu_->detInd.data(), gpu_.detInd_d, nhits*sizeof(int16_t), cudaMemcpyDefault, stream.id()));
     cudaCheck(cudaMemcpyAsync(cpu_->charge.data(), gpu_.charge_d, nhits * sizeof(int32_t), cudaMemcpyDefault, stream.id()));
     cudaCheck(cudaMemcpyAsync(cpu_->xl.data(), gpu_.xl_d, nhits * sizeof(float), cudaMemcpyDefault, stream.id()));
