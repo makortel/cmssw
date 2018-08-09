@@ -29,22 +29,24 @@ namespace {
 namespace pixelgpudetails {
   PixelRecHitGPUKernel::PixelRecHitGPUKernel(cuda::stream_t<>& cudaStream) {
 
+    constexpr auto MAX_HITS = gpuClustering::MaxNumModules * 256;
+
     cudaCheck(cudaMalloc((void **) & gpu_.bs_d, 3 * sizeof(float)));
     cudaCheck(cudaMalloc((void **) & gpu_.hitsLayerStart_d, 11 * sizeof(uint32_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.charge_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.detInd_d, (gpuClustering::MaxNumModules * 256) * sizeof(uint16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.xg_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.yg_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.zg_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.rg_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.xl_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.yl_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.xerr_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.yerr_d, (gpuClustering::MaxNumModules * 256) * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.iphi_d, (gpuClustering::MaxNumModules * 256) * sizeof(int16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.sortIndex_d, (gpuClustering::MaxNumModules * 256) * sizeof(uint16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.mr_d, (gpuClustering::MaxNumModules * 256) * sizeof(uint16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.mc_d, (gpuClustering::MaxNumModules * 256) * sizeof(uint16_t)));
+    cudaCheck(cudaMalloc((void **) & gpu_.charge_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.detInd_d, MAX_HITS * sizeof(uint16_t)));
+    cudaCheck(cudaMalloc((void **) & gpu_.xg_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.yg_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.zg_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.rg_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.xl_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.yl_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.xerr_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.yerr_d, MAX_HITS * sizeof(float)));
+    cudaCheck(cudaMalloc((void **) & gpu_.iphi_d, MAX_HITS * sizeof(int16_t)));
+    cudaCheck(cudaMalloc((void **) & gpu_.sortIndex_d, MAX_HITS * sizeof(uint16_t)));
+    cudaCheck(cudaMalloc((void **) & gpu_.mr_d, MAX_HITS * sizeof(uint16_t)));
+    cudaCheck(cudaMalloc((void **) & gpu_.mc_d, MAX_HITS * sizeof(uint16_t)));
     cudaCheck(cudaMalloc((void **) & gpu_.hist_d, 10 * sizeof(HitsOnGPU::Hist)));
     cudaCheck(cudaMalloc((void **) & gpu_d, sizeof(HitsOnGPU)));
     gpu_.me_d = gpu_d;
@@ -57,6 +59,14 @@ namespace pixelgpudetails {
     cudaCheck(cudaMemcpyAsync(d_phase1TopologyLayerStart_, phase1PixelTopology::layerStart, 11 * sizeof(uint32_t), cudaMemcpyDefault, cudaStream.id()));
 
     cudaCheck(cudaMallocHost(&h_hitsModuleStart_, (gpuClustering::MaxNumModules+1) * sizeof(uint32_t)));
+    cudaCheck(cudaMallocHost(&h_detInd_, MAX_HITS*sizeof(uint16_t)));
+    cudaCheck(cudaMallocHost(&h_charge_, MAX_HITS*sizeof(int32_t)));
+    cudaCheck(cudaMallocHost(&h_xl_, MAX_HITS*sizeof(float)));
+    cudaCheck(cudaMallocHost(&h_yl_, MAX_HITS*sizeof(float)));
+    cudaCheck(cudaMallocHost(&h_xe_, MAX_HITS*sizeof(float)));
+    cudaCheck(cudaMallocHost(&h_ye_, MAX_HITS*sizeof(float)));
+    cudaCheck(cudaMallocHost(&h_mr_, MAX_HITS*sizeof(uint16_t)));
+    cudaCheck(cudaMallocHost(&h_mc_, MAX_HITS*sizeof(uint16_t)));
 #ifdef GPU_DEBUG
     cudaCheck(cudaMallocHost(&h_hitsLayerStart_, 11 * sizeof(uint32_t)));
 #endif
@@ -83,6 +93,14 @@ namespace pixelgpudetails {
     cudaCheck(cudaFree(d_phase1TopologyLayerStart_));
 
     cudaCheck(cudaFreeHost(h_hitsModuleStart_));
+    cudaCheck(cudaFreeHost(h_detInd_));
+    cudaCheck(cudaFreeHost(h_charge_));
+    cudaCheck(cudaFreeHost(h_xl_));
+    cudaCheck(cudaFreeHost(h_yl_));
+    cudaCheck(cudaFreeHost(h_xe_));
+    cudaCheck(cudaFreeHost(h_ye_));
+    cudaCheck(cudaFreeHost(h_mr_));
+    cudaCheck(cudaFreeHost(h_mc_));
 #ifdef GPU_DEBUG
     cudaCheck(cudaFreeHost(h_hitsLayerStart_));
 #endif
@@ -92,11 +110,6 @@ namespace pixelgpudetails {
                                            float const * bs,
                                            pixelCPEforGPU::ParamsOnGPU const * cpeParams,
                                            cuda::stream_t<>& stream) {
-    // memory allocation needs to be first to not to device-synchronize in between
-    // even better would be to avoid the allocation...
-    const auto nhits = input.nClusters;
-    cpu_ = std::make_unique<HitsOnCPU>(nhits);
-
     cudaCheck(cudaMemcpyAsync(gpu_.bs_d, bs, 3 * sizeof(float), cudaMemcpyDefault, stream.id()));
     gpu_.hitsModuleStart_d = input.clusModuleStart_d;
     cudaCheck(cudaMemcpyAsync(gpu_d, &gpu_, sizeof(HitsOnGPU), cudaMemcpyDefault, stream.id()));
@@ -128,18 +141,19 @@ namespace pixelgpudetails {
     cudaCheck(cudaGetLastError());
 
     // needed only if hits on CPU are required...
+    nhits_ = input.nClusters;
     cudaCheck(cudaMemcpyAsync(h_hitsModuleStart_, gpu_.hitsModuleStart_d, (gpuClustering::MaxNumModules+1) * sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 #ifdef GPU_DEBUG
     cudaCheck(cudaMemcpyAsync(h_hitsLayerStart_, gpu_.hitsLayerStart_d, 11 * sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 #endif
-    cudaCheck(cudaMemcpyAsync(cpu_->detInd.data(), gpu_.detInd_d, nhits*sizeof(int16_t), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(cpu_->charge.data(), gpu_.charge_d, nhits * sizeof(int32_t), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(cpu_->xl.data(), gpu_.xl_d, nhits * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(cpu_->yl.data(), gpu_.yl_d, nhits * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(cpu_->xe.data(), gpu_.xerr_d, nhits * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(cpu_->ye.data(), gpu_.yerr_d, nhits * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(cpu_->mr.data(), gpu_.mr_d, nhits * sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(cpu_->mc.data(), gpu_.mc_d, nhits * sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_detInd_, gpu_.detInd_d, nhits_*sizeof(int16_t), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_charge_, gpu_.charge_d, nhits_ * sizeof(int32_t), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_xl_, gpu_.xl_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_yl_, gpu_.yl_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_xe_, gpu_.xerr_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_ye_, gpu_.yerr_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_mr_, gpu_.mr_d, nhits_ * sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
+    cudaCheck(cudaMemcpyAsync(h_mc_, gpu_.mc_d, nhits_ * sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
 
 #ifdef GPU_DEBUG
     cudaStreamSynchronize(stream.id());
@@ -151,15 +165,9 @@ namespace pixelgpudetails {
 
     // for timing test
     // cudaStreamSynchronize(stream.id());
-    // auto nhits = h_hitsLayerStart_[10];
+    // auto nhits_ = h_hitsLayerStart_[10];
     // radixSortMultiWrapper<int16_t><<<10, 256, 0, c.stream>>>(gpu_.iphi_d, gpu_.sortIndex_d, gpu_.hitsLayerStart_d);
 
-    cudautils::fillManyFromVector(gpu_.hist_d, 10, gpu_.iphi_d, gpu_.hitsLayerStart_d, nhits, 256, stream.id());
-  }
-
-  std::unique_ptr<HitsOnCPU>&& PixelRecHitGPUKernel::getOutput(cuda::stream_t<>& stream) {
-    cpu_->gpu_d = gpu_d;
-    memcpy(cpu_->hitsModuleStart, h_hitsModuleStart_, (gpuClustering::MaxNumModules+1) * sizeof(uint32_t));
-    return std::move(cpu_);
+    cudautils::fillManyFromVector(gpu_.hist_d, 10, gpu_.iphi_d, gpu_.hitsLayerStart_d, nhits_, 256, stream.id());
   }
 }
