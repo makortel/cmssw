@@ -33,6 +33,12 @@ namespace siPixelRecHitsHeterogeneousProduct {
      Hist * hist_d;
 
      HitsOnGPU const * me_d = nullptr;
+
+    // Owning pointers to the 32/16 bit arrays with size MAX_HITS
+    void *owner_32bit_;
+    size_t owner_32bit_pitch_;
+    void *owner_16bit_;
+    size_t owner_16bit_pitch_;
   };
 
   struct HitsOnCPU {

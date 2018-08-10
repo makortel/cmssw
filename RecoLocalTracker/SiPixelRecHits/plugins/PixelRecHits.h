@@ -58,6 +58,10 @@ namespace pixelgpudetails {
     float *h_ye_ = nullptr;
     uint16_t *h_mr_ = nullptr;
     uint16_t *h_mc_ = nullptr;
+    void *h_owner_32bit_ = nullptr;
+    size_t h_owner_32bit_pitch_ = 0;
+    void *h_owner_16bit_ = nullptr;
+    size_t h_owner_16bit_pitch_ = 0;
 #ifdef GPU_DEBUG
     uint32_t *h_hitsLayerStart_ = nullptr;
 #endif

@@ -24,6 +24,11 @@ namespace {
       hitsLayerStart[i] = hitsModuleStart[gpuClustering::MaxNumModules];
     }
   }
+
+  template <typename T>
+  T *slicePitch(void *ptr, size_t pitch, size_t row) {
+    return reinterpret_cast<T *>( reinterpret_cast<char *>(ptr) + pitch*row);
+  }
 }
 
 namespace pixelgpudetails {
@@ -33,20 +38,36 @@ namespace pixelgpudetails {
 
     cudaCheck(cudaMalloc((void **) & gpu_.bs_d, 3 * sizeof(float)));
     cudaCheck(cudaMalloc((void **) & gpu_.hitsLayerStart_d, 11 * sizeof(uint32_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.charge_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.detInd_d, MAX_HITS * sizeof(uint16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.xg_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.yg_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.zg_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.rg_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.xl_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.yl_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.xerr_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.yerr_d, MAX_HITS * sizeof(float)));
-    cudaCheck(cudaMalloc((void **) & gpu_.iphi_d, MAX_HITS * sizeof(int16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.sortIndex_d, MAX_HITS * sizeof(uint16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.mr_d, MAX_HITS * sizeof(uint16_t)));
-    cudaCheck(cudaMalloc((void **) & gpu_.mc_d, MAX_HITS * sizeof(uint16_t)));
+
+    // Coalesce all 32bit and 16bit arrays to two big blobs
+    //
+    // This is just a toy. Please don't copy-paste the logic but
+    // create a proper abstraction (e.g. along FWCore/SOA, or
+    // FWCore/Utilities/interface/SoATuple.h
+    //
+    // Order such that the first ones are the ones transferred to CPU
+    static_assert(sizeof(uint32_t) == sizeof(float)); // just stating the obvious
+    cudaCheck(cudaMallocPitch(&gpu_.owner_32bit_, &gpu_.owner_32bit_pitch_, MAX_HITS*sizeof(uint32_t), 9));
+    //edm::LogPrint("Foo") << "Allocate 32bit with pitch " << gpu_.owner_32bit_pitch_;
+    gpu_.charge_d = slicePitch<int32_t>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 0);
+    gpu_.xl_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 1);
+    gpu_.yl_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 2);
+    gpu_.xerr_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 3);
+    gpu_.yerr_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 4);
+    gpu_.xg_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 5);
+    gpu_.yg_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 6);
+    gpu_.zg_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 7);
+    gpu_.rg_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 8);
+
+    // Order such that the first ones are the ones transferred to CPU
+    cudaCheck(cudaMallocPitch(&gpu_.owner_16bit_, &gpu_.owner_16bit_pitch_, MAX_HITS*sizeof(uint16_t), 5));
+    //edm::LogPrint("Foo") << "Allocate 16bit with pitch " << gpu_.owner_16bit_pitch_;
+    gpu_.detInd_d = slicePitch<uint16_t>(gpu_.owner_16bit_, gpu_.owner_16bit_pitch_, 0);
+    gpu_.mr_d = slicePitch<uint16_t>(gpu_.owner_16bit_, gpu_.owner_16bit_pitch_, 1);
+    gpu_.mc_d = slicePitch<uint16_t>(gpu_.owner_16bit_, gpu_.owner_16bit_pitch_, 2);
+    gpu_.iphi_d = slicePitch<int16_t>(gpu_.owner_16bit_, gpu_.owner_16bit_pitch_, 3);
+    gpu_.sortIndex_d = slicePitch<uint16_t>(gpu_.owner_16bit_, gpu_.owner_16bit_pitch_, 4);
+
     cudaCheck(cudaMalloc((void **) & gpu_.hist_d, 10 * sizeof(HitsOnGPU::Hist)));
     cudaCheck(cudaMalloc((void **) & gpu_d, sizeof(HitsOnGPU)));
     gpu_.me_d = gpu_d;
@@ -59,14 +80,23 @@ namespace pixelgpudetails {
     cudaCheck(cudaMemcpyAsync(d_phase1TopologyLayerStart_, phase1PixelTopology::layerStart, 11 * sizeof(uint32_t), cudaMemcpyDefault, cudaStream.id()));
 
     cudaCheck(cudaMallocHost(&h_hitsModuleStart_, (gpuClustering::MaxNumModules+1) * sizeof(uint32_t)));
-    cudaCheck(cudaMallocHost(&h_detInd_, MAX_HITS*sizeof(uint16_t)));
-    cudaCheck(cudaMallocHost(&h_charge_, MAX_HITS*sizeof(int32_t)));
-    cudaCheck(cudaMallocHost(&h_xl_, MAX_HITS*sizeof(float)));
-    cudaCheck(cudaMallocHost(&h_yl_, MAX_HITS*sizeof(float)));
-    cudaCheck(cudaMallocHost(&h_xe_, MAX_HITS*sizeof(float)));
-    cudaCheck(cudaMallocHost(&h_ye_, MAX_HITS*sizeof(float)));
-    cudaCheck(cudaMallocHost(&h_mr_, MAX_HITS*sizeof(uint16_t)));
-    cudaCheck(cudaMallocHost(&h_mc_, MAX_HITS*sizeof(uint16_t)));
+
+    // On CPU we can safely use MAX_HITS*sizeof as the pitch. Thanks
+    // to '*256' it is even aligned by cache line
+    h_owner_32bit_pitch_ = MAX_HITS*sizeof(uint32_t); 
+    cudaCheck(cudaMallocHost(&h_owner_32bit_, h_owner_32bit_pitch_ * 5));
+    h_charge_ = slicePitch<int32_t>(h_owner_32bit_, h_owner_32bit_pitch_, 0);
+    h_xl_ = slicePitch<float>(h_owner_32bit_, h_owner_32bit_pitch_, 1);
+    h_yl_ = slicePitch<float>(h_owner_32bit_, h_owner_32bit_pitch_, 2);
+    h_xe_ = slicePitch<float>(h_owner_32bit_, h_owner_32bit_pitch_, 3);
+    h_ye_ = slicePitch<float>(h_owner_32bit_, h_owner_32bit_pitch_, 4);
+
+    h_owner_16bit_pitch_ = MAX_HITS*sizeof(uint16_t);
+    cudaCheck(cudaMallocHost(&h_owner_16bit_, h_owner_16bit_pitch_ * 3));
+    h_detInd_ = slicePitch<uint16_t>(h_owner_16bit_, h_owner_16bit_pitch_, 0);
+    h_mr_ = slicePitch<uint16_t>(h_owner_16bit_, h_owner_16bit_pitch_, 1);
+    h_mc_ = slicePitch<uint16_t>(h_owner_16bit_, h_owner_16bit_pitch_, 2);
+
 #ifdef GPU_DEBUG
     cudaCheck(cudaMallocHost(&h_hitsLayerStart_, 11 * sizeof(uint32_t)));
 #endif
@@ -74,33 +104,15 @@ namespace pixelgpudetails {
   PixelRecHitGPUKernel::~PixelRecHitGPUKernel() {
     cudaCheck(cudaFree(gpu_.bs_d));
     cudaCheck(cudaFree(gpu_.hitsLayerStart_d));
-    cudaCheck(cudaFree(gpu_.charge_d));
-    cudaCheck(cudaFree(gpu_.detInd_d));
-    cudaCheck(cudaFree(gpu_.xg_d));
-    cudaCheck(cudaFree(gpu_.yg_d));
-    cudaCheck(cudaFree(gpu_.zg_d));
-    cudaCheck(cudaFree(gpu_.rg_d));
-    cudaCheck(cudaFree(gpu_.xl_d));
-    cudaCheck(cudaFree(gpu_.yl_d));
-    cudaCheck(cudaFree(gpu_.xerr_d));
-    cudaCheck(cudaFree(gpu_.yerr_d));
-    cudaCheck(cudaFree(gpu_.iphi_d));
-    cudaCheck(cudaFree(gpu_.sortIndex_d));
-    cudaCheck(cudaFree(gpu_.mr_d));
-    cudaCheck(cudaFree(gpu_.mc_d));
+    cudaCheck(cudaFree(gpu_.owner_32bit_));
+    cudaCheck(cudaFree(gpu_.owner_16bit_));
     cudaCheck(cudaFree(gpu_.hist_d));
     cudaCheck(cudaFree(gpu_d));
     cudaCheck(cudaFree(d_phase1TopologyLayerStart_));
 
     cudaCheck(cudaFreeHost(h_hitsModuleStart_));
-    cudaCheck(cudaFreeHost(h_detInd_));
-    cudaCheck(cudaFreeHost(h_charge_));
-    cudaCheck(cudaFreeHost(h_xl_));
-    cudaCheck(cudaFreeHost(h_yl_));
-    cudaCheck(cudaFreeHost(h_xe_));
-    cudaCheck(cudaFreeHost(h_ye_));
-    cudaCheck(cudaFreeHost(h_mr_));
-    cudaCheck(cudaFreeHost(h_mc_));
+    cudaCheck(cudaFreeHost(h_owner_32bit_));
+    cudaCheck(cudaFreeHost(h_owner_16bit_));
 #ifdef GPU_DEBUG
     cudaCheck(cudaFreeHost(h_hitsLayerStart_));
 #endif
@@ -146,14 +158,16 @@ namespace pixelgpudetails {
 #ifdef GPU_DEBUG
     cudaCheck(cudaMemcpyAsync(h_hitsLayerStart_, gpu_.hitsLayerStart_d, 11 * sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 #endif
-    cudaCheck(cudaMemcpyAsync(h_detInd_, gpu_.detInd_d, nhits_*sizeof(int16_t), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(h_charge_, gpu_.charge_d, nhits_ * sizeof(int32_t), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(h_xl_, gpu_.xl_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(h_yl_, gpu_.yl_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(h_xe_, gpu_.xerr_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(h_ye_, gpu_.yerr_d, nhits_ * sizeof(float), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(h_mr_, gpu_.mr_d, nhits_ * sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
-    cudaCheck(cudaMemcpyAsync(h_mc_, gpu_.mc_d, nhits_ * sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
+
+    cudaCheck(cudaMemcpy2DAsync(h_owner_16bit_, h_owner_16bit_pitch_,
+                                gpu_.owner_16bit_, gpu_.owner_16bit_pitch_,
+                                nhits_*sizeof(uint16_t), 3,
+                                cudaMemcpyDefault, stream.id()));
+
+    cudaCheck(cudaMemcpy2DAsync(h_owner_32bit_, h_owner_32bit_pitch_,
+                                gpu_.owner_32bit_, gpu_.owner_32bit_pitch_,
+                                nhits_*sizeof(uint32_t), 5,
+                                cudaMemcpyDefault, stream.id()));
 
 #ifdef GPU_DEBUG
     cudaStreamSynchronize(stream.id());
