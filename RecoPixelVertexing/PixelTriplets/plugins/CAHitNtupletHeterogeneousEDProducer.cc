@@ -52,7 +52,7 @@ public:
                   const edm::EventSetup &iSetup) override;
 
 private:
-  edm::EDGetTokenT<edm::OwnVector<TrackingRegion> > regionToken_;
+  edm::EDGetTokenT<edm::OwnVector<TrackingRegion>> regionToken_;
 
   edm::EDGetTokenT<HeterogeneousProduct> tGpuHits;
 
@@ -160,7 +160,8 @@ void CAHitNtupletHeterogeneousEDProducer::produceGPUCuda(
 }
 
 void CAHitNtupletHeterogeneousEDProducer::produceCPU(
-    edm::HeterogeneousEvent &iEvent, const edm::EventSetup &iSetup) {
+    edm::HeterogeneousEvent &iEvent, const edm::EventSetup &iSetup)
+{
   throw cms::Exception("NotImplemented") << "CPU version is no longer implemented";
 }
 
