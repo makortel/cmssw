@@ -77,7 +77,7 @@ void CAHitNtupletHeterogeneousEDProducer::fillDescriptions(
     edm::ConfigurationDescriptions &descriptions) {
   edm::ParameterSetDescription desc;
 
-  desc.add<edm::InputTag>("doublets", edm::InputTag("dummy"))->setComment("Not really used, kept to keep the python parameters");
+  desc.add<edm::InputTag>("doublets", edm::InputTag(""))->setComment("Not really used, kept to keep the python parameters");
   desc.add<edm::InputTag>("trackingRegions", edm::InputTag("globalTrackingRegionFromBeamSpot"));
 
   desc.add<edm::InputTag>("heterogeneousPixelRecHitSrc", edm::InputTag("siPixelRecHitHeterogeneous"));
