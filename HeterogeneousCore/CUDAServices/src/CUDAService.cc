@@ -4,10 +4,13 @@
 #include <cuda.h>
 #include <cuda/api_wrappers.h>
 
+#include "DataFormats/Provenance/interface/ModuleDescription.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
+#include "FWCore/ServiceRegistry/interface/ModuleCallingContext.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
@@ -31,7 +34,7 @@ void setCudaLimit(cudaLimit limit, const char* name, size_t request) {
   }
 }
 
-CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry& iRegistry) {
+CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry& registry) {
   bool configEnabled = config.getUntrackedParameter<bool>("enabled");
   if (not configEnabled) {
     edm::LogInfo("CUDAService") << "CUDAService disabled by configuration";
@@ -159,6 +162,17 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
     log << '\n';
   }
 
+  auto const& monitor = config.getUntrackedParameter<edm::ParameterSet>("monitor");
+  if(monitor.getUntrackedParameter<bool>("memoryConstruction")) {
+    registry.watchPostModuleConstruction(this, &CUDAService::postModuleConstruction);
+  }
+  if(monitor.getUntrackedParameter<bool>("memoryBeginStream")) {
+    registry.watchPostModuleBeginStream(this, &CUDAService::postModuleBeginStream);
+  }
+  if(monitor.getUntrackedParameter<bool>("memoryPerEvent")) {
+    registry.watchPostEvent(this, &CUDAService::postEvent);
+  }
+
   log << "CUDAService fully initialized";
   enabled_ = true;
 }
@@ -188,6 +202,12 @@ void CUDAService::fillDescriptions(edm::ConfigurationDescriptions & descriptions
   limits.addUntracked<int>("cudaLimitDevRuntimeSyncDepth", -1)->setComment("Maximum nesting depth of a grid at which a thread can safely call cudaDeviceSynchronize().");
   limits.addUntracked<int>("cudaLimitDevRuntimePendingLaunchCount", -1)->setComment("Maximum number of outstanding device runtime launches that can be made from the current device.");
   desc.addUntracked<edm::ParameterSetDescription>("limits", limits)->setComment("See the documentation of cudaDeviceSetLimit for more information.\nSetting any of these options to -1 keeps the default value.");
+
+  edm::ParameterSetDescription monitor;
+  monitor.addUntracked<bool>("memoryConstruction", false)->setComment("Print memory information for each device after the construction of each module");
+  monitor.addUntracked<bool>("memoryBeginStream", false)->setComment("Print memory information for each device after the beginStream() of each module");
+  monitor.addUntracked<bool>("memoryPerEvent", false)->setComment("Print memory information for each device after each event");
+  desc.addUntracked<edm::ParameterSetDescription>("monitor", monitor)->setComment("Enable simple resource monitoring. (not sure if CUDAService is the best place though)");
 
   descriptions.add("CUDAService", desc);
 }
@@ -225,4 +245,35 @@ void CUDAService::setCurrentDevice(int device) const {
 
 int CUDAService::getCurrentDevice() const {
   return cuda::device::current::get().id();
+}
+
+// activity handlers
+namespace {
+  template <typename T>
+  void dumpUsedMemory(T& log, int num) {
+    for(int i = 0; i < num; ++i) {
+      size_t freeMemory, totalMemory;
+      cudaSetDevice(i);
+      cudaMemGetInfo(&freeMemory, &totalMemory);
+      log << "\n" << i << ": " << (totalMemory-freeMemory) / (1<<20) << " MB used / " << totalMemory / (1<<20) << " MB total";
+    }
+  }
+}
+
+void CUDAService::postModuleConstruction(edm::ModuleDescription const& desc) {
+  auto log = edm::LogPrint("CUDAService");
+  log << "CUDA device memory after construction of " << desc.moduleLabel() << " (" << desc.moduleName() << ")";
+  dumpUsedMemory(log, numberOfDevices_);
+}
+
+void CUDAService::postModuleBeginStream(edm::StreamContext const&, edm::ModuleCallingContext const& mcc) {
+  auto log = edm::LogPrint("CUDAService");
+  log<< "CUDA device memory after beginStream() of " << mcc.moduleDescription()->moduleLabel() << " (" << mcc.moduleDescription()->moduleName() << ")";
+  dumpUsedMemory(log, numberOfDevices_);
+}
+
+void CUDAService::postEvent(edm::StreamContext const& sc) {
+  auto log = edm::LogPrint("CUDAService");
+  log << "CUDA device memory after event";
+  dumpUsedMemory(log, numberOfDevices_);
 }

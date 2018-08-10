@@ -7,9 +7,12 @@
 #include "FWCore/Utilities/interface/StreamID.h"
 
 namespace edm {
-  class ParameterSet;
   class ActivityRegistry;
   class ConfigurationDescriptions;
+  class ModuleCallingContext;
+  class ModuleDescription;
+  class ParameterSet;
+  class StreamContext;
 }
 
 /**
@@ -46,6 +49,11 @@ public:
 
   // Get the current device
   int getCurrentDevice() const;
+
+  // For ActivityRegistry
+  void postModuleConstruction(edm::ModuleDescription const& desc);
+  void postModuleBeginStream(edm::StreamContext const&, edm::ModuleCallingContext const& mcc);
+  void postEvent(edm::StreamContext const& sc);
 
 private:
   int numberOfDevices_ = 0;
