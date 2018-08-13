@@ -67,12 +67,15 @@ void CUDAMonitoringService::fillDescriptions(edm::ConfigurationDescriptions & de
 namespace {
   template <typename T>
   void dumpUsedMemory(T& log, int num) {
+    int old = 0;
+    cudaCheck(cudaGetDevice(&old));
     for(int i = 0; i < num; ++i) {
       size_t freeMemory, totalMemory;
-      cudaSetDevice(i);
-      cudaMemGetInfo(&freeMemory, &totalMemory);
+      cudaCheck(cudaSetDevice(i));
+      cudaCheck(cudaMemGetInfo(&freeMemory, &totalMemory));
       log << "\n" << i << ": " << (totalMemory-freeMemory) / (1<<20) << " MB used / " << totalMemory / (1<<20) << " MB total";
     }
+    cudaCheck(cudaSetDevice(old));
   }
 }
 
