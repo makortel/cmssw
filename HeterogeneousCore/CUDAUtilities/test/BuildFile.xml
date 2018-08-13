@@ -29,3 +29,7 @@
   <use name="cuda-api-wrappers"/>
   <flags CUDA_FLAGS="-g -G"/>
 </bin>
+
+<bin file="test_cudaMemcpy2D.cu" name="test_cudaMemcpy2D">
+  <use name="cuda"/>
+</bin>
