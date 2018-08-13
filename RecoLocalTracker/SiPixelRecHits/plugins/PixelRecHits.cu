@@ -48,6 +48,7 @@ namespace pixelgpudetails {
     // Order such that the first ones are the ones transferred to CPU
     static_assert(sizeof(uint32_t) == sizeof(float)); // just stating the obvious
     cudaCheck(cudaMallocPitch(&gpu_.owner_32bit_, &gpu_.owner_32bit_pitch_, MAX_HITS*sizeof(uint32_t), 9));
+    cudaCheck(cudaMemsetAsync(gpu_.owner_32bit_, 0x0, gpu_.owner_32bit_pitch_*9, cudaStream.id()));
     //edm::LogPrint("Foo") << "Allocate 32bit with pitch " << gpu_.owner_32bit_pitch_;
     gpu_.charge_d = slicePitch<int32_t>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 0);
     gpu_.xl_d = slicePitch<float>(gpu_.owner_32bit_, gpu_.owner_32bit_pitch_, 1);
@@ -61,6 +62,7 @@ namespace pixelgpudetails {
 
     // Order such that the first ones are the ones transferred to CPU
     cudaCheck(cudaMallocPitch(&gpu_.owner_16bit_, &gpu_.owner_16bit_pitch_, MAX_HITS*sizeof(uint16_t), 5));
+    cudaCheck(cudaMemsetAsync(gpu_.owner_16bit_, 0x0, gpu_.owner_16bit_pitch_*5, cudaStream.id()));
     //edm::LogPrint("Foo") << "Allocate 16bit with pitch " << gpu_.owner_16bit_pitch_;
     gpu_.detInd_d = slicePitch<uint16_t>(gpu_.owner_16bit_, gpu_.owner_16bit_pitch_, 0);
     gpu_.mr_d = slicePitch<uint16_t>(gpu_.owner_16bit_, gpu_.owner_16bit_pitch_, 1);
