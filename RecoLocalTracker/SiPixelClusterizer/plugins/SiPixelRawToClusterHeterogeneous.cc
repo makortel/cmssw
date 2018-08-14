@@ -466,7 +466,7 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
     throw cms::Exception("LogicError") << "UseQuality of the module (" << useQuality<< ") differs the one from SiPixelFedCablingMapGPUWrapper. Please fix your configuration.";
   }
   // get the GPU product already here so that the async transfer can begin
-  const auto *gpuMap = hgpuMap->getGPUProductAsync(cudaStream);
+  const auto gpuMap = hgpuMap->getGPUProductAsync(cudaStream);
 
   edm::cuda::device::unique_ptr<unsigned char[]> modulesToUnpackRegional;
   const unsigned char *gpuModulesToUnpack;
