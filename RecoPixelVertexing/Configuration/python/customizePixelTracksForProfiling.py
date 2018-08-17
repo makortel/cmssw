@@ -1,6 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
 def customizePixelTracksForProfiling(process):
+    process.MessageLogger.cerr.FwkReport.reportEvery = 100
+
     process.out = cms.OutputModule("AsciiOutputModule",
         outputCommands = cms.untracked.vstring(
             "keep *_pixelTracks_*_*",
@@ -8,8 +10,6 @@ def customizePixelTracksForProfiling(process):
         verbosity = cms.untracked.uint32(0),
     )
 
-    process.MessageLogger.cerr.FwkReport.reportEvery = 100
-    
     process.outPath = cms.EndPath(process.out)
 
     process.schedule = cms.Schedule(process.raw2digi_step, process.reconstruction_step, process.outPath)
