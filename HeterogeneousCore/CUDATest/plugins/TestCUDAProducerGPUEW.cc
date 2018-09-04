@@ -6,6 +6,7 @@
 
 #include "HeterogeneousCore/CUDACore/interface/CUDAStreamEDProducer.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 
 #include "TestCUDAProducerGPUKernel.h"
@@ -25,6 +26,7 @@ private:
   std::string label_;
   edm::EDGetTokenT<CUDA<float *>> srcToken_;
   std::unique_ptr<TestCUDAProducerGPUKernel> gpuAlgo_;
+  CUDAContextToken ctxTmp_;
   float *devicePtr_ = nullptr;
   float hostData_ = 0.f;
 };
@@ -62,17 +64,14 @@ void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSe
   cuda::memory::async::copy(&hostData_, devicePtr_+10, sizeof(float), ctx.stream().id());
 
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
+
+  ctxTmp_ = ctx.toToken();
 }
 
 void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " 10th element " << hostData_; 
 
-  // It feels a bit stupid to read the input again here, but for
-  // anything else we'd need to somehow transfer the device+stream
-  // information from acquire.
-  edm::Handle<CUDA<float *> > hin;
-  iEvent.getByToken(srcToken_, hin);
-  auto ctx = CUDAScopedContext(*hin);
+  auto ctx = CUDAScopedContext(std::move(ctxTmp_));
 
   iEvent.put(ctx.wrap(devicePtr_));
   devicePtr_ = nullptr;

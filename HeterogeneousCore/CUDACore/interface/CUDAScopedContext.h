@@ -5,6 +5,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
+#include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 
 #include <optional>
 
@@ -21,6 +22,12 @@ public:
     currentDevice_(token.device()),
     setDeviceForThisScope_(currentDevice_),
     stream_(token.stream())
+  {}
+
+  explicit CUDAScopedContext(CUDAContextToken&& token):
+    currentDevice_(token.device()),
+    setDeviceForThisScope_(currentDevice_),
+    stream_(std::move(token.stream()))
   {}
 
   template<typename T>
@@ -49,6 +56,11 @@ public:
 
   cuda::stream_t<>& stream() { return stream_; }
   const cuda::stream_t<>& stream() const { return stream_; }
+
+  CUDAContextToken toToken() {
+    // TODO: should we add a flag to check whether the CUDAScopedContext is valid or not?
+    return CUDAContextToken(currentDevice_, std::move(stream_));
+  }
 
   template <typename T>
   const T& get(const CUDA<T>& data) {

@@ -55,6 +55,20 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       REQUIRE(dataPtr->stream().id() == ctx.stream().id());
     }
 
+    SECTION("Storing state as CUDAContextToken") {
+      CUDAContextToken ctxtok;
+      { // acquire
+        auto ctx = CUDAScopedContext(token);
+        ctxtok = ctx.toToken();
+      }
+
+      { // produce
+        auto ctx = CUDAScopedContext(std::move(ctxtok));
+        REQUIRE(cuda::device::current::get().id() == token.device());
+        REQUIRE(ctx.stream().id() == token.stream().id());
+      }
+    }
+
     SECTION("Joining multiple CUDA streams") {
       cuda::device::current::scoped_override_t<> setDeviceForThisScope(defaultDevice);
       auto current_device = cuda::device::current::get();
