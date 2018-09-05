@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <cuda_runtime_api.h>
+#include <cuda/api_wrappers.h>
 
 #include "catch.hpp"
 
@@ -167,6 +168,40 @@ TEST_CASE("Tests of CUDAService", "[CUDAService]") {
       REQUIRE(cs.enabled(2*deviceCount) == false);
     }
 
+  }
+
+  SECTION("Allocator") {
+    edm::ParameterSet ps;
+    ps.addUntrackedParameter("enabled", true);
+    edm::ParameterSet alloc;
+    alloc.addUntrackedParameter("minBin", 1U);
+    alloc.addUntrackedParameter("maxBin", 3U);
+    ps.addUntrackedParameter("allocator", alloc);
+    auto cs = makeCUDAService(ps, ar);
+    cs.setCurrentDevice(0);
+    auto current_device = cuda::device::current::get();
+    auto cudaStream = current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream);
+    
+    SECTION("Destructor") {
+      auto ptr = cs.make_unique<int>(cudaStream);
+      REQUIRE(ptr.get() != nullptr);
+      cudaStream.synchronize();
+    }
+
+    SECTION("Reset") {
+      auto ptr = cs.make_unique<int[]>(5, cudaStream);
+      REQUIRE(ptr.get() != nullptr);
+      cudaStream.synchronize();
+
+      ptr.reset();
+      REQUIRE(ptr.get() == nullptr);
+    }
+
+    SECTION("Allocating too much") {
+      auto ptr = cs.make_unique<char[]>(512, cudaStream);
+      ptr.reset();
+      REQUIRE_THROWS(ptr = cs.make_unique<char[]>(513, cudaStream));
+    }
   }
 
   //Fake the end-of-job signal.
