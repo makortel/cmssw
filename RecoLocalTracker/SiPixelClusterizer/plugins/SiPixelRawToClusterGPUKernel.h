@@ -202,22 +202,9 @@ namespace pixelgpudetails {
     uint32_t *nModulesActive = nullptr;
     uint32_t *nClusters = nullptr;
 
-    // scratch memory buffers
-    uint32_t * word_d;
-    uint8_t *  fedId_d;
-    uint32_t * pdigi_d;
-    uint32_t * rawIdArr_d;
-
-    GPU::SimpleVector<error_obj> * error_d;
-    error_obj * data_d;
-
     // Data to be put in the event
     SiPixelDigisCUDA digis_d;
     SiPixelClustersCUDA clusters_d;
-
-    // originally in rechit, moved here
-    void *tempScanStorage_d = nullptr;
-    size_t tempScanStorageSize = 0;
   };
 
   // configuration and memory buffers alocated on the GPU
