@@ -176,25 +176,19 @@ namespace pixelgpudetails {
                            bool useQualityInfo, bool includeErrors, bool transferToCPU_, bool debug,
                            cuda::stream_t<>& stream);
 
-    auto getProduct() {
+    siPixelRawToClusterHeterogeneousProduct::GPUProduct getProduct() {
       error_h->set_data(data_h);
-      return siPixelRawToClusterHeterogeneousProduct::GPUProduct{
+      return siPixelRawToClusterHeterogeneousProduct::GPUProduct(
         pdigi_h, rawIdArr_h, clus_h, adc_h, error_h,
-        gpuProduct_d,
-        xx_d, yy_d, adc_d, moduleInd_d, moduleStart_d,clus_d, clusInModule_d, moduleId_d,
-        clusModuleStart_d,
+        std::move(digis_d), std::move(clusters_d),
         nDigis, *nModulesActive, *nClusters
-      };
+      );
     }
 
   private:
     // input
     unsigned int *word = nullptr;        // to hold input for rawtodigi
     unsigned char *fedId_h = nullptr;    // to hold fed index for each word
-
-    // output
-    GPUProduct gpuProduct;
-    GPUProduct * gpuProduct_d;
 
     // FIXME cleanup all these are in the gpuProduct above...
 
@@ -212,23 +206,16 @@ namespace pixelgpudetails {
     uint32_t * word_d;
     uint8_t *  fedId_d;
     uint32_t * pdigi_d;
-    uint16_t * xx_d;
-    uint16_t * yy_d;
-    uint16_t * adc_d;
-    uint16_t * moduleInd_d;
     uint32_t * rawIdArr_d;
 
     GPU::SimpleVector<error_obj> * error_d;
     error_obj * data_d;
 
-    // these are for the clusterizer (to be moved)
-    uint32_t * moduleStart_d;
-    int32_t *  clus_d;
-    uint32_t * clusInModule_d;
-    uint32_t * moduleId_d;
+    // Data to be put in the event
+    SiPixelDigisCUDA digis_d;
+    SiPixelClustersCUDA clusters_d;
 
     // originally in rechit, moved here
-    uint32_t *clusModuleStart_d = nullptr;
     void *tempScanStorage_d = nullptr;
     size_t tempScanStorageSize = 0;
   };

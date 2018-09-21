@@ -1,6 +1,8 @@
 #ifndef EventFilter_SiPixelRawToDigi_siPixelRawToClusterHeterogeneousProduct_h
 #define EventFilter_SiPixelRawToDigi_siPixelRawToClusterHeterogeneousProduct_h
 
+#include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
+#include "CUDADataFormats/SiPixelCluster/interface/SiPixelClustersCUDA.h"
 #include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
@@ -25,6 +27,25 @@ namespace siPixelRawToClusterHeterogeneousProduct {
 
   // FIXME split in two
   struct GPUProduct {
+    GPUProduct() = default;
+    GPUProduct(const GPUProduct&) = delete;
+    GPUProduct& operator=(const GPUProduct&) = delete;
+    GPUProduct(GPUProduct&&) = default;
+    GPUProduct& operator=(GPUProduct&&) = default;
+
+    GPUProduct(uint32_t const *pdigi,
+               uint32_t const *rawIdArr,
+               int32_t const *clus,
+               uint16_t const *adc,
+               GPU::SimpleVector<error_obj> const * error,
+               SiPixelDigisCUDA&& digis,
+               SiPixelClustersCUDA&& clusters,
+               uint32_t ndig, uint32_t nmod, uint32_t nclus):
+      pdigi_h(pdigi), rawIdArr_h(rawIdArr), clus_h(clus), adc_h(adc), error_h(error),
+      digis_d(std::move(digis)), clusters_d(std::move(clusters)),
+      nDigis(ndig), nModules(nmod), nClusters(nclus)
+    {}
+
     // Needed for digi and cluster CPU output
     uint32_t const * pdigi_h = nullptr;
     uint32_t const * rawIdArr_h = nullptr;
@@ -32,20 +53,8 @@ namespace siPixelRawToClusterHeterogeneousProduct {
     uint16_t const * adc_h = nullptr;
     GPU::SimpleVector<error_obj> const * error_h = nullptr;
 
-    GPUProduct const * me_d = nullptr;
-
-    // Needed for GPU rechits
-    uint16_t const * xx_d;
-    uint16_t const * yy_d;
-    uint16_t const * adc_d;
-    uint16_t const * moduleInd_d;
-    uint32_t const * moduleStart_d;
-    int32_t const *  clus_d;
-    uint32_t const * clusInModule_d;
-    uint32_t const * moduleId_d;
-
-    // originally from rechits
-    uint32_t const * clusModuleStart_d;
+    SiPixelDigisCUDA digis_d;
+    SiPixelClustersCUDA clusters_d;
 
     uint32_t nDigis;
     uint32_t nModules;
