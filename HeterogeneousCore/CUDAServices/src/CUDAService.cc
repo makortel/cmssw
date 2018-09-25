@@ -288,6 +288,9 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
 
 CUDAService::~CUDAService() {
   if (enabled_) {
+    // Explicitly destruct the allocator before the device resets below
+    allocator_.reset();
+
     for (int i = 0; i < numberOfDevices_; ++i) {
       cudaCheck(cudaSetDevice(i));
       cudaCheck(cudaDeviceSynchronize());
