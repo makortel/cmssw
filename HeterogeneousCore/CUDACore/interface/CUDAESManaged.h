@@ -1,6 +1,7 @@
 #ifndef HeterogeneousCore_CUDACore_interface_CUDAESManaged_h
 #define HeterogeneousCore_CUDACore_interface_CUDAESManaged_h
 
+#include <atomic>
 #include <vector>
 
 #include <cuda_runtime.h>
@@ -50,6 +51,7 @@ public:
 
 private:
   std::vector<std::pair<void *, size_t> > buffers_;
+  mutable std::atomic<bool> prefetched_;
 };
 
 #endif
