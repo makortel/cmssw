@@ -85,10 +85,15 @@ def setupHeterogeneous(prefix, deviceTypes, deviceFilters, modDict,
         # Finally add the producer of the type
         p += modDict[prefix+dt]
 
+        # Add (until we get the proper fallback mechanism) the transfer module to the path
+        if dt != "CPU":
+            transferModName = transferModuleNames.get(dt, prefix+"From"+dt)
+            p += modDict[transferModName]
+
         modDict[prefix+"Path"+dt] = p
 
     # Task
-    task = cms.Task(transferMod, fallback)
+    task = cms.Task(fallback)
 
     return (fallback, task)
 

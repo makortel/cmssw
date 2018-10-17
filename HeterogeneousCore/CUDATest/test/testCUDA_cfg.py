@@ -74,8 +74,11 @@ process.prodCPU1 = cms.Path(
 process.prodCUDA1 = cms.Path(
     process.prod1CUDADeviceFilter +
     process.prod2CUDA +
+    process.prod2FromCUDA +
     process.prod3CUDA +
-    process.prod4CUDA
+    process.prod3FromCUDA +
+    process.prod4CUDA +
+    process.prod4FromCUDA
 )
 
 process.t = cms.Task(
@@ -84,8 +87,8 @@ process.t = cms.Task(
     # with an EDProducer, they must be in a Path.
 #    process.prod2CPU, process.prod3CPU, process.prod4CPU,
 #    process.prod2CUDA, process.prod3CUDA, process.prod4CUDA,
+#    process.prod2FromCUDA, process.prod3FromCUDA, process.prod4FromCUDA,
 
-    process.prod2FromCUDA, process.prod3FromCUDA, process.prod4FromCUDA,
     process.prod2, process.prod3, process.prod4,
     process.prod1Task, process.prod5Task, process.prod6Task
 )
