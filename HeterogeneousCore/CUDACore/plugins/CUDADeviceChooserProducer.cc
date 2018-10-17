@@ -31,10 +31,6 @@ public:
 };
 
 CUDADeviceChooserProducer::CUDADeviceChooserProducer(const edm::ParameterSet& iConfig) {
-  edm::Service<CUDAService> cudaService;
-  if(!cudaService->enabled()) {
-    throw cms::Exception("Configuration") << "CUDAService is disabled so CUDADeviceChooserProducer is unable to make decisions on which CUDA device to run. If you need to run without CUDA devices, please use CUDADeviceChooserFilter for conditional execution, or remove all CUDA modules from your configuration.";
-  }
   produces<CUDAToken>();
 }
 
@@ -48,17 +44,20 @@ std::unique_ptr<::DeviceCache> CUDADeviceChooserProducer::beginStream(edm::Strea
   auto ret = std::make_unique<::DeviceCache>();
 
   edm::Service<CUDAService> cudaService;
-  if(!cudaService->enabled(id)) {
-    throw cms::Exception("LogicError") << "CUDA is disabled for EDM stream " << id << " in CUDAService, so CUDADeviceChooser is unable to decide the CUDA device for this EDM stream. If you need to dynamically decide whether a chain of CUDA EDModules is run or not, please use CUDADeviceChooserFilter instead.";
+  if(cudaService->enabled(id)) {
+    ret->device = cudacore::chooseCUDADevice(id);
+    LogDebug("CUDADeviceChooserProducer") << "EDM stream " << id << " set to CUDA device " << ret->device;
   }
-  ret->device = cudacore::chooseCUDADevice(id);
-
-  LogDebug("CUDADeviceChooserProducer") << "EDM stream " << id << " set to CUDA device " << ret->device;
 
   return ret;
 }
 
 void CUDADeviceChooserProducer::produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+  edm::Service<CUDAService> cudaService;
+  if(!cudaService->enabled(id)) {
+    throw cms::Exception("LogicError") << "CUDA is disabled for EDM stream " << id << " in CUDAService, so CUDADeviceChooser is unable to decide the CUDA device for this EDM stream. If you need to dynamically decide whether a chain of CUDA EDModules is run or not, please use CUDADeviceChooserFilter instead.";
+  }
+
   auto ret = std::make_unique<CUDAToken>(streamCache(id)->device);
   LogDebug("CUDADeviceChooserProducer") << "EDM stream " << id << " CUDA device " << ret->device() << " with CUDA stream " << ret->stream().id();
   iEvent.put(std::move(ret));
