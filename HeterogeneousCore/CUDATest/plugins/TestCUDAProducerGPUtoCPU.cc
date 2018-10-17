@@ -1,4 +1,3 @@
-#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -7,15 +6,18 @@
 
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "HeterogeneousCore/CUDACore/interface/CUDAStreamEDProducer.h"
 
 #include "TestCUDAProducerGPUKernel.h"
 
-class TestCUDAProducerGPUtoCPU: public edm::stream::EDProducer<edm::ExternalWork> {
+class TestCUDAProducerGPUtoCPU: public CUDAStreamEDProducer<edm::ExternalWork> {
 public:
   explicit TestCUDAProducerGPUtoCPU(const edm::ParameterSet& iConfig);
   ~TestCUDAProducerGPUtoCPU() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
+  void beginStreamCUDA(edm::StreamID id) override;
 
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
 
@@ -28,8 +30,7 @@ private:
 
 TestCUDAProducerGPUtoCPU::TestCUDAProducerGPUtoCPU(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDA<float *>>(iConfig.getParameter<edm::InputTag>("src"))),
-  buffer_(cuda::memory::host::make_unique<float[]>(TestCUDAProducerGPUKernel::NUM_VALUES))
+  srcToken_(consumes<CUDA<float *>>(iConfig.getParameter<edm::InputTag>("src")))
 {
   produces<int>();
 }
@@ -39,6 +40,12 @@ void TestCUDAProducerGPUtoCPU::fillDescriptions(edm::ConfigurationDescriptions& 
   desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source for CUDA<float *>.");
   descriptions.addWithDefaultLabel(desc);
   descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models the GPU->CPU data transfer and formatting of the data to legacy data format. Produces int, to be compatible with TestCUDAProducerCPU.");
+}
+
+void TestCUDAProducerGPUtoCPU::beginStreamCUDA(edm::StreamID id) {
+  // Pinned host memory has to be allocated here as well so that it is
+  // not done when running on a non-GPU machine
+  buffer_ = cuda::memory::host::make_unique<float[]>(TestCUDAProducerGPUKernel::NUM_VALUES);
 }
 
 void TestCUDAProducerGPUtoCPU::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
