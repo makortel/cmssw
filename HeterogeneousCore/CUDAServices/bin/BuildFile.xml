@@ -1,0 +1,2 @@
+<use name="HeterogeneousCore/CUDAServices">
+<bin file="edmCUDAEnabled.cpp"/>
