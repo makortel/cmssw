@@ -1,0 +1,4 @@
+import FWCore.ParameterSet.Config as cms
+
+from HeterogeneousCore.CUDACore.cudaDeviceChooserProducer_cfi import cudaDeviceChooserProducer as _cudaDeviceChooserProducer
+prod1CUDADevice = _cudaDeviceChooserProducer.clone()
