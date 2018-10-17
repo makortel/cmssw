@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import six
 
 import FWCore.ParameterSet.Config as cms
@@ -11,7 +12,11 @@ from FWCore.ParameterSet.SequenceTypes import _SequenceLeaf
 # avoid recompiling the universe for now
 
 def availableResources():
-    return ["cpu"]
+    ret = []
+    if os.system("edmCUDAEnabled") == 0:
+        ret.append("cuda")
+    ret.append("cpu")
+    return ret
 
 class SwitchProducer(_Module):
     """This class is to provide a switch of producers given XXXX.
