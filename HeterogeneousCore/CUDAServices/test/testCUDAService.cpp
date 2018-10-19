@@ -170,7 +170,7 @@ TEST_CASE("Tests of CUDAService", "[CUDAService]") {
 
   }
 
-  SECTION("Allocator") {
+  SECTION("Device allocator") {
     edm::ParameterSet ps;
     ps.addUntrackedParameter("enabled", true);
     edm::ParameterSet alloc;
@@ -183,13 +183,13 @@ TEST_CASE("Tests of CUDAService", "[CUDAService]") {
     auto cudaStream = current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream);
     
     SECTION("Destructor") {
-      auto ptr = cs.make_unique<int>(cudaStream);
+      auto ptr = cs.make_device_unique<int>(cudaStream);
       REQUIRE(ptr.get() != nullptr);
       cudaStream.synchronize();
     }
 
     SECTION("Reset") {
-      auto ptr = cs.make_unique<int[]>(5, cudaStream);
+      auto ptr = cs.make_device_unique<int[]>(5, cudaStream);
       REQUIRE(ptr.get() != nullptr);
       cudaStream.synchronize();
 
@@ -198,9 +198,9 @@ TEST_CASE("Tests of CUDAService", "[CUDAService]") {
     }
 
     SECTION("Allocating too much") {
-      auto ptr = cs.make_unique<char[]>(512, cudaStream);
+      auto ptr = cs.make_device_unique<char[]>(512, cudaStream);
       ptr.reset();
-      REQUIRE_THROWS(ptr = cs.make_unique<char[]>(513, cudaStream));
+      REQUIRE_THROWS(ptr = cs.make_device_unique<char[]>(513, cudaStream));
     }
   }
 

@@ -18,11 +18,11 @@ namespace edm {
 
 namespace cudaserviceimpl {
   template <typename T>
-  struct make_unique_selector { using non_array = edm::cuda::device::unique_ptr<T>; };
+  struct make_device_unique_selector { using non_array = edm::cuda::device::unique_ptr<T>; };
   template <typename T>
-  struct make_unique_selector<T[]> { using unbounded_array = edm::cuda::device::unique_ptr<T[]>; };
+  struct make_device_unique_selector<T[]> { using unbounded_array = edm::cuda::device::unique_ptr<T[]>; };
   template <typename T, size_t N>
-  struct make_unique_selector<T[N]> { struct bounded_array {}; };
+  struct make_device_unique_selector<T[N]> { struct bounded_array {}; };
 }
 
 /**
@@ -62,40 +62,40 @@ public:
 
   // Allocate device memory
   template <typename T>
-  typename cudaserviceimpl::make_unique_selector<T>::non_array
-  make_unique(cuda::stream_t<>& stream) {
+  typename cudaserviceimpl::make_device_unique_selector<T>::non_array
+  make_device_unique(cuda::stream_t<>& stream) {
     int dev = getCurrentDevice();
-    void *mem = allocate(dev, sizeof(T), stream);
-    return typename cudaserviceimpl::make_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
-                                                                        [this, dev](void *ptr) {
-                                                                          this->free(dev, ptr);
-                                                                        });
+    void *mem = allocate_device(dev, sizeof(T), stream);
+    return typename cudaserviceimpl::make_device_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
+                                                                               [this, dev](void *ptr) {
+                                                                                 this->free_device(dev, ptr);
+                                                                               });
   }
 
   template <typename T>
-  typename cudaserviceimpl::make_unique_selector<T>::unbounded_array
-  make_unique(size_t n, cuda::stream_t<>& stream) {
+  typename cudaserviceimpl::make_device_unique_selector<T>::unbounded_array
+  make_device_unique(size_t n, cuda::stream_t<>& stream) {
     int dev = getCurrentDevice();
     using element_type = typename std::remove_extent<T>::type;
-    void *mem = allocate(dev, n*sizeof(element_type), stream);
-    return typename cudaserviceimpl::make_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
-                                                                              [this, dev](void *ptr) {
-                                                                                this->free(dev, ptr);
-                                                                              });
+    void *mem = allocate_device(dev, n*sizeof(element_type), stream);
+    return typename cudaserviceimpl::make_device_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
+                                                                                     [this, dev](void *ptr) {
+                                                                                       this->free_device(dev, ptr);
+                                                                                     });
   }
 
   template <typename T, typename ...Args>
-  typename cudaserviceimpl::make_unique_selector<T>::bounded_array
-  make_unique(Args&&...) = delete;
+  typename cudaserviceimpl::make_device_unique_selector<T>::bounded_array
+  make_device_unique(Args&&...) = delete;
   
   // Free device memory (to be called from unique_ptr)
-  void free(int device, void *ptr);
+  void free_device(int device, void *ptr);
 
 private:
   // PIMPL to hide details of allocator
   struct Allocator;
   std::unique_ptr<Allocator> allocator_;
-  void *allocate(int dev, size_t nbytes, cuda::stream_t<>& stream);
+  void *allocate_device(int dev, size_t nbytes, cuda::stream_t<>& stream);
 
   int numberOfDevices_ = 0;
   unsigned int numberOfStreamsTotal_ = 0;

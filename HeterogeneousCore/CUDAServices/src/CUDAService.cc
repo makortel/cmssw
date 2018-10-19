@@ -370,7 +370,7 @@ struct CUDAService::Allocator {
   cub::CachingDeviceAllocator allocator;
 };
 
-void *CUDAService::allocate(int dev, size_t nbytes, cuda::stream_t<>& stream) {
+void *CUDAService::allocate_device(int dev, size_t nbytes, cuda::stream_t<>& stream) {
   if(nbytes > allocator_->maxAllocation) {
     throw std::runtime_error("Tried to allocate "+std::to_string(nbytes)+" bytes, but the allocator maximum is "+std::to_string(allocator_->maxAllocation));
   }
@@ -380,6 +380,6 @@ void *CUDAService::allocate(int dev, size_t nbytes, cuda::stream_t<>& stream) {
   return ptr;
 }
 
-void CUDAService::free(int device, void *ptr) {
+void CUDAService::free_device(int device, void *ptr) {
   allocator_->allocator.DeviceFree(device, ptr);
 }

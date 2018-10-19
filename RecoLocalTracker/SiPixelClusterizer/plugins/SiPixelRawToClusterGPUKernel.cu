@@ -573,11 +573,11 @@ namespace pixelgpudetails {
 
       assert(0 == wordCounter%2);
       // wordCounter is the total no of words in each event to be trasfered on device
-      auto word_d = cs->make_unique<uint32_t[]>(wordCounter, stream);
-      auto fedId_d = cs->make_unique<uint8_t[]>(wordCounter, stream);
+      auto word_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);
+      auto fedId_d = cs->make_device_unique<uint8_t[]>(wordCounter, stream);
 
-      auto error_d = cs->make_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
-      auto data_d = cs->make_unique<pixelgpudetails::error_obj[]>(MAX_FED_WORDS, stream);
+      auto error_d = cs->make_device_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
+      auto data_d = cs->make_device_unique<pixelgpudetails::error_obj[]>(MAX_FED_WORDS, stream);
       cudaCheck(cudaMemsetAsync(data_d.get(), 0x00, MAX_ERROR_SIZE, stream.id()));
       new (error_h_tmp) GPU::SimpleVector<pixelgpudetails::error_obj>(MAX_FED_WORDS, data_d.get());
       assert(error_h_tmp->size() == 0);
@@ -587,8 +587,8 @@ namespace pixelgpudetails {
       cudaCheck(cudaMemcpyAsync(&fedId_d[0], &fedId_h[0], wordCounter*sizeof(uint8_t) / 2, cudaMemcpyDefault, stream.id()));
       cudaCheck(cudaMemcpyAsync(error_d.get(), error_h_tmp, vsize, cudaMemcpyDefault, stream.id()));
 
-      auto pdigi_d = cs->make_unique<uint32_t[]>(wordCounter, stream);
-      auto rawIdArr_d = cs->make_unique<uint32_t[]>(wordCounter, stream);
+      auto pdigi_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);
+      auto rawIdArr_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);
 
       // Launch rawToDigi kernel
       RawToDigi_kernel<<<blocks, threadsPerBlock, 0, stream.id()>>>(
@@ -703,7 +703,7 @@ namespace pixelgpudetails {
         uint32_t *tmp = nullptr;
         cudaCheck(cub::DeviceScan::InclusiveSum(nullptr, tempScanStorageSize, tmp, tmp, MaxNumModules));
       }
-      auto tempScanStorage_d = cs->make_unique<uint32_t[]>(tempScanStorageSize, stream);
+      auto tempScanStorage_d = cs->make_device_unique<uint32_t[]>(tempScanStorageSize, stream);
       // Set first the first element to 0
       cudaCheck(cudaMemsetAsync(clusters_d.clusModuleStart(), 0, sizeof(uint32_t), stream.id()));
       // Then use inclusive_scan to get the partial sum to the rest
