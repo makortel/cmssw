@@ -14,6 +14,8 @@
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
+#include "CachingHostAllocator.h"
+
 void setCudaLimit(cudaLimit limit, const char* name, size_t request) {
   // read the current device
   int device;
@@ -365,9 +367,10 @@ int CUDAService::getCurrentDevice() const {
 // allocator
 struct CUDAService::Allocator {
   template <typename ...Args>
-  Allocator(size_t max, Args&&... args): maxAllocation(max), allocator(std::forward<Args>(args)...) {}
+  Allocator(size_t max, Args&&... args): maxAllocation(max), deviceAllocator(args...), hostAllocator(std::forward<Args>(args)...) {}
   size_t maxAllocation;
-  cub::CachingDeviceAllocator allocator;
+  cub::CachingDeviceAllocator deviceAllocator;
+  cub::CachingHostAllocator hostAllocator;
 };
 
 void *CUDAService::allocate_device(int dev, size_t nbytes, cuda::stream_t<>& stream) {
@@ -376,10 +379,24 @@ void *CUDAService::allocate_device(int dev, size_t nbytes, cuda::stream_t<>& str
   }
 
   void *ptr = nullptr;
-  cuda::throw_if_error(allocator_->allocator.DeviceAllocate(dev, &ptr, nbytes, stream.id()));
+  cuda::throw_if_error(allocator_->deviceAllocator.DeviceAllocate(dev, &ptr, nbytes, stream.id()));
   return ptr;
 }
 
 void CUDAService::free_device(int device, void *ptr) {
-  allocator_->allocator.DeviceFree(device, ptr);
+  allocator_->deviceAllocator.DeviceFree(device, ptr);
+}
+
+void *CUDAService::allocate_host(size_t nbytes, cuda::stream_t<>& stream) {
+  if(nbytes > allocator_->maxAllocation) {
+    throw std::runtime_error("Tried to allocate "+std::to_string(nbytes)+" bytes, but the allocator maximum is "+std::to_string(allocator_->maxAllocation));
+  }
+
+  void *ptr = nullptr;
+  cuda::throw_if_error(allocator_->hostAllocator.HostAllocate(&ptr, nbytes, stream.id()));
+  return ptr;
+}
+
+void CUDAService::free_host(void *ptr) {
+  allocator_->hostAllocator.HostFree(ptr);
 }
