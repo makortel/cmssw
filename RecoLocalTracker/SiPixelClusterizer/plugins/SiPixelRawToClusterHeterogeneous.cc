@@ -113,7 +113,7 @@ private:
   void beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) override;
   void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
   void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
-  void convertGPUtoCPU(edm::Event& ev, const GPUProduct& gpu) const;
+  void convertGPUtoCPU(edm::Event& ev, const GPUProduct& gpu, pixelgpudetails::SiPixelRawToClusterGPUKernel::CPUData) const;
 
   // Commonalities
   const FEDRawDataCollection *initialize(const edm::Event& ev, const edm::EventSetup& es);
@@ -557,14 +557,15 @@ void SiPixelRawToClusterHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& e
   auto output = std::make_unique<GPUProduct>(gpuAlgo_->getProduct());
 
   if(enableConversion_) {
-    convertGPUtoCPU(ev.event(), *output);
+    convertGPUtoCPU(ev.event(), *output, gpuAlgo_->getCPUData());
   }
 
   ev.put<Output>(std::move(output), heterogeneous::DisableTransfer{});
 }
 
 void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
-                                                       const SiPixelRawToClusterHeterogeneous::GPUProduct& gpu) const {
+                                                       const SiPixelRawToClusterHeterogeneous::GPUProduct& gpu,
+                                                       pixelgpudetails::SiPixelRawToClusterGPUKernel::CPUData digis_clusters_h) const {
   // TODO: add the transfers here as well?
 
   auto collection = std::make_unique<edm::DetSetVector<PixelDigi>>();
@@ -576,8 +577,8 @@ void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
 
   edm::DetSet<PixelDigi> * detDigis=nullptr;
   for (uint32_t i = 0; i < gpu.nDigis; i++) {
-    if (gpu.pdigi_h[i]==0) continue;
-    detDigis = &collection->find_or_insert(gpu.rawIdArr_h[i]);
+    if (digis_clusters_h.pdigi[i]==0) continue;
+    detDigis = &collection->find_or_insert(digis_clusters_h.rawIdArr[i]);
     if ( (*detDigis).empty() ) (*detDigis).data.reserve(32); // avoid the first relocations
     break;
   }
@@ -609,28 +610,28 @@ void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
   };
 
   for (uint32_t i = 0; i < gpu.nDigis; i++) {
-    if (gpu.pdigi_h[i]==0) continue;
-    if (gpu.clus_h[i]>9000) continue; // not in cluster
-    assert(gpu.rawIdArr_h[i] > 109999);
-    if ( (*detDigis).detId() != gpu.rawIdArr_h[i])
+    if (digis_clusters_h.pdigi[i]==0) continue;
+    if (digis_clusters_h.clus[i]>9000) continue; // not in cluster
+    assert(digis_clusters_h.rawIdArr[i] > 109999);
+    if ( (*detDigis).detId() != digis_clusters_h.rawIdArr[i])
       {
         fillClusters((*detDigis).detId());
         assert(nclus==-1);
-        detDigis = &collection->find_or_insert(gpu.rawIdArr_h[i]);
+        detDigis = &collection->find_or_insert(digis_clusters_h.rawIdArr[i]);
         if ( (*detDigis).empty() )
           (*detDigis).data.reserve(32); // avoid the first relocations
         else { std::cout << "Problem det present twice in input! " << (*detDigis).detId() << std::endl; }
       }
-    (*detDigis).data.emplace_back(gpu.pdigi_h[i]);
+    (*detDigis).data.emplace_back(digis_clusters_h.pdigi[i]);
     auto const & dig = (*detDigis).data.back();
     // fill clusters
-    assert(gpu.clus_h[i]>=0);
-    assert(gpu.clus_h[i]<1024);
-    nclus = std::max(gpu.clus_h[i],nclus);
+    assert(digis_clusters_h.clus[i]>=0);
+    assert(digis_clusters_h.clus[i]<1024);
+    nclus = std::max(digis_clusters_h.clus[i],nclus);
     auto row = dig.row();
     auto col = dig.column();
     SiPixelCluster::PixelPos pix(row,col);
-    aclusters[gpu.clus_h[i]].add(pix,gpu.adc_h[i]);
+    aclusters[digis_clusters_h.clus[i]].add(pix, digis_clusters_h.adc[i]);
   }
 
   // fill final clusters
@@ -641,9 +642,9 @@ void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
   auto errors = errors_; // make a copy
   PixelDataFormatter::DetErrors nodeterrors;
 
-  auto size = gpu.error_h->size();
+  auto size = digis_clusters_h.error->size();
   for (auto i = 0; i < size; i++) {
-    pixelgpudetails::error_obj err = (*gpu.error_h)[i];
+    pixelgpudetails::error_obj err = (*digis_clusters_h.error)[i];
     if (err.errorType != 0) {
       SiPixelRawDataError error(err.word, err.errorType, err.fedId + 1200);
       errors[err.rawId].push_back(error);
