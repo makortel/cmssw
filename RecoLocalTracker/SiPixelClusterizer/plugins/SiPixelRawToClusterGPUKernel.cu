@@ -58,9 +58,6 @@ namespace pixelgpudetails {
     cudaCheck(cudaMallocHost(&fedId_h,    MAX_FED_WORDS * sizeof(unsigned char)));
 
     // to store the output of RawToDigi
-    cudaCheck(cudaMallocHost(&adc_h,      MAX_FED_WORDS * sizeof(uint16_t)));
-    cudaCheck(cudaMallocHost(&clus_h,     MAX_FED_WORDS * sizeof(int32_t)));
-
     cudaCheck(cudaMallocHost(&error_h,     vsize));
     cudaCheck(cudaMallocHost(&error_h_tmp, vsize));
     cudaCheck(cudaMallocHost(&data_h, MAX_ERROR_SIZE));
@@ -80,8 +77,6 @@ namespace pixelgpudetails {
     // free the host memory
     cudaCheck(cudaFreeHost(word));
     cudaCheck(cudaFreeHost(fedId_h));
-    cudaCheck(cudaFreeHost(adc_h));
-    cudaCheck(cudaFreeHost(clus_h));
     cudaCheck(cudaFreeHost(error_h));
     cudaCheck(cudaFreeHost(error_h_tmp));
     cudaCheck(cudaFreeHost(data_h));
@@ -644,7 +639,8 @@ namespace pixelgpudetails {
 
       // calibrated adc
       if(transferToCPU) {
-        cudaCheck(cudaMemcpyAsync(adc_h, digis_d.adc(), wordCounter*sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
+        digis_clusters_h.adc = cs->make_host_unique<uint16_t[]>(MAX_FED_WORDS, stream);
+        cudaCheck(cudaMemcpyAsync(digis_clusters_h.adc.get(), digis_d.adc(), wordCounter*sizeof(uint16_t), cudaMemcpyDefault, stream.id()));
       }
 
 #ifdef GPU_DEBUG
@@ -713,7 +709,8 @@ namespace pixelgpudetails {
 
       // clusters
       if(transferToCPU) {
-        cudaCheck(cudaMemcpyAsync(clus_h, clusters_d.clus(), wordCounter*sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
+        digis_clusters_h.clus = cs->make_host_unique<int32_t[]>(MAX_FED_WORDS, stream);
+        cudaCheck(cudaMemcpyAsync(digis_clusters_h.clus.get(), clusters_d.clus(), wordCounter*sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
       }
     } // end clusterizer scope
   }

@@ -33,19 +33,16 @@ namespace siPixelRawToClusterHeterogeneousProduct {
     GPUProduct(GPUProduct&&) = default;
     GPUProduct& operator=(GPUProduct&&) = default;
 
-    GPUProduct(int32_t const *clus,
-               uint16_t const *adc,
-               GPU::SimpleVector<error_obj> const * error,
+    GPUProduct(GPU::SimpleVector<error_obj> const * error,
                SiPixelDigisCUDA&& digis,
                SiPixelClustersCUDA&& clusters,
                uint32_t ndig, uint32_t nmod, uint32_t nclus):
-      clus_h(clus), adc_h(adc), error_h(error),
+      error_h(error),
       digis_d(std::move(digis)), clusters_d(std::move(clusters)),
       nDigis(ndig), nModules(nmod), nClusters(nclus)
     {}
 
     // Needed for digi and cluster CPU output
-    int32_t const * clus_h = nullptr;
     uint16_t const * adc_h = nullptr;
     GPU::SimpleVector<error_obj> const * error_h = nullptr;
 

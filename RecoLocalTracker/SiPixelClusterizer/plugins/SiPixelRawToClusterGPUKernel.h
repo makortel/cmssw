@@ -197,7 +197,7 @@ namespace pixelgpudetails {
     siPixelRawToClusterHeterogeneousProduct::GPUProduct getProduct() {
       error_h->set_data(data_h);
       return siPixelRawToClusterHeterogeneousProduct::GPUProduct(
-        clus_h, adc_h, error_h,
+        error_h,
         std::move(digis_d), std::move(clusters_d),
         nDigis, *nModulesActive, *nClusters
       );
@@ -214,7 +214,6 @@ namespace pixelgpudetails {
 
     // FIXME cleanup all these are in the gpuProduct above...
 
-    uint16_t *adc_h = nullptr; int32_t *clus_h = nullptr; // host copy of calib&clus output
     pixelgpudetails::error_obj *data_h = nullptr;
     GPU::SimpleVector<pixelgpudetails::error_obj> *error_h = nullptr;
     GPU::SimpleVector<pixelgpudetails::error_obj> *error_h_tmp = nullptr;
