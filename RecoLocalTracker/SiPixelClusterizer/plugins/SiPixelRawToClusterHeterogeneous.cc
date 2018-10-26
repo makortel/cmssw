@@ -110,10 +110,9 @@ private:
   void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
 
   // GPU implementation
-  void beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) override;
   void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
   void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
-  void convertGPUtoCPU(edm::Event& ev, const GPUProduct& gpu, pixelgpudetails::SiPixelRawToClusterGPUKernel::CPUData) const;
+  void convertGPUtoCPU(edm::Event& ev, unsigned int nDigis, pixelgpudetails::SiPixelRawToClusterGPUKernel::CPUData) const;
 
   // Commonalities
   const FEDRawDataCollection *initialize(const edm::Event& ev, const edm::EventSetup& es);
@@ -149,8 +148,8 @@ std::unique_ptr<PixelUnpackingRegions> regions_;
   SiPixelGainCalibrationForHLTService  theSiPixelGainCalibration_;
 
   // GPU algo
-  std::unique_ptr<pixelgpudetails::SiPixelRawToClusterGPUKernel> gpuAlgo_;
-  std::unique_ptr<SiPixelFedCablingMapGPUWrapper::ModulesToUnpack> gpuModulesToUnpack_;
+  pixelgpudetails::SiPixelRawToClusterGPUKernel gpuAlgo_;
+  SiPixelFedCablingMapGPUWrapper::ModulesToUnpack gpuModulesToUnpack_;
   PixelDataFormatter::Errors errors_;
 
   bool enableTransfer_;
@@ -455,22 +454,16 @@ void SiPixelRawToClusterHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, c
 }
 
 // -----------------------------------------------------------------------------
-void SiPixelRawToClusterHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) {
-  // Allocate GPU resources here
-  gpuAlgo_ = std::make_unique<pixelgpudetails::SiPixelRawToClusterGPUKernel>(cudaStream);
-  gpuModulesToUnpack_ = std::make_unique<SiPixelFedCablingMapGPUWrapper::ModulesToUnpack>();
-}
-
 void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
   const auto buffers = initialize(ev.event(), es);
 
   if (regions_) {
     std::set<unsigned int> modules = *(regions_->modulesToUnpack());
-    gpuModulesToUnpack_->fillAsync(*cablingMap_, modules, cudaStream);
+    gpuModulesToUnpack_.fillAsync(*cablingMap_, modules, cudaStream);
   }
   else if(recordWatcherUpdatedSinceLastTransfer_) {
     // If regions_ are disabled, it is enough to fill and transfer only if cablingMap has changed
-    gpuModulesToUnpack_->fillAsync(*cablingMap_, std::set<unsigned int>(), cudaStream);
+    gpuModulesToUnpack_.fillAsync(*cablingMap_, std::set<unsigned int>(), cudaStream);
     recordWatcherUpdatedSinceLastTransfer_ = false;
   }
 
@@ -549,24 +542,24 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
 
   } // end of for loop
 
-  gpuAlgo_->makeClustersAsync(gpuMap, gpuModulesToUnpack_->get(), hgains->getGPUProductAsync(cudaStream),
-                              wordFedAppender,
-                              wordCounterGPU, fedCounter, convertADCtoElectrons,
-                              useQuality, includeErrors, enableTransfer_, debug, cudaStream);
+  gpuAlgo_.makeClustersAsync(gpuMap, gpuModulesToUnpack_.get(), hgains->getGPUProductAsync(cudaStream),
+                             wordFedAppender,
+                             wordCounterGPU, fedCounter, convertADCtoElectrons,
+                             useQuality, includeErrors, enableTransfer_, debug, cudaStream);
 }
 
 void SiPixelRawToClusterHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
-  auto output = std::make_unique<GPUProduct>(gpuAlgo_->getProduct());
+  auto output = std::make_unique<GPUProduct>(gpuAlgo_.getProduct());
 
   if(enableConversion_) {
-    convertGPUtoCPU(ev.event(), *output, gpuAlgo_->getCPUData());
+    convertGPUtoCPU(ev.event(), output->nDigis, gpuAlgo_.getCPUData());
   }
 
   ev.put<Output>(std::move(output), heterogeneous::DisableTransfer{});
 }
 
 void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
-                                                       const SiPixelRawToClusterHeterogeneous::GPUProduct& gpu,
+                                                       unsigned int nDigis,
                                                        pixelgpudetails::SiPixelRawToClusterGPUKernel::CPUData digis_clusters_h) const {
   // TODO: add the transfers here as well?
 
@@ -578,7 +571,7 @@ void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
   auto outputClusters = std::make_unique<SiPixelClusterCollectionNew>();
 
   edm::DetSet<PixelDigi> * detDigis=nullptr;
-  for (uint32_t i = 0; i < gpu.nDigis; i++) {
+  for (uint32_t i = 0; i < nDigis; i++) {
     if (digis_clusters_h.pdigi[i]==0) continue;
     detDigis = &collection->find_or_insert(digis_clusters_h.rawIdArr[i]);
     if ( (*detDigis).empty() ) (*detDigis).data.reserve(32); // avoid the first relocations
@@ -611,7 +604,7 @@ void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
     if ( spc.empty() ) spc.abort();
   };
 
-  for (uint32_t i = 0; i < gpu.nDigis; i++) {
+  for (uint32_t i = 0; i < nDigis; i++) {
     if (digis_clusters_h.pdigi[i]==0) continue;
     if (digis_clusters_h.clus[i]>9000) continue; // not in cluster
     assert(digis_clusters_h.rawIdArr[i] > 109999);
