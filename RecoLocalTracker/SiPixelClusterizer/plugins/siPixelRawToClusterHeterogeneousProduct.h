@@ -43,7 +43,6 @@ namespace siPixelRawToClusterHeterogeneousProduct {
     {}
 
     // Needed for digi and cluster CPU output
-    uint16_t const * adc_h = nullptr;
     GPU::SimpleVector<error_obj> const * error_h = nullptr;
 
     SiPixelDigisCUDA digis_d;
