@@ -169,7 +169,7 @@ namespace pixelgpudetails {
       CPUData(CPUData&&) = default;
       CPUData& operator=(CPUData&&) = default;
       
-      edm::cuda::host::unique_ptr<uint32_t[]> nModules_Clusters;
+      edm::cuda::host::unique_ptr<uint32_t[]> nModules_Clusters; // These should really be part of the GPU product
 
       edm::cuda::host::unique_ptr<uint32_t[]> pdigi;
       edm::cuda::host::unique_ptr<uint32_t[]> rawIdArr;
@@ -199,7 +199,9 @@ namespace pixelgpudetails {
       return siPixelRawToClusterHeterogeneousProduct::GPUProduct(
         error_h,
         std::move(digis_d), std::move(clusters_d),
-        nDigis, *nModulesActive, *nClusters
+        nDigis,
+        digis_clusters_h.nModules_Clusters[0],
+        digis_clusters_h.nModules_Clusters[1]
       );
     }
 
@@ -219,8 +221,6 @@ namespace pixelgpudetails {
     GPU::SimpleVector<pixelgpudetails::error_obj> *error_h_tmp = nullptr;
 
     uint32_t nDigis = 0;
-    uint32_t *nModulesActive = nullptr;
-    uint32_t *nClusters = nullptr;
 
     // CPU data
     CPUData digis_clusters_h;
