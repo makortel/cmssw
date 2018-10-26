@@ -494,6 +494,7 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
 
   // In CPU algorithm this loop is part of PixelDataFormatter::interpretRawData()
   ErrorChecker errorcheck;
+  auto wordFedAppender = pixelgpudetails::SiPixelRawToClusterGPUKernel::WordFedAppender(cudaStream);
   for (auto aFed = fedIds.begin(); aFed != fedIds.end(); ++aFed) {
     int fedId = *aFed;
 
@@ -543,12 +544,13 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
     const cms_uint32_t * ew = (const cms_uint32_t *)(trailer);
 
     assert(0 == (ew-bw)%2);
-    gpuAlgo_->initializeWordFed(fedId, wordCounterGPU, bw, (ew-bw));
+    wordFedAppender.initializeWordFed(fedId, wordCounterGPU, bw, (ew-bw));
     wordCounterGPU+=(ew-bw);
 
   } // end of for loop
 
   gpuAlgo_->makeClustersAsync(gpuMap, gpuModulesToUnpack_->get(), hgains->getGPUProductAsync(cudaStream),
+                              wordFedAppender,
                               wordCounterGPU, fedCounter, convertADCtoElectrons,
                               useQuality, includeErrors, enableTransfer_, debug, cudaStream);
 }

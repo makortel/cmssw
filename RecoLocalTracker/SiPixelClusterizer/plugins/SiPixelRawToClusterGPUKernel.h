@@ -180,6 +180,21 @@ namespace pixelgpudetails {
       edm::cuda::host::unique_ptr<int32_t[]> clus;
     };
 
+    class WordFedAppender {
+    public:
+      WordFedAppender(cuda::stream_t<>& cudaStream);
+      ~WordFedAppender() = default;
+
+      void initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length);
+
+      const unsigned int *word() const { return word_.get(); }
+      const unsigned char *fedId() const { return fedId_.get(); }
+
+    private:
+      edm::cuda::host::unique_ptr<unsigned int[]> word_;
+      edm::cuda::host::unique_ptr<unsigned char[]> fedId_;
+    };
+
     SiPixelRawToClusterGPUKernel(cuda::stream_t<>& cudaStream);
     ~SiPixelRawToClusterGPUKernel();
 
@@ -189,10 +204,9 @@ namespace pixelgpudetails {
     SiPixelRawToClusterGPUKernel& operator=(const SiPixelRawToClusterGPUKernel&) = delete;
     SiPixelRawToClusterGPUKernel& operator=(SiPixelRawToClusterGPUKernel&&) = delete;
 
-    void initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length);
-
     void makeClustersAsync(const SiPixelFedCablingMapGPU *cablingMap, const unsigned char *modToUnp,
                            const SiPixelGainForHLTonGPU *gains,
+                           const WordFedAppender& wordFed,
                            const uint32_t wordCounter, const uint32_t fedCounter, bool convertADCtoElectrons,
                            bool useQualityInfo, bool includeErrors, bool transferToCPU_, bool debug,
                            cuda::stream_t<>& stream);
@@ -211,10 +225,6 @@ namespace pixelgpudetails {
     }
 
   private:
-    // input
-    unsigned int *word = nullptr;        // to hold input for rawtodigi
-    unsigned char *fedId_h = nullptr;    // to hold fed index for each word
-
     uint32_t nDigis = 0;
 
     // CPU data

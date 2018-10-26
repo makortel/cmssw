@@ -52,21 +52,23 @@ namespace pixelgpudetails {
   constexpr uint32_t MAX_FED_WORDS   = pixelgpudetails::MAX_FED * pixelgpudetails::MAX_WORD;
   constexpr uint32_t MAX_ERROR_SIZE  = MAX_FED_WORDS * esize;
 
-  SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel(cuda::stream_t<>& cudaStream) {
+  SiPixelRawToClusterGPUKernel::WordFedAppender::WordFedAppender(cuda::stream_t<>& cudaStream) {
+    edm::Service<CUDAService> cs;
+    word_ = cs->make_host_unique<unsigned int[]>(MAX_FED_WORDS, cudaStream);
+    fedId_ = cs->make_host_unique<unsigned char[]>(MAX_FED_WORDS, cudaStream);
+  }
 
-    cudaCheck(cudaMallocHost(&word,       MAX_FED_WORDS * sizeof(unsigned int)));
-    cudaCheck(cudaMallocHost(&fedId_h,    MAX_FED_WORDS * sizeof(unsigned char)));
+  void SiPixelRawToClusterGPUKernel::WordFedAppender::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
+    std::memcpy(word_.get()+wordCounterGPU, src, sizeof(cms_uint32_t)*length);
+    std::memset(fedId_.get()+wordCounterGPU/2, fedId - 1200, length/2);
+  }
+
+  ////////////////////
+
+  SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel(cuda::stream_t<>& cudaStream) {
   }
 
   SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
-    // free the host memory
-    cudaCheck(cudaFreeHost(word));
-    cudaCheck(cudaFreeHost(fedId_h));
-  }
-
-  void SiPixelRawToClusterGPUKernel::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
-    std::memcpy(word+wordCounterGPU, src, sizeof(cms_uint32_t)*length);
-    std::memset(fedId_h+wordCounterGPU/2, fedId - 1200, length/2);
   }
 
   ////////////////////
@@ -524,6 +526,7 @@ namespace pixelgpudetails {
       const SiPixelFedCablingMapGPU *cablingMap,
       const unsigned char *modToUnp,
       const SiPixelGainForHLTonGPU *gains,
+      const WordFedAppender& wordFed,
       const uint32_t wordCounter, const uint32_t fedCounter,
       bool convertADCtoElectrons,
       bool useQualityInfo, bool includeErrors, bool transferToCPU, bool debug,
@@ -555,8 +558,8 @@ namespace pixelgpudetails {
       assert(error_h_tmp->size() == 0);
       assert(error_h_tmp->capacity() == static_cast<int>(MAX_FED_WORDS));
 
-      cudaCheck(cudaMemcpyAsync(&word_d[0],  &word[0],    wordCounter*sizeof(uint32_t),    cudaMemcpyDefault, stream.id()));
-      cudaCheck(cudaMemcpyAsync(&fedId_d[0], &fedId_h[0], wordCounter*sizeof(uint8_t) / 2, cudaMemcpyDefault, stream.id()));
+      cudaCheck(cudaMemcpyAsync(word_d.get(),  wordFed.word(), wordCounter*sizeof(uint32_t),    cudaMemcpyDefault, stream.id()));
+      cudaCheck(cudaMemcpyAsync(fedId_d.get(), wordFed.fedId(), wordCounter*sizeof(uint8_t) / 2, cudaMemcpyDefault, stream.id()));
       cudaCheck(cudaMemcpyAsync(error_d.get(), error_h_tmp.get(), vsize, cudaMemcpyDefault, stream.id()));
 
       auto pdigi_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);
