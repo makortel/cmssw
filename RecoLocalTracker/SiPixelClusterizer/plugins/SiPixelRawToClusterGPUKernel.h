@@ -195,8 +195,8 @@ namespace pixelgpudetails {
       edm::cuda::host::unique_ptr<unsigned char[]> fedId_;
     };
 
-    SiPixelRawToClusterGPUKernel(cuda::stream_t<>& cudaStream);
-    ~SiPixelRawToClusterGPUKernel();
+    SiPixelRawToClusterGPUKernel() = default;
+    ~SiPixelRawToClusterGPUKernel() = default;
 
 
     SiPixelRawToClusterGPUKernel(const SiPixelRawToClusterGPUKernel&) = delete;

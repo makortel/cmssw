@@ -65,14 +65,6 @@ namespace pixelgpudetails {
 
   ////////////////////
 
-  SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel(cuda::stream_t<>& cudaStream) {
-  }
-
-  SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
-  }
-
-  ////////////////////
-
   __device__ uint32_t getLink(uint32_t ww)  {
     return ((ww >> pixelgpudetails::LINK_shift) & pixelgpudetails::LINK_mask);
   }
