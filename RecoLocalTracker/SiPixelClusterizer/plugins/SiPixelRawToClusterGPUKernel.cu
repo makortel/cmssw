@@ -59,7 +59,6 @@ namespace pixelgpudetails {
 
     // to store the output of RawToDigi
     cudaCheck(cudaMallocHost(&error_h,     vsize));
-    cudaCheck(cudaMallocHost(&error_h_tmp, vsize));
     cudaCheck(cudaMallocHost(&data_h, MAX_ERROR_SIZE));
 
     using namespace gpuClustering;
@@ -74,7 +73,6 @@ namespace pixelgpudetails {
     cudaCheck(cudaFreeHost(word));
     cudaCheck(cudaFreeHost(fedId_h));
     cudaCheck(cudaFreeHost(error_h));
-    cudaCheck(cudaFreeHost(error_h_tmp));
     cudaCheck(cudaFreeHost(data_h));
   }
 
@@ -564,13 +562,14 @@ namespace pixelgpudetails {
       auto error_d = cs->make_device_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
       auto data_d = cs->make_device_unique<pixelgpudetails::error_obj[]>(MAX_FED_WORDS, stream);
       cudaCheck(cudaMemsetAsync(data_d.get(), 0x00, MAX_ERROR_SIZE, stream.id()));
-      new (error_h_tmp) GPU::SimpleVector<pixelgpudetails::error_obj>(MAX_FED_WORDS, data_d.get());
+      auto error_h_tmp = cs->make_host_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
+      new (error_h_tmp.get()) GPU::SimpleVector<pixelgpudetails::error_obj>(MAX_FED_WORDS, data_d.get());
       assert(error_h_tmp->size() == 0);
       assert(error_h_tmp->capacity() == static_cast<int>(MAX_FED_WORDS));
 
       cudaCheck(cudaMemcpyAsync(&word_d[0],  &word[0],    wordCounter*sizeof(uint32_t),    cudaMemcpyDefault, stream.id()));
       cudaCheck(cudaMemcpyAsync(&fedId_d[0], &fedId_h[0], wordCounter*sizeof(uint8_t) / 2, cudaMemcpyDefault, stream.id()));
-      cudaCheck(cudaMemcpyAsync(error_d.get(), error_h_tmp, vsize, cudaMemcpyDefault, stream.id()));
+      cudaCheck(cudaMemcpyAsync(error_d.get(), error_h_tmp.get(), vsize, cudaMemcpyDefault, stream.id()));
 
       auto pdigi_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);
       auto rawIdArr_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);

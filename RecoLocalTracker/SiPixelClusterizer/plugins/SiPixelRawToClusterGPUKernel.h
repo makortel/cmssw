@@ -218,7 +218,6 @@ namespace pixelgpudetails {
 
     pixelgpudetails::error_obj *data_h = nullptr;
     GPU::SimpleVector<pixelgpudetails::error_obj> *error_h = nullptr;
-    GPU::SimpleVector<pixelgpudetails::error_obj> *error_h_tmp = nullptr;
 
     uint32_t nDigis = 0;
 
