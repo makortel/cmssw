@@ -319,7 +319,7 @@ void CUDAService::fillDescriptions(edm::ConfigurationDescriptions & descriptions
 
   edm::ParameterSetDescription allocator;
   allocator.addUntracked<unsigned int>("binGrowth", 8)->setComment("Growth factor (bin_growth in cub::CachingDeviceAllocator");
-  allocator.addUntracked<unsigned int>("minBin", 5)->setComment("Smallest bin, corresponds to binGrowth^minBin bytes (min_bin in cub::CacingDeviceAllocator");
+  allocator.addUntracked<unsigned int>("minBin", 1)->setComment("Smallest bin, corresponds to binGrowth^minBin bytes (min_bin in cub::CacingDeviceAllocator");
   allocator.addUntracked<unsigned int>("maxBin", 9)->setComment("Largest bin, corresponds to binGrowth^maxBin bytes (max_bin in cub::CachingDeviceAllocator). Note that unlike in cub, allocations larger than binGrowth^maxBin are set to fail.");
   allocator.addUntracked<unsigned int>("maxCachedBytes", 0)->setComment("Total storage for the allocator. 0 means no limit.");
   allocator.addUntracked<double>("maxCachedFraction", 0.8)->setComment("Fraction of total device memory taken for the allocator. In case there are multiple devices with different amounts of memory, the smallest of them is taken. If maxCachedBytes is non-zero, the smallest of them is taken.");
