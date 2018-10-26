@@ -171,6 +171,9 @@ namespace pixelgpudetails {
       
       edm::cuda::host::unique_ptr<uint32_t[]> nModules_Clusters; // These should really be part of the GPU product
 
+      edm::cuda::host::unique_ptr<pixelgpudetails::error_obj[]> data;
+      edm::cuda::host::unique_ptr<GPU::SimpleVector<pixelgpudetails::error_obj>> error;
+
       edm::cuda::host::unique_ptr<uint32_t[]> pdigi;
       edm::cuda::host::unique_ptr<uint32_t[]> rawIdArr;
       edm::cuda::host::unique_ptr<uint16_t[]> adc;
@@ -195,9 +198,7 @@ namespace pixelgpudetails {
                            cuda::stream_t<>& stream);
 
     siPixelRawToClusterHeterogeneousProduct::GPUProduct getProduct() {
-      error_h->set_data(data_h);
       return siPixelRawToClusterHeterogeneousProduct::GPUProduct(
-        error_h,
         std::move(digis_d), std::move(clusters_d),
         nDigis,
         digis_clusters_h.nModules_Clusters[0],
@@ -213,11 +214,6 @@ namespace pixelgpudetails {
     // input
     unsigned int *word = nullptr;        // to hold input for rawtodigi
     unsigned char *fedId_h = nullptr;    // to hold fed index for each word
-
-    // FIXME cleanup all these are in the gpuProduct above...
-
-    pixelgpudetails::error_obj *data_h = nullptr;
-    GPU::SimpleVector<pixelgpudetails::error_obj> *error_h = nullptr;
 
     uint32_t nDigis = 0;
 

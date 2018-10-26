@@ -642,9 +642,9 @@ void SiPixelRawToClusterHeterogeneous::convertGPUtoCPU(edm::Event& ev,
   auto errors = errors_; // make a copy
   PixelDataFormatter::DetErrors nodeterrors;
 
-  auto size = gpu.error_h->size();
+  auto size = digis_clusters_h.error->size();
   for (auto i = 0; i < size; i++) {
-    pixelgpudetails::error_obj err = (*gpu.error_h)[i];
+    pixelgpudetails::error_obj err = (*digis_clusters_h.error)[i];
     if (err.errorType != 0) {
       SiPixelRawDataError error(err.word, err.errorType, err.fedId + 1200);
       errors[err.rawId].push_back(error);

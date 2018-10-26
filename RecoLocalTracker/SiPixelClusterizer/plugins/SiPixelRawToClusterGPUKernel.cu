@@ -56,24 +56,12 @@ namespace pixelgpudetails {
 
     cudaCheck(cudaMallocHost(&word,       MAX_FED_WORDS * sizeof(unsigned int)));
     cudaCheck(cudaMallocHost(&fedId_h,    MAX_FED_WORDS * sizeof(unsigned char)));
-
-    // to store the output of RawToDigi
-    cudaCheck(cudaMallocHost(&error_h,     vsize));
-    cudaCheck(cudaMallocHost(&data_h, MAX_ERROR_SIZE));
-
-    using namespace gpuClustering;
-
-    new (error_h) GPU::SimpleVector<pixelgpudetails::error_obj>(MAX_FED_WORDS, data_h);
-    assert(error_h->size() == 0);
-    assert(error_h->capacity() == static_cast<int>(MAX_FED_WORDS));
   }
 
   SiPixelRawToClusterGPUKernel::~SiPixelRawToClusterGPUKernel() {
     // free the host memory
     cudaCheck(cudaFreeHost(word));
     cudaCheck(cudaFreeHost(fedId_h));
-    cudaCheck(cudaFreeHost(error_h));
-    cudaCheck(cudaFreeHost(data_h));
   }
 
   void SiPixelRawToClusterGPUKernel::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
@@ -563,7 +551,7 @@ namespace pixelgpudetails {
       auto data_d = cs->make_device_unique<pixelgpudetails::error_obj[]>(MAX_FED_WORDS, stream);
       cudaCheck(cudaMemsetAsync(data_d.get(), 0x00, MAX_ERROR_SIZE, stream.id()));
       auto error_h_tmp = cs->make_host_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
-      new (error_h_tmp.get()) GPU::SimpleVector<pixelgpudetails::error_obj>(MAX_FED_WORDS, data_d.get());
+      new (error_h_tmp.get()) GPU::SimpleVector<pixelgpudetails::error_obj>(MAX_FED_WORDS, data_d.get()); // should make_host_unique() call the constructor as well? note that even if std::make_unique does that, we can't do that in make_device_unique
       assert(error_h_tmp->size() == 0);
       assert(error_h_tmp->capacity() == static_cast<int>(MAX_FED_WORDS));
 
@@ -599,8 +587,14 @@ namespace pixelgpudetails {
         cudaCheck(cudaMemcpyAsync(digis_clusters_h.rawIdArr.get(), rawIdArr_d.get(), wordCounter*sizeof(uint32_t), cudaMemcpyDefault, stream.id()));
 
         if (includeErrors) {
-          cudaCheck(cudaMemcpyAsync(error_h, error_d.get(), vsize, cudaMemcpyDefault, stream.id()));
-          cudaCheck(cudaMemcpyAsync(data_h, data_d.get(), MAX_ERROR_SIZE, cudaMemcpyDefault, stream.id()));
+          digis_clusters_h.data = cs->make_host_unique<pixelgpudetails::error_obj[]>(MAX_FED_WORDS, stream);
+          digis_clusters_h.error = cs->make_host_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
+          new (digis_clusters_h.error.get()) GPU::SimpleVector<pixelgpudetails::error_obj>(MAX_FED_WORDS, digis_clusters_h.data.get());
+          assert(digis_clusters_h.error->size() == 0);
+          assert(digis_clusters_h.error->capacity() == static_cast<int>(MAX_FED_WORDS));
+
+          cudaCheck(cudaMemcpyAsync(digis_clusters_h.error.get(), error_d.get(), vsize, cudaMemcpyDefault, stream.id()));
+          cudaCheck(cudaMemcpyAsync(digis_clusters_h.data.get(), data_d.get(), MAX_ERROR_SIZE, cudaMemcpyDefault, stream.id()));
           // If we want to transfer only the minimal amount of data, we
           // need a synchronization point. A single ExternalWork (of
           // SiPixelRawToClusterHeterogeneous) does not help because it is
@@ -609,10 +603,9 @@ namespace pixelgpudetails {
           // prototype of #100 would allow this easily (as there would be
           // two ExternalWorks).
           //
-          //error_h->set_data(data_h);
           //cudaCheck(cudaStreamSynchronize(stream.id()));
-          //int size = error_h->size();
-          //cudaCheck(cudaMemcpyAsync(data_h, data_d, size*esize, cudaMemcpyDefault, stream.id()));
+          //int size = digis_clusters_h.error->size();
+          //cudaCheck(cudaMemcpyAsync(digis_clusters_h.data.get(), data_d.get(), size*esize, cudaMemcpyDefault, stream.id()));
         }
       }
     }
