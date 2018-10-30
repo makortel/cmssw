@@ -25,16 +25,9 @@ class SwitchProducer(_Module):
     Can not inherit from _Parameterizable because cms.EDProducer is not a (usual) parameter type
     Have to inherit from _Module to be recognized by NodeVisitor
     """
-    def __init__(self, *arg, **kargs):
-        func = availableResources
-        if len(arg) == 1:
-            func = arg[0]
-        elif len(arg) > 1:
-            raise RuntimeError("SwitchProducer accepts at most one positional argument (for non-default availableResources function")
-        if len(kargs) == 0:
-            raise RuntimeError("SwitchProducer needs at least one EDProducer via keyword arguments")
+    def __init__(self, availableResources, **kargs):
         super(SwitchProducer,self).__init__(None) # let's try None as the type...
-        self._availableResourcesFunction = func
+        self._availableResourcesFunction = availableResources
 
         self.__setParameters(kargs)
         self._isModified = False
@@ -96,7 +89,7 @@ class SwitchProducer(_Module):
         if len(args) == 1:
             func = args[0]
         elif len(args) > 1:
-            raise RuntimeError("SwitchProducer accepts at most one positional argument (for non-default availableResources function")
+            raise RuntimeError("SwitchProducer accepts at most one positional argument (for resource availability function")
 
         returnValue = SwitchProducer.__new__(type(self))
 
@@ -232,7 +225,7 @@ if __name__ == "__main__":
 
     class testSwitchProducer(unittest.TestCase):
         def testConstruction(self):
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo"), cpu = cms.EDProducer("Bar"))
+            sp = SwitchProducer(lambda: [], cuda = cms.EDProducer("Foo"), cpu = cms.EDProducer("Bar"))
             self.assertEqual(sp.cuda.type_(), "Foo")
             self.assertEqual(sp.cpu.type_(), "Bar")
             #print(sp.dumpPython())
@@ -250,7 +243,8 @@ if __name__ == "__main__":
             sp = SwitchProducer(lambda: ["cuda"], cpu = cms.EDProducer("Bar"))
             self.assertRaises(RuntimeError, sp._getProducer)
         def testClone(self):
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo",
+            sp = SwitchProducer(lambda: [], 
+                                cuda = cms.EDProducer("Foo",
                                                       a = cms.int32(1),
                                                       b = cms.PSet(c = cms.int32(2))),
                                 cpu = cms.EDProducer("Bar",
@@ -284,7 +278,8 @@ if __name__ == "__main__":
             self.assertEqual(cl.fpga.y.value(), 24)
             self.assertEqual(hasattr(cl, "cpu"), False)
         def testModify(self):
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo",
+            sp = SwitchProducer(lambda: [],
+                                cuda = cms.EDProducer("Foo",
                                                       a = cms.int32(1),
                                                       b = cms.PSet(c = cms.int32(2))),
                                 cpu = cms.EDProducer("Bar",
@@ -324,7 +319,8 @@ if __name__ == "__main__":
             self.assertEqual(hasattr(sp, "cpu"), False)
 
         def testDumpPython(self):
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo",
+            sp = SwitchProducer(lambda: [],
+                                cuda = cms.EDProducer("Foo",
                                                       a = cms.int32(1),
                                                       b = cms.PSet(c = cms.int32(2))),
                                 cpu = cms.EDProducer("Bar",
