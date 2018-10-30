@@ -26,7 +26,7 @@ process.load("HeterogeneousCore.CUDATest.prod1BeginJob_cff")
 process.load("HeterogeneousCore.CUDATest.prod5BeginJob_cff")
 process.load("HeterogeneousCore.CUDATest.prod6BeginJob_cff")
 
-from HeterogeneousCore.ParameterSet.SwitchProducer import SwitchProducer
+from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
 
 from HeterogeneousCore.CUDATest.testCUDAProducerGPUFirst_cfi import testCUDAProducerGPUFirst
 from HeterogeneousCore.CUDATest.testCUDAProducerGPU_cfi import testCUDAProducerGPU
@@ -40,15 +40,15 @@ process.prod4CUDA = testCUDAProducerGPUEW.clone(src = "prod1CUDA")
 
 # Switches between CPU producer and the GPU-to-CPU transfer producers
 from HeterogeneousCore.CUDATest.testCUDAProducerCPU_cfi import testCUDAProducerCPU
-process.prod2 = SwitchProducer(
+process.prod2 = SwitchProducerCUDA(
     cuda = testCUDAProducerGPUtoCPU.clone(src = "prod2CUDA"),
     cpu = testCUDAProducerCPU.clone(src = "prod1")
 )
-process.prod3 = SwitchProducer(
+process.prod3 = SwitchProducerCUDA(
     cuda = testCUDAProducerGPUtoCPU.clone(src = "prod3CUDA"),
     cpu = testCUDAProducerCPU.clone(src = "prod2"),
 )
-process.prod4 = SwitchProducer(
+process.prod4 = SwitchProducerCUDA(
     cuda = testCUDAProducerGPUtoCPU.clone(src = "prod4CUDA"),
     cpu = testCUDAProducerCPU.clone(src = "prod1")
 )
