@@ -3,19 +3,20 @@ import six
 
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.Mixins import _ConfigureComponent, _Labelable, _Parameterizable, _modifyParametersFromDict, PrintOptions, saveOrigin
-from FWCore.ParameterSet.Modules import _Module
+from FWCore.ParameterSet.Modules import EDProducer
 from FWCore.ParameterSet.SequenceTypes import _SequenceLeaf
 
 
 # Eventually to be moved under FWCore/ParameterSet, but I want to
 # avoid recompiling the universe for now
 
-class SwitchProducer(_Module):
+class SwitchProducer(EDProducer):
     """This class is to provide a switch of producers given XXXX.
     Can not inherit from _Module, because it is not a module by itself
     Can not inherit from _TypedParameterizable because does not have a (single) type
     Can not inherit from _Parameterizable because cms.EDProducer is not a (usual) parameter type
     Have to inherit from _Module to be recognized by NodeVisitor
+    Have to inherit from EDProducer to be able to Modifier.toReplaceWith() (?)
     """
     def __init__(self, availableResources, **kargs):
         super(SwitchProducer,self).__init__(None) # let's try None as the type...
@@ -139,12 +140,6 @@ class SwitchProducer(_Module):
             raise ModuleCloneError(self._errorstr())
         def _errorstr(self):
             return "SwitchProducer" # TODO:
-
-    # Mimick EDProducer
-    def _place(self,name,proc):
-        proc._placeProducer(name,self)
-    def _isTaskComponent(self):
-        return True
 
 
 
@@ -309,6 +304,28 @@ if __name__ == "__main__":
             # Remove a producer
             m.toModify(sp, cpu = None)
             self.assertEqual(hasattr(sp, "cpu"), False)
+
+        def testReplace(self):
+            p = cms.EDProducer("Xyzzy", a = cms.int32(1))
+            sp = SwitchProducer(lambda: [],
+                                cuda = cms.EDProducer("Foo",
+                                                      a = cms.int32(1),
+                                                      b = cms.PSet(c = cms.int32(2))),
+                                cpu = cms.EDProducer("Bar",
+                                                     aa = cms.int32(11),
+                                                     bb = cms.PSet(cc = cms.int32(12))))
+            m = cms.Modifier()
+            m._setChosen()
+
+            # Currently fails with "TypeError: cpu does not already exist, so it can only be set to a CMS python configuration type"
+            #m.toReplaceWith(p, sp)
+            #self.assertEqual(isinstance(p, SwitchProducer), true)
+
+            # Currently fails with "TypeError: toReplaceWith requires both arguments to be the same class type"
+            p = cms.EDProducer("Xyzzy", a = cms.int32(1))
+            #m.toReplaceWith(sp, p)
+            #self.assertEqual(isinstance(sp, EDProducer), true)
+            #self.assertEqual(isinstance(sp, SwitchProducer), false)
 
         def testDumpPython(self):
             sp = SwitchProducer(lambda: [],
