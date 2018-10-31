@@ -10,6 +10,9 @@ prod6 = SwitchProducerCUDA(
     cpu = _prod6CPU.clone()
 )
 
+prod6TaskCUDA = cms.Task(prod6CUDA)
+
 prod6Task = cms.Task(
-    prod6CUDA, prod6
+    prod6TaskCUDA,
+    prod6
 )

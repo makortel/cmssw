@@ -62,12 +62,21 @@ process.out = cms.OutputModule("AsciiOutputModule",
     verbosity = cms.untracked.uint32(0),
 )
 
-process.t = cms.Task(
-    process.prod2CUDA, process.prod2,
-    process.prod3CUDA, process.prod3,
-    process.prod4CUDA, process.prod4,
+process.tCUDA = cms.Task(
+    process.prod2CUDA,
+    process.prod3CUDA,
+    process.prod4CUDA
+)
 
-    process.prod1Task, process.prod5Task, process.prod6Task
+process.tSwitch = cms.Task(
+    process.prod2,
+    process.prod3,
+    process.prod4
+)
+
+process.t = cms.Task(
+    process.prod1Task, process.prod5Task, process.prod6Task,
+    process.tCUDA, process.tSwitch
 )
 process.p = cms.Path()
 process.p.associate(process.t)

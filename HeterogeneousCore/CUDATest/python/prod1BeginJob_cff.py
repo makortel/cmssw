@@ -13,6 +13,9 @@ prod1 = SwitchProducerCUDA(
     cpu = _prod1CPU.clone()
 )
 
+prod1TaskCUDA = cms.Task(prod1CUDADevice, prod1CUDA)
+
 prod1Task = cms.Task(
-    prod1CUDADevice, prod1CUDA, prod1
+    prod1TaskCUDA,
+    prod1
 )
