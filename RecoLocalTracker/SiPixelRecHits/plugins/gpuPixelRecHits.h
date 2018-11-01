@@ -14,7 +14,7 @@ namespace gpuPixelRecHits {
 
 
 
-  __global__ void getHits(pixelCPEforGPU::ParamsOnGPU cpeParams,
+  __global__ void getHits(pixelCPEforGPU::ParamsOnGPU const * __restrict__ cpeParams,
                           float const * __restrict__  bs,
                           uint16_t const * __restrict__  id,
 			  uint16_t const * __restrict__  x,
@@ -125,8 +125,8 @@ namespace gpuPixelRecHits {
 
     assert(h < 2000*256);
 
-    pixelCPEforGPU::position(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
-    pixelCPEforGPU::errorFromDB(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
+    pixelCPEforGPU::position(cpeParams->commonParams(), cpeParams->detParams(me), clusParams, ic);
+    pixelCPEforGPU::errorFromDB(cpeParams->commonParams(), cpeParams->detParams(me), clusParams, ic);
 
     chargeh[h] = clusParams.charge[ic];
 
@@ -141,7 +141,7 @@ namespace gpuPixelRecHits {
     mc[h]= clusParams.minCol[ic];
   
     // to global and compute phi... 
-    cpeParams.detParams(me).frame.toGlobal(xl[h],yl[h], xg[h],yg[h],zg[h]);
+    cpeParams->detParams(me).frame.toGlobal(xl[h],yl[h], xg[h],yg[h],zg[h]);
     // here correct for the beamspot...
     xg[h]-=bs[0];
     yg[h]-=bs[1];

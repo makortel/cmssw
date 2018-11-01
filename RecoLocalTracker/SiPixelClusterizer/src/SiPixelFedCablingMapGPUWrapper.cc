@@ -24,6 +24,14 @@ SiPixelFedCablingMapGPUWrapper::SiPixelFedCablingMapGPUWrapper(SiPixelFedCabling
                                                                SiPixelQuality const *badPixelInfo):
   hasQuality_(badPixelInfo != nullptr)
 {
+  unsigned int *fedMap = nullptr;
+  unsigned int *linkMap = nullptr;
+  unsigned int *rocMap = nullptr;
+  unsigned int *RawId = nullptr;
+  unsigned int *rocInDet = nullptr;
+  unsigned int *moduleId = nullptr;
+  unsigned char *badRocs = nullptr;
+
   helper_.allocate(&fedMap,   pixelgpudetails::MAX_SIZE);
   helper_.allocate(&linkMap,  pixelgpudetails::MAX_SIZE);
   helper_.allocate(&rocMap,   pixelgpudetails::MAX_SIZE);
@@ -95,12 +103,20 @@ SiPixelFedCablingMapGPUWrapper::SiPixelFedCablingMapGPUWrapper(SiPixelFedCabling
     LogDebug("SiPixelFedCablingMapGPU") << "----------------------------------------------------------------------------" << std::endl;
     LogDebug("SiPixelFedCablingMapGPU") << i << std::setw(20) << fedMap[i]  << std::setw(20) << linkMap[i]  << std::setw(20) << rocMap[i] << std::endl;
     LogDebug("SiPixelFedCablingMapGPU") << i << std::setw(20) << RawId[i]   << std::setw(20) << rocInDet[i] << std::setw(20) << moduleId[i] << std::endl;
-    LogDebug("SiPixelFedCablingMapGPU") << i << std::setw(20) << (bool)badRocs[i] << std::setw(20) << std::endl;
+    LogDebug("SiPixelFedCablingMapGPU") << i << std::setw(20) << static_cast<bool>(badRocs[i]) << std::setw(20) << std::endl;
     LogDebug("SiPixelFedCablingMapGPU") << "----------------------------------------------------------------------------" << std::endl;
 
   }
 
-  size = index-1;
+  helper_.allocate(&cablingGPU_, 1);
+  cablingGPU_->size = index-1;
+  cablingGPU_->fed = fedMap;
+  cablingGPU_->link = linkMap;
+  cablingGPU_->roc = rocMap;
+  cablingGPU_->RawId = RawId;
+  cablingGPU_->rocInDet = rocInDet;
+  cablingGPU_->moduleId = moduleId;
+  cablingGPU_->badRocs = badRocs;
   helper_.advise();
   helperUnp_.advise();
 }
@@ -109,12 +125,9 @@ SiPixelFedCablingMapGPUWrapper::SiPixelFedCablingMapGPUWrapper(SiPixelFedCabling
 SiPixelFedCablingMapGPUWrapper::~SiPixelFedCablingMapGPUWrapper() {}
 
 
-SiPixelFedCablingMapGPU SiPixelFedCablingMapGPUWrapper::getGPUProductAsync(cuda::stream_t<>& cudaStream) const {
+const SiPixelFedCablingMapGPU *SiPixelFedCablingMapGPUWrapper::getGPUProductAsync(cuda::stream_t<>& cudaStream) const {
   helper_.prefetchAsync(cudaStream);
-  return SiPixelFedCablingMapGPU{size,
-      fedMap, linkMap, rocMap,
-      RawId, rocInDet, moduleId,
-      badRocs};
+  return cablingGPU_;
 }
 
 const unsigned char *SiPixelFedCablingMapGPUWrapper::getModToUnpAllAsync(cuda::stream_t<>& cudaStream) const {

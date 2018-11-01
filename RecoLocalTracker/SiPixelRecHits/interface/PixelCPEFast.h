@@ -46,7 +46,7 @@ public:
 
     // The return value can only be used safely in kernels launched on
     // the same cudaStream, or after cudaStreamSynchronize.
-   pixelCPEforGPU::ParamsOnGPU getGPUProductAsync(cuda::stream_t<>& cudaStream) const;
+   const pixelCPEforGPU::ParamsOnGPU *getGPUProductAsync(cuda::stream_t<>& cudaStream) const;
 
 private:
    ClusterParam * createClusterParam(const SiPixelCluster & cl) const override;
@@ -83,6 +83,7 @@ private:
    CUDAESManaged m_helper;
    pixelCPEforGPU::DetParams *m_detParamsGPU = nullptr;
    pixelCPEforGPU::CommonParams *m_commonParamsGPU = nullptr;
+   pixelCPEforGPU::ParamsOnGPU *m_paramsGPU = nullptr;
 
    void fillParamsForGpu();
 };

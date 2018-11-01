@@ -66,9 +66,9 @@ PixelCPEFast::PixelCPEFast(edm::ParameterSet const & conf,
    fillParamsForGpu();   
 }
 
-pixelCPEforGPU::ParamsOnGPU PixelCPEFast::getGPUProductAsync(cuda::stream_t<>& cudaStream) const {
+const pixelCPEforGPU::ParamsOnGPU *PixelCPEFast::getGPUProductAsync(cuda::stream_t<>& cudaStream) const {
   m_helper.prefetchAsync(cudaStream);
-  return pixelCPEforGPU::ParamsOnGPU{m_commonParamsGPU, m_detParamsGPU};
+  return m_paramsGPU;
 }
 
 void PixelCPEFast::fillParamsForGpu() {
@@ -196,6 +196,11 @@ void PixelCPEFast::fillParamsForGpu() {
    }
 
   }
+
+  m_helper.allocate(&m_paramsGPU, 1);
+  m_paramsGPU->m_commonParams = m_commonParamsGPU;
+  m_paramsGPU->m_detParams = m_detParamsGPU;
+
   m_helper.advise();
 }
 

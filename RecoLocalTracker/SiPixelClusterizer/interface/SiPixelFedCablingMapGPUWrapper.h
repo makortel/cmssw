@@ -25,7 +25,7 @@ public:
   bool hasQuality() const { return hasQuality_; }
 
   // returns pointer to GPU memory
-  SiPixelFedCablingMapGPU getGPUProductAsync(cuda::stream_t<>& cudaStream) const;
+  const SiPixelFedCablingMapGPU *getGPUProductAsync(cuda::stream_t<>& cudaStream) const;
 
   // returns pointer to GPU memory
   const unsigned char *getModToUnpAllAsync(cuda::stream_t<>& cudaStream) const;
@@ -37,13 +37,7 @@ private:
   unsigned char *modToUnpDefault = nullptr;
 
   CUDAESManaged helper_;
-  unsigned int *fedMap = nullptr;
-  unsigned int *linkMap = nullptr;
-  unsigned int *rocMap = nullptr;
-  unsigned int *RawId = nullptr;
-  unsigned int *rocInDet = nullptr;
-  unsigned int *moduleId = nullptr;
-  unsigned char *badRocs = nullptr;
+  SiPixelFedCablingMapGPU *cablingGPU_ = nullptr;
   unsigned int size;
   bool hasQuality_;
 };

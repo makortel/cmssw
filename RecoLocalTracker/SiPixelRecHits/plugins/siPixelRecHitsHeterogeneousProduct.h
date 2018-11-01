@@ -18,7 +18,7 @@ namespace siPixelRecHitsHeterogeneousProduct {
   using hindex_type = uint16_t; // if above is <=2^16
 
   struct HitsOnGPU{
-     pixelCPEforGPU::ParamsOnGPU cpeParams;    // forwarded from setup, NOT owned
+     const pixelCPEforGPU::ParamsOnGPU *cpeParams;    // forwarded from setup, NOT owned
      float * bs_d;
      const uint32_t * hitsModuleStart_d; // forwarded from clusters
      uint32_t * hitsLayerStart_d;

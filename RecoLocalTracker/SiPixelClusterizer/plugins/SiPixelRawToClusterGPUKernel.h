@@ -204,7 +204,7 @@ namespace pixelgpudetails {
     SiPixelRawToClusterGPUKernel& operator=(const SiPixelRawToClusterGPUKernel&) = delete;
     SiPixelRawToClusterGPUKernel& operator=(SiPixelRawToClusterGPUKernel&&) = delete;
 
-    void makeClustersAsync(const SiPixelFedCablingMapGPU& cablingMap, const unsigned char *modToUnp,
+    void makeClustersAsync(const SiPixelFedCablingMapGPU *cablingMap, const unsigned char *modToUnp,
                            const SiPixelGainForHLTonGPU *gains,
                            const WordFedAppender& wordFed,
                            const uint32_t wordCounter, const uint32_t fedCounter, bool convertADCtoElectrons,

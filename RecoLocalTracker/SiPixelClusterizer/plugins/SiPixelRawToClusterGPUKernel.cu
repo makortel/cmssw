@@ -84,9 +84,9 @@ namespace pixelgpudetails {
     return (1==((rawId>>25)&0x7));
   }
 
-  __device__ pixelgpudetails::DetIdGPU getRawId(SiPixelFedCablingMapGPU cablingMap, uint32_t fed, uint32_t link, uint32_t roc) {
+  __device__ pixelgpudetails::DetIdGPU getRawId(const SiPixelFedCablingMapGPU *cablingMap, uint32_t fed, uint32_t link, uint32_t roc) {
     uint32_t index = fed * MAX_LINK * MAX_ROC + (link-1) * MAX_ROC + roc;
-    pixelgpudetails::DetIdGPU detId = { cablingMap.RawId[index], cablingMap.rocInDet[index], cablingMap.moduleId[index] };
+    pixelgpudetails::DetIdGPU detId = { cablingMap->RawId[index], cablingMap->rocInDet[index], cablingMap->moduleId[index] };
     return detId;
   }
 
@@ -219,7 +219,7 @@ namespace pixelgpudetails {
     return ((dcol < 26) &  (2 <= pxid) & (pxid < 162));
   }
 
-  __device__ uint32_t checkROC(uint32_t errorWord, uint32_t fedId, uint32_t link, SiPixelFedCablingMapGPU cablingMap, bool debug = false)
+  __device__ uint32_t checkROC(uint32_t errorWord, uint32_t fedId, uint32_t link, const SiPixelFedCablingMapGPU *cablingMap, bool debug = false)
   {
     int errorType = (errorWord >> pixelgpudetails::ROC_shift) & pixelgpudetails::ERROR_mask;
     if (errorType < 25) return false;
@@ -229,8 +229,8 @@ namespace pixelgpudetails {
       case(25) : {
         errorFound = true;
         uint32_t index = fedId * MAX_LINK * MAX_ROC + (link-1) * MAX_ROC + 1;
-        if (index > 1 && index <= cablingMap.size) {
-          if (!(link == cablingMap.link[index] && 1 == cablingMap.roc[index])) errorFound = false;
+        if (index > 1 && index <= cablingMap->size) {
+          if (!(link == cablingMap->link[index] && 1 == cablingMap->roc[index])) errorFound = false;
         }
         if (debug&errorFound) printf("Invalid ROC = 25 found (errorType = 25)\n");
         break;
@@ -283,7 +283,7 @@ namespace pixelgpudetails {
     return errorFound? errorType : 0;
   }
 
-  __device__ uint32_t getErrRawID(uint32_t fedId, uint32_t errWord, uint32_t errorType, SiPixelFedCablingMapGPU cablingMap, bool debug = false)
+  __device__ uint32_t getErrRawID(uint32_t fedId, uint32_t errWord, uint32_t errorType, const SiPixelFedCablingMapGPU *cablingMap, bool debug = false)
   {
     uint32_t rID = 0xffffffff;
 
@@ -393,7 +393,7 @@ namespace pixelgpudetails {
 
 
   // Kernel to perform Raw to Digi conversion
-  __global__ void RawToDigi_kernel(SiPixelFedCablingMapGPU cablingMap, const unsigned char *modToUnp,
+  __global__ void RawToDigi_kernel(const SiPixelFedCablingMapGPU *cablingMap, const unsigned char *modToUnp,
       const uint32_t wordCounter, const uint32_t *word, const uint8_t *fedIds,
       uint16_t *xx, uint16_t *yy, uint16_t *adc,
       uint32_t *pdigi, uint32_t *rawIdArr, uint16_t *moduleId,
@@ -442,7 +442,7 @@ namespace pixelgpudetails {
 
         uint32_t index = fedId * MAX_LINK * MAX_ROC + (link-1) * MAX_ROC + roc;
         if (useQualityInfo) {
-          skipROC = cablingMap.badRocs[index];
+          skipROC = cablingMap->badRocs[index];
           if (skipROC) continue;
         }
         skipROC = modToUnp[index];
@@ -510,7 +510,7 @@ namespace pixelgpudetails {
 
   // Interface to outside
   void SiPixelRawToClusterGPUKernel::makeClustersAsync(
-      const SiPixelFedCablingMapGPU& cablingMap,
+      const SiPixelFedCablingMapGPU *cablingMap,
       const unsigned char *modToUnp,
       const SiPixelGainForHLTonGPU *gains,
       const WordFedAppender& wordFed,
