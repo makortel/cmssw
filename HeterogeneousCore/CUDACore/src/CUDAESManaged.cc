@@ -1,7 +1,11 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAESManaged.h"
+#include "HeterogeneousCore/CUDAServices/interface/numberOfCUDADevices.h"
 
-
-CUDAESManaged::CUDAESManaged(): prefetched_(false) {}
+CUDAESManaged::CUDAESManaged(): prefetched_(numberOfCUDADevices()) {
+  for(auto& pref: prefetched_) {
+    pref.store(false);
+  }
+}
 
 CUDAESManaged::~CUDAESManaged() {
   for(auto& ptrSize: buffers_) {
@@ -19,12 +23,13 @@ void CUDAESManaged::prefetchAsync(cuda::stream_t<>& stream) const {
   // The boolean atomic is an optimization attempt, it doesn't really
   // matter if more than one thread/edm stream issues the prefetches
   // as long as most of the prefetches are avoided.
-  if(prefetched_.load())
+  auto& pref = prefetched_[stream.device_id()];
+  if(pref.load())
     return;
 
   for(const auto& ptrSize: buffers_) {
     cudaMemPrefetchAsync(ptrSize.first, ptrSize.second, stream.device_id(), stream.id());
   }
 
-  prefetched_.store(true);
+  pref.store(true);
 }

@@ -51,7 +51,7 @@ public:
 
 private:
   std::vector<std::pair<void *, size_t> > buffers_;
-  mutable std::atomic<bool> prefetched_;
+  mutable std::vector<std::atomic<bool>> prefetched_;
 };
 
 #endif
