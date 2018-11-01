@@ -13,11 +13,11 @@ SiPixelClustersCUDA::SiPixelClustersCUDA(size_t feds, size_t nelements, cuda::st
   clusModuleStart_d = cs->make_device_unique<uint32_t[]>(nelements+1, stream);
 
   auto view = cs->make_host_unique<DeviceConstView>(stream);
-  view->moduleStart = moduleStart_d.get();
-  view->clus = clus_d.get();
-  view->clusInModule = clusInModule_d.get();
-  view->moduleId = moduleId_d.get();
-  view->clusModuleStart = clusModuleStart_d.get();
+  view->moduleStart_ = moduleStart_d.get();
+  view->clus_ = clus_d.get();
+  view->clusInModule_ = clusInModule_d.get();
+  view->moduleId_ = moduleId_d.get();
+  view->clusModuleStart_ = clusModuleStart_d.get();
 
   view_d = cs->make_device_unique<DeviceConstView>(stream);
   cudaMemcpyAsync(view_d.get(), view.get(), sizeof(DeviceConstView), cudaMemcpyDefault, stream.id());

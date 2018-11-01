@@ -28,14 +28,14 @@ void simLink(const SiPixelDigisCUDA::DeviceConstView *dd, uint32_t ndigis, const
   if (i >= ndigis)
     return;
 
-  auto id = dd->moduleInd[i];
+  auto id = dd->moduleInd(i);
   if (InvId == id)
     return;
   assert(id < 2000);
 
-  auto ch = pixelgpudetails::pixelToChannel(dd->xx[i], dd->yy[i]);
+  auto ch = pixelgpudetails::pixelToChannel(dd->xx(i), dd->yy(i));
   auto first = hh.hitsModuleStart_d[id];
-  auto cl = first + cc->clus[i];
+  auto cl = first + cc->clus(i);
   assert(cl < 2000 * blockDim.x);
 
   const std::array<uint32_t, 4> me{{id, ch, 0, 0}};

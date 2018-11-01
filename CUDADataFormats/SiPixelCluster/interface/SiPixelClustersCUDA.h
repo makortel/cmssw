@@ -34,12 +34,26 @@ public:
   uint32_t const *c_moduleId() const { return moduleId_d.get(); }
   uint32_t const *c_clusModuleStart() const { return clusModuleStart_d.get(); }
 
-  struct DeviceConstView {
-    uint32_t const *moduleStart;
-    int32_t  const *clus;
-    uint32_t const *clusInModule;
-    uint32_t const *moduleId;
-    uint32_t const *clusModuleStart;
+  class DeviceConstView {
+  public:
+    DeviceConstView() = default;
+
+#ifdef __CUDACC__
+    __device__ __forceinline__ uint32_t moduleStart(int i) const { return __ldg(moduleStart_+i); }
+    __device__ __forceinline__ int32_t  clus(int i) const { return __ldg(clus_+i); }
+    __device__ __forceinline__ uint32_t clusInModule(int i) const { return __ldg(clusInModule_+i); }
+    __device__ __forceinline__ uint32_t moduleId(int i) const { return __ldg(moduleId_+i); }
+    __device__ __forceinline__ uint32_t clusModuleStart(int i) const { return __ldg(clusModuleStart_+i); }
+#endif
+
+    friend SiPixelClustersCUDA;
+
+  private:
+    uint32_t const *moduleStart_ = nullptr;
+    int32_t  const *clus_ = nullptr;
+    uint32_t const *clusInModule_ = nullptr;
+    uint32_t const *moduleId_ = nullptr;
+    uint32_t const *clusModuleStart_ = nullptr;
   };
 
   DeviceConstView *view() const { return view_d.get(); }

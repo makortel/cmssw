@@ -32,11 +32,24 @@ public:
   uint16_t const *c_adc() const { return adc_d.get(); }
   uint16_t const *c_moduleInd() const { return moduleInd_d.get(); }
 
-  struct DeviceConstView {
-    uint16_t const *xx;
-    uint16_t const *yy;
-    uint16_t const *adc;
-    uint16_t const *moduleInd;
+  class DeviceConstView {
+  public:
+    DeviceConstView() = default;
+
+#ifdef __CUDACC__
+    __device__ __forceinline__ uint16_t xx(int i) const { return __ldg(xx_+i); }
+    __device__ __forceinline__ uint16_t yy(int i) const { return __ldg(yy_+i); }
+    __device__ __forceinline__ uint16_t adc(int i) const { return __ldg(adc_+i); }
+    __device__ __forceinline__ uint16_t moduleInd(int i) const { return __ldg(moduleInd_+i); }
+#endif
+
+    friend class SiPixelDigisCUDA;
+
+  private:
+    uint16_t const *xx_ = nullptr;
+    uint16_t const *yy_ = nullptr;
+    uint16_t const *adc_ = nullptr;
+    uint16_t const *moduleInd_ = nullptr;
   };
 
   const DeviceConstView *view() const { return view_d.get(); }
