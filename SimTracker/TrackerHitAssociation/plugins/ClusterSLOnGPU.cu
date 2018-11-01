@@ -14,7 +14,7 @@
 using ClusterSLGPU = trackerHitAssociationHeterogeneousProduct::ClusterSLGPU;
 
 __global__
-void simLink(SiPixelDigisCUDA::DeviceConstView dd, uint32_t ndigis, SiPixelClustersCUDA::DeviceConstView cc, clusterSLOnGPU::HitsOnGPU const * hhp, ClusterSLGPU const * slp, uint32_t n)
+void simLink(const SiPixelDigisCUDA::DeviceConstView *dd, uint32_t ndigis, const SiPixelClustersCUDA::DeviceConstView *cc, clusterSLOnGPU::HitsOnGPU const * hhp, ClusterSLGPU const * slp, uint32_t n)
 {
   assert(slp == slp->me_d);
 
@@ -28,14 +28,14 @@ void simLink(SiPixelDigisCUDA::DeviceConstView dd, uint32_t ndigis, SiPixelClust
   if (i >= ndigis)
     return;
 
-  auto id = dd.moduleInd[i];
+  auto id = dd->moduleInd[i];
   if (InvId == id)
     return;
   assert(id < 2000);
 
-  auto ch = pixelgpudetails::pixelToChannel(dd.xx[i], dd.yy[i]);
+  auto ch = pixelgpudetails::pixelToChannel(dd->xx[i], dd->yy[i]);
   auto first = hh.hitsModuleStart_d[id];
-  auto cl = first + cc.clus[i];
+  auto cl = first + cc->clus[i];
   assert(cl < 2000 * blockDim.x);
 
   const std::array<uint32_t, 4> me{{id, ch, 0, 0}};

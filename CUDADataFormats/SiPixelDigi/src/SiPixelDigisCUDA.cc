@@ -3,6 +3,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
+#include <cuda_runtime.h>
+
 SiPixelDigisCUDA::SiPixelDigisCUDA(size_t nelements, cuda::stream_t<>& stream) {
   edm::Service<CUDAService> cs;
 
@@ -10,4 +12,13 @@ SiPixelDigisCUDA::SiPixelDigisCUDA(size_t nelements, cuda::stream_t<>& stream) {
   yy_d              = cs->make_device_unique<uint16_t[]>(nelements, stream);
   adc_d             = cs->make_device_unique<uint16_t[]>(nelements, stream);
   moduleInd_d       = cs->make_device_unique<uint16_t[]>(nelements, stream);
+
+  auto view = cs->make_host_unique<DeviceConstView>(stream);
+  view->xx = xx_d.get();
+  view->yy = yy_d.get();
+  view->adc = adc_d.get();
+  view->moduleInd = moduleInd_d.get();
+
+  view_d = cs->make_device_unique<DeviceConstView>(stream);
+  cudaMemcpyAsync(view_d.get(), view.get(), sizeof(DeviceConstView), cudaMemcpyDefault, stream.id());
 }

@@ -16,23 +16,23 @@ public:
   SiPixelClustersCUDA(SiPixelClustersCUDA&&) = default;
   SiPixelClustersCUDA& operator=(SiPixelClustersCUDA&&) = default;
 
-  uint32_t * __restrict__ moduleStart() { return moduleStart_d.get(); }
-  int32_t  * __restrict__ clus() { return clus_d.get(); }
-  uint32_t * __restrict__ clusInModule() { return clusInModule_d.get(); }
-  uint32_t * __restrict__ moduleId() { return moduleId_d.get(); }
-  uint32_t * __restrict__ clusModuleStart() { return clusModuleStart_d.get(); }
+  uint32_t *moduleStart() { return moduleStart_d.get(); }
+  int32_t  *clus() { return clus_d.get(); }
+  uint32_t *clusInModule() { return clusInModule_d.get(); }
+  uint32_t *moduleId() { return moduleId_d.get(); }
+  uint32_t *clusModuleStart() { return clusModuleStart_d.get(); }
 
-  uint32_t const * __restrict__ moduleStart() const { return moduleStart_d.get(); }
-  int32_t  const * __restrict__ clus() const { return clus_d.get(); }
-  uint32_t const * __restrict__ clusInModule() const { return clusInModule_d.get(); }
-  uint32_t const * __restrict__ moduleId() const { return moduleId_d.get(); }
-  uint32_t const * __restrict__ clusModuleStart() const { return clusModuleStart_d.get(); }
+  uint32_t const *moduleStart() const { return moduleStart_d.get(); }
+  int32_t  const *clus() const { return clus_d.get(); }
+  uint32_t const *clusInModule() const { return clusInModule_d.get(); }
+  uint32_t const *moduleId() const { return moduleId_d.get(); }
+  uint32_t const *clusModuleStart() const { return clusModuleStart_d.get(); }
 
-  uint32_t const * __restrict__ c_moduleStart() const { return moduleStart_d.get(); }
-  int32_t  const * __restrict__ c_clus() const { return clus_d.get(); }
-  uint32_t const * __restrict__ c_clusInModule() const { return clusInModule_d.get(); }
-  uint32_t const * __restrict__ c_moduleId() const { return moduleId_d.get(); }
-  uint32_t const * __restrict__ c_clusModuleStart() const { return clusModuleStart_d.get(); }
+  uint32_t const *c_moduleStart() const { return moduleStart_d.get(); }
+  int32_t  const *c_clus() const { return clus_d.get(); }
+  uint32_t const *c_clusInModule() const { return clusInModule_d.get(); }
+  uint32_t const *c_moduleId() const { return moduleId_d.get(); }
+  uint32_t const *c_clusModuleStart() const { return clusModuleStart_d.get(); }
 
   struct DeviceConstView {
     uint32_t const *moduleStart;
@@ -42,7 +42,7 @@ public:
     uint32_t const *clusModuleStart;
   };
 
-  DeviceConstView view() const { return DeviceConstView{moduleStart_d.get(), clus_d.get(), clusInModule_d.get(), moduleId_d.get(), clusModuleStart_d.get()}; }
+  DeviceConstView *view() const { return view_d.get(); }
 
 private:
   edm::cuda::device::unique_ptr<uint32_t[]> moduleStart_d;   // index of the first pixel of each module
@@ -52,6 +52,8 @@ private:
 
   // originally from rechits
   edm::cuda::device::unique_ptr<uint32_t[]> clusModuleStart_d;
+
+  edm::cuda::device::unique_ptr<DeviceConstView> view_d;    // "me" pointer
 };
 
 #endif
