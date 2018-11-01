@@ -11,12 +11,11 @@ from FWCore.ParameterSet.SequenceTypes import _SequenceLeaf
 # avoid recompiling the universe for now
 
 class SwitchProducer(EDProducer):
-    """This class is to provide a switch of producers given XXXX.
-    Can not inherit from _Module, because it is not a module by itself
-    Can not inherit from _TypedParameterizable because does not have a (single) type
-    Can not inherit from _Parameterizable because cms.EDProducer is not a (usual) parameter type
-    Have to inherit from _Module to be recognized by NodeVisitor
-    Have to inherit from EDProducer to be able to Modifier.toReplaceWith() (?)
+    """This class is to provide a switch of producers given a function making the decision.
+
+    Intended to be inherited, and the inheriting class to pass the
+    function. This way the objects can be pickled (for productionn)
+    and edmConfigDumped (for debugging).
     """
     def __init__(self, availableResources, **kargs):
         super(SwitchProducer,self).__init__(None) # let's try None as the type...
@@ -114,7 +113,7 @@ class SwitchProducer(EDProducer):
         # Pickling works
         # Could make the first argument to be a list as well, then we could dump the list returned by the function
         # But could that be confusing?
-        result = "cms.SwitchProducer("
+        result = "cms.%s(" % self.__class__.__name__
         options.indent()
         for resource in sorted(self.parameterNames_()):
             result += "\n" + options.indentation() + resource + " = " + getattr(self, resource).dumpPython(options).rstrip() + ","
