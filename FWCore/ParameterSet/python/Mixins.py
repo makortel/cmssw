@@ -435,6 +435,11 @@ class _TypedParameterizable(_Parameterizable):
     def nameInProcessDesc_(self, myname):
         return myname;
     def moduleLabel_(self, myname):
+        # SwitchProducer uses @ to separate the cases, module label
+        # needs to have @ and everything after it stripped away
+        ind = myname.find("@")
+        if ind >= 0:
+            return myname[:ind]
         return myname
     def insertInto(self, parameterSet, myname):
         newpset = parameterSet.newPSet()

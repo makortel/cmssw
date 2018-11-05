@@ -24,12 +24,15 @@ class SwitchProducer(EDProducer):
         self.__setParameters(kargs)
         self._isModified = False
 
-    def _getProducer(self):
+    def _chooseResource(self):
         resources = self._availableResourcesFunction()
         for res in resources:
             if res in self.__dict__:
-                return self.__dict__[res]
+                return res
         raise RuntimeError("No implementation for any of the available resources: "+str(resources))
+
+    def _getProducer(self):
+        return self.__dict__[self._chooseResource()]
 
     # Mimick __Parameterizable
     #@staticmethod
@@ -128,8 +131,21 @@ class SwitchProducer(EDProducer):
     def moduleLabel_(self, myname):
         return myname
     def insertInto(self, parameterSet, myname):
-        producer = self._getProducer()
-        producer.insertInto(parameterSet, myname)
+        for resource in self.parameterNames_():
+            producer = self.__dict__[resource]
+            producer.insertInto(parameterSet, myname+"@"+resource)
+        newpset = parameterSet.newPSet()
+        newpset.addString(True, "@module_label", self.moduleLabel_(myname))
+        newpset.addString(True, "@module_type", type(self).__name__)
+        newpset.addString(True, "@module_edm_type", "SwitchProducer")
+        newpset.addVString(True, "@allCases", [myname+"@"+p for p in self.parameterNames_()])
+        newpset.addString(False, "@chosenCase", myname+"@"+self._chooseResource())
+        parameterSet.addPSet(True, self.nameInProcessDesc_(myname), newpset)
+
+    # Let's see if we should treat this like an EDAlias as well
+    # The web of lies just spreads...
+    def _placeImpl(self,name,proc):
+        proc._placeProducer(name,self)
 
     # Mimick _Module
     def _clonesequence(self, lookuptable):
@@ -369,8 +385,7 @@ if __name__ == "__main__":
             mp = TestMakePSet()
             p.fillProcessDesc(mp)
             self.assertEqual(mp.values["a"][1].values["@module_type"], (True, "A"))
-            self.assertEqual(mp.values["sp"][1].values["@module_edm_type"], (True, "EDProducer"))
-            self.assertEqual(mp.values["sp"][1].values["@module_type"], (True, "Foo"))
-            self.assertEqual(mp.values["sp"][1].values["a"], (True, 1))
+            self.assertEqual(mp.values["sp"][1].values["@module_edm_type"], (True, "SwitchProducer"))
+            self.assertEqual(mp.values["sp"][1].values["@module_type"], (True, "SwitchProducer"))
 
     unittest.main()

@@ -17,6 +17,7 @@ namespace edm {
         std::string label = pset.getParameter<std::string>("@module_label");
         workerManager_.addToUnscheduledWorkers(pset,
                                                preg,
+                                               pset, // TODO: just to get to compile. What on Earth should we pass from here?
                                                &preallocConfig,
                                                processConfiguration,
                                                label,

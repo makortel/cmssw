@@ -40,6 +40,7 @@ namespace edm {
                   ExceptionToActionTable const& actions);
     void addToUnscheduledWorkers(ParameterSet& pset,
                                  ProductRegistry& preg,
+                                 ParameterSet& proc_pset,
                                  PreallocationConfiguration const* prealloc,
                                  std::shared_ptr<ProcessConfiguration> processConfiguration,
                                  std::string label,

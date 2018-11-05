@@ -217,7 +217,7 @@ namespace edm {
         ParameterSet* modulePSet(proc_pset.getPSetForUpdate(label, isTracked));
         assert(isTracked);
         assert(modulePSet != nullptr);
-        workerManager_.addToUnscheduledWorkers(*modulePSet, preg, &prealloc, processConfiguration, label, unscheduledLabels, shouldBeUsedLabels);
+        workerManager_.addToUnscheduledWorkers(*modulePSet, preg, proc_pset, &prealloc, processConfiguration, label, unscheduledLabels, shouldBeUsedLabels);
       }
       if (!shouldBeUsedLabels.empty()) {
         std::ostringstream unusedStream;

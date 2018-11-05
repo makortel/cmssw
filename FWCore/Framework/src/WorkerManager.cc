@@ -10,6 +10,7 @@
 
 static const std::string kFilterType("EDFilter");
 static const std::string kProducerType("EDProducer");
+static const std::string kSwitchProducerType("SwitchProducer");
 
 namespace edm {
   // -----------------------------
@@ -46,6 +47,7 @@ namespace edm {
 
   void WorkerManager::addToUnscheduledWorkers(ParameterSet& pset,
                                               ProductRegistry& preg,
+                                              ParameterSet& proc_pset,
                                               PreallocationConfiguration const* prealloc,
                                               std::shared_ptr<ProcessConfiguration> processConfiguration,
                                               std::string label,
@@ -55,8 +57,23 @@ namespace edm {
     // 1) create worker
     // 2) if it is a WorkerT<EDProducer>, add it to our list
     auto modType = pset.getParameter<std::string>("@module_edm_type");
+
+    // Do SwitchProducer aliasing magic
+    // This is somewhat specific to StreamSchedule (or is it?), would it be better handled there?
+    ParameterSet *real_pset = &pset;
+    if(modType == kSwitchProducerType) {
+      modType = kProducerType;
+      auto chosen = pset.getUntrackedParameter<std::string>("@chosenCase");
+      bool isTracked;
+      ParameterSet *modulePSet = proc_pset.getPSetForUpdate(chosen, isTracked);
+      assert(isTracked);
+      assert(modulePSet);
+      real_pset = modulePSet;
+      modType = real_pset->getParameter<std::string>("@module_edm_type");
+    }
+
     if(modType == kProducerType || modType == kFilterType) {
-      Worker* newWorker = getWorker(pset, preg, prealloc, processConfiguration, label);
+      Worker* newWorker = getWorker(*real_pset, preg, prealloc, processConfiguration, label);
       assert(newWorker->moduleType() == Worker::kProducer || newWorker->moduleType() == Worker::kFilter);
       unscheduledLabels.insert(label);
       unscheduled_.addWorker(newWorker);
