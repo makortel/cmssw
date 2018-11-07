@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+from HeterogeneousCore.ParameterSet.SwitchProducer import SwitchProducer
 
 from HeterogeneousCore.CUDATest.prod5CUDADevice_cfi import prod5CUDADevice
 from HeterogeneousCore.CUDATest.prod5CPU_cfi import prod5CPU as _prod5CPU
@@ -8,7 +8,7 @@ from HeterogeneousCore.CUDATest.prod5FromCUDA_cfi import prod5FromCUDA as _prod5
 
 prod5CUDA.src = "prod5CUDADevice"
 
-prod5 = SwitchProducerCUDA(
+prod5 = SwitchProducer(
     cuda = _prod5FromCUDA.clone(),
     cpu = _prod5CPU.clone()
 )
