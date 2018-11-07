@@ -300,10 +300,7 @@ if __name__ == "__main__":
             self.assertEqual(sp.cpu.bb.cc.value(), 45)
             self.assertEqual(sp.cpu.bb.dd.value(), "foo")
 
-            # The following etc doesn't work because of
-            # AttributeError: 'EDProducer' object has no attribute 'setValue
-            # from _modifyParametersFromDict
-            #m.toModify(sp, cuda = cms.EDProducer("Xyzzy"))
+            m.toModify(sp, cuda = cms.EDProducer("Xyzzy")) # Do we actually want to allow this? In a sense the toReplaceWith would be more logical
 
             # Replace a producer
             m.toReplaceWith(sp.cuda, cms.EDProducer("Fred", x = cms.int32(42)))

@@ -665,7 +665,7 @@ def _modifyParametersFromDict(params, newParams, errorRaiser, keyDepth=""):
                             plist[k] = v
                     else:
                         raise ValueError("Attempted to change non PSet value "+keyDepth+" using a dictionary")
-                elif isinstance(value,_ParameterTypeBase) or (isinstance(key, int)):
+                elif isinstance(value,_ParameterTypeBase) or (isinstance(key, int)) or isinstance(value, _TypedParameterizable):
                     params[key] = value
                 else:
                     params[key].setValue(value)
