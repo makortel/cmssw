@@ -329,10 +329,15 @@ if __name__ == "__main__":
             m._setChosen()
 
             # Currently fails with "TypeError: cpu does not already exist, so it can only be set to a CMS python configuration type"
+            # Fixing would require messing with the internals of _Parameterizable (to allow addition of EDProducer parameters),
+            # maybe we don't want that? The use case can anyway be circumvented by always having p as a SwitchProducer, and
+            # adding more cases with toModify()
             #m.toReplaceWith(p, sp)
             #self.assertEqual(isinstance(p, SwitchProducer), true)
 
             # Currently fails with "TypeError: toReplaceWith requires both arguments to be the same class type"
+            # This might be easier than the previous case as we're messing with SwitchProducer, but with similar arguments the same
+            # can be achieved by removing all cases but one with toModify()
             p = cms.EDProducer("Xyzzy", a = cms.int32(1))
             #m.toReplaceWith(sp, p)
             #self.assertEqual(isinstance(sp, EDProducer), true)
