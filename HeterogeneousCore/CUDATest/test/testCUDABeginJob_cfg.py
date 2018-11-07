@@ -71,14 +71,16 @@ process.tCUDA = cms.Task(
 process.tSwitch = cms.Task(
     process.prod2,
     process.prod3,
-    process.prod4
+#    process.prod4 # test this one on a Path
 )
 
 process.t = cms.Task(
     process.prod1Task, process.prod5Task, process.prod6Task,
     process.tCUDA, process.tSwitch
 )
-process.p = cms.Path()
+process.p = cms.Path(
+    process.prod4
+)
 process.p.associate(process.t)
 process.ep = cms.EndPath(process.out)
 
