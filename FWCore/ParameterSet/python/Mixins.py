@@ -670,7 +670,7 @@ def _modifyParametersFromDict(params, newParams, errorRaiser, keyDepth=""):
                 else:
                     params[key].setValue(value)
             else:
-                if isinstance(value,_ParameterTypeBase):
+                if isinstance(value,_ParameterTypeBase) or isinstance(value, _TypedParameterizable):
                     params[key]=value
                 else:
                     errorRaiser(key)

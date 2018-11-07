@@ -308,10 +308,9 @@ if __name__ == "__main__":
             self.assertEqual(sp.cuda.x.value(), 42)
 
             # Add a producer
-            # Currently gives "KeyError: 'Unknown parameter name fpga specified while calling Modifier'"
-            #m.toModify(sp, fpga = cms.EDProducer("Wilma", y = cms.int32(24)))
-            #self.assertEqual(sp.fpga.type_(), "Wilma")
-            #self.assertEqual(sp.fpga.y.value(), 24)
+            m.toModify(sp, fpga = cms.EDProducer("Wilma", y = cms.int32(24)))
+            self.assertEqual(sp.fpga.type_(), "Wilma")
+            self.assertEqual(sp.fpga.y.value(), 24)
 
             # Remove a producer
             m.toModify(sp, cpu = None)
