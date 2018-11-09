@@ -476,7 +476,7 @@ struct CachingHostAllocator
             cached_bytes.live += search_key.bytes;
             mutex.Unlock();
 
-            if (debug) _CubLog("\tHost allocated new device block at %p (%lld bytes associated with stream %lld).\n",
+            if (debug) _CubLog("\tHost allocated new host block at %p (%lld bytes associated with stream %lld).\n",
                       search_key.d_ptr, (long long) search_key.bytes, (long long) search_key.associated_stream);
         }
 
