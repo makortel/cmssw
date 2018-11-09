@@ -7,7 +7,7 @@ from HeterogeneousCore.CUDATest.prod6FromCUDA_cfi import prod6FromCUDA as _prod6
 
 prod6 = SwitchProducer(
     cuda = _prod6FromCUDA.clone(),
-    cpu = _prod6CPU.clone()
+    cpu = _prod6CPU.clone(src="prod5")
 )
 
 prod6TaskCUDA = cms.Task(prod6CUDA)
