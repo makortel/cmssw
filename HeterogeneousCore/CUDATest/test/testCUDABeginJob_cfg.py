@@ -6,7 +6,8 @@ process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
 
 process.source = cms.Source("EmptySource")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
+#process.source.firstLuminosityBlock = cms.untracked.uint32(2)
 
 process.options = cms.untracked.PSet(
 #    numberOfThreads = cms.untracked.uint32(4),
@@ -59,8 +60,17 @@ process.out = cms.OutputModule("AsciiOutputModule",
         "keep *_prod4_*_*",
         "keep *_prod6_*_*",
     ),
-    verbosity = cms.untracked.uint32(0),
+                               verbosity = cms.untracked.uint32(2),
 )
+if False:
+    process.out = cms.OutputModule("PoolOutputModule",
+        outputCommands = cms.untracked.vstring(
+            "keep *_prod3_*_*",
+            "keep *_prod4_*_*",
+            "keep *_prod6_*_*",
+        ),
+        fileName = cms.untracked.string("foo.root")
+    )
 
 process.tCUDA = cms.Task(
     process.prod2CUDA,

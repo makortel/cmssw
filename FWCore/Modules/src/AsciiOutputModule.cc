@@ -14,6 +14,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/Registry.h"
 
 namespace edm {
 
@@ -76,6 +77,31 @@ namespace edm {
       BranchDescription const& desc = prov->branchDescription();
       if (selected(desc)) {
         LogAbsolute("AsciiOut") << *prov << '\n';
+
+        std::string const& process = desc.processName();
+        std::string const& label = desc.moduleLabel();
+        ProcessHistory const* processHistory = prov->processHistoryPtr();
+
+        if (processHistory) {
+          for (ProcessConfiguration const& pc : *processHistory) {
+            if (pc.processName() == process) {
+              ParameterSetID const& psetID = pc.parameterSetID();
+              pset::Registry const* psetRegistry = pset::Registry::instance();
+              ParameterSet const* processPset = psetRegistry->getMapped(psetID);
+              if (processPset) {
+                LogAbsolute("AsciiOut") << processPset->getParameterSet(label);
+              }
+            }
+          }
+        }
+
+        const auto *productProvenance = prov->productProvenance();
+        const auto& parentage = productProvenance->parentage();
+        LogAbsolute("foo") << "Parents";
+        for(const auto& id: parentage.parents()) {
+          const auto& parentProv = e.getProvenance(id);
+          LogAbsolute("foo") << " " << id << " " << parentProv;
+        }
       }
     }
   }
