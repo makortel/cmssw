@@ -257,6 +257,7 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
   auto maxBin = allocator.getUntrackedParameter<unsigned int>("maxBin");
   size_t maxCachedBytes = allocator.getUntrackedParameter<unsigned int>("maxCachedBytes");
   auto maxCachedFraction = allocator.getUntrackedParameter<double>("maxCachedFraction");
+  auto debug = allocator.getUntrackedParameter<bool>("debug");
 
   size_t minCachedBytes = std::numeric_limits<size_t>::max();
   int currentDevice;
@@ -281,7 +282,10 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
   log << "  maximum amount of cached memory " << (minCachedBytes>>20) << " MB\n";
 
   allocator_ = std::make_unique<Allocator>(cub::CachingDeviceAllocator::IntPow(binGrowth, maxBin),
-                                           binGrowth, minBin, maxBin, minCachedBytes);
+                                           binGrowth, minBin, maxBin, minCachedBytes,
+                                           false, // do not skip cleanup
+                                           debug
+                                           );
   log << "\n";
 
   log << "CUDAService fully initialized";
@@ -323,6 +327,7 @@ void CUDAService::fillDescriptions(edm::ConfigurationDescriptions & descriptions
   allocator.addUntracked<unsigned int>("maxBin", 9)->setComment("Largest bin, corresponds to binGrowth^maxBin bytes (max_bin in cub::CachingDeviceAllocator). Note that unlike in cub, allocations larger than binGrowth^maxBin are set to fail.");
   allocator.addUntracked<unsigned int>("maxCachedBytes", 0)->setComment("Total storage for the allocator. 0 means no limit.");
   allocator.addUntracked<double>("maxCachedFraction", 0.8)->setComment("Fraction of total device memory taken for the allocator. In case there are multiple devices with different amounts of memory, the smallest of them is taken. If maxCachedBytes is non-zero, the smallest of them is taken.");
+  allocator.addUntracked<bool>("debug", false)->setComment("Enable debug prints");
   desc.addUntracked<edm::ParameterSetDescription>("allocator", allocator)->setComment("See the documentation of cub::CachingDeviceAllocator for more details.");
 
   descriptions.add("CUDAService", desc);
