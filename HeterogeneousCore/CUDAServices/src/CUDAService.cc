@@ -80,7 +80,40 @@ unsigned int getCudaCoresPerSM(unsigned int major, unsigned int minor) {
   }
 }
 
+namespace {
+  template <template<typename> typename UniquePtr,
+            typename Allocate>
+  void preallocate(Allocate allocate, const std::vector<unsigned int>& bufferSizes) {
+    auto current_device = cuda::device::current::get();
+    auto stream = current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream);
 
+    std::vector<UniquePtr<char[]> > buffers;
+    buffers.reserve(bufferSizes.size());
+    for(auto size: bufferSizes) {
+      buffers.push_back(allocate(size, stream));
+    }
+  }
+
+  void devicePreallocate(CUDAService& cs, int numberOfDevices, const std::vector<unsigned int>& bufferSizes) {
+    int device;
+    cudaCheck(cudaGetDevice(&device));
+    for(int i=0; i<numberOfDevices; ++i) {
+      cudaCheck(cudaSetDevice(i));
+      preallocate<edm::cuda::device::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
+          return cs.make_device_unique<char[]>(size, stream);
+        }, bufferSizes);
+    }
+    cudaCheck(cudaSetDevice(device));
+  }
+
+  void hostPreallocate(CUDAService& cs, const std::vector<unsigned int>& bufferSizes) {
+    preallocate<edm::cuda::device::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
+        return cs.make_host_unique<char[]>(size, stream);
+      }, bufferSizes);
+  }
+}
+
+/// Constructor
 CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry& iRegistry) {
   bool configEnabled = config.getUntrackedParameter<bool>("enabled");
   if (not configEnabled) {
@@ -290,6 +323,10 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
 
   log << "CUDAService fully initialized";
   enabled_ = true;
+
+  // Preallocate buffers if asked to
+  devicePreallocate(*this, numberOfDevices_, allocator.getUntrackedParameter<std::vector<unsigned int> >("devicePreallocate"));
+  hostPreallocate(*this, allocator.getUntrackedParameter<std::vector<unsigned int> >("hostPreallocate"));
 }
 
 CUDAService::~CUDAService() {
@@ -328,6 +365,8 @@ void CUDAService::fillDescriptions(edm::ConfigurationDescriptions & descriptions
   allocator.addUntracked<unsigned int>("maxCachedBytes", 0)->setComment("Total storage for the allocator. 0 means no limit.");
   allocator.addUntracked<double>("maxCachedFraction", 0.8)->setComment("Fraction of total device memory taken for the allocator. In case there are multiple devices with different amounts of memory, the smallest of them is taken. If maxCachedBytes is non-zero, the smallest of them is taken.");
   allocator.addUntracked<bool>("debug", false)->setComment("Enable debug prints");
+  allocator.addUntracked<std::vector<unsigned int> >("devicePreallocate", std::vector<unsigned int>{})->setComment("Preallocates buffers of given bytes on all devices");
+  allocator.addUntracked<std::vector<unsigned int> >("hostPreallocate", std::vector<unsigned int>{})->setComment("Preallocates buffers of given bytes on the host");
   desc.addUntracked<edm::ParameterSetDescription>("allocator", allocator)->setComment("See the documentation of cub::CachingDeviceAllocator for more details.");
 
   descriptions.add("CUDAService", desc);
@@ -373,6 +412,10 @@ int CUDAService::getCurrentDevice() const {
 struct CUDAService::Allocator {
   template <typename ...Args>
   Allocator(size_t max, Args&&... args): maxAllocation(max), deviceAllocator(args...), hostAllocator(std::forward<Args>(args)...) {}
+
+  void devicePreallocate(int numberOfDevices, const std::vector<unsigned int>& bytes);
+  void hostPreallocate(int numberOfDevices, const std::vector<unsigned int>& bytes);
+
   size_t maxAllocation;
   cub::CachingDeviceAllocator deviceAllocator;
   cub::CachingHostAllocator hostAllocator;
