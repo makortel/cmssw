@@ -909,31 +909,18 @@ ProvenanceDumper::work_() {
         moduleLabel = triggerPaths;
       }
 
+      std::stringstream s;
 
-      auto addModule = [&](std::string const& moduleLabel) {
-        if(processParameterSet->existsAs<edm::ParameterSet>(moduleLabel)) {
-          edm::ParameterSet const& moduleParameterSet = processParameterSet->getParameterSet(moduleLabel);
-          std::stringstream s;
-          if(!moduleParameterSet.isRegistered()) {
-            edm::ParameterSet moduleParameterSetCopy = processParameterSet->getParameterSet(moduleLabel);
-            moduleParameterSetCopy.registerIt();
-            s << moduleParameterSetCopy.id();
-          } else {
-            s << moduleParameterSet.id();
-          }
-          moduleToIdBranches[std::make_pair(product.processName(), moduleLabel)][s.str()].push_back(product);
-          return true;
-        }
-        return false;
-      };
-      if(addModule(moduleLabel)) {
+      if(processParameterSet->existsAs<edm::ParameterSet>(moduleLabel)) {
         edm::ParameterSet const& moduleParameterSet = processParameterSet->getParameterSet(moduleLabel);
-        if(moduleParameterSet.getParameter<std::string>("@module_edm_type") == "EDProducer" &&
-           moduleParameterSet.getParameter<std::string>("@module_type") == "SwitchProducer") {
-          for(const auto& cas: moduleParameterSet.getParameter<std::vector<std::string> >("@all_cases")) {
-            addModule(cas);
-          }
+        if(!moduleParameterSet.isRegistered()) {
+          edm::ParameterSet moduleParameterSetCopy = processParameterSet->getParameterSet(moduleLabel);
+          moduleParameterSetCopy.registerIt();
+          s << moduleParameterSetCopy.id();
+        } else {
+          s << moduleParameterSet.id();
         }
+        moduleToIdBranches[std::make_pair(product.processName(), product.moduleLabel())][s.str()].push_back(product);
       }
     }
   }
