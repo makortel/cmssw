@@ -130,6 +130,13 @@ class SwitchProducer(EDProducer):
         return myname
     def moduleLabel_(self, myname):
         return myname
+    def appendToProcessDescList_(self, lst, myname):
+        # This way we can insert the chosen EDProducer to @all_modules
+        # so that we get easily a worker for it
+        lst.extend([
+            myname,
+            myname+"@"+self._chooseResource()
+        ])
     def insertInto(self, parameterSet, myname):
         for resource in self.parameterNames_():
             producer = self.__dict__[resource]
@@ -395,5 +402,6 @@ if __name__ == "__main__":
             self.assertEqual(mp.values["a"][1].values["@module_type"], (True, "A"))
             self.assertEqual(mp.values["sp"][1].values["@module_edm_type"], (True, "EDProducer"))
             self.assertEqual(mp.values["sp"][1].values["@module_type"], (True, "SwitchProducer"))
+            self.assertEqual(mp.values["@all_modules"][1], ["a", "sp", "sp@test2"])
 
     unittest.main()

@@ -441,6 +441,8 @@ class _TypedParameterizable(_Parameterizable):
         if ind >= 0:
             return myname[:ind]
         return myname
+    def appendToProcessDescList_(self, lst, myname):
+        lst.append(self.nameInProcessDesc_(myname))
     def insertInto(self, parameterSet, myname):
         newpset = parameterSet.newPSet()
         newpset.addString(True, "@module_label", self.moduleLabel_(myname))
