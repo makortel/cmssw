@@ -133,29 +133,32 @@ class SwitchProducer(EDProducer):
     def appendToProcessDescList_(self, lst, myname):
         # This way we can insert the chosen EDProducer to @all_modules
         # so that we get easily a worker for it
-        lst.extend([
-            myname,
-            myname+"@"+self._chooseResource()
-        ])
+        lst.append(myname)
+        for case in self.parameterNames_():
+            lst.append(myname+"@"+case)
     def insertInto(self, parameterSet, myname):
-        for resource in self.parameterNames_():
-            producer = self.__dict__[resource]
-            producer.insertInto(parameterSet, myname+"@"+resource)
+        for case in self.parameterNames_():
+            producer = self.__dict__[case]
+            producer.insertInto(parameterSet, myname+"@"+case)
+            #tmppset = parameterSet.getPSet(True, myname+"@"+case)
+            #tmppset.addString(True, "@module_label", tmppset.getString(True, "@module_label")+"@"+case)
         newpset = parameterSet.newPSet()
         newpset.addString(True, "@module_label", self.moduleLabel_(myname))
         newpset.addString(True, "@module_type", type(self).__name__)
         newpset.addString(True, "@module_edm_type", "EDProducer")
         newpset.addVString(True, "@all_cases", [myname+"@"+p for p in self.parameterNames_()])
         newpset.addString(False, "@chosen_case", myname+"@"+self._chooseResource())
-        tmppset = parameterSet.newPSet()
-        self._getProducer().insertInto(tmppset, myname)
-        newpset.addPSet(False, "@chosen_case_pset", tmppset.getPSet(True, myname)) # bit silly but it needs to be attached with different name than myname
+        #tmppset = parameterSet.newPSet()
+        #self._getProducer().insertInto(tmppset, myname)
+        #newpset.addPSet(False, "@chosen_case_pset", tmppset.getPSet(True, myname)) # bit silly but it needs to be attached with different name than myname
         parameterSet.addPSet(True, self.nameInProcessDesc_(myname), newpset)
 
     # Let's see if we should treat this like an EDAlias as well
     # The web of lies just spreads...
     def _placeImpl(self,name,proc):
         proc._placeProducer(name,self)
+        for case in self.parameterNames_():
+            proc._placeProducer(name+"@"+case, self.__dict__[case])
 
     # Mimick _Module
     def _clonesequence(self, lookuptable):
@@ -203,6 +206,11 @@ if __name__ == "__main__":
             self.__insertValue(tracked,label,value)
         def addString(self,tracked,label,value):
             self.__insertValue(tracked,label,value)
+        def getString(self, tracked, label):
+            elem = self.values[label]
+            if elem[0] != tracked:
+                raise Exception("%s: no such %s parameter" % (label, "tracked" if tracked else "untracked"))
+            return elem[1]
         def addVString(self,tracked,label,value):
             self.__insertValue(tracked,label,value)
         def addInputTag(self,tracked,label,value):
