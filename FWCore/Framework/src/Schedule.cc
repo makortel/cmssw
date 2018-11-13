@@ -239,7 +239,7 @@ namespace edm {
         std::string const& aliasType = aliasPSet.getParameter<std::string>("@module_type");
         if(aliasType == "SwitchProducer") {
           // The lookup mechanism must be improved...
-          std::string const& moduleLabel = aliasPSet.getParameter<std::string>("@alias_from");
+          std::string const& moduleLabel = aliasPSet.getParameter<std::string>("@alias_to");
           for(auto const& item: preg.productList()) {
             if(item.first.moduleLabel() == moduleLabel && item.first.processName() == processName) {
               checkAndInsertAlias(item.first.friendlyClassName(), moduleLabel, item.first.productInstanceName(), processName, alias, item.first.productInstanceName(), preg, aliasMap, aliasKeys);
