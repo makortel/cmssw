@@ -180,9 +180,10 @@ class _SwitchProducerAlias(object):
 
     def insertInto(self, parameterSet, myname):
         newpset = parameterSet.newPSet()
-        newpset.addString(True, "@module_label", myname)
+        newpset.addString(True, "@module_label", self._aliasTo)
         newpset.addString(True, "@module_type", "SwitchProducer")
         newpset.addString(True, "@module_edm_type", "EDAlias")
+        newpset.addString(True, "@alias_from", self._aliasFrom)
         parameterSet.addPSet(True, self.nameInProcessDesc_(myname), newpset)
 
 if __name__ == "__main__":

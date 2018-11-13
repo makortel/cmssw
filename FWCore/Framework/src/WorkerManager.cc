@@ -41,16 +41,7 @@ namespace edm {
                                    PreallocationConfiguration const* prealloc,
                                    std::shared_ptr<ProcessConfiguration const> processConfiguration,
                                    std::string const & label) {
-    // Do SwitchProducer aliasing magic
-    ParameterSet *real_pset = &pset;
-    if(pset.getParameter<std::string>("@module_type") == kSwitchProducerType) { // @module_edm_type is EDProducer
-      const auto& chosen = pset.getUntrackedParameter<std::string>("@chosen_case");
-      bool isTracked;
-      real_pset = pset.getPSetForUpdate("@chosen_case_pset", isTracked);
-      assert(not isTracked);
-      assert(real_pset);
-    }
-    WorkerParams params(real_pset, preg, prealloc, processConfiguration, *actionTable_);
+    WorkerParams params(&pset, preg, prealloc, processConfiguration, *actionTable_);
     return workerReg_.getWorker(params, label);
   }
 

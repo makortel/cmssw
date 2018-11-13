@@ -236,40 +236,52 @@ namespace edm {
         // usually alias is the same as aliasLabel, but for
         // SwitchProducer we need more flexibility
         std::string const& alias = aliasPSet.getParameter<std::string>("@module_label");
-        std::vector<std::string> vPSetNames = aliasPSet.getParameterNamesForType<VParameterSet>();
-        for(std::string const& moduleLabel : vPSetNames) {
-          VParameterSet vPSet = aliasPSet.getParameter<VParameterSet>(moduleLabel);
-          for(ParameterSet& pset : vPSet) {
-            desc.validate(pset);
-            std::string friendlyClassName = pset.getParameter<std::string>("type");
-            std::string productInstanceName = pset.getParameter<std::string>("fromProductInstance");
-            std::string instanceAlias = pset.getParameter<std::string>("toProductInstance");
-            if(productInstanceName == star) {
-              bool match = false;
-              BranchKey lowerBound(friendlyClassName, moduleLabel, empty, empty);
-              for(ProductRegistry::ProductList::const_iterator it = preg.productList().lower_bound(lowerBound);
-                  it != preg.productList().end() && it->first.friendlyClassName() == friendlyClassName && it->first.moduleLabel() == moduleLabel;
-                  ++it) {
-                if(it->first.processName() != processName) {
-                  continue;
-                }
-                match = true;
+        std::string const& aliasType = aliasPSet.getParameter<std::string>("@module_type");
+        if(aliasType == "SwitchProducer") {
+          // The lookup mechanism must be improved...
+          std::string const& moduleLabel = aliasPSet.getParameter<std::string>("@alias_from");
+          for(auto const& item: preg.productList()) {
+            if(item.first.moduleLabel() == moduleLabel && item.first.processName() == processName) {
+              checkAndInsertAlias(item.first.friendlyClassName(), moduleLabel, item.first.productInstanceName(), processName, alias, item.first.productInstanceName(), preg, aliasMap, aliasKeys);
+            }
+          }
+        }
+        else {
+          std::vector<std::string> vPSetNames = aliasPSet.getParameterNamesForType<VParameterSet>();
+          for(std::string const& moduleLabel : vPSetNames) {
+            VParameterSet vPSet = aliasPSet.getParameter<VParameterSet>(moduleLabel);
+            for(ParameterSet& pset : vPSet) {
+              desc.validate(pset);
+              std::string friendlyClassName = pset.getParameter<std::string>("type");
+              std::string productInstanceName = pset.getParameter<std::string>("fromProductInstance");
+              std::string instanceAlias = pset.getParameter<std::string>("toProductInstance");
+              if(productInstanceName == star) {
+                bool match = false;
+                BranchKey lowerBound(friendlyClassName, moduleLabel, empty, empty);
+                for(ProductRegistry::ProductList::const_iterator it = preg.productList().lower_bound(lowerBound);
+                    it != preg.productList().end() && it->first.friendlyClassName() == friendlyClassName && it->first.moduleLabel() == moduleLabel;
+                    ++it) {
+                  if(it->first.processName() != processName) {
+                    continue;
+                  }
+                  match = true;
 
-                checkAndInsertAlias(friendlyClassName, moduleLabel, it->first.productInstanceName(), processName, alias, instanceAlias, preg, aliasMap, aliasKeys);
-              }
-              if(!match) {
-                // No product was found matching the alias.
-                // We throw an exception only if a module with the specified module label was created in this process.
-                for(auto const& product : preg.productList()) {
-                  if(moduleLabel == product.first.moduleLabel() && processName == product.first.processName()) {
-                    throw Exception(errors::Configuration, "EDAlias parameter set mismatch\n")
-                       << "There are no products of type '" << friendlyClassName << "'\n"
-                       << "with module label '" << moduleLabel << "'.\n";
+                  checkAndInsertAlias(friendlyClassName, moduleLabel, it->first.productInstanceName(), processName, alias, instanceAlias, preg, aliasMap, aliasKeys);
+                }
+                if(!match) {
+                  // No product was found matching the alias.
+                  // We throw an exception only if a module with the specified module label was created in this process.
+                  for(auto const& product : preg.productList()) {
+                    if(moduleLabel == product.first.moduleLabel() && processName == product.first.processName()) {
+                      throw Exception(errors::Configuration, "EDAlias parameter set mismatch\n")
+                        << "There are no products of type '" << friendlyClassName << "'\n"
+                        << "with module label '" << moduleLabel << "'.\n";
+                    }
                   }
                 }
+              } else {
+                checkAndInsertAlias(friendlyClassName, moduleLabel, productInstanceName, processName, alias, instanceAlias, preg, aliasMap, aliasKeys);
               }
-            } else {
-              checkAndInsertAlias(friendlyClassName, moduleLabel, productInstanceName, processName, alias, instanceAlias, preg, aliasMap, aliasKeys);
             }
           }
         }
