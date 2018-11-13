@@ -231,8 +231,11 @@ namespace edm {
       std::map<BranchKey, BranchKey> aliasKeys; // Used to search for duplicates or clashes.
 
       // Now, loop over the alias information and store it in aliasMap.
-      for(std::string const& alias : aliases) {
-        ParameterSet const& aliasPSet = proc_pset.getParameterSet(alias);
+      for(std::string const& aliasLabel : aliases) {
+        ParameterSet const& aliasPSet = proc_pset.getParameterSet(aliasLabel);
+        // usually alias is the same as aliasLabel, but for
+        // SwitchProducer we need more flexibility
+        std::string const& alias = aliasPSet.getParameter<std::string>("@module_label");
         std::vector<std::string> vPSetNames = aliasPSet.getParameterNamesForType<VParameterSet>();
         for(std::string const& moduleLabel : vPSetNames) {
           VParameterSet vPSet = aliasPSet.getParameter<VParameterSet>(moduleLabel);
