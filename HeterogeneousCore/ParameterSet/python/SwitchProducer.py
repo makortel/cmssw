@@ -183,7 +183,7 @@ class _SwitchProducerAlias(object):
         newpset.addString(True, "@module_label", self._aliasFrom)
         newpset.addString(True, "@module_type", "SwitchProducer")
         newpset.addString(True, "@module_edm_type", "EDAlias")
-        newpset.addString(True, "@alias_to", self._aliasTo)
+        newpset.addString(False, "@alias_to", self._aliasTo)
         parameterSet.addPSet(True, self.nameInProcessDesc_(myname), newpset)
 
 if __name__ == "__main__":
