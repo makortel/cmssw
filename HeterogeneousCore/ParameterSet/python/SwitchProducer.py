@@ -140,12 +140,17 @@ class SwitchProducer(EDProducer):
         for case in self.parameterNames_():
             producer = self.__dict__[case]
             producer.insertInto(parameterSet, myname+"@"+case)
+            #tmppset = parameterSet.getPSet(True, myname+"@"+case)
+            #tmppset.addString(True, "@module_label", tmppset.getString(True, "@module_label")+"@"+case)
         newpset = parameterSet.newPSet()
         newpset.addString(True, "@module_label", self.moduleLabel_(myname))
         newpset.addString(True, "@module_type", type(self).__name__)
         newpset.addString(True, "@module_edm_type", "EDProducer")
         newpset.addVString(True, "@all_cases", [myname+"@"+p for p in self.parameterNames_()])
         newpset.addString(False, "@chosen_case", myname+"@"+self._chooseResource())
+        #tmppset = parameterSet.newPSet()
+        #self._getProducer().insertInto(tmppset, myname)
+        #newpset.addPSet(False, "@chosen_case_pset", tmppset.getPSet(True, myname)) # bit silly but it needs to be attached with different name than myname
         parameterSet.addPSet(True, self.nameInProcessDesc_(myname), newpset)
 
     def _placeImpl(self,name,proc):
@@ -155,7 +160,6 @@ class SwitchProducer(EDProducer):
             # automatically because they're not part of any
             # Task/Sequence/Path
             proc._placeProducer(name+"@"+case, self.__dict__[case])
-        proc._placeAlias("@"+name, _SwitchProducerAlias(name, name+"@"+self._chooseResource()))
 
     # Mimick _Module
     def _clonesequence(self, lookuptable):
@@ -166,25 +170,6 @@ class SwitchProducer(EDProducer):
         def _errorstr(self):
             return "SwitchProducer" # TODO:
 
-class _SwitchProducerAlias(object):
-    def __init__(self, aliasFrom, aliasTo):
-        super(_SwitchProducerAlias, self).__init__()
-        self._aliasFrom = aliasFrom
-        self._aliasTo = aliasTo
-
-    def nameInProcessDesc_(self, myname):
-        return myname;
-
-    def appendToProcessDescList_(self, lst, myname):
-        lst.append(self.nameInProcessDesc_(myname))
-
-    def insertInto(self, parameterSet, myname):
-        newpset = parameterSet.newPSet()
-        newpset.addString(True, "@module_label", self._aliasFrom)
-        newpset.addString(True, "@module_type", "SwitchProducer")
-        newpset.addString(True, "@module_edm_type", "EDAlias")
-        newpset.addString(False, "@alias_to", self._aliasTo)
-        parameterSet.addPSet(True, self.nameInProcessDesc_(myname), newpset)
 
 if __name__ == "__main__":
     import unittest
