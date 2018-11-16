@@ -299,22 +299,6 @@ namespace edm {
 
     typedef std::vector<std::string> vstring;
 
-    void processSwitchProducers(ParameterSet const& proc_pset, std::string const& processName, ProductRegistry& preg) {
-      auto const& modules = proc_pset.getParameter<vstring>("@all_modules");
-      for(auto const& moduleLabel: modules) {
-        auto const& modulePSet = proc_pset.getParameterSet(moduleLabel);
-        if(modulePSet.getParameter<std::string>("@module_edm_type") == "EDProducer" and
-           modulePSet.getParameter<std::string>("@module_type") == "SwitchProducer") {
-          auto const& chosenCase = modulePSet.getUntrackedParameter<std::string>("@chosen_case");
-          for(auto const& item: preg.productList()) {
-            if(item.first.moduleLabel() == chosenCase && item.first.processName() == processName) {
-              preg.addLabelAlias(item.second, moduleLabel, item.first.productInstanceName());
-            }
-          }
-        }
-      }
-    }
-
     void reduceParameterSet(ParameterSet& proc_pset,
                             vstring const& end_path_name_list,
                             vstring& modulesInConfig,
@@ -561,7 +545,6 @@ namespace edm {
     reduceParameterSet(proc_pset, tns.getEndPaths(), modulesInConfig, usedModuleLabels,
                        outputModulePathPositions);
     processEDAliases(proc_pset, processConfiguration->processName(), preg);
-    processSwitchProducers(proc_pset, processConfiguration->processName(), preg);
     proc_pset.registerIt();
     processConfiguration->setParameterSetID(proc_pset.id());
     processConfiguration->setProcessConfigurationID();
