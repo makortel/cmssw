@@ -36,6 +36,12 @@ namespace edm {
     enum MatchMode { Strict = 0,
                      Permissive };
 
+    enum class AliasType {
+      None,
+      EDAlias,
+      SwitchProducer
+    };
+
     BranchDescription();
 
     BranchDescription(BranchType const& branchType,
@@ -53,7 +59,8 @@ namespace edm {
 
     BranchDescription(BranchDescription const& aliasForBranch,
                       std::string const& moduleLabelAlias,
-                      std::string const& poruductInstanceAlias);
+                      std::string const& poruductInstanceAlias,
+                      AliasType aliasType = AliasType::EDAlias);
 
     ~BranchDescription() {}
 
@@ -75,6 +82,7 @@ namespace edm {
     BranchID const& branchID() const {return branchID_;}
     BranchID const& aliasForBranchID() const {return aliasForBranchID_;}
     bool isAlias() const {return aliasForBranchID_.isValid() && produced();}
+    AliasType aliasType() const {return transient_.aliasType_;}
     BranchID const& originalBranchID() const {return aliasForBranchID_.isValid() ? aliasForBranchID_ : branchID_;}
     std::string const& fullClassName() const {return fullClassName_;}
     std::string const& className() const {return fullClassName();}
@@ -150,6 +158,9 @@ namespace edm {
       // The basket size of the branch, as marked
       // in the data dictionary.
       int basketSize_;
+
+      // The type of the alias
+      AliasType aliasType_;
       
       // Was this branch produced in this process rather than in a previous process
       bool produced_;

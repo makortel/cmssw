@@ -25,6 +25,7 @@ namespace edm {
     unwrappedType_(),
     splitLevel_(),
     basketSize_(),
+    aliasType_(AliasType::None),
     produced_(false),
     onDemand_(false),
     dropped_(false),
@@ -86,7 +87,8 @@ namespace edm {
   BranchDescription::BranchDescription(
                         BranchDescription const& aliasForBranch,
                         std::string const& moduleLabelAlias,
-                        std::string const& productInstanceAlias) :
+                        std::string const& productInstanceAlias,
+                        AliasType aliasType) :
       branchType_(aliasForBranch.branchType()),
       moduleLabel_(moduleLabelAlias),
       processName_(aliasForBranch.processName()),
@@ -103,6 +105,10 @@ namespace edm {
     transient_.availableOnlyAtEndTransition_=aliasForBranch.availableOnlyAtEndTransition();
     transient_.moduleName_ = aliasForBranch.moduleName();
     transient_.parameterSetID_ = aliasForBranch.parameterSetID();
+    if(aliasType == AliasType::None) {
+      throw Exception(errors::LogicError) << "Tried to construct BranchDescription for an alias with aliasType of None.\nPlease report this error to the FWCore developers.";
+    }
+    transient_.aliasType_ = aliasType;
     setUnwrappedType(aliasForBranch.unwrappedType());
     init();
   }
