@@ -249,6 +249,52 @@ namespace edm {
       std::shared_ptr<BranchDescription const> bd_;
   };
 
+  class SwitchAliasProductResolver : public ProductResolverBase {
+  public:
+    typedef ProducedProductResolver::ProductStatus ProductStatus;
+    SwitchAliasProductResolver(std::shared_ptr<BranchDescription const> bd, Principal const *iParentPrincipal);
+
+    void connectTo(ProductResolverBase const& iOther, Principal const *) final {
+      realProduct_.connectTo(iOther, iParentPrincipal);
+    }
+
+  private:
+    Resolution resolveProduct(Principal const& principal,
+                              bool skipCurrentProcess,
+                              SharedResourcesAcquirer* sra,
+                              ModuleCallingContext const* mcc) const override {
+      return realProduct_.resolveProduct(principal, skipCurrentProcess, sra, mcc);
+    }
+
+    bool unscheduledWasNotRun_() const override;
+    bool productUnavailable_() const override;
+    bool productResolved_() const override { return realProduct_.productResolved(); }
+    bool productWasDeleted_() const override { return realProduct_.productWasDeleted(); }
+    bool productWasFetchedAndIsValid_(bool iSkipCurrentProcess) const override { return realProduct_.productWasFetchedAndIsValid(iSkipCurrentProcess); }
+
+    void putProduct_(std::unique_ptr<WrapperBase> edp) const override;
+    void putOrMergeProduct_(std::unique_ptr<WrapperBase> prod, MergeableRunProductMetadata const* mergeableRunProductMetadata) const final;
+    BranchDescription const& branchDescription_() const override {return *bd_;}
+    void resetBranchDescription_(std::shared_ptr<BranchDescription const> bd) override {bd_ = bd;}
+    Provenance const* provenance_() const final;
+
+    std::string const& resolvedModuleLabel_() const override {
+      // I don't really know which one to return (here or from
+      // realProduct_). I guess "here" makes more sense as we're trying
+      // to hide the realProduct_. Having no callers of
+      // resolvedModuleLabel() doesn't help in deciphering...
+      return moduleLabel();
+    }
+    void setProvenance_(ProductProvenanceRetriever const* provRetriever, ProcessHistory const& ph, ProductID const& pid) override;
+    void setProcessHistory_(ProcessHistory const& ph) override;
+    ProductProvenance const* productProvenancePtr_() const override;
+    void resetProductData_(bool deleteEarly) override;
+    bool singleProduct_() const override;
+
+    ProducedProductResolver& realProduct_;
+    std::shared_ptr<BranchDescription const> bd_;
+  };
+
   class ParentProcessProductResolver : public ProductResolverBase {
   public:
     typedef ProducedProductResolver::ProductStatus ProductStatus;

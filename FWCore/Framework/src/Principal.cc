@@ -143,13 +143,15 @@ namespace edm {
       BranchDescription const& bd = prod.second;
       if(bd.branchType() == branchType_) {
         if(isForPrimaryProcess or bd.processName() == pc.processName()) {
-          if(bd.isAlias()) {
+          if(bd.aliasType() == BranchDescription::AliasType::EDAlias) {
             hasAliases = true;
           } else {
             auto cbd = std::make_shared<BranchDescription const>(bd);
             if(bd.produced()) {
               if(bd.moduleLabel() == source) {
                 addSourceProduct(cbd);
+              } else if(bd.aliasType() == BranchDescription::AliasType::SwitchProducer) {
+                addSwitchAliasedProduct(cbd);
               } else if(bd.onDemand()) {
                 assert(branchType_ == InEvent);
                 addUnscheduledProduct(cbd);
@@ -171,7 +173,7 @@ namespace edm {
     if(hasAliases) {
       for(auto const& prod : prodsList) {
         BranchDescription const& bd = prod.second;
-        if(bd.isAlias() && bd.branchType() == branchType_) {
+        if(bd.aliasType() == BranchDescription::AliasType::EDAlias && bd.branchType() == branchType_) {
           auto cbd = std::make_shared<BranchDescription const>(bd);
           addAliasedProduct(cbd);
         }
@@ -328,6 +330,11 @@ namespace edm {
     assert(index != ProductResolverIndexInvalid);
 
     addProductOrThrow(std::make_unique<AliasProductResolver>(std::move(bd), dynamic_cast<ProducedProductResolver&>(*productResolvers_[index])));
+  }
+
+  void
+  Principal::addSwitchAliasedProduct(std::shared_ptr<BranchDescription const> bd) {
+    addProductOrThrow(std::make_unique<SwitchAliasProductResolver>(std::move(bd)));
   }
 
   void

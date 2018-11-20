@@ -578,7 +578,61 @@ namespace edm {
   }
   
 
+  void SwitchAliasProductResolver::SwitchAliasProductResolver(std::shared_ptr<BranchDescription const> bd, ProducedProductResolver& realProduct):
+    ProductResolverBase(),
+    realProduct_(realProduct),
+    bd_(bd)
+  {}
+
+  bool SwitchAliasProductResolver::unscheduledWasNotRun_() const {
+    // take from Produced/Puttable/Unscheduled???
+    // or maybe it should come from the alias instead
+  }
+
+  bool SwitchAliasProductResolver::productUnavailable_() const {
+    // take from Produced/Puttable/Unscheduled
+    // or maybe it should come from the alias instead
+    //
+    // the logic for "filter on a Path" should somehow come to play via the prefetching
+  }
+
+  void SwitchAliasProductResolver::putProduct_(std::unique_ptr<WrapperBase> ) const {
+    throw Exception(errors::LogicError)
+    << "SwitchAliasProductResolver::putProduct_() not implemented and should never be called.\n"
+    << "Contact a Framework developer\n";
+  }
   
+  void SwitchAliasProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp) const {
+    throw Exception(errors::LogicError)
+    << "SwitchAliasProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp) not implemented and should never be called.\n"
+    << "Contact a Framework developer\n";
+  }
+
+  Provenance const* SwitchAliasProductResolver::provenance_() const final {
+    // take from Produced/Puttable/Unscheduled
+  }
+  
+  void SwitchAliasProductResolver::setProvenance_(ProductProvenanceRetriever const* provRetriever, ProcessHistory const& ph, ProductID const& pid) {
+    // take from Produced/Puttable/Unscheduled
+  }
+
+  void SwitchAliasProductResolver::setProcessHistory_(ProcessHistory const& ph) override {
+    // take from Produced/Puttable/Unscheduled
+  }
+
+  ProductProvenance const* SwitchAliasProductResolver::productProvenancePtr_() const {
+    // take from Produced/Puttable/Unscheduled
+  }
+
+  void SwitchAliasProductResolver::resetProductData_(bool deleteEarly) override {
+    realProduct_.resetProductData_(deleteEarly);
+  }
+
+  bool SwitchAliasProductResolver::singleProduct_() const {
+    return true;
+  }
+
+
   void ParentProcessProductResolver::setProvenance_(ProductProvenanceRetriever const* provRetriever, ProcessHistory const& ph, ProductID const& pid) {
     provRetriever_ = provRetriever;
   }
