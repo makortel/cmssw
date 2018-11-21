@@ -30,7 +30,9 @@ namespace edm {
     descriptions.addDefault(desc);
   }
 
-  void SwitchProducer::produce(StreamID, Event& e, EventSetup const& c) const {}
+  void SwitchProducer::produce(StreamID, Event& e, EventSetup const& c) const {
+    throw cms::Exception("LogicError") << "SwitchProcucer::produce() should never get called.\nPlese contact a Framework developer";
+  }
 }
 
 using edm::SwitchProducer;

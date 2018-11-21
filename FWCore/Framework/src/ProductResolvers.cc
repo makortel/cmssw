@@ -578,15 +578,40 @@ namespace edm {
   }
   
 
-  void SwitchAliasProductResolver::SwitchAliasProductResolver(std::shared_ptr<BranchDescription const> bd, ProducedProductResolver& realProduct):
+  SwitchAliasProductResolver::SwitchAliasProductResolver(std::shared_ptr<BranchDescription const> bd, ProducedProductResolver& realProduct):
     ProductResolverBase(),
     realProduct_(realProduct),
-    bd_(bd)
+    bd_(bd),
+    productData_(bd)
   {}
+
+  ProductResolverBase::Resolution
+  SwitchAliasProductResolver::resolveProduct_(Principal const& principal,
+                                              bool skipCurrentProcess,
+                                              SharedResourcesAcquirer* sra,
+                                              ModuleCallingContext const* mcc) const {
+    auto res = realProduct_.resolveProduct(principal, skipCurrentProcess, sra, mcc);
+    if(res.data() == nullptr) {
+      return res;
+    }
+    // Use the Wrapper of the pointed-to resolver, but the provenance of this resolver
+    productData_.unsafe_setWrapper(res.data()->sharedConstWrapper());
+    return Resolution(&productData_);
+  }
+
+  void SwitchAliasProductResolver::prefetchAsync_(WaitingTask* waitTask,
+                                                  Principal const& principal,
+                                                  bool skipCurrentProcess,
+                                                  ServiceToken const& token,
+                                                  SharedResourcesAcquirer* sra,
+                                                  ModuleCallingContext const* mcc) const  {
+    realProduct_.prefetchAsync(waitTask, principal, skipCurrentProcess, token, sra, mcc);
+  }
 
   bool SwitchAliasProductResolver::unscheduledWasNotRun_() const {
     // take from Produced/Puttable/Unscheduled???
     // or maybe it should come from the alias instead
+    return realProduct_.unscheduledWasNotRun();
   }
 
   bool SwitchAliasProductResolver::productUnavailable_() const {
@@ -594,6 +619,7 @@ namespace edm {
     // or maybe it should come from the alias instead
     //
     // the logic for "filter on a Path" should somehow come to play via the prefetching
+    return realProduct_.productUnavailable();
   }
 
   void SwitchAliasProductResolver::putProduct_(std::unique_ptr<WrapperBase> ) const {
@@ -608,23 +634,24 @@ namespace edm {
     << "Contact a Framework developer\n";
   }
 
-  Provenance const* SwitchAliasProductResolver::provenance_() const final {
-    // take from Produced/Puttable/Unscheduled
+  Provenance const* SwitchAliasProductResolver::provenance_() const {
+    return &productData_.provenance();
   }
   
   void SwitchAliasProductResolver::setProvenance_(ProductProvenanceRetriever const* provRetriever, ProcessHistory const& ph, ProductID const& pid) {
-    // take from Produced/Puttable/Unscheduled
+    productData_.setProvenance(provRetriever,ph,pid);
   }
 
-  void SwitchAliasProductResolver::setProcessHistory_(ProcessHistory const& ph) override {
-    // take from Produced/Puttable/Unscheduled
+  void SwitchAliasProductResolver::setProcessHistory_(ProcessHistory const& ph) {
+    productData_.setProcessHistory(ph);
   }
 
   ProductProvenance const* SwitchAliasProductResolver::productProvenancePtr_() const {
-    // take from Produced/Puttable/Unscheduled
+    return provenance()->productProvenance();
   }
 
-  void SwitchAliasProductResolver::resetProductData_(bool deleteEarly) override {
+  void SwitchAliasProductResolver::resetProductData_(bool deleteEarly) {
+    productData_.resetProductData();
     realProduct_.resetProductData_(deleteEarly);
   }
 

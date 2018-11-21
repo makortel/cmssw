@@ -252,19 +252,23 @@ namespace edm {
   class SwitchAliasProductResolver : public ProductResolverBase {
   public:
     typedef ProducedProductResolver::ProductStatus ProductStatus;
-    SwitchAliasProductResolver(std::shared_ptr<BranchDescription const> bd, Principal const *iParentPrincipal);
+    SwitchAliasProductResolver(std::shared_ptr<BranchDescription const> bd, ProducedProductResolver& realProduct);
 
-    void connectTo(ProductResolverBase const& iOther, Principal const *) final {
+    void connectTo(ProductResolverBase const& iOther, Principal const *iParentPrincipal) final {
       realProduct_.connectTo(iOther, iParentPrincipal);
     }
 
   private:
-    Resolution resolveProduct(Principal const& principal,
-                              bool skipCurrentProcess,
-                              SharedResourcesAcquirer* sra,
-                              ModuleCallingContext const* mcc) const override {
-      return realProduct_.resolveProduct(principal, skipCurrentProcess, sra, mcc);
-    }
+    Resolution resolveProduct_(Principal const& principal,
+                               bool skipCurrentProcess,
+                               SharedResourcesAcquirer* sra,
+                               ModuleCallingContext const* mcc) const override;
+    void prefetchAsync_(WaitingTask* waitTask,
+                        Principal const& principal,
+                        bool skipCurrentProcess,
+                        ServiceToken const& token,
+                        SharedResourcesAcquirer* sra,
+                        ModuleCallingContext const* mcc) const override;
 
     bool unscheduledWasNotRun_() const override;
     bool productUnavailable_() const override;
@@ -273,7 +277,7 @@ namespace edm {
     bool productWasFetchedAndIsValid_(bool iSkipCurrentProcess) const override { return realProduct_.productWasFetchedAndIsValid(iSkipCurrentProcess); }
 
     void putProduct_(std::unique_ptr<WrapperBase> edp) const override;
-    void putOrMergeProduct_(std::unique_ptr<WrapperBase> prod, MergeableRunProductMetadata const* mergeableRunProductMetadata) const final;
+    void putOrMergeProduct_(std::unique_ptr<WrapperBase> prod) const final;
     BranchDescription const& branchDescription_() const override {return *bd_;}
     void resetBranchDescription_(std::shared_ptr<BranchDescription const> bd) override {bd_ = bd;}
     Provenance const* provenance_() const final;
@@ -291,8 +295,11 @@ namespace edm {
     void resetProductData_(bool deleteEarly) override;
     bool singleProduct_() const override;
 
+    // for "alias" view
     ProducedProductResolver& realProduct_;
-    std::shared_ptr<BranchDescription const> bd_;
+    std::shared_ptr<BranchDescription const> bd_; // with productData_ this is redundant
+    // for "product" view
+    ProductData productData_;
   };
 
   class ParentProcessProductResolver : public ProductResolverBase {
