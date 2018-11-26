@@ -31,7 +31,9 @@ namespace edm {
   }
 
   void SwitchProducer::produce(StreamID, Event& e, EventSetup const& c) const {
-    throw cms::Exception("LogicError") << "SwitchProcucer::produce() should never get called.\nPlese contact a Framework developer";
+    //throw cms::Exception("LogicError") << "SwitchProcucer::produce() should never get called.\nPlese contact a Framework developer";
+    // Ok, it gets called for scheduled by Path::runNextWorkerAsync() -> WorkerInPath::runWorkerAsync() -> Worker::doWorkAsync()
+    // What should we actually do then? Call the produce of the chosen EDProducer or just leave that to prefetching?
   }
 }
 
