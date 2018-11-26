@@ -793,11 +793,20 @@ trackValidatorFromPVAllTPPixelTrackingOnly = trackValidatorFromPVPixelTrackingOn
     doSimPlots = False,
     doSimTrackPlots = False,
 )
+trackValidatorBHadronPixelTrackingOnly = trackValidatorPixelTrackingOnly.clone(
+    dirName = "Tracking/PixelTrackBHadron/",
+    label_tp_effic = "trackingParticlesBHadron",
+    label_tp_effic_refvector = True,
+    doSimPlots = True,
+    doRecoTrackPlots = False, # Fake rate is defined wrt. all TPs, and that is already included in trackValidator
+    dodEdxPlots = False,
+)
 
 
 tracksValidationTruthPixelTrackingOnly = tracksValidationTruth.copy()
 tracksValidationTruthPixelTrackingOnly.replace(trackingParticleRecoTrackAsssociation, trackingParticlePixelTrackAsssociation)
 tracksValidationTruthPixelTrackingOnly.replace(VertexAssociatorByPositionAndTracks, PixelVertexAssociatorByPositionAndTracks)
+tracksValidationTruthPixelTrackingOnly.add(trackingParticlesBHadron)
 
 tracksPreValidationPixelTrackingOnly = cms.Task(
     tracksValidationTruthPixelTrackingOnly,
@@ -807,6 +816,7 @@ tracksPreValidationPixelTrackingOnly = cms.Task(
 tracksValidationPixelTrackingOnly = cms.Sequence(
     trackValidatorPixelTrackingOnly +
     trackValidatorFromPVPixelTrackingOnly +
+    trackValidatorFromPVAllTPPixelTrackingOnly +
     trackValidatorFromPVAllTPPixelTrackingOnly,
     tracksPreValidationPixelTrackingOnly
 )
