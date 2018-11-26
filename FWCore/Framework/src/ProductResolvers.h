@@ -258,6 +258,8 @@ namespace edm {
       realProduct_.connectTo(iOther, iParentPrincipal);
     }
 
+    void setupUnscheduled(UnscheduledConfigurator const& iConfigure) final;
+
   private:
     Resolution resolveProduct_(Principal const& principal,
                                bool skipCurrentProcess,
@@ -300,6 +302,9 @@ namespace edm {
     std::shared_ptr<BranchDescription const> bd_; // with productData_ this is redundant
     // for "product" view
     ProductData productData_;
+    Worker *worker_ = nullptr;
+    mutable WaitingTaskList waitingTasks_;
+    mutable std::atomic<bool> prefetchRequested_;
   };
 
   class ParentProcessProductResolver : public ProductResolverBase {

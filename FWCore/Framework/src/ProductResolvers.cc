@@ -582,8 +582,13 @@ namespace edm {
     ProductResolverBase(),
     realProduct_(realProduct),
     bd_(bd),
-    productData_(bd)
+    productData_(bd),
+    prefetchRequested_(false)
   {}
+
+  void SwitchAliasProductResolver::setupUnscheduled(UnscheduledConfigurator const& iConfigure) {
+    worker_ = iConfigure.findWorker(bd_->moduleLabel());
+  }
 
   ProductResolverBase::Resolution
   SwitchAliasProductResolver::resolveProduct_(Principal const& principal,
@@ -605,7 +610,40 @@ namespace edm {
                                                   ServiceToken const& token,
                                                   SharedResourcesAcquirer* sra,
                                                   ModuleCallingContext const* mcc) const  {
-    realProduct_.prefetchAsync(waitTask, principal, skipCurrentProcess, token, sra, mcc);
+    if(skipCurrentProcess) { return; }
+
+    if(bd_->onDemand()) {
+      // If SwitchProducer is not on any Path, act like an EDAlias (AliasProductResolver)
+      realProduct_.prefetchAsync(waitTask, principal, skipCurrentProcess, token, sra, mcc);
+      return;
+    }
+
+    // If SwitchProducer is on a Path, act like an EDProducer on a Path (PuttableProductResolver)
+    if(bd_->availableOnlyAtEndTransition() and mcc and not mcc->parent().isAtEndTransition()) {
+      return;
+    }
+
+    waitingTasks_.add(waitTask);
+
+    bool expected = false;
+    if(prefetchRequested_.compare_exchange_strong(expected, true)) {
+      //using a waiting task to do a callback guarantees that
+      // the waitingTasks_ list will be released from waiting even
+      // if the module does not put this data product or the
+      // module has an exception while running
+
+      auto waiting = make_waiting_task(tbb::task::allocate_root(),
+                                       [this](std::exception_ptr const *iException) {
+                                         if(nullptr != iException) {
+                                           waitingTasks_.doneWaiting(*iException);
+                                         }
+                                         else {
+                                           waitingTasks_.doneWaiting(std::exception_ptr());
+                                         }
+                                       });
+
+      worker_->callWhenDoneAsync(waiting);
+    }
   }
 
   bool SwitchAliasProductResolver::unscheduledWasNotRun_() const {
