@@ -613,10 +613,12 @@ namespace edm {
     if(skipCurrentProcess) { return; }
 
     if(bd_->onDemand()) {
+      edm::LogPrint("Foo") << "FOO: " << bd_->moduleLabel() << " is on demand";
       // If SwitchProducer is not on any Path, act like an EDAlias (AliasProductResolver)
       realProduct_.prefetchAsync(waitTask, principal, skipCurrentProcess, token, sra, mcc);
       return;
     }
+    edm::LogPrint("Foo") << "FOO: " << bd_->moduleLabel() << " is in a Path";
 
     // If SwitchProducer is on a Path, act like an EDProducer on a Path (PuttableProductResolver)
     if(bd_->availableOnlyAtEndTransition() and mcc and not mcc->parent().isAtEndTransition()) {

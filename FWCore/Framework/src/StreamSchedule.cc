@@ -196,10 +196,16 @@ namespace edm {
 
     //See if all modules were used
     std::set<std::string> usedWorkerLabels;
+    edm::LogPrint("foo") << "usedWorkerLabels";
     for (auto const& worker : allWorkers()) {
+      edm::LogPrint("foo") << " " << worker->description().moduleLabel();
       usedWorkerLabels.insert(worker->description().moduleLabel());
     }
     std::vector<std::string> modulesInConfig(proc_pset.getParameter<std::vector<std::string> >("@all_modules"));
+    edm::LogPrint("foo") << "modulesInConfig";
+    for(auto const& mod: modulesInConfig) {
+      edm::LogPrint("foo") << " " << mod;
+    }
     std::set<std::string> modulesInConfigSet(modulesInConfig.begin(), modulesInConfig.end());
     std::vector<std::string> unusedLabels;
     set_difference(modulesInConfigSet.begin(), modulesInConfigSet.end(),
