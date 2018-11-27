@@ -19,6 +19,7 @@ namespace edm {
         if(iBranch.moduleLabel() == chosenLabel) {
           this->consumes(edm::TypeToGet{iBranch.unwrappedTypeID(),PRODUCT_TYPE},
                          edm::InputTag{iBranch.moduleLabel(), iBranch.productInstanceName(), iBranch.processName()});
+          this->produces(iBranch.unwrappedTypeID(), iBranch.productInstanceName()).setSwitchAlias(iBranch.moduleLabel());
         }
       });
   }
