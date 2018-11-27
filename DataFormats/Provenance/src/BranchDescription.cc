@@ -101,7 +101,8 @@ namespace edm {
       transient_() {
     setDropped(false);
     setProduced(aliasForBranch.produced());
-    setOnDemand(aliasForBranch.onDemand());
+    // The problem is that I need to know here if the SwitchProducer is unscheduled or not
+    setOnDemand(aliasForBranch.onDemand() and aliasType != AliasType::SwitchProducer); // SwitchProducer alias needs to be not-on-demand by default
     transient_.availableOnlyAtEndTransition_=aliasForBranch.availableOnlyAtEndTransition();
     transient_.moduleName_ = aliasForBranch.moduleName();
     transient_.parameterSetID_ = aliasForBranch.parameterSetID();

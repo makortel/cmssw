@@ -616,6 +616,7 @@ namespace edm {
       edm::LogPrint("Foo") << "FOO: " << bd_->moduleLabel() << " is on demand";
       // If SwitchProducer is not on any Path, act like an EDAlias (AliasProductResolver)
       realProduct_.prefetchAsync(waitTask, principal, skipCurrentProcess, token, sra, mcc);
+      // Chris: need to call SwitchProducer::produce() to register in provenance
       return;
     }
     edm::LogPrint("Foo") << "FOO: " << bd_->moduleLabel() << " is in a Path";
