@@ -285,34 +285,44 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
 
   // create allocator
   auto const& allocator = config.getUntrackedParameter<edm::ParameterSet>("allocator");
-  auto binGrowth = allocator.getUntrackedParameter<unsigned int>("binGrowth");
-  auto minBin = allocator.getUntrackedParameter<unsigned int>("minBin");
-  auto maxBin = allocator.getUntrackedParameter<unsigned int>("maxBin");
-  size_t maxCachedBytes = allocator.getUntrackedParameter<unsigned int>("maxCachedBytes");
+  auto binGrowth         = allocator.getUntrackedParameter<unsigned int>("binGrowth");
+  auto minBin            = allocator.getUntrackedParameter<unsigned int>("minBin");
+  auto maxBin            = allocator.getUntrackedParameter<unsigned int>("maxBin");
+  size_t maxCachedBytes  = allocator.getUntrackedParameter<unsigned int>("maxCachedBytes");
   auto maxCachedFraction = allocator.getUntrackedParameter<double>("maxCachedFraction");
   auto debug = allocator.getUntrackedParameter<bool>("debug");
 
   size_t minCachedBytes = std::numeric_limits<size_t>::max();
   int currentDevice;
   cudaCheck(cudaGetDevice(&currentDevice));
-  for(int i=0; i<numberOfDevices_; ++i) {
+  for (int i = 0; i < numberOfDevices_; ++i) {
     size_t freeMemory, totalMemory;
-    cudaSetDevice(i);
-    cudaMemGetInfo(&freeMemory, &totalMemory);
-    minCachedBytes = std::min(minCachedBytes, static_cast<size_t>(maxCachedFraction*freeMemory));
+    cudaCheck(cudaSetDevice(i));
+    cudaCheck(cudaMemGetInfo(&freeMemory, &totalMemory));
+    minCachedBytes = std::min(minCachedBytes, static_cast<size_t>(maxCachedFraction * freeMemory));
   }
-  if(maxCachedBytes > 0) {
+  cudaCheck(cudaSetDevice(currentDevice));
+  if (maxCachedBytes > 0) {
     minCachedBytes = std::min(minCachedBytes, maxCachedBytes);
   }
   log << "cub::CachingDeviceAllocator settings\n"
       << "  bin growth " << binGrowth << "\n"
       << "  min bin    " << minBin << "\n"
       << "  max bin    " << maxBin << "\n"
-      << "   resulting bins\n";
-  for(auto bin = minBin; bin <= maxBin; ++bin) {
-    log << "    " << cub::CachingDeviceAllocator::IntPow(binGrowth, bin) << " B\n";
+      << "  resulting bins:\n";
+  for (auto bin = minBin; bin <= maxBin; ++bin) {
+    auto binSize = cub::CachingDeviceAllocator::IntPow(binGrowth, bin);
+    if (binSize >= (1<<30) and binSize % (1<<30) == 0) {
+      log << "    " << std::setw(8) << (binSize >> 30) << " GB\n";
+    } else if (binSize >= (1<<20) and binSize % (1<<20) == 0) {
+      log << "    " << std::setw(8) << (binSize >> 20) << " MB\n";
+    } else if (binSize >= (1<<10) and binSize % (1<<10) == 0) {
+      log << "    " << std::setw(8) << (binSize >> 10) << " kB\n";
+    } else {
+      log << "    " << std::setw(9) << binSize << " B\n";
+    }
   }
-  log << "  maximum amount of cached memory " << (minCachedBytes>>20) << " MB\n";
+  log << "  maximum amount of cached memory: " << (minCachedBytes >> 20) << " MB\n";
 
   allocator_ = std::make_unique<Allocator>(cub::CachingDeviceAllocator::IntPow(binGrowth, maxBin),
                                            binGrowth, minBin, maxBin, minCachedBytes,
