@@ -308,7 +308,7 @@ namespace edm {
           auto const& chosenCase = modulePSet.getUntrackedParameter<std::string>("@chosen_case");
           for(auto const& item: preg.productList()) {
             if(item.first.moduleLabel() == chosenCase && item.first.processName() == processName) {
-              preg.addLabelAlias(item.second, moduleLabel, item.first.productInstanceName(), ProductRegistry::AliasType::SwitchProducer);
+              preg.addLabelAlias(item.second, moduleLabel, item.first.productInstanceName());
             }
           }
         }

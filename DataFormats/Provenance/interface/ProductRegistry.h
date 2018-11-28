@@ -35,7 +35,6 @@ namespace edm {
 
   public:
     typedef std::map<BranchKey, BranchDescription> ProductList;
-    using AliasType = BranchDescription::AliasType;
 
     ProductRegistry();
 
@@ -50,7 +49,7 @@ namespace edm {
 
     void addProduct(BranchDescription const& productdesc, bool iFromListener = false);
 
-    void addLabelAlias(BranchDescription const& productdesc, std::string const& labelAlias, std::string const& instanceAlias, AliasType aliasType=AliasType::None);
+    void addLabelAlias(BranchDescription const& productdesc, std::string const& labelAlias, std::string const& instanceAlias);
 
     void copyProduct(BranchDescription const& productdesc);
 

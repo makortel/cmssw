@@ -119,20 +119,16 @@ namespace edm {
   void
   ProductRegistry::addLabelAlias(BranchDescription const& productDesc,
                                  std::string const& labelAlias,
-                                 std::string const& instanceAlias,
-                                 AliasType aliasType) {
+                                 std::string const& instanceAlias) {
     assert(productDesc.produced());
     assert(productDesc.branchID().isValid());
     throwIfFrozen();
-    BranchDescription bd(productDesc, labelAlias, instanceAlias, aliasType);
+    BranchDescription bd(productDesc, labelAlias, instanceAlias);
     std::pair<ProductList::iterator, bool> ret =
          productList_.insert(std::make_pair(BranchKey(bd), bd));
     assert(ret.second);
-    if(aliasType == AliasType::EDAlias) {
-      // The following short-circuit is valid only for EDAlias
-      transient_.aliasToOriginal_.emplace_back(labelAlias,
-                                               productDesc.moduleLabel());
-    }
+    transient_.aliasToOriginal_.emplace_back(labelAlias,
+                                             productDesc.moduleLabel());
     addCalled(bd, false);
   }
 
