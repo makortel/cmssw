@@ -337,7 +337,7 @@ namespace edm {
 
   void
   Principal::addSwitchAliasedProduct(std::shared_ptr<BranchDescription const> bd) {
-    ProductResolverIndex index = preg_->indexFrom(bd->originalBranchID());
+    ProductResolverIndex index = preg_->indexFrom(bd->aliasForBranchID());
     assert(index != ProductResolverIndexInvalid);
 
     addProductOrThrow(std::make_unique<SwitchAliasProductResolver>(std::move(bd), dynamic_cast<ProducedProductResolver&>(*productResolvers_[index])));

@@ -76,7 +76,7 @@ namespace edm {
     BranchID const& aliasForBranchID() const {return aliasForBranchID_;}
     void setAliasForBranch(BranchDescription const& aliasForBranch);
     bool isAlias() const {return aliasForBranchID_.isValid() && produced();}
-    BranchID const& originalBranchID() const {return aliasForBranchID_.isValid() ? aliasForBranchID_ : branchID_;}
+    BranchID const& originalBranchID() const {return (aliasForBranchID_.isValid() and not isSwitchAlias()) ? aliasForBranchID_ : branchID_;}
     std::string const& fullClassName() const {return fullClassName_;}
     std::string const& className() const {return fullClassName();}
     std::string const& friendlyClassName() const {return friendlyClassName_;}
