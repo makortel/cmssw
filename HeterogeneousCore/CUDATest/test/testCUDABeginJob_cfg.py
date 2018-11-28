@@ -67,12 +67,16 @@ process.prod7Filter = cms.EDFilter("ModuloEventIDFilter",
     offset = cms.uint32(5)
 )
 
+process.prod20 = testCUDAProducerCPU.clone()
+process.prod21 = testCUDAProducerCPU.clone(src = "prod20")
+
 process.out = cms.OutputModule("AsciiOutputModule",
     outputCommands = cms.untracked.vstring(
         "keep *_prod3_*_*",
         "keep *_prod4_*_*",
         "keep *_prod6_*_*",
         "keep *_prod7_*_*",
+        "keep *_prod21_*_*",
     ),
                                verbosity = cms.untracked.uint32(0),
 )
@@ -102,7 +106,8 @@ process.tSwitch = cms.Task(
 
 process.t = cms.Task(
     process.prod1Task, process.prod5Task, process.prod6Task,
-    process.tCUDA, process.tSwitch
+    process.tCUDA, process.tSwitch,
+    process.prod20, process.prod21
 )
 process.p = cms.Path(
     process.prod4
