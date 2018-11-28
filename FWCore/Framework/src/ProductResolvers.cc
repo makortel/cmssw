@@ -10,6 +10,7 @@
 #include "FWCore/Framework/interface/DelayedReader.h"
 #include "DataFormats/Provenance/interface/ProductProvenanceRetriever.h"
 #include "DataFormats/Provenance/interface/BranchKey.h"
+#include "DataFormats/Provenance/interface/ParentageRegistry.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Concurrency/interface/SerialTaskQueue.h"
 #include "FWCore/Concurrency/interface/FunctorTask.h"
@@ -584,7 +585,13 @@ namespace edm {
     bd_(bd),
     productData_(bd),
     prefetchRequested_(false)
-  {}
+  {
+    // Parentage of this branch is always the same by construction, so we can compute the ID just "once" here.
+    Parentage p;
+    p.setParents(std::vector<BranchID>{realProduct.branchDescription().branchID()});
+    parentageID_ = p.id();
+    ParentageRegistry::instance()->insertMapped(p);
+  }
 
   void SwitchAliasProductResolver::setupUnscheduled(UnscheduledConfigurator const& iConfigure) {
     worker_ = iConfigure.findWorker(bd_->moduleLabel());
@@ -678,6 +685,8 @@ namespace edm {
   }
   
   void SwitchAliasProductResolver::setProvenance_(ProductProvenanceRetriever const* provRetriever, ProcessHistory const& ph, ProductID const& pid) {
+    // insertIntoSet is const, so let's exploit that to fake the getting of the "input" product
+    provRetriever->insertIntoSet(ProductProvenance(bd_->branchID(), parentageID_));
     productData_.setProvenance(provRetriever,ph,pid);
   }
 

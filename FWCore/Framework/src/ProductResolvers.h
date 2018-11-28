@@ -305,6 +305,8 @@ namespace edm {
     Worker *worker_ = nullptr;
     mutable WaitingTaskList waitingTasks_;
     mutable std::atomic<bool> prefetchRequested_;
+    // for provenance
+    ParentageID parentageID_;
   };
 
   class ParentProcessProductResolver : public ProductResolverBase {
