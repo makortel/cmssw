@@ -300,10 +300,8 @@ namespace edm {
     typedef std::vector<std::string> vstring;
 
     void processSwitchProducers(std::string const& processName, ProductRegistry& preg) {
-      edm::LogPrint("foo") << "processSwitchProducers(): encountered the following switch producer BranchDescriptions";
       for(auto& prod: preg.productListUpdator()) {
         if(prod.second.isSwitchAlias()) {
-          edm::LogPrint("foo") << " " << prod.first.moduleLabel() << " -> " << prod.second.switchAliasModuleLabel();
           for(auto const& item: preg.productList()) {
             if(item.first.moduleLabel() == prod.second.switchAliasModuleLabel()) {
               assert(item.first.processName() == processName); // The "@" branches should never end up in the files

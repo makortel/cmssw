@@ -90,7 +90,6 @@ namespace edm {
                               true,
                               isEndTransition(p->transition_));
       if(not p->switchAlias_.empty()) {
-        edm::LogPrint("foo") << "ProductRegistryHelper::addToRegistry(): module " << iDesc.moduleLabel() << " alias to " << p->switchAlias_;
         pdesc.setSwitchAliasModuleLabel(p->switchAlias_);
       }
 
