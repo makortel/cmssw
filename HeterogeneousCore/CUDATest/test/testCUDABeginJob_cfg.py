@@ -58,7 +58,7 @@ process.prod4 = SwitchProducer(
 )
 process.prod7 = SwitchProducer(
     cuda = testCUDAProducerGPUtoCPU.clone(src = "prod7CUDA"),
-    cpu = testCUDAProducerCPU.clone(src = "prod7")
+    cpu = testCUDAProducerCPU.clone(src = "prod6")
 )
 
 # Effectively a filter that always returns false
