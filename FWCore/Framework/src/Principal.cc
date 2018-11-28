@@ -173,7 +173,7 @@ namespace edm {
         BranchDescription const& bd = prod.second;
         if(bd.isAlias() && bd.branchType() == branchType_) {
           auto cbd = std::make_shared<BranchDescription const>(bd);
-          if(bd.aliasType() == BranchDescription::AliasType::SwitchProducer) {
+          if(bd.isSwitchAlias()) {
             addSwitchAliasedProduct(cbd);
           }
           else {

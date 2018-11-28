@@ -9,6 +9,7 @@
 #include "FWCore/Utilities/interface/DictionaryTools.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/TypeWithDict.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include <vector>
 #include <typeindex>
@@ -88,6 +89,10 @@ namespace edm {
                               type,
                               true,
                               isEndTransition(p->transition_));
+      if(not p->switchAlias_.empty()) {
+        edm::LogPrint("foo") << "ProductRegistryHelper::addToRegistry(): module " << iDesc.moduleLabel() << " alias to " << p->switchAlias_;
+        pdesc.setSwitchAliasModuleLabel(p->switchAlias_);
+      }
 
       if (pdesc.transient()) {
         if (!checkDictionary(missingDictionaries, pdesc.wrappedName(), pdesc.wrappedType())) {

@@ -99,8 +99,7 @@ namespace edm {
       transient_() {
     setDropped(false);
     setProduced(aliasForBranch.produced());
-    // The problem is that I need to know here if the SwitchProducer is unscheduled or not
-    setOnDemand(aliasForBranch.onDemand() and aliasType != AliasType::SwitchProducer); // SwitchProducer alias needs to be not-on-demand by default
+    setOnDemand(aliasForBranch.onDemand());
     transient_.availableOnlyAtEndTransition_=aliasForBranch.availableOnlyAtEndTransition();
     transient_.moduleName_ = aliasForBranch.moduleName();
     transient_.parameterSetID_ = aliasForBranch.parameterSetID();
@@ -235,6 +234,22 @@ namespace edm {
     branchAliases_.insert(other.branchAliases().begin(), other.branchAliases().end());
     if(splitLevel() == invalidSplitLevel) setSplitLevel(other.splitLevel());
     if(basketSize() == invalidBasketSize) setBasketSize(other.basketSize());
+  }
+
+  void
+  BranchDescription::setAliasForBranch(BranchDescription const& aliasForBranch) {
+    // TODO: Convert these to exceptions
+    assert(branchType_ == aliasForBranch.branchType());
+    assert(produced() == aliasForBranch.produced());
+    assert(unwrappedTypeID().typeInfo() == aliasForBranch.unwrappedType().typeInfo());
+
+    branchAliases_ = aliasForBranch.branchAliases();
+    aliasForBranchID_ = aliasForBranch.branchID();
+    transient_.availableOnlyAtEndTransition_ = aliasForBranch.availableOnlyAtEndTransition();
+
+    // Maybe it is better to not overwrite these?
+    //transient_.moduleName_ = aliasForBranch.moduleName();
+    //transient_.parameterSetID = aliasForBranch.parameterSetID();
   }
 
   void

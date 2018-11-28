@@ -74,6 +74,7 @@ namespace edm {
     std::string const& processName() const {return processName_;}
     BranchID const& branchID() const {return branchID_;}
     BranchID const& aliasForBranchID() const {return aliasForBranchID_;}
+    void setAliasForBranch(BranchDescription const& aliasForBranch);
     bool isAlias() const {return aliasForBranchID_.isValid() && produced();}
     BranchID const& originalBranchID() const {return aliasForBranchID_.isValid() ? aliasForBranchID_ : branchID_;}
     std::string const& fullClassName() const {return fullClassName_;}
@@ -100,6 +101,9 @@ namespace edm {
     void setSplitLevel(int level) {transient_.splitLevel_ = level;}
     int basketSize() const {return transient_.basketSize_;}
     void setBasketSize(int size) {transient_.basketSize_ = size;}
+    bool isSwitchAlias() const {return not transient_.switchAliasModuleLabel_.empty();}
+    std::string const& switchAliasModuleLabel() const { return transient_.switchAliasModuleLabel_; }
+    void setSwitchAliasModuleLabel(std::string label) {transient_.switchAliasModuleLabel_ = std::move(label);}
 
     ParameterSetID const& parameterSetID() const {return transient_.parameterSetID_;}
     std::string const& moduleName() const {return transient_.moduleName_;}
@@ -136,6 +140,9 @@ namespace edm {
 
       // The wrapped class name, which is currently derivable fron the other attributes.
       std::string wrappedName_;
+
+      // For SwitchProducer alias, the label of the aliased-for label; otherwise empty
+      std::string switchAliasModuleLabel_;
 
       // A TypeWithDict object for the wrapped object
       TypeWithDict wrappedType_;
