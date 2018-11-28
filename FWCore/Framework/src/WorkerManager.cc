@@ -70,13 +70,7 @@ namespace edm {
   }
 
   void WorkerManager::setOnDemandProducts(ProductRegistry& pregistry, std::set<std::string> const& unscheduledLabels) const {
-    edm::LogPrint("foo") << "WorkerManager::setOnDemandProducts(): Unscheduled labels";
-    for(auto const& lab: unscheduledLabels) {
-      edm::LogPrint("foo") << " " << lab;
-    }
-    edm::LogPrint("foo") << "product list";
     for(auto& prod : pregistry.productListUpdator()) {
-      edm::LogPrint("foo") << " " << prod.second.moduleLabel() << " is produced? " << prod.second.produced();
       if(prod.second.produced() &&
           prod.second.branchType() == InEvent &&
           unscheduledLabels.end() != unscheduledLabels.find(prod.second.moduleLabel())) {
