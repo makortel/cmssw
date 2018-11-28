@@ -817,7 +817,7 @@ tracksValidationPixelTrackingOnly = cms.Sequence(
     trackValidatorPixelTrackingOnly +
     trackValidatorFromPVPixelTrackingOnly +
     trackValidatorFromPVAllTPPixelTrackingOnly +
-    trackValidatorFromPVAllTPPixelTrackingOnly,
+    trackValidatorBHadronPixelTrackingOnly,
     tracksPreValidationPixelTrackingOnly
 )
 
