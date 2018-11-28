@@ -104,6 +104,17 @@ namespace edm {
               }
             }
           }
+
+          const auto *prodProv = prov.productProvenance();
+          if(prodProv) {
+            const auto& parent = prodProv->parentage();
+            LogAbsolute("AsciiOut") << "Parents";
+            for(auto const& branchID: parent.parents()) {
+              auto const& parProv = e.getProvenance(branchID);
+              LogAbsolute("AsciiOut") << "BranchID " << branchID << " label " << parProv.branchDescription().moduleLabel();
+            }
+            LogAbsolute("AsciiOut") << "\n";
+          }
         }
       }
     }
