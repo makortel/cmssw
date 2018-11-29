@@ -414,6 +414,13 @@ namespace edm {
                    }
                  }
                }
+
+               const auto& parent = productProvenance->parentage();
+               LogAbsolute("AsciiOut") << "Parents";
+               for(auto const& branchID: parent.parents()) {
+                 auto const& parProv = iEvent.getProvenance(branchID);
+                 LogAbsolute("AsciiOut") << "BranchID " << branchID << " label " << parProv.branchDescription().moduleLabel();
+               }
              }
            }
          }
