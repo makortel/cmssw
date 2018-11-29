@@ -74,7 +74,6 @@ namespace edm {
     std::string const& processName() const {return processName_;}
     BranchID const& branchID() const {return branchID_;}
     BranchID const& aliasForBranchID() const {return aliasForBranchID_;}
-    void setAliasForBranch(BranchDescription const& aliasForBranch);
     bool isAlias() const {return aliasForBranchID_.isValid() && produced();}
     BranchID const& originalBranchID() const {return (aliasForBranchID_.isValid() and not isSwitchAlias()) ? aliasForBranchID_ : branchID_;}
     std::string const& fullClassName() const {return fullClassName_;}
@@ -104,6 +103,10 @@ namespace edm {
     bool isSwitchAlias() const {return not transient_.switchAliasModuleLabel_.empty();}
     std::string const& switchAliasModuleLabel() const { return transient_.switchAliasModuleLabel_; }
     void setSwitchAliasModuleLabel(std::string label) {transient_.switchAliasModuleLabel_ = std::move(label);}
+    BranchID const& switchAliasForBranchID() const {return transient_.switchAliasForBranchID_;}
+    void setSwitchAliasForBranch(BranchDescription const& aliasForBranch);
+
+    bool isAnyAlias() const {return isAlias() or isSwitchAlias();}
 
     ParameterSetID const& parameterSetID() const {return transient_.parameterSetID_;}
     std::string const& moduleName() const {return transient_.moduleName_;}
@@ -143,6 +146,11 @@ namespace edm {
 
       // For SwitchProducer alias, the label of the aliased-for label; otherwise empty
       std::string switchAliasModuleLabel_;
+
+      // Need a separate (transient) BranchID for switch, because
+      // otherwise originalBranchID() gives wrong answer when reading
+      // from a file (leading to wrong ProductProvenance to be retrieved)
+      BranchID switchAliasForBranchID_;
 
       // A TypeWithDict object for the wrapped object
       TypeWithDict wrappedType_;

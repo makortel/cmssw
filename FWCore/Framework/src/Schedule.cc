@@ -305,7 +305,7 @@ namespace edm {
           for(auto const& item: preg.productList()) {
             if(item.first.moduleLabel() == prod.second.switchAliasModuleLabel()) {
               assert(item.first.processName() == processName); // The "@" branches should never end up in the files
-              prod.second.setAliasForBranch(item.second);
+              prod.second.setSwitchAliasForBranch(item.second);
             }
           }
         }

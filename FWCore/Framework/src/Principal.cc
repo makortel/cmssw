@@ -143,7 +143,7 @@ namespace edm {
       BranchDescription const& bd = prod.second;
       if(bd.branchType() == branchType_) {
         if(isForPrimaryProcess or bd.processName() == pc.processName()) {
-          if(bd.isAlias()) {
+          if(bd.isAnyAlias()) {
             hasAliases = true;
           } else {
             auto cbd = std::make_shared<BranchDescription const>(bd);
@@ -171,7 +171,7 @@ namespace edm {
     if(hasAliases) {
       for(auto const& prod : prodsList) {
         BranchDescription const& bd = prod.second;
-        if(bd.isAlias() && bd.branchType() == branchType_) {
+        if(bd.isAnyAlias() and bd.branchType() == branchType_) {
           auto cbd = std::make_shared<BranchDescription const>(bd);
           if(bd.isSwitchAlias()) {
             addSwitchAliasedProduct(cbd);
@@ -337,7 +337,7 @@ namespace edm {
 
   void
   Principal::addSwitchAliasedProduct(std::shared_ptr<BranchDescription const> bd) {
-    ProductResolverIndex index = preg_->indexFrom(bd->aliasForBranchID());
+    ProductResolverIndex index = preg_->indexFrom(bd->switchAliasForBranchID());
     assert(index != ProductResolverIndexInvalid);
 
     addProductOrThrow(std::make_unique<SwitchAliasProductResolver>(std::move(bd), dynamic_cast<ProducedProductResolver&>(*productResolvers_[index])));
@@ -694,7 +694,7 @@ namespace edm {
         if (process == bd.processName()) {
 
           // Ignore aliases to avoid matching the same product multiple times.
-          if(bd.isAlias()) {
+          if(bd.isAnyAlias()) {
             continue;
           }
 
@@ -829,7 +829,7 @@ namespace edm {
   Principal::getAllProvenance(std::vector<Provenance const*>& provenances) const {
     provenances.clear();
     for(auto const& productResolver : *this) {
-      if(productResolver->singleProduct() && productResolver->provenanceAvailable() && !productResolver->branchDescription().isAlias()) {
+      if(productResolver->singleProduct() && productResolver->provenanceAvailable() && !productResolver->branchDescription().isAnyAlias()) {
         // We do not attempt to get the event/lumi/run status from the provenance,
         // because the per event provenance may have been dropped.
         if(productResolver->provenance()->branchDescription().present()) {
@@ -846,7 +846,7 @@ namespace edm {
   Principal::getAllStableProvenance(std::vector<StableProvenance const*>& provenances) const {
     provenances.clear();
     for(auto const& productResolver : *this) {
-      if(productResolver->singleProduct() && !productResolver->branchDescription().isAlias()) {
+      if(productResolver->singleProduct() && !productResolver->branchDescription().isAnyAlias()) {
         if(productResolver->stableProvenance()->branchDescription().present()) {
            provenances.push_back(productResolver->stableProvenance());
         }

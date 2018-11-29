@@ -237,14 +237,14 @@ namespace edm {
   }
 
   void
-  BranchDescription::setAliasForBranch(BranchDescription const& aliasForBranch) {
+  BranchDescription::setSwitchAliasForBranch(BranchDescription const& aliasForBranch) {
     // TODO: Convert these to exceptions
     assert(branchType_ == aliasForBranch.branchType());
     assert(produced() == aliasForBranch.produced());
     assert(unwrappedTypeID().typeInfo() == aliasForBranch.unwrappedType().typeInfo());
 
     branchAliases_ = aliasForBranch.branchAliases();
-    aliasForBranchID_ = aliasForBranch.branchID();
+    transient_.switchAliasForBranchID_ = aliasForBranch.branchID();
     transient_.availableOnlyAtEndTransition_ = aliasForBranch.availableOnlyAtEndTransition();
 
     // Maybe it is better to not overwrite these?

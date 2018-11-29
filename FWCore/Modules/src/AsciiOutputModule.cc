@@ -76,8 +76,7 @@ namespace edm {
     for(auto const& prod: reg->productList()) {
       BranchDescription const& desc = prod.second;
       if(selected(desc)) {
-        const bool isAlias = desc.isAlias() and not desc.isSwitchAlias();
-        if(isAlias) {
+        if(desc.isAlias()) {
           LogAbsolute("AsciiOut") << "ModuleLabel " << desc.moduleLabel() << " is an alias for";
         }
 
@@ -97,7 +96,7 @@ namespace edm {
                 pset::Registry const* psetRegistry = pset::Registry::instance();
                 ParameterSet const* processPset = psetRegistry->getMapped(psetID);
                 if (processPset) {
-                  if(isAlias) {
+                  if(desc.isAlias()) {
                     LogAbsolute("AsciiOut") << "Alias PSet\n" << processPset->getParameterSet(desc.moduleLabel());
                   }
                   LogAbsolute("AsciiOut") << processPset->getParameterSet(label) << "\n";
