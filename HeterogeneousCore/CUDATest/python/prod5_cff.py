@@ -1,9 +1,17 @@
 import FWCore.ParameterSet.Config as cms
 
-from HeterogeneousCore.CUDATest.prod5CUDADeviceFilter_cfi import prod5CUDADeviceFilter
+from HeterogeneousCore.CUDATest.prod5CUDADeviceProducer_cfi import prod5CUDADeviceProducer
+from HeterogeneousCore.CUDATest.prod5CPU_cfi import prod5CPU as _prod5CPU
+from HeterogeneousCore.CUDATest.prod5CUDA_cfi import prod5CUDA
+from HeterogeneousCore.CUDATest.prod5FromCUDA_cfi import prod5FromCUDA as _prod5FromCUDA
 
-# The prod6 is the final, (legacy) CPU-only product name, and the
-# prod6Task is the Task containing all modules. The function itself
-# sets up everything else.
-from HeterogeneousCore.CUDATest.setupHeterogeneous import setupCUDA
-(prod5, prod5Task) = setupCUDA("prod5", prod5CUDADeviceFilter, globals())
+from Configuration.ProcessModifiers.gpu_cff import gpu
+
+prod5 = _prod5CPU.clone()
+gpu.toReplaceWith(prod5, _prod5FromCUDA)
+
+prod5Task = cms.Task(
+    prod5CUDADeviceProducer,
+    prod5CUDA,
+    prod5
+)
