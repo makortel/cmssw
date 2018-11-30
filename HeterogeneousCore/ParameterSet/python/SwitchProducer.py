@@ -1,38 +1,35 @@
 from __future__ import print_function
 import six
-import importlib
+import copy
 
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.Mixins import _ConfigureComponent, _Labelable, _Parameterizable, _modifyParametersFromDict, PrintOptions, saveOrigin
 from FWCore.ParameterSet.Modules import EDProducer
 from FWCore.ParameterSet.SequenceTypes import _SequenceLeaf
 
-
 # Eventually to be moved under FWCore/ParameterSet, but I want to
 # avoid recompiling the universe for now
-
 class SwitchProducer(EDProducer):
     """This class is to provide a switch of producers.
     """
-    def __init__(self, **kargs):
+    def __init__(self, caseFunctionDict, **kargs):
         super(SwitchProducer,self).__init__(None) # let's try None as the type...
 
+        self._caseFunctionDict = copy.copy(caseFunctionDict)
         self.__setParameters(kargs)
         self._isModified = False
-        self._modulePath = "HeterogeneousCore.ParameterSet."
+
+    @staticmethod
+    def cpu():
+        return (True, 1)
 
     def _chooseResource(self):
-        #resources = ["cuda", "cpu"] # TODO: really implement...
-        #for res in resources:
-        #    if res in self.__dict__:
-        #        return res
-
         cases = self.parameterNames_()
         bestCase = None
         for case in cases:
-            mod = importlib.import_module(self._modulePath+case)
-            if mod.enabled() and (bestCase is None or bestCase[0] < mod.priority()):
-                bestCase = (mod.priority(), case)
+            (enabled, priority) = self._caseFunctionDict[case]()
+            if enabled and (bestCase is None or bestCase[0] < priority):
+                bestCase = (priority, case)
         if bestCase is None:
             raise RuntimeError("All cases '%s' were disabled" % (str(cases)))
         return bestCase[1]
@@ -40,14 +37,11 @@ class SwitchProducer(EDProducer):
     def _getProducer(self):
         return self.__dict__[self._chooseResource()]
 
-    # Mimick __Parameterizable
-    #@staticmethod
-    #def _raiseBadSetAttr(name):
-    #    raise TypeError(name+" does not already exist, so it can only be set to a CMS python configuration type")
-
     def __addParameter(self, name, value):
         if not isinstance(value, cms.EDProducer):
             raise TypeError(name+" does not already exist, so it can only be set to a cms.EDProducer")
+        if name not in self._caseFunctionDict:
+            raise ValueError("Case '%s' is not allowed (allowed ones are %s)" % (name, ",".join(six.iterkeys(self._caseFunctionDict))))
         if name in self.__dict__:
             message = "Duplicate insert of member " + name
             message += "\nThe original parameters are:\n"
@@ -140,17 +134,12 @@ class SwitchProducer(EDProducer):
         for case in self.parameterNames_():
             producer = self.__dict__[case]
             producer.insertInto(parameterSet, myname+"@"+case)
-            #tmppset = parameterSet.getPSet(True, myname+"@"+case)
-            #tmppset.addString(True, "@module_label", tmppset.getString(True, "@module_label")+"@"+case)
         newpset = parameterSet.newPSet()
         newpset.addString(True, "@module_label", self.moduleLabel_(myname))
-        newpset.addString(True, "@module_type", type(self).__name__)
+        newpset.addString(True, "@module_type", "SwitchProducer")
         newpset.addString(True, "@module_edm_type", "EDProducer")
         newpset.addVString(True, "@all_cases", [myname+"@"+p for p in self.parameterNames_()])
         newpset.addString(False, "@chosen_case", myname+"@"+self._chooseResource())
-        #tmppset = parameterSet.newPSet()
-        #self._getProducer().insertInto(tmppset, myname)
-        #newpset.addPSet(False, "@chosen_case_pset", tmppset.getPSet(True, myname)) # bit silly but it needs to be attached with different name than myname
         parameterSet.addPSet(True, self.nameInProcessDesc_(myname), newpset)
 
     def _placeImpl(self,name,proc):
@@ -247,107 +236,127 @@ if __name__ == "__main__":
         def newPSet(self):
             return TestMakePSet()
 
+    class SwitchProducerTest(SwitchProducer):
+        def __init__(self, **kargs):
+            super(SwitchProducerTest,self).__init__(
+                dict(
+                    test1 = lambda: (True, -10),
+                    test2 = lambda: (True, -9),
+                    test3 = lambda: (True, -8)
+                ), **kargs)
+
+    class SwitchProducerTest1Dis(SwitchProducer):
+        def __init__(self, **kargs):
+            super(SwitchProducerTest1Dis,self).__init__(
+                dict(
+                    test1 = lambda: (False, -10),
+                    test2 = lambda: (True, -9)
+                ), **kargs)
+
+    class SwitchProducerTest2Dis(SwitchProducer):
+        def __init__(self, **kargs):
+            super(SwitchProducerTest2Dis,self).__init__(
+                dict(
+                    test1 = lambda: (True, -10),
+                    test2 = lambda: (False, -9)
+                ), **kargs)
 
     class testSwitchProducer(unittest.TestCase):
         def testConstruction(self):
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo"), cpu = cms.EDProducer("Bar"))
-            self.assertEqual(sp.cuda.type_(), "Foo")
-            self.assertEqual(sp.cpu.type_(), "Bar")
-            #print(sp.dumpPython())
+            sp = SwitchProducerTest(test1 = cms.EDProducer("Foo"), test2 = cms.EDProducer("Bar"))
+            self.assertEqual(sp.test1.type_(), "Foo")
+            self.assertEqual(sp.test2.type_(), "Bar")
+
+            self.assertRaises(ValueError, lambda: SwitchProducerTest(nonexistent = cms.EDProducer("Foo")))
         def testGetProducer(self):
-            sp = SwitchProducer(test1 = cms.EDProducer("Foo"), test2 = cms.EDProducer("Bar"))
-            sp._modulePath += "test."
+            sp = SwitchProducerTest(test1 = cms.EDProducer("Foo"), test2 = cms.EDProducer("Bar"))
             self.assertEqual(sp._getProducer().type_(), "Bar")
-            sp = SwitchProducer(test1dis = cms.EDProducer("Foo"), test2 = cms.EDProducer("Bar"))
-            sp._modulePath += "test."
+            sp = SwitchProducerTest1Dis(test1 = cms.EDProducer("Foo"), test2 = cms.EDProducer("Bar"))
             self.assertEqual(sp._getProducer().type_(), "Bar")
-            sp = SwitchProducer(test1 = cms.EDProducer("Foo"), test2dis = cms.EDProducer("Bar"))
-            sp._modulePath += "test."
+            sp = SwitchProducerTest2Dis(test1 = cms.EDProducer("Foo"), test2 = cms.EDProducer("Bar"))
             self.assertEqual(sp._getProducer().type_(), "Foo")
-            sp = SwitchProducer(test1 = cms.EDProducer("Bar"))
-            sp._modulePath += "test."
+            sp = SwitchProducerTest(test1 = cms.EDProducer("Bar"))
             self.assertEqual(sp._getProducer().type_(), "Bar")
-            sp = SwitchProducer(test1dis = cms.EDProducer("Bar"))
-            sp._modulePath += "test."
+            sp = SwitchProducerTest1Dis(test1 = cms.EDProducer("Bar"))
             self.assertRaises(RuntimeError, sp._getProducer)
         def testClone(self):
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo",
-                                                      a = cms.int32(1),
-                                                      b = cms.PSet(c = cms.int32(2))),
-                                cpu = cms.EDProducer("Bar",
-                                                     aa = cms.int32(11),
-                                                     bb = cms.PSet(cc = cms.int32(12))))
+            sp = SwitchProducerTest(test1 = cms.EDProducer("Foo",
+                                                           a = cms.int32(1),
+                                                           b = cms.PSet(c = cms.int32(2))),
+                                    test2 = cms.EDProducer("Bar",
+                                                           aa = cms.int32(11),
+                                                           bb = cms.PSet(cc = cms.int32(12))))
             # Simple clone
             cl = sp.clone()
-            self.assertEqual(cl.cuda.type_(), "Foo")
-            self.assertEqual(cl.cuda.a.value(), 1)
-            self.assertEqual(cl.cuda.b.c.value(), 2)
-            self.assertEqual(cl.cpu.type_(), "Bar")
-            self.assertEqual(cl.cpu.aa.value(), 11)
-            self.assertEqual(cl.cpu.bb.cc.value(), 12)
+            self.assertEqual(cl.test1.type_(), "Foo")
+            self.assertEqual(cl.test1.a.value(), 1)
+            self.assertEqual(cl.test1.b.c.value(), 2)
+            self.assertEqual(cl.test2.type_(), "Bar")
+            self.assertEqual(cl.test2.aa.value(), 11)
+            self.assertEqual(cl.test2.bb.cc.value(), 12)
 
             # Modify values with a dict
-            cl = sp.clone(cuda = dict(a = 4, b = dict(c = None)),
-                          cpu = dict(aa = 15, bb = dict(cc = 45, dd = cms.string("foo"))))
-            self.assertEqual(cl.cuda.a.value(), 4)
-            self.assertEqual(cl.cuda.b.hasParameter("c"), False)
-            self.assertEqual(cl.cpu.aa.value(), 15)
-            self.assertEqual(cl.cpu.bb.cc.value(), 45)
-            self.assertEqual(cl.cpu.bb.dd.value(), "foo")
+            cl = sp.clone(test1 = dict(a = 4, b = dict(c = None)),
+                          test2 = dict(aa = 15, bb = dict(cc = 45, dd = cms.string("foo"))))
+            self.assertEqual(cl.test1.a.value(), 4)
+            self.assertEqual(cl.test1.b.hasParameter("c"), False)
+            self.assertEqual(cl.test2.aa.value(), 15)
+            self.assertEqual(cl.test2.bb.cc.value(), 45)
+            self.assertEqual(cl.test2.bb.dd.value(), "foo")
 
             # Replace/add/remove EDProducers
-            cl = sp.clone(cuda = cms.EDProducer("Fred", x = cms.int32(42)),
-                          fpga = cms.EDProducer("Wilma", y = cms.int32(24)),
-                          cpu = None)
-            self.assertEqual(cl.cuda.type_(), "Fred")
-            self.assertEqual(cl.cuda.x.value(), 42)
-            self.assertEqual(cl.fpga.type_(), "Wilma")
-            self.assertEqual(cl.fpga.y.value(), 24)
-            self.assertEqual(hasattr(cl, "cpu"), False)
+            cl = sp.clone(test1 = cms.EDProducer("Fred", x = cms.int32(42)),
+                          test3 = cms.EDProducer("Wilma", y = cms.int32(24)),
+                          test2 = None)
+            self.assertEqual(cl.test1.type_(), "Fred")
+            self.assertEqual(cl.test1.x.value(), 42)
+            self.assertEqual(cl.test3.type_(), "Wilma")
+            self.assertEqual(cl.test3.y.value(), 24)
+            self.assertEqual(hasattr(cl, "test2"), False)
         def testModify(self):
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo",
-                                                      a = cms.int32(1),
-                                                      b = cms.PSet(c = cms.int32(2))),
-                                cpu = cms.EDProducer("Bar",
-                                                     aa = cms.int32(11),
-                                                     bb = cms.PSet(cc = cms.int32(12))))
+            sp = SwitchProducerTest(test1 = cms.EDProducer("Foo",
+                                                           a = cms.int32(1),
+                                                           b = cms.PSet(c = cms.int32(2))),
+                                    test2 = cms.EDProducer("Bar",
+                                                           aa = cms.int32(11),
+                                                           bb = cms.PSet(cc = cms.int32(12))))
             m = cms.Modifier()
             m._setChosen()
 
             # Modify parameters
             m.toModify(sp,
-                       cuda = dict(a = 4, b = dict(c = None)),
-                       cpu = dict(aa = 15, bb = dict(cc = 45, dd = cms.string("foo"))))
-            self.assertEqual(sp.cuda.a.value(), 4)
-            self.assertEqual(sp.cuda.b.hasParameter("c"), False)
-            self.assertEqual(sp.cpu.aa.value(), 15)
-            self.assertEqual(sp.cpu.bb.cc.value(), 45)
-            self.assertEqual(sp.cpu.bb.dd.value(), "foo")
+                       test1 = dict(a = 4, b = dict(c = None)),
+                       test2 = dict(aa = 15, bb = dict(cc = 45, dd = cms.string("foo"))))
+            self.assertEqual(sp.test1.a.value(), 4)
+            self.assertEqual(sp.test1.b.hasParameter("c"), False)
+            self.assertEqual(sp.test2.aa.value(), 15)
+            self.assertEqual(sp.test2.bb.cc.value(), 45)
+            self.assertEqual(sp.test2.bb.dd.value(), "foo")
 
-            m.toModify(sp, cuda = cms.EDProducer("Xyzzy")) # Do we actually want to allow this? In a sense the toReplaceWith would be more logical
+            m.toModify(sp, test2 = cms.EDProducer("Xyzzy")) # Do we actually want to allow this? In a sense the toReplaceWith would be more logical
 
             # Replace a producer
-            m.toReplaceWith(sp.cuda, cms.EDProducer("Fred", x = cms.int32(42)))
-            self.assertEqual(sp.cuda.type_(), "Fred")
-            self.assertEqual(sp.cuda.x.value(), 42)
+            m.toReplaceWith(sp.test1, cms.EDProducer("Fred", x = cms.int32(42)))
+            self.assertEqual(sp.test1.type_(), "Fred")
+            self.assertEqual(sp.test1.x.value(), 42)
 
             # Add a producer
-            m.toModify(sp, fpga = cms.EDProducer("Wilma", y = cms.int32(24)))
-            self.assertEqual(sp.fpga.type_(), "Wilma")
-            self.assertEqual(sp.fpga.y.value(), 24)
+            m.toModify(sp, test3 = cms.EDProducer("Wilma", y = cms.int32(24)))
+            self.assertEqual(sp.test3.type_(), "Wilma")
+            self.assertEqual(sp.test3.y.value(), 24)
 
             # Remove a producer
-            m.toModify(sp, cpu = None)
-            self.assertEqual(hasattr(sp, "cpu"), False)
+            m.toModify(sp, test2 = None)
+            self.assertEqual(hasattr(sp, "test2"), False)
 
         def testReplace(self):
             p = cms.EDProducer("Xyzzy", a = cms.int32(1))
-            sp = SwitchProducer(cuda = cms.EDProducer("Foo",
-                                                      a = cms.int32(1),
-                                                      b = cms.PSet(c = cms.int32(2))),
-                                cpu = cms.EDProducer("Bar",
-                                                     aa = cms.int32(11),
-                                                     bb = cms.PSet(cc = cms.int32(12))))
+            sp = SwitchProducerTest(test1 = cms.EDProducer("Foo",
+                                                           a = cms.int32(1),
+                                                           b = cms.PSet(c = cms.int32(2))),
+                                    test2 = cms.EDProducer("Bar",
+                                                           aa = cms.int32(11),
+                                                           bb = cms.PSet(cc = cms.int32(12))))
             m = cms.Modifier()
             m._setChosen()
 
@@ -367,14 +376,14 @@ if __name__ == "__main__":
             #self.assertEqual(isinstance(sp, SwitchProducer), false)
 
         def testDumpPython(self):
-            sp = SwitchProducer(test2 = cms.EDProducer("Foo",
-                                                      a = cms.int32(1),
-                                                      b = cms.PSet(c = cms.int32(2))),
-                                test1 = cms.EDProducer("Bar",
-                                                       aa = cms.int32(11),
-                                                       bb = cms.PSet(cc = cms.int32(12))))
+            sp = SwitchProducerTest(test2 = cms.EDProducer("Foo",
+                                                           a = cms.int32(1),
+                                                           b = cms.PSet(c = cms.int32(2))),
+                                    test1 = cms.EDProducer("Bar",
+                                                           aa = cms.int32(11),
+                                                           bb = cms.PSet(cc = cms.int32(12))))
             self.assertEqual(sp.dumpPython(),
-"""cms.SwitchProducer(
+"""cms.SwitchProducerTest(
     test1 = cms.EDProducer("Bar",
         aa = cms.int32(11),
         bb = cms.PSet(
@@ -392,13 +401,12 @@ if __name__ == "__main__":
 
         def testProcess(self):
             p = cms.Process("test")
-            p.sp = SwitchProducer(test2 = cms.EDProducer("Foo",
-                                                         a = cms.int32(1),
-                                                         b = cms.PSet(c = cms.int32(2))),
-                                  test1 = cms.EDProducer("Bar",
-                                                         aa = cms.int32(11),
-                                                         bb = cms.PSet(cc = cms.int32(12))))
-            p.sp._modulePath += "test."
+            p.sp = SwitchProducerTest(test2 = cms.EDProducer("Foo",
+                                                             a = cms.int32(1),
+                                                             b = cms.PSet(c = cms.int32(2))),
+                                      test1 = cms.EDProducer("Bar",
+                                                             aa = cms.int32(11),
+                                                             bb = cms.PSet(cc = cms.int32(12))))
             p.a = cms.EDProducer("A")
             p.s = cms.Sequence(p.a + p.sp)
             p.t = cms.Task(p.a, p.sp)
@@ -410,6 +418,6 @@ if __name__ == "__main__":
             self.assertEqual(mp.values["a"][1].values["@module_type"], (True, "A"))
             self.assertEqual(mp.values["sp"][1].values["@module_edm_type"], (True, "EDProducer"))
             self.assertEqual(mp.values["sp"][1].values["@module_type"], (True, "SwitchProducer"))
-            self.assertEqual(mp.values["@all_modules"][1], ["a", "sp", "sp@test2"])
+            self.assertEqual(mp.values["@all_modules"][1], ["a", "sp", "sp@test1", "sp@test2"])
 
     unittest.main()
