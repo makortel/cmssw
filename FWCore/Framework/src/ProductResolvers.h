@@ -251,7 +251,7 @@ namespace edm {
 
   class SwitchAliasProductResolver : public ProductResolverBase {
   public:
-    typedef ProducedProductResolver::ProductStatus ProductStatus;
+    using ProductStatus = DataManagingProductResolver::ProductStatus;
     SwitchAliasProductResolver(std::shared_ptr<BranchDescription const> bd, ProducedProductResolver& realProduct);
 
     void connectTo(ProductResolverBase const& iOther, Principal const *iParentPrincipal) final {
@@ -274,7 +274,13 @@ namespace edm {
 
     bool unscheduledWasNotRun_() const override;
     bool productUnavailable_() const override;
-    bool productResolved_() const override { return realProduct_.productResolved(); }
+    bool productResolved_() const override {
+      // SwitchProducer will never put anything in the event, and
+      // "false" will make Event::commit_() to call putProduct() with
+      // null unique_ptr<WrapperBase> to signal that the produce() was
+      // run.
+      return false;
+    } 
     bool productWasDeleted_() const override { return realProduct_.productWasDeleted(); }
     bool productWasFetchedAndIsValid_(bool iSkipCurrentProcess) const override { return realProduct_.productWasFetchedAndIsValid(iSkipCurrentProcess); }
 
@@ -297,6 +303,8 @@ namespace edm {
     void resetProductData_(bool deleteEarly) override;
     bool singleProduct_() const override;
 
+    constexpr static const ProductStatus defaultStatus_ = ProductStatus::NotPut;
+
     // for "alias" view
     ProducedProductResolver& realProduct_;
     std::shared_ptr<BranchDescription const> bd_; // with productData_ this is redundant
@@ -307,6 +315,8 @@ namespace edm {
     mutable std::atomic<bool> prefetchRequested_;
     // for provenance
     ParentageID parentageID_;
+    // for filter in a Path
+    mutable ProductStatus status_;
   };
 
   class ParentProcessProductResolver : public ProductResolverBase {

@@ -584,7 +584,8 @@ namespace edm {
     realProduct_(realProduct),
     bd_(bd),
     productData_(bd),
-    prefetchRequested_(false)
+    prefetchRequested_(false),
+    status_(defaultStatus_)
   {
     // Parentage of this branch is always the same by construction, so we can compute the ID just "once" here.
     Parentage p;
@@ -602,7 +603,12 @@ namespace edm {
                                               bool skipCurrentProcess,
                                               SharedResourcesAcquirer* sra,
                                               ModuleCallingContext const* mcc) const {
-    auto res = realProduct_.resolveProduct(principal, skipCurrentProcess, sra, mcc);
+    auto res = Resolution(nullptr);
+    // for uncheduled, act like alias
+    // for scheduled, if produce() was run, ask the product
+    if(bd_->onDemand() or status_ == ProductStatus::ResolveFailed) {
+      res = realProduct_.resolveProduct(principal, skipCurrentProcess, sra, mcc);
+    }
     if(res.data() == nullptr) {
       return res;
     }
@@ -622,7 +628,6 @@ namespace edm {
     if(bd_->onDemand()) {
       // If SwitchProducer is not on any Path, act like an EDAlias (AliasProductResolver)
       realProduct_.prefetchAsync(waitTask, principal, skipCurrentProcess, token, sra, mcc);
-      // Chris: need to call SwitchProducer::produce() to register in provenance
       return;
     }
 
@@ -655,23 +660,35 @@ namespace edm {
   }
 
   bool SwitchAliasProductResolver::unscheduledWasNotRun_() const {
-    // take from Produced/Puttable/Unscheduled???
-    // or maybe it should come from the alias instead
-    return realProduct_.unscheduledWasNotRun();
+    // for unscheduled, act like alias
+    if(bd_->onDemand()) {
+      return realProduct_.unscheduledWasNotRun();
+    }
+    // for scheduled, act like puttable
+    return false;
   }
 
   bool SwitchAliasProductResolver::productUnavailable_() const {
-    // take from Produced/Puttable/Unscheduled
-    // or maybe it should come from the alias instead
-    //
-    // the logic for "filter on a Path" should somehow come to play via the prefetching
-    return realProduct_.productUnavailable();
+    // for unscheduled, act like alias
+    // for scheduled, if produce() was run (ResolveFailed), ask from the real resolver
+    if(bd_->onDemand() or status_ == ProductStatus::ResolveFailed) {
+      return realProduct_.productUnavailable();
+    }
+    // for scheduled, if produce() was not run, return true
+    return true;
   }
 
   void SwitchAliasProductResolver::putProduct_(std::unique_ptr<WrapperBase> ) const {
-    throw Exception(errors::LogicError)
-    << "SwitchAliasProductResolver::putProduct_() not implemented and should never be called.\n"
-    << "Contact a Framework developer\n";
+    if(status_ != defaultStatus_) {
+      throw Exception(errors::InsertFailure) << "Attempt to insert more than one product for a branch " << bd_->branchName() << "This makes no sense for SwitchAliasProductResolver.\nContact a Framework developer";
+    }
+    // Let's use ResolveFailed to signal that produce() was called, as
+    // there is no real product in this resolver
+    status_ = ProductStatus::ResolveFailed;
+    bool expected = false;
+    if(prefetchRequested_.compare_exchange_strong(expected, true)) {
+      waitingTasks_.doneWaiting(std::exception_ptr());
+    }
   }
   
   void SwitchAliasProductResolver::putOrMergeProduct_(std::unique_ptr<WrapperBase> edp) const {
@@ -701,6 +718,9 @@ namespace edm {
   void SwitchAliasProductResolver::resetProductData_(bool deleteEarly) {
     productData_.resetProductData();
     realProduct_.resetProductData_(deleteEarly);
+    if(not deleteEarly) {
+      status_ = defaultStatus_;
+    }
   }
 
   bool SwitchAliasProductResolver::singleProduct_() const {
