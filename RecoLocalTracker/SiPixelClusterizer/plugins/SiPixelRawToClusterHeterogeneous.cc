@@ -132,7 +132,6 @@ std::unique_ptr<PixelUnpackingRegions> regions_;
 
   edm::ESWatcher<SiPixelFedCablingMapRcd> recordWatcher;
   edm::ESWatcher<SiPixelQualityRcd> qualityWatcher;
-  bool recordWatcherUpdatedSinceLastTransfer_ = false;
 
   bool usePilotBlade;
   bool usePhase1;
@@ -276,7 +275,6 @@ const FEDRawDataCollection *SiPixelRawToClusterHeterogeneous::initialize(const e
     fedIds   = cablingMap->fedIds();
     cabling_ = cablingMap->cablingTree();
     LogDebug("map version:")<< cabling_->version();
-    recordWatcherUpdatedSinceLastTransfer_ = true;
   }
   // initialize quality record or update if necessary
   if (qualityWatcher.check( es )&&useQuality) {
@@ -467,10 +465,9 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
     std::set<unsigned int> modules = *(regions_->modulesToUnpack());
     gpuModulesToUnpack.fillAsync(*cablingMap_, modules, cudaStream);
   }
-  else if(recordWatcherUpdatedSinceLastTransfer_) {
+  else {
     // If regions_ are disabled, it is enough to fill and transfer only if cablingMap has changed
     gpuModulesToUnpack.fillAsync(*cablingMap_, std::set<unsigned int>(), cudaStream);
-    recordWatcherUpdatedSinceLastTransfer_ = false;
   }
 
   edm::ESHandle<SiPixelFedCablingMapGPUWrapper> hgpuMap;
