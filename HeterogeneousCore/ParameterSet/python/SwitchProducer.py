@@ -7,6 +7,9 @@ from FWCore.ParameterSet.Mixins import _ConfigureComponent, _Labelable, _Paramet
 from FWCore.ParameterSet.Modules import EDProducer
 from FWCore.ParameterSet.SequenceTypes import _SequenceLeaf
 
+def _switch_cpu():
+    return (True, 1)
+
 # Eventually to be moved under FWCore/ParameterSet, but I want to
 # avoid recompiling the universe for now
 class SwitchProducer(EDProducer):
@@ -20,8 +23,8 @@ class SwitchProducer(EDProducer):
         self._isModified = False
 
     @staticmethod
-    def cpu():
-        return (True, 1)
+    def getCpu():
+        return _switch_cpu
 
     def _chooseResource(self):
         cases = self.parameterNames_()
