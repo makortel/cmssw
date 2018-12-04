@@ -394,6 +394,7 @@ struct CachingHostAllocator
                     // Reuse existing cache block.  Insert into live blocks.
                     found = true;
                     search_key = *block_itr;
+                    search_key.device = device;
                     search_key.associated_stream = active_stream;
                     live_blocks.insert(search_key);
 
