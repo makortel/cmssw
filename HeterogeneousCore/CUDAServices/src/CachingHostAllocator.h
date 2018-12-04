@@ -394,8 +394,16 @@ struct CachingHostAllocator
                     // Reuse existing cache block.  Insert into live blocks.
                     found = true;
                     search_key = *block_itr;
-                    search_key.device = device;
                     search_key.associated_stream = active_stream;
+                    if(search_key.device != device) {
+                      // If "associated" device changes, need to re-create the event on the right device
+                      if (CubDebug(error = cudaSetDevice(search_key.device))) return error;
+                      if (CubDebug(error = cudaEventDestroy(search_key.ready_event))) return error;
+                      if (CubDebug(error = cudaSetDevice(device))) return error;
+                      if (CubDebug(error = cudaEventCreateWithFlags(&search_key.ready_event, cudaEventDisableTiming))) return error;
+                      search_key.device = device;
+                    }
+
                     live_blocks.insert(search_key);
 
                     // Remove from free blocks
