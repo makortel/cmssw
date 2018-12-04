@@ -460,16 +460,6 @@ void SiPixelRawToClusterHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, c
 void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
   const auto buffers = initialize(ev.event(), es);
 
-  auto gpuModulesToUnpack = SiPixelFedCablingMapGPUWrapper::ModulesToUnpack(cudaStream);
-  if (regions_) {
-    std::set<unsigned int> modules = *(regions_->modulesToUnpack());
-    gpuModulesToUnpack.fillAsync(*cablingMap_, modules, cudaStream);
-  }
-  else {
-    // If regions_ are disabled, it is enough to fill and transfer only if cablingMap has changed
-    gpuModulesToUnpack.fillAsync(*cablingMap_, std::set<unsigned int>(), cudaStream);
-  }
-
   edm::ESHandle<SiPixelFedCablingMapGPUWrapper> hgpuMap;
   es.get<CkfComponentsRecord>().get(hgpuMap);
   if(hgpuMap->hasQuality() != useQuality) {
@@ -477,6 +467,17 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
   }
   // get the GPU product already here so that the async transfer can begin
   const auto *gpuMap = hgpuMap->getGPUProductAsync(cudaStream);
+
+  edm::cuda::device::unique_ptr<unsigned char[]> modulesToUnpackRegional;
+  const unsigned char *gpuModulesToUnpack;
+  if (regions_) {
+    modulesToUnpackRegional = hgpuMap->getModToUnpRegionalAsync(*(regions_->modulesToUnpack()), cudaStream);
+    gpuModulesToUnpack = modulesToUnpackRegional.get();
+  }
+  else {
+    gpuModulesToUnpack = hgpuMap->getModToUnpAllAsync(cudaStream);
+  }
+
 
   edm::ESHandle<SiPixelGainCalibrationForHLTGPU> hgains;
   es.get<SiPixelGainCalibrationForHLTGPURcd>().get(hgains);
@@ -545,7 +546,7 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
 
   } // end of for loop
 
-  gpuAlgo_.makeClustersAsync(gpuMap, gpuModulesToUnpack.get(), hgains->getGPUProductAsync(cudaStream),
+  gpuAlgo_.makeClustersAsync(gpuMap, gpuModulesToUnpack, hgains->getGPUProductAsync(cudaStream),
                              wordFedAppender,
                              wordCounterGPU, fedCounter, convertADCtoElectrons,
                              useQuality, includeErrors, enableTransfer_, debug, cudaStream);
