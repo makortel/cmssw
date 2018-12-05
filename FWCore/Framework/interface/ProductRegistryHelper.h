@@ -43,6 +43,7 @@ namespace edm {
       TypeID typeID_;
       std::string productInstanceName_;
       std::string branchAlias_;
+      std::string switchAlias_;
     };
 
     struct BranchAliasSetter {
@@ -51,6 +52,10 @@ namespace edm {
       
       BranchAliasSetter& setBranchAlias(std::string alias) {
         value_.branchAlias_ = std::move(alias);
+        return *this;
+      }
+      BranchAliasSetter& setSwitchAlias(std::string moduleLabel) {
+        value_.switchAlias_ = std::move(moduleLabel);
         return *this;
       }
       TypeLabelItem& value_;

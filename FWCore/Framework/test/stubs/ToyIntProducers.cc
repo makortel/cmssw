@@ -19,6 +19,7 @@ Toy EDProducers of Ints for testing purposes only.
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/InputTag.h"
+#include "FWCore/Utilities/interface/transform.h"
 //
 #include <cassert>
 #include <string>
@@ -411,6 +412,39 @@ namespace edmtest {
     e.emplace(otherPutToken_,value);
   }
 
+  //
+  // Produces multiple IntProduct products
+  //
+
+  class ManyIntProducer : public edm::global::EDProducer<> {
+  public:
+    explicit ManyIntProducer(edm::ParameterSet const& p):
+      tokenValues_{vector_transform(p.getParameter<std::vector<edm::ParameterSet>>("values"), [this](edm::ParameterSet const& pset) {
+          return TokenValue{produces<IntProduct>(pset.getParameter<std::string>("instance")),
+                            pset.getParameter<int>("value")};
+        })}
+    {
+      tokenValues_.push_back(TokenValue{produces<IntProduct>(), p.getParameter<int>("ivalue")});
+    }
+
+    void produce(edm::StreamID, edm::Event& e, edm::EventSetup const& c) const override;
+
+  private:
+    struct TokenValue {
+      edm::EDPutTokenT<IntProduct> token;
+      int value;
+    };
+    std::vector<TokenValue> tokenValues_;
+  };
+
+  void
+  ManyIntProducer::produce(edm::StreamID, edm::Event& e, edm::EventSetup const&) const {
+    // EventSetup is not used.
+    for(auto const tv: tokenValues_) {
+      e.emplace(tv.token, tv.value);
+    }
+  }
+
 }
 
 using edmtest::FailingProducer;
@@ -426,6 +460,7 @@ using edmtest::TransientIntProducer;
 using edmtest::IntProducerFromTransient;
 using edmtest::Int16_tProducer;
 using edmtest::AddIntsProducer;
+using edmtest::ManyIntProducer;
 DEFINE_FWK_MODULE(FailingProducer);
 DEFINE_FWK_MODULE(edmtest::FailingInRunProducer);
 DEFINE_FWK_MODULE(NonProducer);
@@ -440,3 +475,4 @@ DEFINE_FWK_MODULE(TransientIntProducer);
 DEFINE_FWK_MODULE(IntProducerFromTransient);
 DEFINE_FWK_MODULE(Int16_tProducer);
 DEFINE_FWK_MODULE(AddIntsProducer);
+DEFINE_FWK_MODULE(ManyIntProducer);

@@ -89,6 +89,9 @@ namespace edm {
                               type,
                               true,
                               isEndTransition(p->transition_));
+      if(not p->switchAlias_.empty()) {
+        pdesc.setSwitchAliasModuleLabel(p->switchAlias_);
+      }
       setIsMergeable(pdesc);
 
       if (pdesc.transient()) {
