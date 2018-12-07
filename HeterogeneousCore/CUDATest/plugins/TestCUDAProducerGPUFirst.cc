@@ -6,7 +6,6 @@
 
 #include "HeterogeneousCore/CUDACore/interface/CUDAStreamEDProducer.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 
 #include "TestCUDAProducerGPUKernel.h"
@@ -23,22 +22,19 @@ public:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup);
 private:
   std::string label_;
-  edm::EDGetTokenT<CUDAToken> srcToken_;
   std::unique_ptr<TestCUDAProducerGPUKernel> gpuAlgo_;
 };
 
 TestCUDAProducerGPUFirst::TestCUDAProducerGPUFirst(const edm::ParameterSet& iConfig):
-  label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDAToken>(iConfig.getParameter<edm::InputTag>("src")))
+  label_(iConfig.getParameter<std::string>("@module_label"))
 {
   produces<CUDA<float *>>();
 }
 
 void TestCUDAProducerGPUFirst::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source of CUDAToken.");
   descriptions.addWithDefaultLabel(desc);
-  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this the first algorithm in the chain of the GPU EDProducers, so it reads a CUDAToken. Produces CUDA<float *>.");
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this the first algorithm in the chain of the GPU EDProducers. Produces CUDA<float *>.");
 }
 
 void TestCUDAProducerGPUFirst::beginStreamCUDA(edm::StreamID id) {
@@ -49,10 +45,7 @@ void TestCUDAProducerGPUFirst::beginStreamCUDA(edm::StreamID id) {
 void TestCUDAProducerGPUFirst::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  edm::Handle<CUDAToken> htoken;
-  iEvent.getByToken(srcToken_, htoken);
-
-  auto ctx = CUDAScopedContext(*htoken);
+  auto ctx = CUDAScopedContext(iEvent.streamID());
 
   float *output = gpuAlgo_->runAlgo(label_, ctx.stream());
   iEvent.put(ctx.wrap(output));

@@ -6,9 +6,9 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
+#include "HeterogeneousCore/CUDACore/interface/chooseCUDADevice.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
-#include "chooseCUDADevice.h"
 
 #include <memory>
 

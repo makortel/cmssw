@@ -3,9 +3,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
-
-#include "HeterogeneousCore/CUDACore/test/TestCUDA.h" // ugly...
+#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 
 #include <iostream>
 
@@ -29,9 +27,7 @@ process.moduleToTest(process.toTest)
   SECTION("No event data") {
     edm::test::TestProcessor tester(config);
 
-    REQUIRE_THROWS_AS(tester.test(), cms::Exception);
-    //If the module does not throw when given no data, substitute 
-    //REQUIRE_NOTHROW for REQUIRE_THROWS_AS
+    REQUIRE_NOTHROW(tester.test());
   }
   
   SECTION("beginJob and endJob only") {
@@ -59,9 +55,7 @@ TEST_CASE("TestCUDAProducerGPUFirst operation", s_tag) {
 R"_(from FWCore.TestProcessor.TestProcess import *
 process = TestProcess()
 process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
-process.toTest = cms.EDProducer("TestCUDAProducerGPUFirst",
-    src = cms.InputTag("deviceChooser")
-)
+process.toTest = cms.EDProducer("TestCUDAProducerGPUFirst")
 process.moduleToTest(process.toTest)
 )_"
   };
@@ -76,17 +70,15 @@ process.moduleToTest(process.toTest)
     return;
   }
 
-  auto putToken = config.produces<CUDAToken>("deviceChooser");
-
   constexpr int defaultDevice = 0;
 
   SECTION("Produce") {
     edm::test::TestProcessor tester{config};
-    auto tokenPtr = std::make_unique<CUDAToken>(defaultDevice);
-    auto event = tester.test(std::make_pair(putToken, std::move(tokenPtr)));
+    auto event = tester.test();
     auto prod = event.get<CUDA<float *> >();
     REQUIRE(prod->device() == defaultDevice);
-    const float *data = TestCUDA::get(*prod);
+    auto ctx = CUDAScopedContext(*prod);
+    const float *data = ctx.get(*prod);
     REQUIRE(data != nullptr);
 
     float firstElements[10];

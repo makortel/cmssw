@@ -1,10 +1,8 @@
 #include "catch.hpp"
 
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
+#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-
-#include "TestCUDA.h"
 
 #include <cuda_runtime_api.h>
 
@@ -27,13 +25,14 @@ TEST_CASE("Use of CUDA template", "[CUDACore]") {
 
   constexpr int defaultDevice = 0;
   {
-    auto token = CUDAToken(defaultDevice);
-    CUDA<int> data = TestCUDA::create(10, token);
+    auto ctx = CUDAScopedContext(defaultDevice);
+    std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
+    auto& data = *dataPtr;
 
-    SECTION("Construct from CUDAToken") {
+    SECTION("Construct from CUDAScopedContext") {
       REQUIRE(data.isValid());
       REQUIRE(data.device() == defaultDevice);
-      REQUIRE(data.stream().id() == token.stream().id());
+      REQUIRE(data.stream().id() == ctx.stream().id());
       REQUIRE(&data.event() != nullptr);
     }
 

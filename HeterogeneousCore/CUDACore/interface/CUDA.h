@@ -30,46 +30,40 @@ public:
   CUDA(CUDA&&) = default;
   CUDA& operator=(CUDA&&) = default;
 
-  bool isValid() const { return streamEvent_.get() != nullptr; }
+  bool isValid() const { return stream_.get() != nullptr; }
 
   int device() const { return device_; }
 
-  const cuda::stream_t<>& stream() const { return streamEvent_->stream; }
-  cuda::stream_t<>& stream() { return streamEvent_->stream; }
+  const cuda::stream_t<>& stream() const { return *stream_; }
+  cuda::stream_t<>& stream() { return *stream_; }
+  const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
 
-  const cuda::event_t& event() const { return streamEvent_->event; }
-  cuda::event_t& event() { return streamEvent_->event; }
+  const cuda::event_t& event() const { return *event_; }
+  cuda::event_t& event() { return *event_; }
 
 private:
   friend class CUDAScopedContext;
-  friend class TestCUDA;
 
-  template <typename TokenOrContext>
-  explicit CUDA(T data, const TokenOrContext& token):
-    streamEvent_(std::make_unique<StreamEvent>(token)),
+  // Using template to break circular dependency
+  template <typename Context>
+  explicit CUDA(T data, const Context& ctx):
+    stream_(ctx.streamPtr()),
+    event_(std::make_unique<cuda::event_t>(cuda::event::create(ctx.device(),
+                                                               cuda::event::sync_by_busy_waiting,   // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
+                                                               cuda::event::dont_record_timings))), // it should be a bit faster to ignore timings
     data_(std::move(data)),
-    device_(token.device())
+    device_(ctx.device())
   {}
 
-  // Using unique_ptr to support the default constructor. Tried
-  // std::optional, but cuda::stream_t and cuda::event_t have their
-  // move assignment operators deleted. Use a struct to save one
-  // memory allocation.
-public: // need to be public for ROOT dicrionary generation?
-  struct StreamEvent {
-    template <typename TokenOrContext>
-    explicit StreamEvent(const TokenOrContext& token):
-      stream(token.stream()),
-      event(cuda::event::create(token.device(),
-                                cuda::event::sync_by_busy_waiting, // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
-                                cuda::event::dont_record_timings)) // it should be a bit faster to ignore timings
-    {}
-
-    cuda::stream_t<> stream; // stream_t is just a handle, the real CUDA stream is owned by CUDAToken (with long-enough life time)
-    cuda::event_t event;
-  };
 private:
-  std::unique_ptr<StreamEvent> streamEvent_;
+  // The cuda::stream_t is really shared among edm::Event products, so
+  // using shared_ptr also here
+  std::shared_ptr<cuda::stream_t<>> stream_;
+  // Using unique_ptr to support the default constructor. Tried
+  // std::optional, but cuda::event_t has its move assignment
+  // operators deleted.
+  std::unique_ptr<cuda::event_t> event_;
+
   T data_;
   int device_ = -1;
 };

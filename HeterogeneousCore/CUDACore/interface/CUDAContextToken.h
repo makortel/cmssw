@@ -14,26 +14,24 @@ public:
   ~CUDAContextToken() = default;
 
   CUDAContextToken(const CUDAContextToken&) = delete;
-  CUDAContextToken& operator=(const CUDAToken&) = delete;
+  CUDAContextToken& operator=(const CUDAContextToken&) = delete;
   CUDAContextToken(CUDAContextToken&&) = default;
   CUDAContextToken& operator=(CUDAContextToken&& other) = default;
 
 private:
   friend class CUDAScopedContext;
 
-  explicit CUDAContextToken(int device, cuda::stream_t<>&& stream):
-    stream_(std::make_unique<cuda::stream_t<>>(std::move(stream))),
+  explicit CUDAContextToken(int device, std::shared_ptr<cuda::stream_t<>> stream):
+    stream_(std::move(stream)),
     device_(device)
   {}
 
   int device() { return device_; }
-  cuda::stream_t<>&& stream() {
-    auto ret = std::move(*stream_);
-    stream_.reset();
-    return std::move(ret);
+  std::shared_ptr<cuda::stream_t<>>&& streamPtr() {
+    return std::move(stream_);
   }
 
-  std::unique_ptr<cuda::stream_t<>> stream_;
+  std::shared_ptr<cuda::stream_t<>> stream_;
   int device_;
 };
 

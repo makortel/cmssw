@@ -2,15 +2,13 @@
 
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAToken.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
-#include "TestCUDA.h"
 #include "test_CUDAScopedContextKernels.h"
 
 namespace {
-  std::unique_ptr<CUDA<int *> > produce(const CUDAToken& token, int *d, int *h) {
-    auto ctx = CUDAScopedContext(token);
+  std::unique_ptr<CUDA<int *> > produce(int device, int *d, int *h) {
+    auto ctx = CUDAScopedContext(device);
 
     cuda::memory::async::copy(d, h, sizeof(int), ctx.stream().id());
     testCUDAScopedContextKernels_single(d, ctx.stream());
@@ -30,42 +28,41 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
 
   constexpr int defaultDevice = 0;
   {
-    auto token = CUDAToken(defaultDevice);
+    auto ctx = CUDAScopedContext(defaultDevice);
 
-    SECTION("From CUDAToken") {
-      auto ctx = CUDAScopedContext(token);
-      REQUIRE(cuda::device::current::get().id() == token.device());
-      REQUIRE(ctx.stream().id() == token.stream().id());
-    }
-
-    SECTION("From CUDA<T>") {
-      const CUDA<int> data = TestCUDA::create(10, token);
-
-      auto ctx = CUDAScopedContext(data);
-      REQUIRE(cuda::device::current::get().id() == data.device());
-      REQUIRE(ctx.stream().id() == data.stream().id());
+    SECTION("Construct from device ID") {
+      REQUIRE(cuda::device::current::get().id() == defaultDevice);
     }
 
     SECTION("Wrap T to CUDA<T>") {
-      auto ctx = CUDAScopedContext(token);
-
       std::unique_ptr<CUDA<int> > dataPtr = ctx.wrap(10);
       REQUIRE(dataPtr.get() != nullptr);
       REQUIRE(dataPtr->device() == ctx.device());
       REQUIRE(dataPtr->stream().id() == ctx.stream().id());
     }
 
+    SECTION("Construct from from CUDA<T>") {
+      std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
+      const auto& data = *dataPtr;
+
+      auto ctx2 = CUDAScopedContext(data);
+      REQUIRE(cuda::device::current::get().id() == data.device());
+      REQUIRE(ctx2.stream().id() == data.stream().id());
+    }
+
     SECTION("Storing state as CUDAContextToken") {
       CUDAContextToken ctxtok;
       { // acquire
-        auto ctx = CUDAScopedContext(token);
-        ctxtok = ctx.toToken();
+        std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
+        const auto& data = *dataPtr;
+        auto ctx2 = CUDAScopedContext(data);
+        ctxtok = ctx2.toToken();
       }
 
       { // produce
-        auto ctx = CUDAScopedContext(std::move(ctxtok));
-        REQUIRE(cuda::device::current::get().id() == token.device());
-        REQUIRE(ctx.stream().id() == token.stream().id());
+        auto ctx2 = CUDAScopedContext(std::move(ctxtok));
+        REQUIRE(cuda::device::current::get().id() == ctx.device());
+        REQUIRE(ctx2.stream().id() == ctx.stream().id());
       }
     }
 
@@ -76,17 +73,17 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       // Mimick a producer on the second CUDA stream
       int h_a1 = 1;
       auto d_a1 = cuda::memory::device::make_unique<int>(current_device);
-      auto wprod1 = produce(token, d_a1.get(), &h_a1);
+      auto wprod1 = produce(defaultDevice, d_a1.get(), &h_a1);
 
       // Mimick a producer on the second CUDA stream
-      auto token2 = CUDAToken(defaultDevice);
-      REQUIRE(token.stream().id() != token2.stream().id());
       int h_a2 = 2;
       auto d_a2 = cuda::memory::device::make_unique<int>(current_device);
-      auto wprod2 = produce(token2, d_a2.get(), &h_a2);
+      auto wprod2 = produce(defaultDevice, d_a2.get(), &h_a2);
+
+      REQUIRE(wprod1->stream().id() != wprod2->stream().id());
 
       // Mimick a third producer "joining" the two streams
-      auto ctx = CUDAScopedContext(token);
+      auto ctx2 = CUDAScopedContext(*wprod1);
 
       auto prod1 = ctx.get(*wprod1);
       auto prod2 = ctx.get(*wprod2);
