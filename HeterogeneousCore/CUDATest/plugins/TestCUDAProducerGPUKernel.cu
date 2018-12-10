@@ -2,6 +2,8 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
 namespace {
   template<typename T>
@@ -52,21 +54,7 @@ namespace {
   }
 }
 
-TestCUDAProducerGPUKernel::TestCUDAProducerGPUKernel() {
-  h_a = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
-  h_b = cuda::memory::host::make_unique<float[]>(NUM_VALUES);
-
-  auto current_device = cuda::device::current::get();
-  d_a = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
-  d_b = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
-  d_c = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES);
-
-  d_ma = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
-  d_mb = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
-  d_mc = cuda::memory::device::make_unique<float[]>(current_device, NUM_VALUES*NUM_VALUES);
-}
-
-float *TestCUDAProducerGPUKernel::runAlgo(const std::string& label, const float *d_input, cuda::stream_t<>& stream) {
+edm::cuda::device::unique_ptr<float[]> TestCUDAProducerGPUKernel::runAlgo(const std::string& label, const float *d_input, cuda::stream_t<>& stream) const {
   // First make the sanity check
   if(d_input != nullptr) {
     auto h_check = std::make_unique<float[]>(NUM_VALUES);
@@ -78,10 +66,18 @@ float *TestCUDAProducerGPUKernel::runAlgo(const std::string& label, const float 
     }
   }
 
+  edm::Service<CUDAService> cs;
+
+  auto h_a = cs->make_host_unique<float[]>(NUM_VALUES, stream);
+  auto h_b = cs->make_host_unique<float[]>(NUM_VALUES, stream);
+
   for (auto i=0; i<NUM_VALUES; i++) {
     h_a[i] = i;
     h_b[i] = i*i;
   }
+
+  auto d_a = cs->make_device_unique<float[]>(NUM_VALUES, stream);
+  auto d_b = cs->make_device_unique<float[]>(NUM_VALUES, stream);
 
   cuda::memory::async::copy(d_a.get(), h_a.get(), NUM_VALUES*sizeof(float), stream.id());
   cuda::memory::async::copy(d_b.get(), h_b.get(), NUM_VALUES*sizeof(float), stream.id());
@@ -89,10 +85,14 @@ float *TestCUDAProducerGPUKernel::runAlgo(const std::string& label, const float 
   int threadsPerBlock {32};
   int blocksPerGrid = (NUM_VALUES + threadsPerBlock - 1) / threadsPerBlock;
 
+  auto d_c = cs->make_device_unique<float[]>(NUM_VALUES, stream);
   auto current_device = cuda::device::current::get();
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU launching kernels device " << current_device.id() << " CUDA stream " << stream.id();
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
+  auto d_ma = cs->make_device_unique<float[]>(NUM_VALUES*NUM_VALUES, stream);
+  auto d_mb = cs->make_device_unique<float[]>(NUM_VALUES*NUM_VALUES, stream);
+  auto d_mc = cs->make_device_unique<float[]>(NUM_VALUES*NUM_VALUES, stream);
   dim3 threadsPerBlock3{NUM_VALUES, NUM_VALUES};
   dim3 blocksPerGrid3{1,1};
   if(NUM_VALUES*NUM_VALUES > 32) {
@@ -108,5 +108,5 @@ float *TestCUDAProducerGPUKernel::runAlgo(const std::string& label, const float 
   matrixMulVector<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_mc.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
   edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU kernels launched, returning return pointer device " << current_device.id() << " CUDA stream " << stream.id();
-  return d_a.get();
+  return d_a;
 }

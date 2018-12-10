@@ -7,6 +7,8 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 
+#include <cuda/api_wrappers.h>
+
 #include <optional>
 
 /**

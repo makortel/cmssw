@@ -1,41 +1,40 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
-#include "HeterogeneousCore/CUDACore/interface/CUDAStreamEDProducer.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
+#include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
 
 #include "TestCUDAProducerGPUKernel.h"
 
-class TestCUDAProducerGPUEW: public CUDAStreamEDProducer<edm::ExternalWork> {
+class TestCUDAProducerGPUEW: public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit TestCUDAProducerGPUEW(const edm::ParameterSet& iConfig);
   ~TestCUDAProducerGPUEW() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-  void beginStreamCUDA(edm::StreamID id) override;
-
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 private:
   std::string label_;
-  edm::EDGetTokenT<CUDA<float *>> srcToken_;
-  std::unique_ptr<TestCUDAProducerGPUKernel> gpuAlgo_;
+  edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
+  TestCUDAProducerGPUKernel gpuAlgo_;
   CUDAContextToken ctxTmp_;
-  float *devicePtr_ = nullptr;
+  edm::cuda::device::unique_ptr<float[]> devicePtr_;
   float hostData_ = 0.f;
 };
 
 TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDA<float *>>(iConfig.getParameter<edm::InputTag>("src")))
+  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src")))
 {
-  produces<CUDA<float *>>();
+  produces<CUDA<CUDAThing>>();
 }
 
 void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -44,24 +43,19 @@ void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& des
   descriptions.addWithDefaultLabel(desc);
 }
 
-void TestCUDAProducerGPUEW::beginStreamCUDA(edm::StreamID id) {
-  // Allocate device memory via RAII
-  gpuAlgo_ = std::make_unique<TestCUDAProducerGPUKernel>();
-}
-
 void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  edm::Handle<CUDA<float *> > hin;
+  edm::Handle<CUDA<CUDAThing>> hin;
   iEvent.getByToken(srcToken_, hin);
   auto ctx = CUDAScopedContext(*hin, std::move(waitingTaskHolder));
-  const float *input = ctx.get(*hin);
+  const CUDAThing& input = ctx.get(*hin);
 
-  devicePtr_ = gpuAlgo_->runAlgo(label_, input, ctx.stream());
+  devicePtr_ = gpuAlgo_.runAlgo(label_, input.get(), ctx.stream());
   // Mimick the need to transfer some of the GPU data back to CPU to
   // be used for something within this module, or to be put in the
   // event.
-  cuda::memory::async::copy(&hostData_, devicePtr_+10, sizeof(float), ctx.stream().id());
+  cuda::memory::async::copy(&hostData_, devicePtr_.get()+10, sizeof(float), ctx.stream().id());
 
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
@@ -73,8 +67,7 @@ void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, const edm::EventSetup& i
 
   auto ctx = CUDAScopedContext(std::move(ctxTmp_));
 
-  iEvent.put(ctx.wrap(devicePtr_));
-  devicePtr_ = nullptr;
+  iEvent.put(ctx.wrap(CUDAThing(std::move(devicePtr_))));
 
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }

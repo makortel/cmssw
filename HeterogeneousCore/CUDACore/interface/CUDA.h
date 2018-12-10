@@ -58,14 +58,14 @@ private:
 private:
   // The cuda::stream_t is really shared among edm::Event products, so
   // using shared_ptr also here
-  std::shared_ptr<cuda::stream_t<>> stream_;
+  std::shared_ptr<cuda::stream_t<>> stream_; //!
   // Using unique_ptr to support the default constructor. Tried
   // std::optional, but cuda::event_t has its move assignment
   // operators deleted.
-  std::unique_ptr<cuda::event_t> event_;
+  std::unique_ptr<cuda::event_t> event_; //!
 
-  T data_;
-  int device_ = -1;
+  T data_; //!
+  int device_ = -1; //!
 };
 
 #endif

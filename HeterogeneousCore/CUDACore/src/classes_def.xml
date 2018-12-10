@@ -1,4 +1,0 @@
-<lcgdict>
-    <class name="CUDA<float *>" persistent="false"/>
-    <class name="edm::Wrapper<CUDA<float *>>" persistent="false"/>
-</lcgdict>

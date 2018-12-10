@@ -1,0 +1,4 @@
+<lcgdict>
+    <class name="CUDA<CUDAThing>" persistent="false"/>
+    <class name="edm::Wrapper<CUDA<CUDAThing>>" persistent="false"/>
+</lcgdict>

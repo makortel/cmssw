@@ -4,6 +4,7 @@
 
 #include "HeterogeneousCore/CUDACore/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
 
 #include <iostream>
 
@@ -75,10 +76,11 @@ process.moduleToTest(process.toTest)
   SECTION("Produce") {
     edm::test::TestProcessor tester{config};
     auto event = tester.test();
-    auto prod = event.get<CUDA<float *> >();
+    auto prod = event.get<CUDA<CUDAThing> >();
     REQUIRE(prod->device() == defaultDevice);
     auto ctx = CUDAScopedContext(*prod);
-    const float *data = ctx.get(*prod);
+    const CUDAThing& thing = ctx.get(*prod);
+    const float *data = thing.get();
     REQUIRE(data != nullptr);
 
     float firstElements[10];
