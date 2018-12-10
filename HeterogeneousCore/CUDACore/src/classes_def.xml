@@ -1,7 +1,4 @@
 <lcgdict>
-    <class name="CUDAToken" persistent="false"/>
-    <class name="edm::Wrapper<CUDAToken>" persistent="false"/>
-
     <class name="CUDA<float *>" persistent="false"/>
     <class name="edm::Wrapper<CUDA<float *>>" persistent="false"/>
 </lcgdict>
