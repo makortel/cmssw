@@ -1,6 +1,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "HeterogeneousCore/CUDACore/interface/chooseCUDADevice.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
+
+#include "chooseCUDADevice.h"
 
 namespace cudacore {
   int chooseCUDADevice(edm::StreamID id) {

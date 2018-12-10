@@ -1,7 +1,8 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "HeterogeneousCore/CUDACore/interface/chooseCUDADevice.h"
+
+#include "chooseCUDADevice.h"
 
 
 CUDAScopedContext::CUDAScopedContext(edm::StreamID streamID): CUDAScopedContext(cudacore::chooseCUDADevice(streamID)) {}
