@@ -4,7 +4,7 @@
 #include "FWCore/Concurrency/interface/WaitingTaskWithArenaHolder.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/StreamID.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 
 #include <cuda/api_wrappers.h>

@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "HeterogeneousCore/CUDACore/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 

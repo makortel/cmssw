@@ -1,5 +1,5 @@
-#ifndef HeterogeneousCore_CUDACore_CUDA_h
-#define HeterogeneousCore_CUDACore_CUDA_h
+#ifndef CUDADataFormats_Common_CUDA_h
+#define CUDADataFormats_Common_CUDA_h
 
 #include <optional>
 
