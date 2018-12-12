@@ -5,7 +5,5 @@ from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi import siPixelCl
 siPixelClustersPreSplitting = _siPixelClusters.clone()
 
 from Configuration.ProcessModifiers.gpu_cff import gpu
-from RecoLocalTracker.SiPixelClusterizer.siPixelClustersHeterogeneous_cfi import siPixelClustersHeterogeneous as _siPixelClustersHeterogeneous
-from RecoLocalTracker.SiPixelClusterizer.siPixelFedCablingMapGPUWrapper_cfi import *
-from CalibTracker.SiPixelESProducers.siPixelGainCalibrationForHLTGPU_cfi import *
-gpu.toReplaceWith(siPixelClustersPreSplitting, _siPixelClustersHeterogeneous.clone())
+from RecoLocalTracker.SiPixelClusterizer.siPixelClustersFromSoA_cfi import siPixelClustersFromSoA as _siPixelClustersFromSoA
+gpu.toReplaceWith(siPixelClustersPreSplitting, _siPixelClustersFromSoA.clone())

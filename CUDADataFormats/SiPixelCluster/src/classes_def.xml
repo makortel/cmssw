@@ -1,0 +1,4 @@
+<lcgdict>
+  <class name="CUDA<SiPixelClustersCUDA>" persistent="false"/>
+  <class name="edm::Wrapper<CUDA<SiPixelClustersCUDA>>" persistent="false"/>
+</lcgdict>

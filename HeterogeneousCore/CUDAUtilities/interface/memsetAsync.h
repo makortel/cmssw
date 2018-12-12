@@ -17,9 +17,15 @@ namespace cudautils {
     cuda::memory::device::async::set(ptr.get(), value, sizeof(T), stream.id());
   }
 
+  /**
+   * The type of `value` is `int` because of `cudaMemsetAsync()` takes
+   * it as an `int`. Note that `cudaMemsetAsync()` sets the value of
+   * each **byte** to `value`. This may lead to unexpected results if
+   * `sizeof(T) > 1` and `value != 0`.
+   */
   template <typename T>
   inline
-  void memsetAsync(edm::cuda::device::unique_ptr<T[]>& ptr, T value, size_t nelements, cuda::stream_t<>& stream) {
+  void memsetAsync(edm::cuda::device::unique_ptr<T[]>& ptr, int value, size_t nelements, cuda::stream_t<>& stream) {
     cuda::memory::device::async::set(ptr.get(), value, nelements*sizeof(T), stream.id());
   }
 }
