@@ -2,8 +2,10 @@
 #define HeterogeneousCore_CUDACore_CUDAScopedContext_h
 
 #include "FWCore/Concurrency/interface/WaitingTaskWithArenaHolder.h"
+#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/StreamID.h"
+#include "FWCore/Utilities/interface/EDPutToken.h"
 #include "CUDADataFormats/Common/interface/CUDA.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 
@@ -93,12 +95,16 @@ public:
   template <typename T>
   std::unique_ptr<CUDA<T> > wrap(T data) {
     // make_unique doesn't work because of private constructor
-    auto ret = std::unique_ptr<CUDA<T> >(new CUDA<T>(std::move(data), *this));
-    // Record CUDA event to the CUDA stream. The event will become
-    // "occurred" after all work queued to the stream before this
-    // point has been finished.
-    ret->event().record(stream_->id());
-    return ret;
+    //
+    // CUDA<T> constructor records CUDA event to the CUDA stream. The
+    // event will become "occurred" after all work queued to the
+    // stream before this point has been finished.
+    return std::unique_ptr<CUDA<T> >(new CUDA<T>(*this, std::move(data)));
+  }
+
+  template <typename T, typename... Args>
+  auto emplace(edm::Event& iEvent, edm::EDPutTokenT<T> token, Args&&... args) {
+    return iEvent.emplace(token, *this, std::forward<Args>(args)...);
   }
 
 private:

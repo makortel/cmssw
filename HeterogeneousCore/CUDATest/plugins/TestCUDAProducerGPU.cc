@@ -22,15 +22,15 @@ public:
 private:
   std::string label_;
   edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
+  edm::EDPutTokenT<CUDA<CUDAThing>> dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
 };
 
 TestCUDAProducerGPU::TestCUDAProducerGPU(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src")))
-{
-  produces<CUDA<CUDAThing>>();
-}
+  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))),
+  dstToken_(produces<CUDA<CUDAThing>>())
+{}
 
 void TestCUDAProducerGPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
@@ -47,7 +47,7 @@ void TestCUDAProducerGPU::produce(edm::StreamID streamID, edm::Event& iEvent, co
   auto ctx = CUDAScopedContext(*hin);
   const CUDAThing& input = ctx.get(*hin);
 
-  iEvent.put(ctx.wrap(CUDAThing(gpuAlgo_.runAlgo(label_, input.get(), ctx.stream()))));
+  ctx.emplace(iEvent, dstToken_, CUDAThing(gpuAlgo_.runAlgo(label_, input.get(), ctx.stream())));
 
   edm::LogPrint("TestCUDAProducerGPU") << label_ << " TestCUDAProducerGPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }

@@ -24,6 +24,7 @@ public:
 private:
   std::string label_;
   edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
+  edm::EDPutTokenT<CUDA<CUDAThing>> dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
   CUDAContextToken ctxTmp_;
   edm::cuda::device::unique_ptr<float[]> devicePtr_;
@@ -32,10 +33,9 @@ private:
 
 TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src")))
-{
-  produces<CUDA<CUDAThing>>();
-}
+  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))),
+  dstToken_(produces<CUDA<CUDAThing>>())
+{}
 
 void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
@@ -67,7 +67,7 @@ void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, const edm::EventSetup& i
 
   auto ctx = CUDAScopedContext(std::move(ctxTmp_));
 
-  iEvent.put(ctx.wrap(CUDAThing(std::move(devicePtr_))));
+  ctx.emplace(iEvent, dstToken_, std::move(devicePtr_));
 
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }

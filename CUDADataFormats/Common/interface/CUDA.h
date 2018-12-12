@@ -5,6 +5,10 @@
 
 #include <cuda/api_wrappers.h>
 
+namespace edm {
+  template <typename T> class Wrapper;
+}
+
 /**
  * The purpose of this class is to wrap CUDA data to edm::Event in a
  * way which forces correct use of various utilities.
@@ -43,17 +47,23 @@ public:
 
 private:
   friend class CUDAScopedContext;
+  friend class edm::Wrapper<CUDA<T>>;
 
   // Using template to break circular dependency
   template <typename Context>
-  explicit CUDA(T data, const Context& ctx):
+  explicit CUDA(const Context& ctx, T data):
     stream_(ctx.streamPtr()),
     event_(std::make_unique<cuda::event_t>(cuda::event::create(ctx.device(),
                                                                cuda::event::sync_by_busy_waiting,   // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
                                                                cuda::event::dont_record_timings))), // it should be a bit faster to ignore timings
     data_(std::move(data)),
     device_(ctx.device())
-  {}
+  {
+    // Record CUDA event to the CUDA stream. The event will become
+    // "occurred" after all work queued to the stream before this
+    // point has been finished.
+    event_->record(stream_->id());
+  }
 
 private:
   // The cuda::stream_t is really shared among edm::Event products, so
