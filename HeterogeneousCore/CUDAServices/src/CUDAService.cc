@@ -106,7 +106,7 @@ namespace {
   }
 
   void hostPreallocate(CUDAService& cs, const std::vector<unsigned int>& bufferSizes) {
-    preallocate<edm::cuda::device::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
+    preallocate<edm::cuda::host::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
         return cs.make_host_unique<char[]>(size, stream);
       }, bufferSizes);
   }
