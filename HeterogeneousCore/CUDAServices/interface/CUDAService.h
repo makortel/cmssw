@@ -76,9 +76,9 @@ public:
     int dev = getCurrentDevice();
     void *mem = allocate_device(dev, sizeof(T), stream);
     return typename cudaserviceimpl::make_device_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
-                                                                               [this, dev](void *ptr) {
-                                                                                 this->free_device(dev, ptr);
-                                                                               });
+                                                                               edm::cuda::device::impl::DeviceDeleter([this, dev](void *ptr) {
+                                                                                   this->free_device(dev, ptr);
+                                                                                 }));
   }
 
   template <typename T>
@@ -89,9 +89,9 @@ public:
     int dev = getCurrentDevice();
     void *mem = allocate_device(dev, n*sizeof(element_type), stream);
     return typename cudaserviceimpl::make_device_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
-                                                                                     [this, dev](void *ptr) {
-                                                                                       this->free_device(dev, ptr);
-                                                                                     });
+                                                                                     edm::cuda::device::impl::DeviceDeleter([this, dev](void *ptr) {
+                                                                                         this->free_device(dev, ptr);
+                                                                                       }));
   }
 
   template <typename T, typename ...Args>
@@ -105,9 +105,9 @@ public:
     static_assert(std::is_trivially_constructible<T>::value, "Allocating with non-trivial constructor on the pinned host memory is not supported");
     void *mem = allocate_host(sizeof(T), stream);
     return typename cudaserviceimpl::make_host_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
-                                                                             [this](void *ptr) {
-                                                                               this->free_host(ptr);
-                                                                             });
+                                                                             edm::cuda::host::impl::HostDeleter([this](void *ptr) {
+                                                                                 this->free_host(ptr);
+                                                                               }));
   }
 
   template <typename T>
@@ -117,9 +117,9 @@ public:
     static_assert(std::is_trivially_constructible<element_type>::value, "Allocating with non-trivial constructor on the pinned host memory is not supported");
     void *mem = allocate_host(n*sizeof(element_type), stream);
     return typename cudaserviceimpl::make_host_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
-                                                                                   [this](void *ptr) {
-                                                                                     this->free_host(ptr);
-                                                                                   });
+                                                                                   edm::cuda::host::impl::HostDeleter([this](void *ptr) {
+                                                                                       this->free_host(ptr);
+                                                                                     }));
   }
 
   template <typename T, typename ...Args>
