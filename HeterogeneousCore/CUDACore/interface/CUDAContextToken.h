@@ -18,6 +18,11 @@ public:
   CUDAContextToken(CUDAContextToken&&) = default;
   CUDAContextToken& operator=(CUDAContextToken&& other) = default;
 
+  void reset() {
+    stream_.reset();
+    device_ = -1;
+  }
+
 private:
   friend class CUDAScopedContext;
 
