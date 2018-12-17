@@ -174,13 +174,13 @@ namespace edm {
         if(bd.isAnyAlias() && bd.branchType() == branchType_) {
           auto cbd = std::make_shared<BranchDescription const>(bd);
           if(bd.isSwitchAlias()) {
+            assert(branchType_ == InEvent);
             // Need different implementation for SwitchProducers not
             // in any Path (onDemand) and for those in a Path in order
             // to prevent the switch-aliased-for EDProducers from
             // being run when the SwitchProducer is in a Path after a
             // failing EDFilter.
             if(bd.onDemand()) {
-              assert(branchType_ == InEvent);
               addSwitchAliasProduct(cbd);
             }
             else {
