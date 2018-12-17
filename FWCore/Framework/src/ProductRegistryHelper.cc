@@ -89,8 +89,12 @@ namespace edm {
                               type,
                               true,
                               isEndTransition(p->transition_));
-      if(not p->switchAlias_.empty()) {
-        pdesc.setSwitchAliasModuleLabel(p->switchAlias_);
+      if(p->aliasType_ == TypeLabelItem::AliasType::kSwitchAlias) {
+        if(not p->branchAlias_.empty()) {
+          throw edm::Exception(edm::errors::LogicError) << "Branch alias type has been set to SwitchAlias, but the alias content is empty.\n"
+                                                        << "Please report this error to the FWCore developers";
+        }
+        pdesc.setSwitchAliasModuleLabel(p->branchAlias_);
       }
       setIsMergeable(pdesc);
 
