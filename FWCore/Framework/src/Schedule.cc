@@ -341,6 +341,18 @@ namespace edm {
               }
               assert(std::distance(range.first, range.second) == 1);
               foundBranches[std::distance(chosenBranches.begin(), range.first)] = true;
+
+              // Check that all cases do not have BranchAlias
+              //auto ibd = preg.productList().find(*(range.first));
+              //assert(ibd != preg.productList().end());
+              auto const& bd = item.second;
+              if(not bd.branchAliases().empty()) {
+                auto ex = Exception(errors::UnimplementedFeature) << "SwitchProducer does not support ROOT branch aliases. Got the following ROOT branch aliases for SwitchProducer with label " << switchLabel << " for case " << caseLabel << ":";
+                for(auto const& item: bd.branchAliases()) {
+                  ex << " " << item;
+                }
+                throw ex;
+              }
             }
           }
 

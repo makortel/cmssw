@@ -28,13 +28,6 @@ namespace edm {
           if(iBranch.branchType() != InEvent) {
             throw Exception(errors::UnimplementedFeature) << "SwitchProducer does not support non-event branches. Got " << iBranch.branchType() << " for SwitchProducer with label " << moduleLabel << " whose chosen case is " << chosenLabel << ".";
           }
-          if(not iBranch.branchAliases().empty()) {
-            auto ex = Exception(errors::UnimplementedFeature) << "SwitchProducer does not support ROOT branch aliases. Got the following ROOT branch aliases for SwitchProducer with label " << moduleLabel << " whose chosen case is " << chosenLabel << ":";
-            for(auto const& item: iBranch.branchAliases()) {
-              ex << " " << item;
-            }
-            throw ex;
-          }
 
           // With consumes, create the connection to the chosen case EDProducer for prefetching
           this->consumes(edm::TypeToGet{iBranch.unwrappedTypeID(),PRODUCT_TYPE},

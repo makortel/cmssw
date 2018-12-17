@@ -247,7 +247,27 @@ process.moduleToTest(process.s)
 
 
 TEST_CASE("Configuration with ROOT branch alias", s_tag) {
-  const std::string baseConfig{
+  const std::string baseConfig1{
+R"_(from FWCore.TestProcessor.TestProcess import *
+import FWCore.ParameterSet.Config as cms
+
+class SwitchProducerTest(cms.SwitchProducer):
+    def __init__(self, **kargs):
+        super(SwitchProducerTest,self).__init__(
+            dict(
+                test1 = lambda: (True, -10),
+                test2 = lambda: (True, -9)
+            ), **kargs)
+
+process = TestProcess()
+process.s = SwitchProducerTest(
+   test1 = cms.EDProducer('ManyIntProducer', ivalue = cms.int32(1), values = cms.VPSet(cms.PSet(instance=cms.string('foo'),value=cms.int32(3)))),
+   test2 = cms.EDProducer('ManyIntProducer', ivalue = cms.int32(2), values = cms.VPSet(cms.PSet(instance=cms.string('foo'),value=cms.int32(4),branchAlias=cms.string('bar'))))
+)
+process.moduleToTest(process.s)
+)_"};
+
+    const std::string baseConfig2{
 R"_(from FWCore.TestProcessor.TestProcess import *
 import FWCore.ParameterSet.Config as cms
 
@@ -262,13 +282,18 @@ class SwitchProducerTest(cms.SwitchProducer):
 process = TestProcess()
 process.s = SwitchProducerTest(
    test1 = cms.EDProducer('ManyIntProducer', ivalue = cms.int32(1), values = cms.VPSet(cms.PSet(instance=cms.string('foo'),value=cms.int32(3),branchAlias=cms.string('bar')))),
-   test2 = cms.EDProducer('ManyIntProducer', ivalue = cms.int32(2), values = cms.VPSet(cms.PSet(instance=cms.string('foo'),value=cms.int32(4),branchAlias=cms.string('bar'))))
+   test2 = cms.EDProducer('ManyIntProducer', ivalue = cms.int32(2), values = cms.VPSet(cms.PSet(instance=cms.string('foo'),value=cms.int32(4))))
 )
 process.moduleToTest(process.s)
 )_"};
 
-  edm::test::TestProcessor::Config config{ baseConfig };
-  SECTION("ROOT branch aliases are not supported") {
+  SECTION("ROOT branch aliases are not supported for the chosen case") {
+    edm::test::TestProcessor::Config config{ baseConfig1 };
+    REQUIRE_THROWS_WITH(edm::test::TestProcessor(config), Catch::Contains("SwitchProducer does not support ROOT branch aliases"));
+  }
+
+  SECTION("ROOT branch aliases are not supported for the non-chosen case") {
+    edm::test::TestProcessor::Config config{ baseConfig2 };
     REQUIRE_THROWS_WITH(edm::test::TestProcessor(config), Catch::Contains("SwitchProducer does not support ROOT branch aliases"));
   }
 }
