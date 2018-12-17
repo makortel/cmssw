@@ -420,6 +420,10 @@ namespace edmtest {
   public:
     explicit ManyIntProducer(edm::ParameterSet const& p):
       tokenValues_{vector_transform(p.getParameter<std::vector<edm::ParameterSet>>("values"), [this](edm::ParameterSet const& pset) {
+          if(pset.existsAs<std::string>("branchAlias")) {
+            return TokenValue{produces<IntProduct>(pset.getParameter<std::string>("instance")).setBranchAlias(pset.getParameter<std::string>("branchAlias")),
+                              pset.getParameter<int>("value")};
+          }
           return TokenValue{produces<IntProduct>(pset.getParameter<std::string>("instance")),
                             pset.getParameter<int>("value")};
         })}
