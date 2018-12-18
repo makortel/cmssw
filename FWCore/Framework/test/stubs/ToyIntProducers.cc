@@ -429,7 +429,8 @@ namespace edmtest {
           }
           return TokenValue{produces<IntProduct>(pset.getParameter<std::string>("instance")),
                             pset.getParameter<int>("value")};
-        })}
+        })},
+      throw_{p.getUntrackedParameter<bool>("throw")}
     {
       tokenValues_.push_back(TokenValue{produces<IntProduct>(), p.getParameter<int>("ivalue")});
     }
@@ -437,6 +438,7 @@ namespace edmtest {
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
       edm::ParameterSetDescription desc;
       desc.add<int>("ivalue");
+      desc.addUntracked<bool>("throw", false);
 
       {
         edm::ParameterSetDescription pset;
@@ -457,10 +459,15 @@ namespace edmtest {
       int value;
     };
     std::vector<TokenValue> tokenValues_;
+    bool throw_;
   };
 
   void
   ManyIntProducer::produce(edm::StreamID, edm::Event& e, edm::EventSetup const&) const {
+    if(throw_) {
+      throw edm::Exception(edm::errors::NotFound) << "Intentional 'NotFound' exception for testing purposes\n";
+    }
+
     // EventSetup is not used.
     for(auto const tv: tokenValues_) {
       e.emplace(tv.token, tv.value);

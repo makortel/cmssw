@@ -12,28 +12,6 @@ class SwitchProducerTest(cms.SwitchProducer):
 
 process = cms.Process("PROD1")
 
-process.Tracer = cms.Service('Tracer',
-                             dumpContextForLabels = cms.untracked.vstring('intProducer'),
-                             dumpNonModuleContext = cms.untracked.bool(True)
-)
-
-process.MessageLogger = cms.Service("MessageLogger",
-    destinations   = cms.untracked.vstring('cout',
-                                           'cerr'
-    ),
-    categories = cms.untracked.vstring(
-        'Tracer'
-    ),
-    cout = cms.untracked.PSet(
-        default = cms.untracked.PSet (
-            limit = cms.untracked.int32(0)
-        ),
-        Tracer = cms.untracked.PSet(
-            limit=cms.untracked.int32(100000000)
-        )
-    )
-)
-
 process.options = cms.untracked.PSet(
     numberOfStreams = cms.untracked.uint32(1),
     numberOfConcurrentRuns = cms.untracked.uint32(1),

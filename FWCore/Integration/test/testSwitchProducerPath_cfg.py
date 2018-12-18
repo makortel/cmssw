@@ -12,28 +12,6 @@ class SwitchProducerTest(cms.SwitchProducer):
 
 process = cms.Process("PROD1")
 
-process.Tracer = cms.Service('Tracer',
-                             dumpContextForLabels = cms.untracked.vstring('intProducer'),
-                             dumpNonModuleContext = cms.untracked.bool(True)
-)
-
-process.MessageLogger = cms.Service("MessageLogger",
-    destinations   = cms.untracked.vstring('cout',
-                                           'cerr'
-    ),
-    categories = cms.untracked.vstring(
-        'Tracer'
-    ),
-    cout = cms.untracked.PSet(
-        default = cms.untracked.PSet (
-            limit = cms.untracked.int32(0)
-        ),
-        Tracer = cms.untracked.PSet(
-            limit=cms.untracked.int32(100000000)
-        )
-    )
-)
-
 process.options = cms.untracked.PSet(
     numberOfStreams = cms.untracked.uint32(1),
     numberOfConcurrentRuns = cms.untracked.uint32(1),
@@ -55,8 +33,12 @@ process.out = cms.OutputModule("PoolOutputModule",
     )
 )
 
-process.intProducer1 = cms.EDProducer("IntProducer", ivalue = cms.int32(1))
-process.intProducer2 = cms.EDProducer("IntProducer", ivalue = cms.int32(2))
+process.intProducer1 = cms.EDProducer("ManyIntProducer", ivalue = cms.int32(1))
+process.intProducer2 = cms.EDProducer("ManyIntProducer", ivalue = cms.int32(2))
+if enableTest2:
+    process.intProducer1.throw = cms.untracked.bool(True)
+else:
+    process.intProducer2.throw = cms.untracked.bool(True)
 
 process.intProducer = SwitchProducerTest(
     test1 = cms.EDProducer("AddIntsProducer", labels = cms.vstring("intProducer1")),
