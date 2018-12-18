@@ -16,6 +16,8 @@ Toy EDProducers of Ints for testing purposes only.
 #include "FWCore/Framework/interface/one/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/InputTag.h"
@@ -420,8 +422,9 @@ namespace edmtest {
   public:
     explicit ManyIntProducer(edm::ParameterSet const& p):
       tokenValues_{vector_transform(p.getParameter<std::vector<edm::ParameterSet>>("values"), [this](edm::ParameterSet const& pset) {
-          if(pset.existsAs<std::string>("branchAlias")) {
-            return TokenValue{produces<IntProduct>(pset.getParameter<std::string>("instance")).setBranchAlias(pset.getParameter<std::string>("branchAlias")),
+          auto const& branchAlias = pset.getParameter<std::string>("branchAlias");
+          if(not branchAlias.empty()) {
+            return TokenValue{produces<IntProduct>(pset.getParameter<std::string>("instance")).setBranchAlias(branchAlias),
                               pset.getParameter<int>("value")};
           }
           return TokenValue{produces<IntProduct>(pset.getParameter<std::string>("instance")),
@@ -429,6 +432,21 @@ namespace edmtest {
         })}
     {
       tokenValues_.push_back(TokenValue{produces<IntProduct>(), p.getParameter<int>("ivalue")});
+    }
+
+    static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+      edm::ParameterSetDescription desc;
+      desc.add<int>("ivalue");
+
+      {
+        edm::ParameterSetDescription pset;
+        pset.add<std::string>("instance");
+        pset.add<int>("value");
+        pset.add<std::string>("branchAlias", "");
+        desc.addVPSet("values", pset, std::vector<edm::ParameterSet>{});
+      }
+
+      descriptions.addDefault(desc);
     }
 
     void produce(edm::StreamID, edm::Event& e, edm::EventSetup const& c) const override;
