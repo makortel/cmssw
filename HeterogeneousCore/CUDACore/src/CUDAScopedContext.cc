@@ -1,18 +1,25 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
 #include "chooseCUDADevice.h"
 
 
-CUDAScopedContext::CUDAScopedContext(edm::StreamID streamID): CUDAScopedContext(cudacore::chooseCUDADevice(streamID)) {}
-CUDAScopedContext::CUDAScopedContext(int device):
-  currentDevice_(device),
-  setDeviceForThisScope_(device)
+CUDAScopedContext::CUDAScopedContext(edm::StreamID streamID):
+  currentDevice_(cudacore::chooseCUDADevice(streamID)),
+  setDeviceForThisScope_(currentDevice_)
 {
-  auto current_device = cuda::device::current::get();
-  stream_ = std::make_shared<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
+  edm::Service<CUDAService> cs;
+  stream_ = cs->getCUDAStream();
 }
+
+CUDAScopedContext::CUDAScopedContext(int device, std::unique_ptr<cuda::stream_t<>> stream):
+  currentDevice_(device),
+  setDeviceForThisScope_(device),
+  stream_(std::move(stream))
+{}
 
 CUDAScopedContext::~CUDAScopedContext() {
   if(waitingTaskHolder_.has_value()) {

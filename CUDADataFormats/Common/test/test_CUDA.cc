@@ -6,6 +6,17 @@
 
 #include <cuda_runtime_api.h>
 
+namespace cudatest {
+  class TestCUDAScopedContext {
+  public:
+    static
+    CUDAScopedContext make(int dev) {
+      auto device = cuda::device::get(dev);
+      return CUDAScopedContext(dev, std::make_unique<cuda::stream_t<>>(device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream)));
+    }
+  };
+}
+
 TEST_CASE("Use of CUDA template", "[CUDACore]") {
   SECTION("Default constructed") {
     auto foo = CUDA<int>();
@@ -25,7 +36,7 @@ TEST_CASE("Use of CUDA template", "[CUDACore]") {
 
   constexpr int defaultDevice = 0;
   {
-    auto ctx = CUDAScopedContext(defaultDevice);
+    auto ctx = cudatest::TestCUDAScopedContext::make(defaultDevice);
     std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
     auto& data = *dataPtr;
 

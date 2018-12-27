@@ -6,9 +6,20 @@
 
 #include "test_CUDAScopedContextKernels.h"
 
+namespace cudatest {
+  class TestCUDAScopedContext {
+  public:
+    static
+    CUDAScopedContext make(int dev) {
+      auto device = cuda::device::get(dev);
+      return CUDAScopedContext(dev, std::make_unique<cuda::stream_t<>>(device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream)));
+    }
+  };
+}
+
 namespace {
   std::unique_ptr<CUDA<int *> > produce(int device, int *d, int *h) {
-    auto ctx = CUDAScopedContext(device);
+    auto ctx = cudatest::TestCUDAScopedContext::make(device);
 
     cuda::memory::async::copy(d, h, sizeof(int), ctx.stream().id());
     testCUDAScopedContextKernels_single(d, ctx.stream());
@@ -28,7 +39,7 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
 
   constexpr int defaultDevice = 0;
   {
-    auto ctx = CUDAScopedContext(defaultDevice);
+    auto ctx = cudatest::TestCUDAScopedContext::make(defaultDevice);
 
     SECTION("Construct from device ID") {
       REQUIRE(cuda::device::current::get().id() == defaultDevice);

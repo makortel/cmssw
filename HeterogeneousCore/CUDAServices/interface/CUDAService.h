@@ -132,12 +132,20 @@ public:
   // Free pinned host memory (to be called from unique_ptr)
   void free_host(void *ptr);
 
+  // Gets a (cached) CUDA stream for the current device. The stream
+  // will be returned to the cache by the shared_ptr destructor.
+  std::shared_ptr<cuda::stream_t<>> getCUDAStream();
+
 private:
   // PIMPL to hide details of allocator
   struct Allocator;
   std::unique_ptr<Allocator> allocator_;
   void *allocate_device(int dev, size_t nbytes, cuda::stream_t<>& stream);
   void *allocate_host(size_t nbytes, cuda::stream_t<>& stream);
+
+  // PIMPL to hide details of the CUDA stream cache
+  struct CUDAStreamCache;
+  std::unique_ptr<CUDAStreamCache> cudaStreamCache_;
 
   int numberOfDevices_ = 0;
   unsigned int numberOfStreamsTotal_ = 0;

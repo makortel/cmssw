@@ -13,6 +13,10 @@
 
 #include <optional>
 
+namespace cudatest {
+  class TestCUDAScopedContext;
+}
+
 /**
  * The aim of this class is to do necessary per-event "initialization":
  * - setting the current device
@@ -23,12 +27,6 @@
 class CUDAScopedContext {
 public:
   explicit CUDAScopedContext(edm::StreamID streamID);
-
-  // This constructor takes the device as a parameter. It is mainly
-  // inteded for testing, but can be used for special cases if you
-  // really know what you're doing. Please use the StreamID overload
-  // if at all possible.
-  explicit CUDAScopedContext(int device);
 
   explicit CUDAScopedContext(CUDAContextToken&& token):
     currentDevice_(token.device()),
@@ -108,6 +106,11 @@ public:
   }
 
 private:
+  friend class cudatest::TestCUDAScopedContext;
+
+  // This construcor is only meant for testing
+  explicit CUDAScopedContext(int device, std::unique_ptr<cuda::stream_t<>> stream);
+
   int currentDevice_;
   std::optional<edm::WaitingTaskWithArenaHolder> waitingTaskHolder_;
   cuda::device::current::scoped_override_t<> setDeviceForThisScope_;

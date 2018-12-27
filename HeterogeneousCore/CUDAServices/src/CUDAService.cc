@@ -9,6 +9,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/Utilities/interface/ReusableObjectHolder.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
@@ -336,6 +337,10 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
     log << "cub::CachingDeviceAllocator disabled\n";
   }
 
+  cudaStreamCache_ = std::make_unique<CUDAStreamCache>(numberOfDevices_);
+
+  log << "\n";
+
   log << "CUDAService fully initialized";
   enabled_ = true;
 
@@ -350,6 +355,7 @@ CUDAService::~CUDAService() {
     if(allocator_) {
       allocator_.reset();
     }
+    cudaStreamCache_.reset();
 
     for (int i = 0; i < numberOfDevices_; ++i) {
       cudaCheck(cudaSetDevice(i));
@@ -489,4 +495,20 @@ void CUDAService::free_host(void *ptr) {
   else {
     cuda::throw_if_error(cudaFreeHost(ptr));
   }
+}
+
+
+// CUDA stream cache
+struct CUDAService::CUDAStreamCache {
+  explicit CUDAStreamCache(int ndev): cache(ndev) {}
+
+  // Separate caches for each device for fast lookup
+  std::vector<edm::ReusableObjectHolder<cuda::stream_t<>>> cache;
+};
+
+std::shared_ptr<cuda::stream_t<>> CUDAService::getCUDAStream() {
+  return cudaStreamCache_->cache[getCurrentDevice()].makeOrGet([](){
+      auto current_device = cuda::device::current::get();
+      return std::make_unique<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
+    });
 }
