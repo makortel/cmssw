@@ -35,8 +35,6 @@ private:
   const GPU::SimpleVector<PixelErrorCompact> *error_ = nullptr;
   const PixelFormatterErrors *formatterErrors_ = nullptr;
 
-  CUDAContextToken ctxTmp_;
-
   int nDigis_;
   bool includeErrors_;
 };
@@ -73,8 +71,6 @@ void SiPixelDigisSoAFromCUDA::acquire(const edm::Event& iEvent, const edm::Event
     error_ = tmp.second;
     formatterErrors_ = &(gpuDigis.formatterErrors());
   }
-
-  ctxTmp_ = ctx.toToken(); // CUDA stream must live until produce
 }
 
 void SiPixelDigisSoAFromCUDA::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -103,8 +99,6 @@ void SiPixelDigisSoAFromCUDA::produce(edm::Event& iEvent, const edm::EventSetup&
   data_.reset();
   error_ = nullptr;
   formatterErrors_ = nullptr;
-  
-  ctxTmp_.reset(); // release CUDA stream etc
 }
 
 // define as framework plugin
