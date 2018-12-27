@@ -468,7 +468,7 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
   // get the GPU product already here so that the async transfer can begin
   const auto *gpuMap = hgpuMap->getGPUProductAsync(cudaStream);
 
-  edm::cuda::device::unique_ptr<unsigned char[]> modulesToUnpackRegional;
+  cudautils::device::unique_ptr<unsigned char[]> modulesToUnpackRegional;
   const unsigned char *gpuModulesToUnpack;
   if (regions_) {
     modulesToUnpackRegional = hgpuMap->getModToUnpRegionalAsync(*(regions_->modulesToUnpack()), cudaStream);

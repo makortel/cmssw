@@ -5,7 +5,7 @@
 #include <cuda_runtime.h>
 #include "cuda/api_wrappers.h"
 
-#include "CUDADataFormats/Common/interface/host_unique_ptr.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 #include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
 #include "siPixelRawToClusterHeterogeneousProduct.h"
@@ -169,15 +169,15 @@ namespace pixelgpudetails {
       CPUData(CPUData&&) = default;
       CPUData& operator=(CPUData&&) = default;
       
-      edm::cuda::host::unique_ptr<uint32_t[]> nModules_Clusters; // These should really be part of the GPU product
+      cudautils::host::unique_ptr<uint32_t[]> nModules_Clusters; // These should really be part of the GPU product
 
-      edm::cuda::host::unique_ptr<pixelgpudetails::error_obj[]> data;
-      edm::cuda::host::unique_ptr<GPU::SimpleVector<pixelgpudetails::error_obj>> error;
+      cudautils::host::unique_ptr<pixelgpudetails::error_obj[]> data;
+      cudautils::host::unique_ptr<GPU::SimpleVector<pixelgpudetails::error_obj>> error;
 
-      edm::cuda::host::unique_ptr<uint32_t[]> pdigi;
-      edm::cuda::host::unique_ptr<uint32_t[]> rawIdArr;
-      edm::cuda::host::unique_ptr<uint16_t[]> adc;
-      edm::cuda::host::unique_ptr<int32_t[]> clus;
+      cudautils::host::unique_ptr<uint32_t[]> pdigi;
+      cudautils::host::unique_ptr<uint32_t[]> rawIdArr;
+      cudautils::host::unique_ptr<uint16_t[]> adc;
+      cudautils::host::unique_ptr<int32_t[]> clus;
     };
 
     class WordFedAppender {
@@ -191,8 +191,8 @@ namespace pixelgpudetails {
       const unsigned char *fedId() const { return fedId_.get(); }
 
     private:
-      edm::cuda::host::unique_ptr<unsigned int[]> word_;
-      edm::cuda::host::unique_ptr<unsigned char[]> fedId_;
+      cudautils::host::unique_ptr<unsigned int[]> word_;
+      cudautils::host::unique_ptr<unsigned char[]> fedId_;
     };
 
     SiPixelRawToClusterGPUKernel() = default;

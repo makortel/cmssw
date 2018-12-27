@@ -8,8 +8,8 @@
 
 #include "FWCore/Utilities/interface/StreamID.h"
 
-#include "CUDADataFormats/Common/interface/device_unique_ptr.h"
-#include "CUDADataFormats/Common/interface/host_unique_ptr.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 
 namespace edm {
   class ParameterSet;
@@ -19,16 +19,16 @@ namespace edm {
 
 namespace cudaserviceimpl {
   template <typename T>
-  struct make_device_unique_selector { using non_array = edm::cuda::device::unique_ptr<T>; };
+  struct make_device_unique_selector { using non_array = cudautils::device::unique_ptr<T>; };
   template <typename T>
-  struct make_device_unique_selector<T[]> { using unbounded_array = edm::cuda::device::unique_ptr<T[]>; };
+  struct make_device_unique_selector<T[]> { using unbounded_array = cudautils::device::unique_ptr<T[]>; };
   template <typename T, size_t N>
   struct make_device_unique_selector<T[N]> { struct bounded_array {}; };
 
   template <typename T>
-  struct make_host_unique_selector { using non_array = edm::cuda::host::unique_ptr<T>; };
+  struct make_host_unique_selector { using non_array = cudautils::host::unique_ptr<T>; };
   template <typename T>
-  struct make_host_unique_selector<T[]> { using unbounded_array = edm::cuda::host::unique_ptr<T[]>; };
+  struct make_host_unique_selector<T[]> { using unbounded_array = cudautils::host::unique_ptr<T[]>; };
   template <typename T, size_t N>
   struct make_host_unique_selector<T[N]> { struct bounded_array {}; };
 }
@@ -76,7 +76,7 @@ public:
     int dev = getCurrentDevice();
     void *mem = allocate_device(dev, sizeof(T), stream);
     return typename cudaserviceimpl::make_device_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
-                                                                               edm::cuda::device::impl::DeviceDeleter([this, dev](void *ptr) {
+                                                                               cudautils::device::impl::DeviceDeleter([this, dev](void *ptr) {
                                                                                    this->free_device(dev, ptr);
                                                                                  }));
   }
@@ -89,7 +89,7 @@ public:
     int dev = getCurrentDevice();
     void *mem = allocate_device(dev, n*sizeof(element_type), stream);
     return typename cudaserviceimpl::make_device_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
-                                                                                     edm::cuda::device::impl::DeviceDeleter([this, dev](void *ptr) {
+                                                                                     cudautils::device::impl::DeviceDeleter([this, dev](void *ptr) {
                                                                                          this->free_device(dev, ptr);
                                                                                        }));
   }
@@ -105,7 +105,7 @@ public:
     static_assert(std::is_trivially_constructible<T>::value, "Allocating with non-trivial constructor on the pinned host memory is not supported");
     void *mem = allocate_host(sizeof(T), stream);
     return typename cudaserviceimpl::make_host_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
-                                                                             edm::cuda::host::impl::HostDeleter([this](void *ptr) {
+                                                                             cudautils::host::impl::HostDeleter([this](void *ptr) {
                                                                                  this->free_host(ptr);
                                                                                }));
   }
@@ -117,7 +117,7 @@ public:
     static_assert(std::is_trivially_constructible<element_type>::value, "Allocating with non-trivial constructor on the pinned host memory is not supported");
     void *mem = allocate_host(n*sizeof(element_type), stream);
     return typename cudaserviceimpl::make_host_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
-                                                                                   edm::cuda::host::impl::HostDeleter([this](void *ptr) {
+                                                                                   cudautils::host::impl::HostDeleter([this](void *ptr) {
                                                                                        this->free_host(ptr);
                                                                                      }));
   }

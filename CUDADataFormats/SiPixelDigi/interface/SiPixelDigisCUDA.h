@@ -1,8 +1,7 @@
 #ifndef CUDADataFormats_SiPixelDigi_interface_SiPixelDigisCUDA_h
 #define CUDADataFormats_SiPixelDigi_interface_SiPixelDigisCUDA_h
 
-#include "CUDADataFormats/Common/interface/device_unique_ptr.h"
-#include "FWCore/Utilities/interface/propagate_const.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 
 #include <cuda/api_wrappers.h>
 
@@ -55,11 +54,11 @@ public:
   const DeviceConstView *view() const { return view_d.get(); }
 
 private:
-  edm::cuda::device::unique_ptr<uint16_t[]> xx_d;        // local coordinates of each pixel
-  edm::cuda::device::unique_ptr<uint16_t[]> yy_d;        //
-  edm::cuda::device::unique_ptr<uint16_t[]> adc_d;       // ADC of each pixel
-  edm::cuda::device::unique_ptr<uint16_t[]> moduleInd_d; // module id of each pixel
-  edm::cuda::device::unique_ptr<DeviceConstView> view_d; // "me" pointer
+  cudautils::device::unique_ptr<uint16_t[]> xx_d;        // local coordinates of each pixel
+  cudautils::device::unique_ptr<uint16_t[]> yy_d;        //
+  cudautils::device::unique_ptr<uint16_t[]> adc_d;       // ADC of each pixel
+  cudautils::device::unique_ptr<uint16_t[]> moduleInd_d; // module id of each pixel
+  cudautils::device::unique_ptr<DeviceConstView> view_d; // "me" pointer
 };
 
 #endif

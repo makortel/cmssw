@@ -1,7 +1,7 @@
 #ifndef CUDADataFormats_SiPixelCluster_interface_SiPixelClustersCUDA_h
 #define CUDADataFormats_SiPixelCluster_interface_SiPixelClustersCUDA_h
 
-#include "CUDADataFormats/Common/interface/device_unique_ptr.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 
 #include <cuda/api_wrappers.h>
 
@@ -59,15 +59,15 @@ public:
   DeviceConstView *view() const { return view_d.get(); }
 
 private:
-  edm::cuda::device::unique_ptr<uint32_t[]> moduleStart_d;   // index of the first pixel of each module
-  edm::cuda::device::unique_ptr<int32_t[]>  clus_d;          // cluster id of each pixel
-  edm::cuda::device::unique_ptr<uint32_t[]> clusInModule_d;  // number of clusters found in each module
-  edm::cuda::device::unique_ptr<uint32_t[]> moduleId_d;      // module id of each module
+  cudautils::device::unique_ptr<uint32_t[]> moduleStart_d;   // index of the first pixel of each module
+  cudautils::device::unique_ptr<int32_t[]>  clus_d;          // cluster id of each pixel
+  cudautils::device::unique_ptr<uint32_t[]> clusInModule_d;  // number of clusters found in each module
+  cudautils::device::unique_ptr<uint32_t[]> moduleId_d;      // module id of each module
 
   // originally from rechits
-  edm::cuda::device::unique_ptr<uint32_t[]> clusModuleStart_d;
+  cudautils::device::unique_ptr<uint32_t[]> clusModuleStart_d;
 
-  edm::cuda::device::unique_ptr<DeviceConstView> view_d;    // "me" pointer
+  cudautils::device::unique_ptr<DeviceConstView> view_d;    // "me" pointer
 };
 
 #endif

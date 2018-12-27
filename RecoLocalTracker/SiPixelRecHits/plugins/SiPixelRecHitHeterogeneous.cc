@@ -1,4 +1,3 @@
-#include "CUDADataFormats/Common/interface/host_unique_ptr.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
@@ -17,6 +16,7 @@
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "HeterogeneousCore/CUDACore/interface/GPUCuda.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 #include "HeterogeneousCore/Producer/interface/HeterogeneousEDProducer.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/PixelCPEBase.h"
