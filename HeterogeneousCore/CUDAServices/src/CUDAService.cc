@@ -98,7 +98,7 @@ namespace {
     cudaCheck(cudaGetDevice(&device));
     for(int i=0; i<numberOfDevices; ++i) {
       cudaCheck(cudaSetDevice(i));
-      preallocate<edm::cuda::device::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
+      preallocate<cudautils::device::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
           return cs.make_device_unique<char[]>(size, stream);
         }, bufferSizes);
     }
@@ -106,7 +106,7 @@ namespace {
   }
 
   void hostPreallocate(CUDAService& cs, const std::vector<unsigned int>& bufferSizes) {
-    preallocate<edm::cuda::host::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
+    preallocate<cudautils::host::unique_ptr>([&](size_t size, cuda::stream_t<>& stream) {
         return cs.make_host_unique<char[]>(size, stream);
       }, bufferSizes);
   }

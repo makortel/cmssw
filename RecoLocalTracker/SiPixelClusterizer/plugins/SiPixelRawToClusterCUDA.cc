@@ -122,7 +122,7 @@ void SiPixelRawToClusterCUDA::acquire(const edm::Event& iEvent, const edm::Event
   // get the GPU product already here so that the async transfer can begin
   const auto *gpuGains = hgains->getGPUProductAsync(ctx.stream());
 
-  edm::cuda::device::unique_ptr<unsigned char[]> modulesToUnpackRegional;
+  cudautils::device::unique_ptr<unsigned char[]> modulesToUnpackRegional;
   const unsigned char *gpuModulesToUnpack;
 
   if(regions_) {

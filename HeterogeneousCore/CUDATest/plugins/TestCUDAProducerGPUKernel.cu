@@ -54,7 +54,7 @@ namespace {
   }
 }
 
-edm::cuda::device::unique_ptr<float[]> TestCUDAProducerGPUKernel::runAlgo(const std::string& label, const float *d_input, cuda::stream_t<>& stream) const {
+cudautils::device::unique_ptr<float[]> TestCUDAProducerGPUKernel::runAlgo(const std::string& label, const float *d_input, cuda::stream_t<>& stream) const {
   // First make the sanity check
   if(d_input != nullptr) {
     auto h_check = std::make_unique<float[]>(NUM_VALUES);

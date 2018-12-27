@@ -1,7 +1,7 @@
 #ifndef HeterogeneousCore_CUDACore_TestCUDAProducerGPUKernel_h
 #define HeterogeneousCore_CUDACore_TestCUDAProducerGPUKernel_h
 
-#include "CUDADataFormats/Common/interface/device_unique_ptr.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 
 #include <cuda/api_wrappers.h>
 
@@ -22,10 +22,10 @@ public:
   ~TestCUDAProducerGPUKernel() = default;
 
   // returns (owning) pointer to device memory
-  edm::cuda::device::unique_ptr<float[]> runAlgo(const std::string& label, cuda::stream_t<>& stream) const {
+  cudautils::device::unique_ptr<float[]> runAlgo(const std::string& label, cuda::stream_t<>& stream) const {
     return runAlgo(label, nullptr, stream);
   }
-  edm::cuda::device::unique_ptr<float[]> runAlgo(const std::string& label, const float *d_input, cuda::stream_t<>& stream) const;
+  cudautils::device::unique_ptr<float[]> runAlgo(const std::string& label, const float *d_input, cuda::stream_t<>& stream) const;
 };
 
 #endif

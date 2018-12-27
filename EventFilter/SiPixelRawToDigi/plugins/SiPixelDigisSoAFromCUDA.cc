@@ -1,4 +1,3 @@
-#include "CUDADataFormats/Common/interface/host_unique_ptr.h"
 #include "CUDADataFormats/Common/interface/CUDA.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
 #include "DataFormats/SiPixelDigi/interface/SiPixelDigisSoA.h"
@@ -10,6 +9,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 
 
 class SiPixelDigisSoAFromCUDA: public edm::stream::EDProducer<edm::ExternalWork> {
@@ -26,12 +26,12 @@ private:
   edm::EDGetTokenT<CUDA<SiPixelDigisCUDA>> digiGetToken_;
   edm::EDPutTokenT<SiPixelDigisSoA> digiPutToken_;
 
-  edm::cuda::host::unique_ptr<uint32_t[]> pdigi_;
-  edm::cuda::host::unique_ptr<uint32_t[]> rawIdArr_;
-  edm::cuda::host::unique_ptr<uint16_t[]> adc_;
-  edm::cuda::host::unique_ptr< int32_t[]> clus_;
+  cudautils::host::unique_ptr<uint32_t[]> pdigi_;
+  cudautils::host::unique_ptr<uint32_t[]> rawIdArr_;
+  cudautils::host::unique_ptr<uint16_t[]> adc_;
+  cudautils::host::unique_ptr< int32_t[]> clus_;
 
-  edm::cuda::host::unique_ptr<PixelErrorCompact[]> data_;
+  cudautils::host::unique_ptr<PixelErrorCompact[]> data_;
   const GPU::SimpleVector<PixelErrorCompact> *error_ = nullptr;
   const PixelFormatterErrors *formatterErrors_ = nullptr;
 

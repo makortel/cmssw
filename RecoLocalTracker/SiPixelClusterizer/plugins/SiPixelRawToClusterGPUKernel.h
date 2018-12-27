@@ -5,11 +5,11 @@
 #include <cuda_runtime.h>
 #include "cuda/api_wrappers.h"
 
-#include "CUDADataFormats/Common/interface/host_unique_ptr.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
 #include "CUDADataFormats/SiPixelCluster/interface/SiPixelClustersCUDA.h"
 #include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 #include "DataFormats/SiPixelDigi/interface/PixelErrors.h"
 
 struct SiPixelFedCablingMapGPU;
@@ -167,8 +167,8 @@ namespace pixelgpudetails {
       const unsigned char *fedId() const { return fedId_.get(); }
 
     private:
-      edm::cuda::host::unique_ptr<unsigned int[]> word_;
-      edm::cuda::host::unique_ptr<unsigned char[]> fedId_;
+      cudautils::host::unique_ptr<unsigned int[]> word_;
+      cudautils::host::unique_ptr<unsigned char[]> fedId_;
     };
 
     SiPixelRawToClusterGPUKernel() = default;
@@ -200,8 +200,8 @@ namespace pixelgpudetails {
     uint32_t nDigis = 0;
 
     // Data to be put in the event
-    edm::cuda::host::unique_ptr<uint32_t[]> nModules_Clusters_h;
-    edm::cuda::host::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_h;
+    cudautils::host::unique_ptr<uint32_t[]> nModules_Clusters_h;
+    cudautils::host::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_h;
     SiPixelDigisCUDA digis_d;
     SiPixelClustersCUDA clusters_d;
   };

@@ -27,7 +27,7 @@ private:
   edm::EDPutTokenT<CUDA<CUDAThing>> dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
   CUDAContextToken ctxTmp_;
-  edm::cuda::device::unique_ptr<float[]> devicePtr_;
+  cudautils::device::unique_ptr<float[]> devicePtr_;
   float hostData_ = 0.f;
 };
 

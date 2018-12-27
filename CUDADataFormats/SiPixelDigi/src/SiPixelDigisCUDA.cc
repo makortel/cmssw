@@ -44,28 +44,28 @@ SiPixelDigisCUDA::SiPixelDigisCUDA(size_t maxFedWords, bool includeErrors, cuda:
   }
 }
 
-edm::cuda::host::unique_ptr<uint16_t[]> SiPixelDigisCUDA::adcToHostAsync(cuda::stream_t<>& stream) const {
+cudautils::host::unique_ptr<uint16_t[]> SiPixelDigisCUDA::adcToHostAsync(cuda::stream_t<>& stream) const {
   edm::Service<CUDAService> cs;
   auto ret = cs->make_host_unique<uint16_t[]>(nDigis(), stream);
   cudautils::copyAsync(ret, adc_d, nDigis(), stream);
   return ret;
 }
 
-edm::cuda::host::unique_ptr<int32_t[]> SiPixelDigisCUDA::clusToHostAsync(cuda::stream_t<>& stream) const {
+cudautils::host::unique_ptr<int32_t[]> SiPixelDigisCUDA::clusToHostAsync(cuda::stream_t<>& stream) const {
   edm::Service<CUDAService> cs;
   auto ret = cs->make_host_unique<int32_t[]>(nDigis(), stream);
   cudautils::copyAsync(ret, clus_d, nDigis(), stream);
   return ret;
 }
 
-edm::cuda::host::unique_ptr<uint32_t[]> SiPixelDigisCUDA::pdigiToHostAsync(cuda::stream_t<>& stream) const {
+cudautils::host::unique_ptr<uint32_t[]> SiPixelDigisCUDA::pdigiToHostAsync(cuda::stream_t<>& stream) const {
   edm::Service<CUDAService> cs;
   auto ret = cs->make_host_unique<uint32_t[]>(nDigis(), stream);
   cudautils::copyAsync(ret, pdigi_d, nDigis(), stream);
   return ret;
 }
 
-edm::cuda::host::unique_ptr<uint32_t[]> SiPixelDigisCUDA::rawIdArrToHostAsync(cuda::stream_t<>& stream) const {
+cudautils::host::unique_ptr<uint32_t[]> SiPixelDigisCUDA::rawIdArrToHostAsync(cuda::stream_t<>& stream) const {
   edm::Service<CUDAService> cs;
   auto ret = cs->make_host_unique<uint32_t[]>(nDigis(), stream);
   cudautils::copyAsync(ret, rawIdArr_d, nDigis(), stream);

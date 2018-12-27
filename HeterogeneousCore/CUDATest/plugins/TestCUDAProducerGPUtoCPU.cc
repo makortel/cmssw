@@ -26,7 +26,7 @@ public:
 private:
   std::string label_;
   edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
-  edm::cuda::host::unique_ptr<float[]> buffer_;
+  cudautils::host::unique_ptr<float[]> buffer_;
 };
 
 TestCUDAProducerGPUtoCPU::TestCUDAProducerGPUtoCPU(const edm::ParameterSet& iConfig):

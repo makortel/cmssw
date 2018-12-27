@@ -41,7 +41,7 @@ void TestCUDAProducerGPUFirst::produce(edm::StreamID streamID, edm::Event& iEven
 
   auto ctx = CUDAScopedContext(streamID);
 
-  edm::cuda::device::unique_ptr<float[]> output = gpuAlgo_.runAlgo(label_, ctx.stream());
+  cudautils::device::unique_ptr<float[]> output = gpuAlgo_.runAlgo(label_, ctx.stream());
   iEvent.put(ctx.wrap(CUDAThing(std::move(output))));
 
   edm::LogPrint("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
