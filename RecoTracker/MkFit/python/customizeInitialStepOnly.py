@@ -71,3 +71,24 @@ def customizeInitialStepOnly(process):
     removePath(process, "RECOSIMoutput_step")
 
     return process
+
+
+def customizeInitialStepOnlyNoMTV(process):
+    process = customizeInitialStepOnly(process)
+
+    # Remove validation
+    removePath(process, "prevalidation_step")
+    removePath(process, "validation_step")
+    removePath(process, "DQMoutput_step")
+
+    # Add a dummy output module to trigger the (minimal) prefetching
+    process.out = cms.OutputModule("AsciiOutputModule",
+        outputCommands = cms.untracked.vstring(
+            "keep *_initialStepTracks_*_*",
+        ),
+        verbosity = cms.untracked.uint32(0)
+    )
+    process.outPath = cms.EndPath(process.out)
+    process.schedule = cms.Schedule(process.raw2digi_step, process.reconstruction_step, process.outPath)
+
+    return process
