@@ -31,9 +31,14 @@ CUDAScopedContext::~CUDAScopedContext() {
                                   waitingTaskHolder.doneWaiting(nullptr);
                                 }
                                 else {
-                                  auto error = cudaGetErrorName(status);
-                                  auto message = cudaGetErrorString(status);
-                                  waitingTaskHolder.doneWaiting(std::make_exception_ptr(cms::Exception("CUDAError") << "Callback of CUDA stream " << streamId << " in device " << device << " error " << error << ": " << message));
+                                  // wrap the exception in a try-catch block to let GDB "catch throw" break on it
+                                  try {
+                                    auto error = cudaGetErrorName(status);
+                                    auto message = cudaGetErrorString(status);
+                                    throw cms::Exception("CUDAError") << "Callback of CUDA stream " << streamId << " in device " << device << " error " << error << ": " << message;
+                                  } catch(cms::Exception&) {
+                                    waitingTaskHolder.doneWaiting(std::current_exception());
+                                  }
                                 }
                               });
   }
