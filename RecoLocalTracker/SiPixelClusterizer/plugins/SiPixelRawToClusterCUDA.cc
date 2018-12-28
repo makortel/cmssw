@@ -1,6 +1,7 @@
 #include "CUDADataFormats/Common/interface/CUDA.h"
 #include "CUDADataFormats/SiPixelCluster/interface/SiPixelClustersCUDA.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
+#include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigiErrorsCUDA.h"
 #include "CalibTracker/Records/interface/SiPixelGainCalibrationForHLTGPURcd.h"
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationForHLTGPU.h"
 #include "CondFormats/DataRecord/interface/SiPixelFedCablingMapRcd.h"
@@ -47,6 +48,7 @@ private:
   edm::EDGetTokenT<FEDRawDataCollection> rawGetToken_;
 
   edm::EDPutTokenT<CUDA<SiPixelDigisCUDA>> digiPutToken_;
+  edm::EDPutTokenT<CUDA<SiPixelDigiErrorsCUDA>> digiErrorPutToken_;
   edm::EDPutTokenT<CUDA<SiPixelClustersCUDA>> clusterPutToken_;
 
   CUDAContextToken ctxTmp_;
@@ -78,6 +80,10 @@ SiPixelRawToClusterCUDA::SiPixelRawToClusterCUDA(const edm::ParameterSet& iConfi
   usePilotBlade_(iConfig.getParameter<bool> ("UsePilotBlade")), // Control the usage of pilot-blade data, FED=40
   convertADCtoElectrons_(iConfig.getParameter<bool>("ConvertADCtoElectrons"))
 {
+  if(includeErrors_) {
+    digiErrorPutToken_ = produces<CUDA<SiPixelDigiErrorsCUDA>>();
+  }
+
   // regions
   if(!iConfig.getParameter<edm::ParameterSet>("Regions").getParameterNames().empty()) {
     regions_ = std::make_unique<PixelUnpackingRegions>(iConfig, consumesCollector());
@@ -215,6 +221,7 @@ void SiPixelRawToClusterCUDA::acquire(const edm::Event& iEvent, const edm::Event
 
   gpuAlgo_.makeClustersAsync(gpuMap, gpuModulesToUnpack, gpuGains,
                              wordFedAppender,
+                             std::move(errors_),
                              wordCounterGPU, fedCounter, convertADCtoElectrons_,
                              useQuality_, includeErrors_,
                              edm::MessageDrop::instance()->debugEnabled,
@@ -229,6 +236,9 @@ void SiPixelRawToClusterCUDA::produce(edm::Event& iEvent, const edm::EventSetup&
   auto tmp = gpuAlgo_.getResults();
   ctx.emplace(iEvent, digiPutToken_, std::move(tmp.first));
   ctx.emplace(iEvent, clusterPutToken_, std::move(tmp.second));
+  if(includeErrors_) {
+    ctx.emplace(iEvent, digiErrorPutToken_, gpuAlgo_.getErrors());
+  }
 }
 
 // define as framework plugin

@@ -1,4 +1,7 @@
 <lcgdict>
   <class name="CUDA<SiPixelDigisCUDA>" persistent="false"/>
   <class name="edm::Wrapper<CUDA<SiPixelDigisCUDA>>" persistent="false"/>
+
+  <class name="CUDA<SiPixelDigiErrorsCUDA>" persistent="false"/>
+  <class name="edm::Wrapper<CUDA<SiPixelDigiErrorsCUDA>>" persistent="false"/>
 </lcgdict>

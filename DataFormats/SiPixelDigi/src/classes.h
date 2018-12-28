@@ -6,6 +6,7 @@
 #include "DataFormats/SiPixelDigi/interface/SiPixelCalibDigi.h"
 #include "DataFormats/SiPixelDigi/interface/SiPixelCalibDigiError.h"
 #include "DataFormats/SiPixelDigi/interface/SiPixelDigisSoA.h"
+#include "DataFormats/SiPixelDigi/interface/SiPixelDigiErrorsSoA.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"

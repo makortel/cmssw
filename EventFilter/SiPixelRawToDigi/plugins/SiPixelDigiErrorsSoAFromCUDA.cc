@@ -1,6 +1,6 @@
 #include "CUDADataFormats/Common/interface/CUDA.h"
-#include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
-#include "DataFormats/SiPixelDigi/interface/SiPixelDigisSoA.h"
+#include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigiErrorsCUDA.h"
+#include "DataFormats/SiPixelDigi/interface/SiPixelDigiErrorsSoA.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -11,11 +11,10 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 
-
-class SiPixelDigisSoAFromCUDA: public edm::stream::EDProducer<edm::ExternalWork> {
+class SiPixelDigiErrorsSoAFromCUDA: public edm::stream::EDProducer<edm::ExternalWork> {
 public:
-  explicit SiPixelDigisSoAFromCUDA(const edm::ParameterSet& iConfig);
-  ~SiPixelDigisSoAFromCUDA() override = default;
+  explicit SiPixelDigiErrorsSoAFromCUDA(const edm::ParameterSet& iConfig);
+  ~SiPixelDigiErrorsSoAFromCUDA() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -23,44 +22,40 @@ private:
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
-  edm::EDGetTokenT<CUDA<SiPixelDigisCUDA>> digiGetToken_;
-  edm::EDPutTokenT<SiPixelDigisSoA> digiPutToken_;
+  edm::EDGetTokenT<CUDA<SiPixelDigiErrorsCUDA>> digiErrorGetToken_;
+  edm::EDPutTokenT<SiPixelDigiErrorsSoA> digiErrorPutToken_;
 
-  cudautils::host::unique_ptr<uint32_t[]> pdigi_;
-  cudautils::host::unique_ptr<uint32_t[]> rawIdArr_;
-  cudautils::host::unique_ptr<uint16_t[]> adc_;
-  cudautils::host::unique_ptr< int32_t[]> clus_;
-
-  int nDigis_;
+  cudautils::host::unique_ptr<PixelErrorCompact[]> data_;
+  GPU::SimpleVector<PixelErrorCompact> error_;
+  const PixelFormatterErrors *formatterErrors_ = nullptr;
 };
 
-SiPixelDigisSoAFromCUDA::SiPixelDigisSoAFromCUDA(const edm::ParameterSet& iConfig):
-  digiGetToken_(consumes<CUDA<SiPixelDigisCUDA>>(iConfig.getParameter<edm::InputTag>("src"))),
-  digiPutToken_(produces<SiPixelDigisSoA>())
+SiPixelDigiErrorsSoAFromCUDA::SiPixelDigiErrorsSoAFromCUDA(const edm::ParameterSet& iConfig):
+  digiErrorGetToken_(consumes<CUDA<SiPixelDigiErrorsCUDA>>(iConfig.getParameter<edm::InputTag>("src"))),
+  digiErrorPutToken_(produces<SiPixelDigiErrorsSoA>())
 {}
 
-void SiPixelDigisSoAFromCUDA::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void SiPixelDigiErrorsSoAFromCUDA::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag("siPixelClustersCUDA"));
   descriptions.addWithDefaultLabel(desc);
 }
 
-void SiPixelDigisSoAFromCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+void SiPixelDigiErrorsSoAFromCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   // Do the transfer in a CUDA stream parallel to the computation CUDA stream
   auto ctx = CUDAScopedContext(iEvent.streamID(), std::move(waitingTaskHolder));
 
-  edm::Handle<CUDA<SiPixelDigisCUDA>> hdigi;
-  iEvent.getByToken(digiGetToken_, hdigi);
-  const auto& gpuDigis = ctx.get(*hdigi);
+  edm::Handle<CUDA<SiPixelDigiErrorsCUDA>> herror;
+  iEvent.getByToken(digiErrorGetToken_, herror);
+  const auto& gpuDigiErrors = ctx.get(*herror);
 
-  nDigis_ = gpuDigis.nDigis();
-  pdigi_ = gpuDigis.pdigiToHostAsync(ctx.stream());
-  rawIdArr_ = gpuDigis.rawIdArrToHostAsync(ctx.stream());
-  adc_ = gpuDigis.adcToHostAsync(ctx.stream());
-  clus_ = gpuDigis.clusToHostAsync(ctx.stream());
+  auto tmp = gpuDigiErrors.dataErrorToHostAsync(ctx.stream());
+  error_ = std::move(tmp.first);
+  data_ = std::move(tmp.second);
+  formatterErrors_ = &(gpuDigiErrors.formatterErrors());
 }
 
-void SiPixelDigisSoAFromCUDA::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void SiPixelDigiErrorsSoAFromCUDA::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // The following line copies the data from the pinned host memory to
   // regular host memory. In principle that feels unnecessary (why not
   // just use the pinned host memory?). There are a few arguments for
@@ -71,13 +66,12 @@ void SiPixelDigisSoAFromCUDA::produce(edm::Event& iEvent, const edm::EventSetup&
   //     host memory to be allocated without a CUDA stream
   // - What if a CPU algorithm would produce the same SoA? We can't
   //   use cudaMallocHost without a GPU...
-  iEvent.emplace(digiPutToken_, nDigis_, pdigi_.get(), rawIdArr_.get(), adc_.get(), clus_.get());
+  iEvent.emplace(digiErrorPutToken_, error_.size(), error_.data(), formatterErrors_);
 
-  pdigi_.reset();
-  rawIdArr_.reset();
-  adc_.reset();
-  clus_.reset();
+  error_ = GPU::make_SimpleVector<PixelErrorCompact>(0, nullptr);
+  data_.reset();
+  formatterErrors_ = nullptr;
 }
 
 // define as framework plugin
-DEFINE_FWK_MODULE(SiPixelDigisSoAFromCUDA);
+DEFINE_FWK_MODULE(SiPixelDigiErrorsSoAFromCUDA);

@@ -6,6 +6,7 @@
 #include "cuda/api_wrappers.h"
 
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
+#include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigiErrorsCUDA.h"
 #include "CUDADataFormats/SiPixelCluster/interface/SiPixelClustersCUDA.h"
 #include "FWCore/Utilities/interface/typedefs.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
@@ -183,6 +184,7 @@ namespace pixelgpudetails {
     void makeClustersAsync(const SiPixelFedCablingMapGPU *cablingMap, const unsigned char *modToUnp,
                            const SiPixelGainForHLTonGPU *gains,
                            const WordFedAppender& wordFed,
+                           PixelFormatterErrors&& errors,
                            const uint32_t wordCounter, const uint32_t fedCounter, bool convertADCtoElectrons,
                            bool useQualityInfo, bool includeErrors, bool debug,
                            cuda::stream_t<>& stream);
@@ -200,14 +202,18 @@ namespace pixelgpudetails {
       return std::make_pair(std::move(digis_d), std::move(clusters_d));
     }
 
+    SiPixelDigiErrorsCUDA&& getErrors() {
+      return std::move(digiErrors_d);
+    }
+
   private:
     uint32_t nDigis = 0;
 
     // Data to be put in the event
     cudautils::host::unique_ptr<uint32_t[]> nModules_Clusters_h;
-    cudautils::host::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_h;
     SiPixelDigisCUDA digis_d;
     SiPixelClustersCUDA clusters_d;
+    SiPixelDigiErrorsCUDA digiErrors_d;
   };
 
   // see RecoLocalTracker/SiPixelClusterizer

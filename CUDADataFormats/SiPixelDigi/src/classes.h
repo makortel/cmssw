@@ -3,6 +3,7 @@
 
 #include "CUDADataFormats/Common/interface/CUDA.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
+#include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigiErrorsCUDA.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 
 #endif

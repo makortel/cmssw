@@ -509,6 +509,7 @@ namespace pixelgpudetails {
       const unsigned char *modToUnp,
       const SiPixelGainForHLTonGPU *gains,
       const WordFedAppender& wordFed,
+      PixelFormatterErrors&& errors,
       const uint32_t wordCounter, const uint32_t fedCounter,
       bool convertADCtoElectrons,
       bool useQualityInfo, bool includeErrors, bool debug,
@@ -516,7 +517,10 @@ namespace pixelgpudetails {
   {
     nDigis = wordCounter;
 
-    digis_d = SiPixelDigisCUDA(pixelgpudetails::MAX_FED_WORDS, includeErrors, stream);
+    digis_d = SiPixelDigisCUDA(pixelgpudetails::MAX_FED_WORDS, stream);
+    if(includeErrors) {
+      digiErrors_d = SiPixelDigiErrorsCUDA(pixelgpudetails::MAX_FED_WORDS, std::move(errors), stream);
+    }
     clusters_d = SiPixelClustersCUDA(gpuClustering::MaxNumModules, stream);
 
     edm::Service<CUDAService> cs;
@@ -545,14 +549,14 @@ namespace pixelgpudetails {
           digis_d.pdigi(),
           digis_d.rawIdArr(),
           digis_d.moduleInd(),
-          digis_d.error(),
+          digiErrors_d.error(), // returns nullptr if default-constructed
           useQualityInfo,
           includeErrors,
           debug);
       cudaCheck(cudaGetLastError());
 
       if(includeErrors) {
-        digis_d.copyErrorToHostAsync(stream);
+        digiErrors_d.copyErrorToHostAsync(stream);
       }
     }
     // End  of Raw2Digi and passing data for cluserisation

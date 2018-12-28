@@ -3,16 +3,13 @@
 
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
-#include "DataFormats/SiPixelDigi/interface/PixelErrors.h"
-#include "FWCore/Utilities/interface/propagate_const.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/GPUSimpleVector.h"
 
 #include <cuda/api_wrappers.h>
 
 class SiPixelDigisCUDA {
 public:
   SiPixelDigisCUDA() = default;
-  explicit SiPixelDigisCUDA(size_t maxFedWords, bool includeErrors, cuda::stream_t<>& stream);
+  explicit SiPixelDigisCUDA(size_t maxFedWords, cuda::stream_t<>& stream);
   ~SiPixelDigisCUDA() = default;
 
   SiPixelDigisCUDA(const SiPixelDigisCUDA&) = delete;
@@ -28,10 +25,6 @@ public:
   uint32_t nModules() const { return nModules_h; }
   uint32_t nDigis() const { return nDigis_h; }
 
-  void setFormatterErrors(const PixelFormatterErrors& err) { formatterErrors_h = err; }
-  bool hasErrors() const { return hasErrors_h; }
-  const PixelFormatterErrors& formatterErrors() const { return formatterErrors_h; }
-
   uint16_t * xx() { return xx_d.get(); }
   uint16_t * yy() { return yy_d.get(); }
   uint16_t * adc() { return adc_d.get(); }
@@ -39,7 +32,6 @@ public:
   int32_t  * clus() { return clus_d.get(); }
   uint32_t * pdigi() { return pdigi_d.get(); }
   uint32_t * rawIdArr() { return rawIdArr_d.get(); }
-  GPU::SimpleVector<PixelErrorCompact> *error() { return error_d.get(); }
 
   uint16_t const *xx() const { return xx_d.get(); }
   uint16_t const *yy() const { return yy_d.get(); }
@@ -48,7 +40,6 @@ public:
   int32_t  const *clus() const { return clus_d.get(); } 
   uint32_t const *pdigi() const { return pdigi_d.get(); }
   uint32_t const *rawIdArr() const { return rawIdArr_d.get(); }
-  GPU::SimpleVector<PixelErrorCompact> const *error() const { return error_d.get(); }
 
   uint16_t const *c_xx() const { return xx_d.get(); }
   uint16_t const *c_yy() const { return yy_d.get(); }
@@ -57,18 +48,12 @@ public:
   int32_t  const *c_clus() const { return clus_d.get(); }
   uint32_t const *c_pdigi() const { return pdigi_d.get(); }
   uint32_t const *c_rawIdArr() const { return rawIdArr_d.get(); }
-  GPU::SimpleVector<PixelErrorCompact> const *c_error() const { return error_d.get(); }
   
   cudautils::host::unique_ptr<uint16_t[]> adcToHostAsync(cuda::stream_t<>& stream) const;
   cudautils::host::unique_ptr< int32_t[]> clusToHostAsync(cuda::stream_t<>& stream) const;
   cudautils::host::unique_ptr<uint32_t[]> pdigiToHostAsync(cuda::stream_t<>& stream) const;
   cudautils::host::unique_ptr<uint32_t[]> rawIdArrToHostAsync(cuda::stream_t<>& stream) const;
 
-  using HostDataError = std::pair<cudautils::host::unique_ptr<PixelErrorCompact[]>, GPU::SimpleVector<PixelErrorCompact> const *>;
-  HostDataError dataErrorToHostAsync(cuda::stream_t<>& stream) const;
-
-  void copyErrorToHostAsync(cuda::stream_t<>& stream);
-  
   class DeviceConstView {
   public:
     DeviceConstView() = default;
@@ -107,16 +92,8 @@ private:
   cudautils::device::unique_ptr<uint32_t[]> pdigi_d;
   cudautils::device::unique_ptr<uint32_t[]> rawIdArr_d;
 
-  // These are for error CPU output; should we (eventually) place them
-  // to a separate product?
-  cudautils::device::unique_ptr<PixelErrorCompact[]> data_d;
-  cudautils::device::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_d;
-  cudautils::host::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_h;
-  PixelFormatterErrors formatterErrors_h;
-
   uint32_t nModules_h = 0;
   uint32_t nDigis_h = 0;
-  bool hasErrors_h;
 };
 
 #endif

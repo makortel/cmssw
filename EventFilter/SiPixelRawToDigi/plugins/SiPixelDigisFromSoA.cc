@@ -6,7 +6,7 @@
 #include "DataFormats/DetId/interface/DetIdCollection.h"
 #include "DataFormats/SiPixelDetId/interface/PixelFEDChannel.h"
 #include "DataFormats/SiPixelDigi/interface/PixelDigi.h"
-#include "DataFormats/SiPixelDigi/interface/SiPixelDigisSoA.h"
+#include "DataFormats/SiPixelDigi/interface/SiPixelDigiErrorsSoA.h"
 #include "EventFilter/SiPixelRawToDigi/interface/PixelDataFormatter.h"
 #include "FWCore/Framework/interface/ESTransientHandle.h"
 #include "FWCore/Framework/interface/ESWatcher.h"
@@ -30,7 +30,7 @@ public:
 private:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
-  edm::EDGetTokenT<SiPixelDigisSoA> digiSoAGetToken_;
+  edm::EDGetTokenT<SiPixelDigiErrorsSoA> digiErrorSoAGetToken_;
   edm::EDGetTokenT<edm::DetSetVector<PixelDigi>> digiGetToken_; // for a copy
 
   edm::EDPutTokenT<edm::DetSetVector<PixelDigi>> digiPutToken_;
@@ -60,7 +60,7 @@ SiPixelDigisFromSoA::SiPixelDigisFromSoA(const edm::ParameterSet& iConfig):
   usePhase1_(iConfig.getParameter<bool> ("UsePhase1"))
 {
   if(includeErrors_) {
-    digiSoAGetToken_         = consumes<SiPixelDigisSoA>(iConfig.getParameter<edm::InputTag>("digiSoASrc"));
+    digiErrorSoAGetToken_    = consumes<SiPixelDigiErrorsSoA>(iConfig.getParameter<edm::InputTag>("digiErrorSoASrc"));
     errorPutToken_           = produces<edm::DetSetVector<SiPixelRawDataError>>();
     tkErrorPutToken_         = produces<DetIdCollection>();
     userErrorPutToken_       = produces<DetIdCollection>("UserErrorModules");
@@ -71,7 +71,7 @@ SiPixelDigisFromSoA::SiPixelDigisFromSoA(const edm::ParameterSet& iConfig):
 void SiPixelDigisFromSoA::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("digiSrc", edm::InputTag("siPixelClusters"));
-  desc.add<edm::InputTag>("digiSoASrc", edm::InputTag("siPixelDigisSoA"));
+  desc.add<edm::InputTag>("digiErrorSoASrc", edm::InputTag("siPixelDigiErrorsSoA"));
   desc.add<std::string>("CablingMapLabel","")->setComment("CablingMap label");
   desc.add<bool>("IncludeErrors", true);
   desc.add<bool>("UsePhase1",false)->setComment("##  Use phase1");
@@ -97,28 +97,24 @@ void SiPixelDigisFromSoA::produce(edm::Event& iEvent, const edm::EventSetup& iSe
       LogDebug("map version:")<< cabling_->version();
     }
 
-    edm::Handle<SiPixelDigisSoA> hsoa;
-    iEvent.getByToken(digiSoAGetToken_, hsoa);
-    const auto& digis = *hsoa;
+    edm::Handle<SiPixelDigiErrorsSoA> hsoa;
+    iEvent.getByToken(digiErrorSoAGetToken_, hsoa);
+    const auto& digiErrors = *hsoa;
 
-    if(!digis.hasError()) {
-      throw cms::Exception("LogicError") << "The module was configured to include errors, but the input SoA does not include the errors. This is likely a problem in the configuration.";
-    }
-    
     auto errorcollection = std::make_unique<edm::DetSetVector<SiPixelRawDataError>>();
     auto tkerror_detidcollection = std::make_unique<DetIdCollection>();
     auto usererror_detidcollection = std::make_unique<DetIdCollection>();
     auto disabled_channelcollection = std::make_unique< edmNew::DetSetVector<PixelFEDChannel>>();
 
     PixelDataFormatter formatter(cabling_.get(), usePhase1_); // for phase 1 & 0
-    const PixelDataFormatter::Errors *formatterErrors = digis.formatterErrors();
+    const PixelDataFormatter::Errors *formatterErrors = digiErrors.formatterErrors();
     assert(formatterErrors != nullptr);
     auto errors = *formatterErrors; // make a copy
     PixelDataFormatter::DetErrors nodeterrors;
 
-    auto size = digis.errorSize();
+    auto size = digiErrors.size();
     for (auto i = 0U; i < size; i++) {
-      PixelErrorCompact err = digis.error(i);
+      PixelErrorCompact err = digiErrors.error(i);
       if (err.errorType != 0) {
         SiPixelRawDataError error(err.word, err.errorType, err.fedId + 1200);
         errors[err.rawId].push_back(error);
