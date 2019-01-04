@@ -1,3 +1,4 @@
+#include "CUDADataFormats/Common/interface/host_unique_ptr.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
@@ -10,10 +11,12 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "HeterogeneousCore/CUDACore/interface/GPUCuda.h"
+#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/Product/interface/HeterogeneousProduct.h"
 #include "HeterogeneousCore/Producer/interface/HeterogeneousEDProducer.h"
 #include "RecoLocalTracker/SiPixelRecHits/interface/PixelCPEBase.h"
@@ -179,15 +182,17 @@ void SiPixelRecHitHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& i
 
   edm::Handle<reco::BeamSpot> bsHandle;
   iEvent.getByToken( tBeamSpot, bsHandle);
-  float bs[3] = {0.f};
+  edm::Service<CUDAService> cs;
+  auto bs = cs->make_host_unique<float[]>(3, cudaStream);
   if(bsHandle.isValid()) {
     const auto  & bsh = *bsHandle;
     bs[0]=bsh.x0(); bs[1]=bsh.y0(); bs[2]=bsh.z0();
   }
+  else {
+    bs[0] = 0.f; bs[1] = 0.f; bs[2] = 0.f;
+  }
 
-
-  gpuAlgo_->makeHitsAsync(*hinput, bs, fcpe->getGPUProductAsync(cudaStream), enableTransfer_, cudaStream);
-
+  gpuAlgo_->makeHitsAsync(*hinput, bs.get(), fcpe->getGPUProductAsync(cudaStream), enableTransfer_, cudaStream);
 }
 
 void SiPixelRecHitHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) {
