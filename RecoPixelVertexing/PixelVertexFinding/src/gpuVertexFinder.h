@@ -66,6 +66,7 @@ namespace gpuVertexFinder {
 	     float ichi2max,   // max normalized distance to cluster
              bool ienableTransfer
 	     ) :
+      onGPU{nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr},
       minT(iminT),
       eps(ieps),
       errmax(ierrmax),
