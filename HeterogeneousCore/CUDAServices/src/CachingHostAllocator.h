@@ -1,3 +1,6 @@
+#ifndef HeterogenousCore_CUDAServices_src_CachingHostAllocator_h
+#define HeterogenousCore_CUDAServices_src_CachingHostAllocator_h
+
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
@@ -35,21 +38,15 @@
  * thread-safe.
  ******************************************************************************/
 
-#pragma once
-
 #include <set>
 #include <map>
 #include <cmath>
 
-#include <cub/util_namespace.cuh>
 #include <cub/util_debug.cuh>
 #include <cub/host/mutex.cuh>
 
-/// Optional outer namespace(s)
-CUB_NS_PREFIX
-
 /// CUB namespace
-namespace cub {
+namespace notcub {
 
 
 /**
@@ -538,9 +535,6 @@ struct CachingHostAllocator
             }
         }
 
-        // Unlock
-        mutex.Unlock();
-
         if (CubDebug(error = cudaGetDevice(&entrypoint_device))) return error;
         if (entrypoint_device != search_key.device) {
             if (CubDebug(error = cudaSetDevice(search_key.device))) return error;
@@ -550,7 +544,11 @@ struct CachingHostAllocator
             // Insert the ready event in the associated stream (must have current device set properly)
             if (CubDebug(error = cudaEventRecord(search_key.ready_event, search_key.associated_stream))) return error;
         }
-        else
+
+        // Unlock
+        mutex.Unlock();
+
+        if (!recached)
         {
             // Free the allocation from the runtime and cleanup the event.
             if (CubDebug(error = cudaFreeHost(d_ptr))) return error;
@@ -641,4 +639,5 @@ struct CachingHostAllocator
 /** @} */       // end group UtilMgmt
 
 }               // CUB namespace
-CUB_NS_POSTFIX  // Optional outer namespace(s)
+
+#endif
