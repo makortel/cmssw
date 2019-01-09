@@ -41,12 +41,15 @@ blockPrefixScan(T * c, uint32_t size, T* ws) {
     mask = __ballot_sync(mask,i+blockDim.x<size);
   }
   __syncthreads();
-  if (size<=32) return;
-  if (threadIdx.x<32) warpPrefixScan(ws,threadIdx.x,0xffffffff);
+  bool active = size > 32;
+  if (active & threadIdx.x<32) warpPrefixScan(ws,threadIdx.x,0xffffffff);
   __syncthreads();
-  for (auto i=first+32; i<size; i+=blockDim.x) {
-    auto warpId = i/32;
-    c[i]+=ws[warpId-1];
+
+  if (active) {
+    for (auto i=first+32; i<size; i+=blockDim.x) {
+      auto warpId = i/32;
+      c[i]+=ws[warpId-1];
+    }
   }
   __syncthreads();
 }
