@@ -30,17 +30,19 @@ namespace gpuClustering {
     assert(thisModuleId==moduleId[blockIdx.x]);
 
     auto nclus = nClustersInModule[thisModuleId];
-    if (nclus==0) return;
-
-    assert(nclus<=MaxNumClustersPerModules);
+    bool active = nclus > 0;
+    int first;
+    if (active) {
+      assert(nclus<=MaxNumClustersPerModules);
 
 #ifdef GPU_DEBUG
-    if (thisModuleId % 100 == 1)
-      if (threadIdx.x == 0)
-        printf("start clusterizer for module %d in block %d\n", thisModuleId, blockIdx.x);
+      if (thisModuleId % 100 == 1)
+        if (threadIdx.x == 0)
+          printf("start clusterizer for module %d in block %d\n", thisModuleId, blockIdx.x);
 #endif
 
-    auto first = firstPixel + threadIdx.x;
+      first = firstPixel + threadIdx.x;
+    }
 
     __shared__ int32_t charge[MaxNumClustersPerModules];
     for (int i=threadIdx.x; i<nclus; i += blockDim.x) {
@@ -48,45 +50,59 @@ namespace gpuClustering {
     }
     __syncthreads();
 
-    for (int i = first; i < numElements; i += blockDim.x) {
-      if (id[i] == InvId) continue;     // not valid
-      if (id[i] != thisModuleId) break;           // end of module
-      atomicAdd(&charge[clusterId[i]], adc[i]);
+    if (active) {
+      for (int i = first; i < numElements; i += blockDim.x) {
+        if (id[i] == InvId) continue;     // not valid
+        if (id[i] != thisModuleId) break;           // end of module
+        atomicAdd(&charge[clusterId[i]], adc[i]);
+      }
     }
+
     __syncthreads();
 
     auto chargeCut = thisModuleId<96 ? 2000 : 4000; // move in constants (calib?)
     __shared__ uint8_t ok[MaxNumClustersPerModules];
     __shared__ uint16_t newclusId[MaxNumClustersPerModules];
-    for (int i=threadIdx.x; i<nclus; i += blockDim.x) {
-       newclusId[i] = ok[i] =  charge[i]>chargeCut ? 1 : 0;
+    if (active) {
+      for (int i=threadIdx.x; i<nclus; i += blockDim.x) {
+        newclusId[i] = ok[i] =  charge[i]>chargeCut ? 1 : 0;
+      }
     }
 
     __syncthreads();
 
     // renumber
     __shared__ uint16_t ws[32];
-    blockPrefixScan(newclusId, nclus, ws);
+    if (active) {
+      blockPrefixScan(newclusId, nclus, ws);
 
-    assert(nclus>=newclusId[nclus-1]);
+      assert(nclus>=newclusId[nclus-1]);
     
-    if(nclus==newclusId[nclus-1]) return;
+      active = active && (nclus!=newclusId[nclus-1]);
+      if (active) {
+        nClustersInModule[thisModuleId] = newclusId[nclus-1];
+      }
+    }
 
-    nClustersInModule[thisModuleId] = newclusId[nclus-1];
     __syncthreads();
 
     // mark bad cluster again
-    for (int i=threadIdx.x; i<nclus; i += blockDim.x) {
-      if (0==ok[i]) newclusId[i]=InvId+1;
+    if (active) {
+      for (int i=threadIdx.x; i<nclus; i += blockDim.x) {
+        if (0==ok[i]) newclusId[i]=InvId+1;
+      }
     }
+
     __syncthreads();
 
     // reassign id
-    for (int i = first; i < numElements; i += blockDim.x) {
-      if (id[i] == InvId) continue;     // not valid
-      if (id[i] != thisModuleId) break;           // end of module
-      clusterId[i] = newclusId[clusterId[i]]-1;
-      if(clusterId[i]==InvId) id[i] = InvId;
+    if(active) {
+      for (int i = first; i < numElements; i += blockDim.x) {
+        if (id[i] == InvId) continue;     // not valid
+        if (id[i] != thisModuleId) break;           // end of module
+        clusterId[i] = newclusId[clusterId[i]]-1;
+        if(clusterId[i]==InvId) id[i] = InvId;
+      }
     }
 
     //done
