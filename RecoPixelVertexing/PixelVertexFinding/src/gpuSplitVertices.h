@@ -42,11 +42,11 @@ namespace gpuVertexFinder {
     // one vertex per block
     auto kv = blockIdx.x;
     
-    if (kv>= nvFinal) return;
-    if (nn[kv]<4) return;
-    if (chi2[kv]<maxChi2*float(nn[kv])) return;
-    
-    assert(nn[kv]<1023);
+    bool active = (kv < nvFinal) && (nn[kv]>=4) && (chi2[kv]>=maxChi2*float(nn[kv]));
+    if (active) {
+      assert(nn[kv]<1023);
+    }
+
     __shared__ uint32_t it[1024];   // track index
     __shared__ float zz[1024];      // z pos
     __shared__ uint8_t newV[1024];   // 0 or 1
@@ -57,69 +57,80 @@ namespace gpuVertexFinder {
     __syncthreads();
 
     // copy to local
-    for (auto k = threadIdx.x; k<nt; k+=blockDim.x) {
-      if (iv[k]==kv) {
-        auto old = atomicInc(&nq,1024);
-        zz[old] = zt[k]-zv[kv];
-        newV[old] = zz[old]<0 ? 0 : 1;
-        ww[old] = 1.f/ezt2[k];
-        it[old] = k;
+    if (active) {
+      for (auto k = threadIdx.x; k<nt; k+=blockDim.x) {
+        if (iv[k]==kv) {
+          auto old = atomicInc(&nq,1024);
+          zz[old] = zt[k]-zv[kv];
+          newV[old] = zz[old]<0 ? 0 : 1;
+          ww[old] = 1.f/ezt2[k];
+          it[old] = k;
+        }
       }
     }
     
     __shared__ float znew[2], wnew[2];  // the new vertices
-    
     __syncthreads();
-    assert(nq==nn[kv]+1);
-    
+    if(active) {
+      assert(nq==nn[kv]+1);
+    }
+
 
     int  maxiter=20;
     // kt-min....
     bool more = true;
     while(__syncthreads_or(more) ) {
       more = false;
-      if(0==threadIdx.x) {
+      if(active && 0==threadIdx.x) {
         znew[0]=0; znew[1]=0;
         wnew[0]=0; wnew[1]=0;
       }
       __syncthreads();
-      for (auto k = threadIdx.x; k<nq; k+=blockDim.x) {
-        auto i = newV[k];
-        atomicAdd(&znew[i],zz[k]*ww[k]);
-        atomicAdd(&wnew[i],ww[k]);
+      if (active) {
+        for (auto k = threadIdx.x; k<nq; k+=blockDim.x) {
+          auto i = newV[k];
+          atomicAdd(&znew[i],zz[k]*ww[k]);
+          atomicAdd(&wnew[i],ww[k]);
+        }
       }
       __syncthreads();
-      if(0==threadIdx.x) {
+      if(active && 0==threadIdx.x) {
         znew[0]/=wnew[0];
         znew[1]/=wnew[1];
       }
       __syncthreads();
-      for (auto k = threadIdx.x; k<nq; k+=blockDim.x) {
-        auto d0 = fabs(zz[k]-znew[0]);
-        auto d1 = fabs(zz[k]-znew[1]);
-        auto newer = d0<d1 ? 0 : 1;
-        more |= newer != newV[k];
-        newV[k] = newer;
+      if (active) {
+        for (auto k = threadIdx.x; k<nq; k+=blockDim.x) {
+          auto d0 = fabs(zz[k]-znew[0]);
+          auto d1 = fabs(zz[k]-znew[1]);
+          auto newer = d0<d1 ? 0 : 1;
+          more |= newer != newV[k];
+          newV[k] = newer;
+        }
+        --maxiter;
+        if (maxiter<=0) more=false;
       }
-      --maxiter;
-      if (maxiter<=0) more=false;
     }
     
     // quality cut
-    auto dist2 = (znew[0]-znew[1])*(znew[0]-znew[1]);
+    if (active) {
+      auto dist2 = (znew[0]-znew[1])*(znew[0]-znew[1]);
 
-    auto chi2Dist = dist2/(1.f/wnew[0]+1.f/wnew[1]);
+      auto chi2Dist = dist2/(1.f/wnew[0]+1.f/wnew[1]);
 
-    if(verbose && 0==threadIdx.x) printf("inter %d %f %f\n",20-maxiter,chi2Dist, dist2*wv[kv]);
+      if(verbose && 0==threadIdx.x) printf("inter %d %f %f\n",20-maxiter,chi2Dist, dist2*wv[kv]);
     
-    if (chi2Dist<4) return;
+      active = active && chi2Dist>=4;
+    }
     
     // get a new global vertex
     __shared__ uint32_t igv;
-    if (0==threadIdx.x) igv = atomicInc(data.nvIntermediate,1024);
+    if (active && 0==threadIdx.x) igv = atomicInc(data.nvIntermediate,1024);
     __syncthreads();
-    for (auto k = threadIdx.x; k<nq; k+=blockDim.x) {
-      if(1==newV[k]) iv[it[k]]=igv;
+    if (active) {
+      for (auto k = threadIdx.x; k<nq; k+=blockDim.x) {
+        if(1==newV[k]) iv[it[k]]=igv;
+      }
     }
 
   }
