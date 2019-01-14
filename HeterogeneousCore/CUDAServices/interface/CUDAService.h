@@ -17,22 +17,6 @@ namespace edm {
   class ConfigurationDescriptions;
 }
 
-namespace cudaserviceimpl {
-  template <typename T>
-  struct make_device_unique_selector { using non_array = cudautils::device::unique_ptr<T>; };
-  template <typename T>
-  struct make_device_unique_selector<T[]> { using unbounded_array = cudautils::device::unique_ptr<T[]>; };
-  template <typename T, size_t N>
-  struct make_device_unique_selector<T[N]> { struct bounded_array {}; };
-
-  template <typename T>
-  struct make_host_unique_selector { using non_array = cudautils::host::unique_ptr<T>; };
-  template <typename T>
-  struct make_host_unique_selector<T[]> { using unbounded_array = cudautils::host::unique_ptr<T[]>; };
-  template <typename T, size_t N>
-  struct make_host_unique_selector<T[N]> { struct bounded_array {}; };
-}
-
 /**
  * TODO:
  * - CUDA stream management?
@@ -70,60 +54,60 @@ public:
 
   // Allocate device memory
   template <typename T>
-  typename cudaserviceimpl::make_device_unique_selector<T>::non_array
+  typename cudautils::device::impl::make_device_unique_selector<T>::non_array
   make_device_unique(cuda::stream_t<>& stream) {
     static_assert(std::is_trivially_constructible<T>::value, "Allocating with non-trivial constructor on the device memory is not supported");
     int dev = getCurrentDevice();
     void *mem = allocate_device(dev, sizeof(T), stream);
-    return typename cudaserviceimpl::make_device_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
-                                                                               cudautils::device::impl::DeviceDeleter([this, dev](void *ptr) {
-                                                                                   this->free_device(dev, ptr);
-                                                                                 }));
+    return typename cudautils::device::impl::make_device_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
+                                                                                       cudautils::device::impl::DeviceDeleter([this, dev](void *ptr) {
+                                                                                           this->free_device(dev, ptr);
+                                                                                         }));
   }
 
   template <typename T>
-  typename cudaserviceimpl::make_device_unique_selector<T>::unbounded_array
+  typename cudautils::device::impl::make_device_unique_selector<T>::unbounded_array
   make_device_unique(size_t n, cuda::stream_t<>& stream) {
     using element_type = typename std::remove_extent<T>::type;
     static_assert(std::is_trivially_constructible<element_type>::value, "Allocating with non-trivial constructor on the device memory is not supported");
     int dev = getCurrentDevice();
     void *mem = allocate_device(dev, n*sizeof(element_type), stream);
-    return typename cudaserviceimpl::make_device_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
-                                                                                     cudautils::device::impl::DeviceDeleter([this, dev](void *ptr) {
-                                                                                         this->free_device(dev, ptr);
-                                                                                       }));
+    return typename cudautils::device::impl::make_device_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
+                                                                                             cudautils::device::impl::DeviceDeleter([this, dev](void *ptr) {
+                                                                                                 this->free_device(dev, ptr);
+                                                                                               }));
   }
 
   template <typename T, typename ...Args>
-  typename cudaserviceimpl::make_device_unique_selector<T>::bounded_array
+  typename cudautils::device::impl::make_device_unique_selector<T>::bounded_array
   make_device_unique(Args&&...) = delete;
 
   // Allocate pinned host memory
   template <typename T>
-  typename cudaserviceimpl::make_host_unique_selector<T>::non_array
+  typename cudautils::host::impl::make_host_unique_selector<T>::non_array
   make_host_unique(cuda::stream_t<>& stream) {
     static_assert(std::is_trivially_constructible<T>::value, "Allocating with non-trivial constructor on the pinned host memory is not supported");
     void *mem = allocate_host(sizeof(T), stream);
-    return typename cudaserviceimpl::make_host_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
-                                                                             cudautils::host::impl::HostDeleter([this](void *ptr) {
-                                                                                 this->free_host(ptr);
-                                                                               }));
-  }
-
-  template <typename T>
-  typename cudaserviceimpl::make_host_unique_selector<T>::unbounded_array
-  make_host_unique(size_t n, cuda::stream_t<>& stream) {
-    using element_type = typename std::remove_extent<T>::type;
-    static_assert(std::is_trivially_constructible<element_type>::value, "Allocating with non-trivial constructor on the pinned host memory is not supported");
-    void *mem = allocate_host(n*sizeof(element_type), stream);
-    return typename cudaserviceimpl::make_host_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
+    return typename cudautils::host::impl::make_host_unique_selector<T>::non_array(reinterpret_cast<T *>(mem),
                                                                                    cudautils::host::impl::HostDeleter([this](void *ptr) {
                                                                                        this->free_host(ptr);
                                                                                      }));
   }
 
+  template <typename T>
+  typename cudautils::host::impl::make_host_unique_selector<T>::unbounded_array
+  make_host_unique(size_t n, cuda::stream_t<>& stream) {
+    using element_type = typename std::remove_extent<T>::type;
+    static_assert(std::is_trivially_constructible<element_type>::value, "Allocating with non-trivial constructor on the pinned host memory is not supported");
+    void *mem = allocate_host(n*sizeof(element_type), stream);
+    return typename cudautils::host::impl::make_host_unique_selector<T>::unbounded_array(reinterpret_cast<element_type *>(mem),
+                                                                                         cudautils::host::impl::HostDeleter([this](void *ptr) {
+                                                                                             this->free_host(ptr);
+                                                                                           }));
+  }
+
   template <typename T, typename ...Args>
-  typename cudaserviceimpl::make_host_unique_selector<T>::bounded_array
+  typename cudautils::host::impl::make_host_unique_selector<T>::bounded_array
   make_host_unique(Args&&...) = delete;
   
   // Free device memory (to be called from unique_ptr)

@@ -21,6 +21,15 @@ namespace cudautils {
 
     template <typename T>
     using unique_ptr = std::unique_ptr<T, impl::HostDeleter>;
+
+    namespace impl {
+      template <typename T>
+      struct make_host_unique_selector { using non_array = cudautils::host::unique_ptr<T>; };
+      template <typename T>
+      struct make_host_unique_selector<T[]> { using unbounded_array = cudautils::host::unique_ptr<T[]>; };
+      template <typename T, size_t N>
+      struct make_host_unique_selector<T[N]> { struct bounded_array {}; };
+    }
   }
 }
 

@@ -21,6 +21,15 @@ namespace cudautils {
 
     template <typename T>
     using unique_ptr = std::unique_ptr<T, impl::DeviceDeleter>;
+
+    namespace impl {
+      template <typename T>
+      struct make_device_unique_selector { using non_array = cudautils::device::unique_ptr<T>; };
+      template <typename T>
+      struct make_device_unique_selector<T[]> { using unbounded_array = cudautils::device::unique_ptr<T[]>; };
+      template <typename T, size_t N>
+      struct make_device_unique_selector<T[N]> { struct bounded_array {}; };
+    }
   }
 }
 
