@@ -68,3 +68,6 @@
   <flags CUDA_FLAGS="-g -DGPU_DEBUG"/>
 </bin>
 
+<bin file="testCatch2Main.cpp,make_host_unique_t.cpp" name="cudaMemUtils_t">
+  <use name="catch2"/>
+</bin>
