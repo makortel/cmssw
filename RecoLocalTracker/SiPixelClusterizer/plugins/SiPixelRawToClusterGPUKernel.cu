@@ -34,6 +34,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/make_host_unique.h"
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/gpuCalibPixel.h"
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/gpuClustering.h"
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/gpuClusterChargeCut.h"
@@ -52,10 +53,9 @@ namespace pixelgpudetails {
   constexpr uint32_t MAX_FED_WORDS   = pixelgpudetails::MAX_FED * pixelgpudetails::MAX_WORD;
   constexpr uint32_t MAX_ERROR_SIZE  = MAX_FED_WORDS * esize;
 
-  SiPixelRawToClusterGPUKernel::WordFedAppender::WordFedAppender(cuda::stream_t<>& cudaStream) {
-    edm::Service<CUDAService> cs;
-    word_ = cs->make_host_unique<unsigned int[]>(MAX_FED_WORDS, cudaStream);
-    fedId_ = cs->make_host_unique<unsigned char[]>(MAX_FED_WORDS, cudaStream);
+  SiPixelRawToClusterGPUKernel::WordFedAppender::WordFedAppender() {
+    word_ = cudautils::make_host_unique<unsigned int[]>(MAX_FED_WORDS, cudaHostAllocWriteCombined);
+    fedId_ = cudautils::make_host_unique<unsigned char[]>(MAX_FED_WORDS, cudaHostAllocWriteCombined);
   }
 
   void SiPixelRawToClusterGPUKernel::WordFedAppender::initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length) {
@@ -509,6 +509,10 @@ namespace pixelgpudetails {
   } // end of Raw to Digi kernel
 
   // Interface to outside
+  SiPixelRawToClusterGPUKernel::SiPixelRawToClusterGPUKernel():
+    error_h_to_d{cudautils::make_host_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(cudaHostAllocWriteCombined)}
+  {}
+
   void SiPixelRawToClusterGPUKernel::makeClustersAsync(
       const SiPixelFedCablingMapGPU *cablingMap,
       const unsigned char *modToUnp,
@@ -540,14 +544,13 @@ namespace pixelgpudetails {
       auto error_d = cs->make_device_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
       auto data_d = cs->make_device_unique<pixelgpudetails::error_obj[]>(MAX_FED_WORDS, stream);
       cudaCheck(cudaMemsetAsync(data_d.get(), 0x00, MAX_ERROR_SIZE, stream.id()));
-      auto error_h_tmp = cs->make_host_unique<GPU::SimpleVector<pixelgpudetails::error_obj>>(stream);
-      GPU::make_SimpleVector(error_h_tmp.get(), MAX_FED_WORDS, data_d.get());
-      assert(error_h_tmp->size() == 0);
-      assert(error_h_tmp->capacity() == static_cast<int>(MAX_FED_WORDS));
+      GPU::make_SimpleVector(error_h_to_d.get(), MAX_FED_WORDS, data_d.get());
+      assert(error_h_to_d->size() == 0);
+      assert(error_h_to_d->capacity() == static_cast<int>(MAX_FED_WORDS));
 
       cudaCheck(cudaMemcpyAsync(word_d.get(),  wordFed.word(), wordCounter*sizeof(uint32_t),    cudaMemcpyDefault, stream.id()));
       cudaCheck(cudaMemcpyAsync(fedId_d.get(), wordFed.fedId(), wordCounter*sizeof(uint8_t) / 2, cudaMemcpyDefault, stream.id()));
-      cudaCheck(cudaMemcpyAsync(error_d.get(), error_h_tmp.get(), vsize, cudaMemcpyDefault, stream.id()));
+      cudaCheck(cudaMemcpyAsync(error_d.get(), error_h_to_d.get(), vsize, cudaMemcpyDefault, stream.id()));
 
       auto pdigi_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);
       auto rawIdArr_d = cs->make_device_unique<uint32_t[]>(wordCounter, stream);

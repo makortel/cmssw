@@ -182,7 +182,7 @@ namespace pixelgpudetails {
 
     class WordFedAppender {
     public:
-      WordFedAppender(cuda::stream_t<>& cudaStream);
+      WordFedAppender();
       ~WordFedAppender() = default;
 
       void initializeWordFed(int fedId, unsigned int wordCounterGPU, const cms_uint32_t *src, unsigned int length);
@@ -195,7 +195,7 @@ namespace pixelgpudetails {
       cudautils::host::unique_ptr<unsigned char[]> fedId_;
     };
 
-    SiPixelRawToClusterGPUKernel() = default;
+    SiPixelRawToClusterGPUKernel();
     ~SiPixelRawToClusterGPUKernel() = default;
 
 
@@ -235,6 +235,9 @@ namespace pixelgpudetails {
     // Data to be put in the event
     SiPixelDigisCUDA digis_d;
     SiPixelClustersCUDA clusters_d;
+
+    // For host-to-device copy
+    cudautils::host::unique_ptr<GPU::SimpleVector<pixelgpudetails::error_obj>> error_h_to_d;
   };
 
   // configuration and memory buffers alocated on the GPU

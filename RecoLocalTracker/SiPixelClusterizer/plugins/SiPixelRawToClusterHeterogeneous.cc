@@ -110,6 +110,7 @@ private:
   void produceCPU(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup) override;
 
   // GPU implementation
+  void beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) override;
   void acquireGPUCuda(const edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
   void produceGPUCuda(edm::HeterogeneousEvent& iEvent, const edm::EventSetup& iSetup, cuda::stream_t<>& cudaStream) override;
   void convertGPUtoCPU(edm::Event& ev, unsigned int nDigis, pixelgpudetails::SiPixelRawToClusterGPUKernel::CPUData) const;
@@ -147,7 +148,8 @@ std::unique_ptr<PixelUnpackingRegions> regions_;
   SiPixelGainCalibrationForHLTService  theSiPixelGainCalibration_;
 
   // GPU algo
-  pixelgpudetails::SiPixelRawToClusterGPUKernel gpuAlgo_;
+  std::unique_ptr<pixelgpudetails::SiPixelRawToClusterGPUKernel> gpuAlgo_;
+  std::unique_ptr<pixelgpudetails::SiPixelRawToClusterGPUKernel::WordFedAppender> wordFedAppender_;
   PixelDataFormatter::Errors errors_;
 
   bool enableTransfer_;
@@ -457,6 +459,11 @@ void SiPixelRawToClusterHeterogeneous::produceCPU(edm::HeterogeneousEvent& ev, c
 }
 
 // -----------------------------------------------------------------------------
+void SiPixelRawToClusterHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<>& cudaStream) {
+  gpuAlgo_ = std::make_unique<pixelgpudetails::SiPixelRawToClusterGPUKernel>();
+  wordFedAppender_ = std::make_unique<pixelgpudetails::SiPixelRawToClusterGPUKernel::WordFedAppender>();
+}
+
 void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
   const auto buffers = initialize(ev.event(), es);
 
@@ -491,7 +498,6 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
 
   // In CPU algorithm this loop is part of PixelDataFormatter::interpretRawData()
   ErrorChecker errorcheck;
-  auto wordFedAppender = pixelgpudetails::SiPixelRawToClusterGPUKernel::WordFedAppender(cudaStream);
   for (auto aFed = fedIds.begin(); aFed != fedIds.end(); ++aFed) {
     int fedId = *aFed;
 
@@ -541,22 +547,22 @@ void SiPixelRawToClusterHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEv
     const cms_uint32_t * ew = (const cms_uint32_t *)(trailer);
 
     assert(0 == (ew-bw)%2);
-    wordFedAppender.initializeWordFed(fedId, wordCounterGPU, bw, (ew-bw));
+    wordFedAppender_->initializeWordFed(fedId, wordCounterGPU, bw, (ew-bw));
     wordCounterGPU+=(ew-bw);
 
   } // end of for loop
 
-  gpuAlgo_.makeClustersAsync(gpuMap, gpuModulesToUnpack, hgains->getGPUProductAsync(cudaStream),
-                             wordFedAppender,
-                             wordCounterGPU, fedCounter, convertADCtoElectrons,
-                             useQuality, includeErrors, enableTransfer_, debug, cudaStream);
+  gpuAlgo_->makeClustersAsync(gpuMap, gpuModulesToUnpack, hgains->getGPUProductAsync(cudaStream),
+                              *wordFedAppender_,
+                              wordCounterGPU, fedCounter, convertADCtoElectrons,
+                              useQuality, includeErrors, enableTransfer_, debug, cudaStream);
 }
 
 void SiPixelRawToClusterHeterogeneous::produceGPUCuda(edm::HeterogeneousEvent& ev, const edm::EventSetup& es, cuda::stream_t<>& cudaStream) {
-  auto output = std::make_unique<GPUProduct>(gpuAlgo_.getProduct());
+  auto output = std::make_unique<GPUProduct>(gpuAlgo_->getProduct());
 
   if(enableConversion_) {
-    convertGPUtoCPU(ev.event(), output->nDigis, gpuAlgo_.getCPUData());
+    convertGPUtoCPU(ev.event(), output->nDigis, gpuAlgo_->getCPUData());
   }
 
   ev.put<Output>(std::move(output), heterogeneous::DisableTransfer{});
