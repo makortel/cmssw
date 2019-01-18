@@ -177,8 +177,8 @@ private:
                    const TransientTrackingRecHitBuilder& ttrhBuilder,
                    const mkfit::LayerNumberConverter& lnc) const;
 
-  bool passCCC(const SiStripRecHit2D hit, const DetId hitId) const;
-  bool passCCC(const SiPixelRecHit hit, const DetId hitId) const;
+  bool passCCC(const SiStripRecHit2D& hit, const DetId hitId) const;
+  bool passCCC(const SiPixelRecHit& hit, const DetId hitId) const;
 
   mkfit::TrackVec convertSeeds(const edm::View<TrajectorySeed>& seeds,
                                const IndexLayer& indexLayers,
@@ -495,11 +495,11 @@ std::vector<const DetLayer *> MkFitProducer::createDetLayers(const mkfit::LayerN
   return dets;
 }
 
-bool MkFitProducer::passCCC(const SiStripRecHit2D hit, const DetId hitId){
+bool MkFitProducer::passCCC(const SiStripRecHit2D& hit, const DetId hitId){
   return (siStripClusterTools::chargePerCM(hitId,hit.firstClusterRef().stripCluster()) < 1620 );
 }
 
-bool MkFitProducer::passCCC(const SiPixelRecHit hit, const DetId hitId){
+bool MkFitProducer::passCCC(const SiPixelRecHit& hit, const DetId hitId){
   return true;
 }
 
