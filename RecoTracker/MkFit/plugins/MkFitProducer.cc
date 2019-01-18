@@ -495,11 +495,11 @@ std::vector<const DetLayer *> MkFitProducer::createDetLayers(const mkfit::LayerN
   return dets;
 }
 
-bool MkFitProducer::passCCC(const SiStripRecHit2D& hit, const DetId hitId){
+bool MkFitProducer::passCCC(const SiStripRecHit2D& hit, const DetId hitId) const {
   return (siStripClusterTools::chargePerCM(hitId,hit.firstClusterRef().stripCluster()) < 1620 );
 }
 
-bool MkFitProducer::passCCC(const SiPixelRecHit& hit, const DetId hitId){
+bool MkFitProducer::passCCC(const SiPixelRecHit& hit, const DetId hitId) const {
   return true;
 }
 
