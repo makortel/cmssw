@@ -113,7 +113,7 @@ void SiPixelRawToClusterCUDA::fillDescriptions(edm::ConfigurationDescriptions& d
 
 
 void SiPixelRawToClusterCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  auto ctx = CUDAScopedContext(iEvent.streamID(), std::move(waitingTaskHolder));
+  CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
 
   edm::ESHandle<SiPixelFedCablingMapGPUWrapper> hgpuMap;
   iSetup.get<CkfComponentsRecord>().get(hgpuMap);
@@ -153,9 +153,7 @@ void SiPixelRawToClusterCUDA::acquire(const edm::Event& iEvent, const edm::Event
     LogDebug("map version:")<< cabling_->version();
   }
 
-  edm::Handle<FEDRawDataCollection> hbuffers;
-  iEvent.getByToken(rawGetToken_, hbuffers);
-  const auto& buffers = *hbuffers;
+  const auto& buffers = iEvent.get(rawGetToken_);
 
   errors_.clear();
 
@@ -231,7 +229,7 @@ void SiPixelRawToClusterCUDA::acquire(const edm::Event& iEvent, const edm::Event
 }
 
 void SiPixelRawToClusterCUDA::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  auto ctx = CUDAScopedContext(std::move(ctxTmp_));
+  CUDAScopedContext ctx{std::move(ctxTmp_)};
 
   auto tmp = gpuAlgo_.getResults();
   ctx.emplace(iEvent, digiPutToken_, std::move(tmp.first));

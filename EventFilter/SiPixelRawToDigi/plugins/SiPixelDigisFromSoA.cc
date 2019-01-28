@@ -82,9 +82,7 @@ void SiPixelDigisFromSoA::fillDescriptions(edm::ConfigurationDescriptions& descr
 
 void SiPixelDigisFromSoA::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // How could we avoid the copy?
-  edm::Handle<edm::DetSetVector<PixelDigi>> hdigi;
-  iEvent.getByToken(digiGetToken_, hdigi);
-  iEvent.emplace(digiPutToken_, *hdigi);
+  iEvent.emplace(digiPutToken_, iEvent.get(digiGetToken_));
 
   // pack errors into collection
   if (includeErrors_) {
@@ -97,9 +95,7 @@ void SiPixelDigisFromSoA::produce(edm::Event& iEvent, const edm::EventSetup& iSe
       LogDebug("map version:")<< cabling_->version();
     }
 
-    edm::Handle<SiPixelDigiErrorsSoA> hsoa;
-    iEvent.getByToken(digiErrorSoAGetToken_, hsoa);
-    const auto& digiErrors = *hsoa;
+    const auto& digiErrors = iEvent.get(digiErrorSoAGetToken_);
 
     auto errorcollection = std::make_unique<edm::DetSetVector<SiPixelRawDataError>>();
     auto tkerror_detidcollection = std::make_unique<DetIdCollection>();

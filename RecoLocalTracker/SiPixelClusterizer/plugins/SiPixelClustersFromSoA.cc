@@ -78,9 +78,7 @@ void SiPixelClustersFromSoA::fillDescriptions(edm::ConfigurationDescriptions& de
 }
 
 void SiPixelClustersFromSoA::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
-  edm::Handle<SiPixelDigisSoA> hdigi;
-  iEvent.getByToken(digiGetToken_, hdigi);
-  const auto& digis = *hdigi;
+  const auto& digis = iEvent.get(digiGetToken_);
   
   edm::ESHandle<TrackerTopology> trackerTopologyHandle;
   iSetup.get<TrackerTopologyRcd>().get(trackerTopologyHandle);

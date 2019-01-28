@@ -43,11 +43,9 @@ void SiPixelDigiErrorsSoAFromCUDA::fillDescriptions(edm::ConfigurationDescriptio
 
 void SiPixelDigiErrorsSoAFromCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   // Do the transfer in a CUDA stream parallel to the computation CUDA stream
-  auto ctx = CUDAScopedContext(iEvent.streamID(), std::move(waitingTaskHolder));
+  CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
 
-  edm::Handle<CUDA<SiPixelDigiErrorsCUDA>> herror;
-  iEvent.getByToken(digiErrorGetToken_, herror);
-  const auto& gpuDigiErrors = ctx.get(*herror);
+  const auto& gpuDigiErrors = ctx.get(iEvent.get(digiErrorGetToken_));
 
   auto tmp = gpuDigiErrors.dataErrorToHostAsync(ctx.stream());
   error_ = std::move(tmp.first);
