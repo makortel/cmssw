@@ -26,15 +26,15 @@ public:
 private:
   std::string label_;
   edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
+  edm::EDPutTokenT<int> dstToken_;
   cudautils::host::unique_ptr<float[]> buffer_;
 };
 
 TestCUDAProducerGPUtoCPU::TestCUDAProducerGPUtoCPU(const edm::ParameterSet& iConfig):
-  label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src")))
-{
-  produces<int>();
-}
+  label_{iConfig.getParameter<std::string>("@module_label")},
+  srcToken_{consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
+  dstToken_{produces<int>()}
+{}
 
 void TestCUDAProducerGPUtoCPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
@@ -46,10 +46,9 @@ void TestCUDAProducerGPUtoCPU::fillDescriptions(edm::ConfigurationDescriptions& 
 void TestCUDAProducerGPUtoCPU::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   edm::LogPrint("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  edm::Handle<CUDA<CUDAThing>> hin;
-  iEvent.getByToken(srcToken_, hin);
-  auto ctx = CUDAScopedContext(*hin, std::move(waitingTaskHolder));
-  const CUDAThing& device = ctx.get(*hin);
+  const auto& in = iEvent.get(srcToken_);
+  CUDAScopedContext ctx{in, std::move(waitingTaskHolder)};
+  const CUDAThing& device = ctx.get(in);
 
   edm::Service<CUDAService> cs;
   buffer_ = cs->make_host_unique<float[]>(TestCUDAProducerGPUKernel::NUM_VALUES, ctx.stream());
@@ -68,7 +67,7 @@ void TestCUDAProducerGPUtoCPU::produce(edm::Event& iEvent, const edm::EventSetup
   }
   buffer_.reset(); // not so nice, but no way around?
 
-  iEvent.put(std::make_unique<int>(counter));
+  iEvent.emplace(dstToken_, counter);
 
   edm::LogPrint("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << counter;
 }

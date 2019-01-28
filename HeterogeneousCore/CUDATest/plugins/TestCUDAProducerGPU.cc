@@ -42,12 +42,11 @@ void TestCUDAProducerGPU::fillDescriptions(edm::ConfigurationDescriptions& descr
 void TestCUDAProducerGPU::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
   edm::LogPrint("TestCUDAProducerGPU") << label_ << " TestCUDAProducerGPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  edm::Handle<CUDA<CUDAThing>> hin;
-  iEvent.getByToken(srcToken_, hin);
-  auto ctx = CUDAScopedContext(*hin);
-  const CUDAThing& input = ctx.get(*hin);
+  const auto& in = iEvent.get(srcToken_);
+  CUDAScopedContext ctx{in};
+  const CUDAThing& input = ctx.get(in);
 
-  ctx.emplace(iEvent, dstToken_, CUDAThing(gpuAlgo_.runAlgo(label_, input.get(), ctx.stream())));
+  ctx.emplace(iEvent, dstToken_, CUDAThing{gpuAlgo_.runAlgo(label_, input.get(), ctx.stream())});
 
   edm::LogPrint("TestCUDAProducerGPU") << label_ << " TestCUDAProducerGPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }

@@ -32,9 +32,9 @@ private:
 };
 
 TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(const edm::ParameterSet& iConfig):
-  label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))),
-  dstToken_(produces<CUDA<CUDAThing>>())
+  label_{iConfig.getParameter<std::string>("@module_label")},
+  srcToken_{consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
+  dstToken_{produces<CUDA<CUDAThing>>()}
 {}
 
 void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -46,10 +46,9 @@ void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& des
 void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  edm::Handle<CUDA<CUDAThing>> hin;
-  iEvent.getByToken(srcToken_, hin);
-  auto ctx = CUDAScopedContext(*hin, std::move(waitingTaskHolder));
-  const CUDAThing& input = ctx.get(*hin);
+  const auto& in = iEvent.get(srcToken_);
+  CUDAScopedContext ctx{in, std::move(waitingTaskHolder)};
+  const CUDAThing& input = ctx.get(in);
 
   devicePtr_ = gpuAlgo_.runAlgo(label_, input.get(), ctx.stream());
   // Mimick the need to transfer some of the GPU data back to CPU to
@@ -65,7 +64,7 @@ void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSe
 void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " 10th element " << hostData_; 
 
-  auto ctx = CUDAScopedContext(std::move(ctxTmp_));
+  CUDAScopedContext ctx{std::move(ctxTmp_)};
 
   ctx.emplace(iEvent, dstToken_, std::move(devicePtr_));
 

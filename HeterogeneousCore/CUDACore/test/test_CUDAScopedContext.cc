@@ -56,7 +56,7 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
       const auto& data = *dataPtr;
 
-      auto ctx2 = CUDAScopedContext(data);
+      CUDAScopedContext ctx2{data};
       REQUIRE(cuda::device::current::get().id() == data.device());
       REQUIRE(ctx2.stream().id() == data.stream().id());
     }
@@ -66,12 +66,12 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       { // acquire
         std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
         const auto& data = *dataPtr;
-        auto ctx2 = CUDAScopedContext(data);
+        CUDAScopedContext ctx2{data};
         ctxtok = ctx2.toToken();
       }
 
       { // produce
-        auto ctx2 = CUDAScopedContext(std::move(ctxtok));
+        CUDAScopedContext ctx2{std::move(ctxtok)};
         REQUIRE(cuda::device::current::get().id() == ctx.device());
         REQUIRE(ctx2.stream().id() == ctx.stream().id());
       }
@@ -94,7 +94,7 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       REQUIRE(wprod1->stream().id() != wprod2->stream().id());
 
       // Mimick a third producer "joining" the two streams
-      auto ctx2 = CUDAScopedContext(*wprod1);
+      CUDAScopedContext ctx2{*wprod1};
 
       auto prod1 = ctx.get(*wprod1);
       auto prod2 = ctx.get(*wprod2);

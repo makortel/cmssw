@@ -20,17 +20,17 @@ public:
 private:
   std::string label_;
   edm::EDGetTokenT<int> srcToken_;
+  edm::EDPutTokenT<int> dstToken_;
 };
 
 TestCUDAProducerCPU::TestCUDAProducerCPU(const edm::ParameterSet& iConfig):
-  label_(iConfig.getParameter<std::string>("@module_label"))
+  label_{iConfig.getParameter<std::string>("@module_label")},
+  dstToken_{produces<int>()}
 {
   auto srcTag = iConfig.getParameter<edm::InputTag>("src");
   if(!srcTag.label().empty()) {
     srcToken_ = consumes<int>(srcTag);
   }
-
-  produces<int>();
 }
 
 void TestCUDAProducerCPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -45,9 +45,7 @@ void TestCUDAProducerCPU::produce(edm::StreamID id, edm::Event& iEvent, const ed
 
   int input = 0;
   if(!srcToken_.isUninitialized()) {
-    edm::Handle<int> hin;
-    iEvent.getByToken(srcToken_, hin);
-    input = *hin;
+    input = iEvent.get(srcToken_);
   }
 
   std::random_device r;
@@ -59,7 +57,7 @@ void TestCUDAProducerCPU::produce(edm::StreamID id, edm::Event& iEvent, const ed
 
   const unsigned int output = input + id*100 + iEvent.id().event();
 
-  iEvent.put(std::make_unique<int>(output));
+  iEvent.emplace(dstToken_, output);
 
   edm::LogPrint("TestCUDAProducerCPU") << label_ << " TestCUDAProducerCPU::produce end event " << iEvent.id().event() << " stream " << id << " result " << output;
 }
