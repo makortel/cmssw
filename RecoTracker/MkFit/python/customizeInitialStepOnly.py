@@ -33,13 +33,25 @@ def customizeInitialStepOnly(process):
         selector.src = "initialStepTracks"
         selector.vertexTag = "firstStepPrimaryVertices"
 
-    process.trackingParticleRecoTrackAsssociation.label_tr = "initialStepTracks"
+    process.trackingParticleRecoTrackAsssociationPreSplitting = process.trackingParticleRecoTrackAsssociation.clone(
+        label_tr = "initialStepTracks",
+        associator = "quickTrackAssociatorByHitsPreSplitting",
+    )
+    process.VertexAssociatorByPositionAndTracksPreSplitting = process.VertexAssociatorByPositionAndTracks.clone(
+        trackAssociation = "trackingParticleRecoTrackAsssociationPreSplitting"
+    )
+
 
     def setInput(mtvs, labels):
         for mtv in mtvs:
             mod = getattr(process, mtv)
             mod.label = labels
             mod.label_vertex = "firstStepPrimaryVertices"
+            if mod.UseAssociators.value():
+                mod.associators = ["quickTrackAssociatorByHitsPreSplitting"]
+            else:
+                mod.associators = ["trackingParticleRecoTrackAsssociationPreSplitting"]
+            mod.vertexAssociator = "VertexAssociatorByPositionAndTracksPreSplitting"
             mod.trackCollectionForDrCalculation = "initialStepTracks"
             mod.dodEdxPlots = False
 
@@ -50,16 +62,20 @@ def customizeInitialStepOnly(process):
     setInput(["trackValidatorBuilding"], ["initialStepTracks"])
     process.trackValidatorBuilding.mvaLabels = cms.untracked.PSet(initialStepTracks = cms.untracked.vstring('initialStep'))
 
-    process.tracksPreValidationTrackingOnly = cms.Sequence(
-        process.cutsRecoTracksInitialStep+
-        process.cutsRecoTracksPt09InitialStep+
-        process.cutsRecoTracksFromPVInitialStep+
-        process.cutsRecoTracksFromPVPt09InitialStep+
-        process.tracksValidationTruth+
-        cms.ignore(process.trackingParticlesSignal)+
-        process.trackingParticlesBHadron
+    process.tracksPreValidationTrackingOnly = cms.Task(
+        process.cutsRecoTracksInitialStep,
+        process.cutsRecoTracksPt09InitialStep,
+        process.cutsRecoTracksFromPVInitialStep,
+        process.cutsRecoTracksFromPVPt09InitialStep,
+        process.tracksValidationTruth,
+        process.trackingParticlesSignal,
+        process.trackingParticlesBHadron,
+        process.trackingParticleRecoTrackAsssociationPreSplitting,
+        process.VertexAssociatorByPositionAndTracksPreSplitting,
     )
     process.trackValidatorsTrackingOnly.remove(process.trackValidatorConversionTrackingOnly)
+    process.trackValidatorsTrackingOnly.remove(process.trackValidatorSeedingPreSplittingTrackingOnly)
+    process.trackValidatorsTrackingOnly.remove(process.trackValidatorBuildingPreSplitting)
 
     # Remove vertex validation
     process.globalPrevalidationTrackingOnly.remove(process.vertexValidationTrackingOnly)
