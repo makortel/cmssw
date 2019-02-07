@@ -8,7 +8,10 @@ siPixelClustersPreSplitting = SwitchProducerCUDA(
 )
 
 from Configuration.ProcessModifiers.gpu_cff import gpu
-from RecoLocalTracker.SiPixelClusterizer.siPixelClustersFromSoA_cfi import siPixelClustersFromSoA as _siPixelClustersFromSoA
 gpu.toModify(siPixelClustersPreSplitting,
-    cuda = _siPixelClustersFromSoA.clone()
+    cuda = cms.EDAlias(
+        siPixelDigisClustersPreSplitting = cms.VPSet(
+            cms.PSet(type = cms.string("SiPixelClusteredmNewDetSetVector"))
+        )
+    )
 )

@@ -2,14 +2,17 @@ import FWCore.ParameterSet.Config as cms
 
 from RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizerPreSplitting_cfi import siPixelClustersPreSplitting
 from RecoLocalTracker.SiPixelClusterizer.siPixelRawToClusterCUDA_cfi import siPixelRawToClusterCUDA as _siPixelRawToClusterCUDA
+from RecoLocalTracker.SiPixelClusterizer.siPixelDigisClustersFromSoA_cfi import siPixelDigisClustersFromSoA as _siPixelDigisClustersFromSoA
 from RecoLocalTracker.SiPixelClusterizer.siPixelFedCablingMapGPUWrapper_cfi import *
 from CalibTracker.SiPixelESProducers.siPixelGainCalibrationForHLTGPU_cfi import *
 
 siPixelClustersPreSplittingTask = cms.Task(siPixelClustersPreSplitting)
 
 siPixelClustersCUDAPreSplitting = _siPixelRawToClusterCUDA.clone()
+siPixelDigisClustersPreSplitting = _siPixelDigisClustersFromSoA.clone()
 siPixelClustersPreSplittingTaskCUDA = cms.Task(
     siPixelClustersCUDAPreSplitting,
+    siPixelDigisClustersPreSplitting,
 )
 
 from Configuration.ProcessModifiers.gpu_cff import gpu

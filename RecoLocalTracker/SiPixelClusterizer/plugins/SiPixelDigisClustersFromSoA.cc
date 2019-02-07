@@ -48,10 +48,10 @@ namespace {
   constexpr uint32_t dummydetid = 0xffffffff;
 }
 
-class SiPixelClustersFromSoA: public edm::global::EDProducer<> {
+class SiPixelDigisClustersFromSoA: public edm::global::EDProducer<> {
 public:
-  explicit SiPixelClustersFromSoA(const edm::ParameterSet& iConfig);
-  ~SiPixelClustersFromSoA() override = default;
+  explicit SiPixelDigisClustersFromSoA(const edm::ParameterSet& iConfig);
+  ~SiPixelDigisClustersFromSoA() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -65,19 +65,19 @@ private:
  
 };
 
-SiPixelClustersFromSoA::SiPixelClustersFromSoA(const edm::ParameterSet& iConfig):
+SiPixelDigisClustersFromSoA::SiPixelDigisClustersFromSoA(const edm::ParameterSet& iConfig):
   digiGetToken_(consumes<SiPixelDigisSoA>(iConfig.getParameter<edm::InputTag>("src"))),
   digiPutToken_(produces<edm::DetSetVector<PixelDigi>>()),
   clusterPutToken_(produces<SiPixelClusterCollectionNew>())
 {}
 
-void SiPixelClustersFromSoA::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void SiPixelDigisClustersFromSoA::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag("siPixelDigisSoA"));
   descriptions.addWithDefaultLabel(desc);
 }
 
-void SiPixelClustersFromSoA::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+void SiPixelDigisClustersFromSoA::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
   const auto& digis = iEvent.get(digiGetToken_);
   
   edm::ESHandle<TrackerTopology> trackerTopologyHandle;
@@ -155,4 +155,4 @@ void SiPixelClustersFromSoA::produce(edm::StreamID, edm::Event& iEvent, const ed
   iEvent.put(clusterPutToken_, std::move(outputClusters));
 }
 
-DEFINE_FWK_MODULE(SiPixelClustersFromSoA);
+DEFINE_FWK_MODULE(SiPixelDigisClustersFromSoA);
