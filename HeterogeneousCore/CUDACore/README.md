@@ -1,16 +1,71 @@
-# Next iteration of the prototype for CMSSW interface to heterogeneous algorithms
+# Prototype for CMSSW interface to CUDA algorithms
+
+## Outline
+
+* [Introduction](introduction)
+  * [Design goals]()
+  * [Overall guidelines]()
+* [Sub-packages]()
+* Examples
+  * Isolated producer (no CUDA input nor output)
+  * Producer with CUDA input
+  * Producer with CUDA output
+  * Produder with CUDA input and output (with ExternalWork)
+  * Producer with CUDA input and output (without ExternalWork)
+  * Configuration
+* More details
+
 
 ## Introduction
 
-The current prototype with `HeterogeneousEDProducer` and
-`HeterogeneousProduct` is documented [here](../Producer/README.md).
-The main differences wrt. that are
-* Split device-specific code to different EDProducers
-* Plug components together in the configuration
+This page documents the CUDA integration within CMSSW
 
-This page documents the CUDA integration, and discusses briefly on how
-to extend to other devices. It will be extended if/when it gets
-deployed and `HeterogeneousEDProducer` retired.
+### Design goals
+
+1. Provide a mechanism for a chain of modules to share a resource
+   * Resource can be e.g. CUDA device memory or a CUDA stream
+2. Minimize data movements between the CPU and the device
+3. Support multi devices
+4. Allow the same job configuration to be used on all hardware combinations
+
+### Overall guidelines
+
+1. Within the `acquire()`/`produce()` functions all CUDA operations should be asynchronous, i.e.
+   * Use `cudaMemcpyAsync()`, `cudaMemsetAsync()`, `cudaMemPrefetchAsync()` etc.
+   * Avoid `cudaMalloc*()`, `cudaHostAlloc()`, `cudaFree*()`, `cudaHostRegister()`, `cudaHostUnregister()` on every event
+     * Occasional calls are permitted through a caching allocator
+   * Avoid `assert()` in device functions, or use `#include HeterogeneousCore/CUDAUtilities/interface/cuda_assert.h`
+     * With the latter the `assert()`s in CUDA code are disabled by
+       default, but can be enabled by defining `GPU_DEBUG` macro
+       (before the aforementioned include)
+2. Synchronization needs should be fulfilled with
+   [`ExternalWork`](https://twiki.cern.ch/twiki/bin/view/CMSPublic/FWMultithreadedFrameworkStreamModuleInterface#edm_ExternalWork)
+   extension to EDProducers
+   * `ExternalWork` can be used to replace one synchronization point
+     (e.g. between device kernels and copying a known amount of data
+     back to CPU).
+   * For further synchronization points (e.g. copying data whose
+     amount is known only at the device side), split the work to
+     multiple `ExternalWork` producers. This approach has the added
+     benefit that e.g. data transfers to CPU become on-demand automatically
+   * A general breakdown of the possible steps:
+     * Convert input legacy CPU data format to CPU SoA
+     * Transfer input CPU SoA to GPU
+     * Run kernels
+     * Transfer the number of output elements to CPU
+     * Transfer the output data from GPU to CPU SoA
+     * Convert the output SoA to legacy GPU data formats
+3. Within `acquire()`/`produce()`, the CUDA device is set implicitly
+   and the CUDA stream is provided by the system (with
+   `CUDAScopedContext`)
+   * It is strongly recommended to use the provided CUDA stream for all operations
+     * If that is not feasible for some reason, the provided CUDA
+       stream must synchronize with the work queued on other CUDA
+       streams (with CUDA events and `cudaStreamWaitEvent()`)
+4. Outside of `acquire()`/`produce()`, CUDA API functions may be
+   called only if `CUDAService::enabled()` returns `true`.
+   * With point 3 it follows that in these cases multiple devices have
+     to be dealt with explicitly, as well as CUDA streams
 
 ## Sub-packages
 * [`HeterogeneousCore/CUDACore`](#cuda-integration) CUDA-specific core components
@@ -19,7 +74,256 @@ deployed and `HeterogeneousEDProducer` retired.
 * [`HeterogeneousCore/CUDATest`](../CUDATest) Test modules and configurations
 * [`CUDADataFormats/Common`](../../CUDADataFormats/Common) Utilities for event products with CUDA data
 
-# CUDA integration
+## Examples
+
+### Isolated producer (no CUDA input nor output)
+
+```cpp
+class IsolatedProducerCUDA: public edm::stream::EDProducer<ExternalWork> {
+public:
+  ...
+  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  ...
+private:
+  ...
+  IsolatedProducerGPUAlgo gpuAlgo_;
+  edm::EDGetTokenT<InputData> inputToken_;
+  edm::EDPutTokenT<OutputData> outputToken_;
+};
+...
+void IsolatedProducerCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  // Sets the current device and creates a CUDA stream
+  CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
+
+  auto const& inputData = iEvent.get(inputToken_);
+
+  // Queues asynchronous data transfers and kernels to the CUDA stream
+  // returned by CUDAScopedContext::stream()
+  gpuAlgo_.makeAsync(inputData, ctx.stream());
+
+  // Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished
+}
+
+// Called after the asynchronous work has finished
+void IsolatedProducerCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
+  // Real life is likely more complex than this simple example. Here
+  // getResult() returns some data in CPU memory that is passed
+  // directly to the OutputData constructor.
+  iEvent.emplace(outputToken_, gpuAlgo_.getResult());
+}
+```
+
+### Producer with CUDA output
+
+```cpp
+class ProducerOutputCUDA: public edm::stream::EDProducer<ExternalWork> {
+public:
+  ...
+  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  ...
+private:
+  ...
+  ProducerOutputGPUAlgo gpuAlgo_;
+  edm::EDGetTokenT<InputData> inputToken_;
+  edm::EDPutTokenT<CUDAProduct<OutputData>> outputToken_;
+  CUDAContextToken ctxTmp_;
+};
+...
+void ProducerOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  // Sets the current device and creates a CUDA stream
+  CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
+
+  auto const& inputData = iEvent.get(inputToken_);
+
+  // Queues asynchronous data transfers and kernels to the CUDA stream
+  // returned by CUDAScopedContext::stream()
+  gpuAlgo.makeAsync(inputData, ctx.stream());
+
+  // Passes the current device and CUDA stream to produce()
+  // Feels a bit silly, and will hopefully get improved in the future
+  ctxTmp_ = ctx.toToken();
+
+  // Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished
+}
+
+// Called after the asynchronous work has finished
+void ProducerOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
+  // Sets again the current device, uses the CUDA stream created in the acquire()
+  CUDAScopedContext ctx{std::move(ctxTmp_)};
+
+  // Now getResult() returns data in GPU memory that is passed to the
+  // constructor of OutputData. CUDAScopedContext::emplace() wraps the
+  // OutputData to CUDAProduct<OutputData>. CUDAProduct<T> stores also
+  // the current device and the CUDA stream since those will be needed
+  // in the consumer side.
+  ctx.emplace(iEvent, outputToken_, gpuAlgo.getResult());
+}
+```
+
+### Producer with CUDA input
+
+```cpp
+class ProducerInputCUDA: public edm::stream::EDProducer<ExternalWork> {
+public:
+  ...
+  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  ...
+private:
+  ...
+  ProducerInputGPUAlgo gpuAlgo_;
+  edm::EDGetTokenT<CUDAProduct<InputData>> inputToken_;
+  edm::EDPutTokenT<OutputData> outputToken_;
+};
+...
+void ProducerInputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  CUDAProduct<InputData> const& inputDataWrapped = iEvent.get(inputToken_);
+
+  // Set the current device to the same that was used to produce
+  // InputData, and also use the same CUDA stream
+  CUDAScopedContext ctx{inputDataWrapped, std::move(waitingTaskHolder)};
+
+  // Alternatively, if e.g. there is another module queuing //
+  // independent work to the CUDA stream, a new CUDA stream can also be
+  // created here with
+  CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder);
+  
+  // Grab the real input data. Checks that the input data is on the
+  // current device. If the input data was produced in a different CUDA
+  // stream than the CUDAScopedContext holds, create an inter-stream
+  // synchronization point with CUDA event and cudaStreamWaitEvent()
+  auto const& inputData = ctx.get(inputDataWrapped);
+
+  // Queues asynchronous data transfers and kernels to the CUDA stream
+  // returned by CUDAScopedContext::stream()
+  gpuAlgo.makeAsync(inputData, ctx.stream());
+
+  // Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished
+}
+
+// Called after the asynchronous work has finished
+void ProducerInputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
+  // Real life is likely more complex than this simple example. Here
+  // getResult() returns some data in CPU memory that is passed
+  // directly to the OutputData constructor.
+  iEvent.emplace(outputToken_, gpuAlgo_.getResult());
+}
+```
+
+### Producer with CUDA input and output (with ExternalWork)
+
+```cpp
+class ProducerInputOutputCUDA: public edm::stream::EDProducer<ExternalWork> {
+public:
+  ...
+  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  ...
+private:
+  ...
+  ProducerInputGPUAlgo gpuAlgo_;
+  edm::EDGetTokenT<CUDAProduct<InputData>> inputToken_;
+  edm::EDPutTokenT<CUDAProduct<OutputData>> outputToken_;
+  CUDAContextToken ctxTmp_;
+};
+...
+void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  CUDAProduct<InputData> const& inputDataWrapped = iEvent.get(inputToken_);
+
+  // Set the current device to the same that was used to produce
+  // InputData, and also use the same CUDA stream
+  CUDAScopedContext ctx{inputDataWrapped, std::move(waitingTaskHolder)};
+
+  // Grab the real input data. Checks that the input data is on the
+  // current device. If the input data was produced in a different CUDA
+  // stream than the CUDAScopedContext holds, create an inter-stream
+  // synchronization point with CUDA event and cudaStreamWaitEvent()
+  auto const& inputData = ctx.get(inputDataWrapped);
+
+  // Queues asynchronous data transfers and kernels to the CUDA stream
+  // returned by CUDAScopedContext::stream()
+  gpuAlgo.makeAsync(inputData, ctx.stream());
+
+  // Passes the current device and CUDA stream to produce()
+  // Feels a bit silly, and will hopefully get improved in the future
+  ctxTmp_ = ctx.toToken();
+
+// Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished
+}
+
+// Called after the asynchronous work has finished
+void ProducerInputOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
+  // Sets again the current device, uses the CUDA stream created in the acquire()
+  CUDAScopedContext ctx{std::move(ctxTmp_)};
+
+  // Now getResult() returns data in GPU memory that is passed to the
+  // constructor of OutputData. CUDAScopedContext::emplace() wraps the
+  // OutputData to CUDAProduct<OutputData>. CUDAProduct<T> stores also
+  // the current device and the CUDA stream since those will be needed
+  // in the consumer side.
+  ctx.emplace(iEvent, outputToken_, gpuAlgo.getResult());
+}
+```
+
+### Producer with CUDA input and output (without ExternalWork)
+
+If the producer does not need to transfer anything back to CPU (like
+the number of output elements), the `ExternalWork` extension is not
+needed as there is no need to synchronize.
+
+```cpp
+class ProducerInputOutputCUDA: public edm::global::EDProducer<> {
+public:
+  ...
+  void produce(edm::StreamID streamID, edm::Event& iEvent, edm::EventSetup& iSetup) const override;
+  ...
+private:
+  ...
+  ProducerInputGPUAlgo gpuAlgo_;
+  edm::EDGetTokenT<CUDAProduct<InputData>> inputToken_;
+  edm::EDPutTokenT<CUDAProduct<OutputData>> outputToken_;
+};
+...
+void ProducerInputOutputCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, edm::EventSetup& iSetup) const {
+  CUDAProduct<InputData> const& inputDataWrapped = iEvent.get(inputToken_);
+
+  // Set the current device to the same that was used to produce
+  // InputData, and also use the same CUDA stream
+  CUDAScopedContext ctx{streamID};
+
+  // Grab the real input data. Checks that the input data is on the
+  // current device. If the input data was produced in a different CUDA
+  // stream than the CUDAScopedContext holds, create an inter-stream
+  // synchronization point with CUDA event and cudaStreamWaitEvent()
+  auto const& inputData = ctx.get(inputDataWrapped);
+
+  // Queues asynchronous data transfers and kernels to the CUDA stream
+  // returned by CUDAScopedContext::stream(). Here makeAsync() also
+  // returns data in GPU memory that is passed to the constructor of
+  // OutputData. CUDAScopedContext::emplace() wraps the OutputData to
+  // CUDAProduct<OutputData>. CUDAProduct<T> stores also the current
+  // device and the CUDA stream since those will be needed in the
+  // consumer side.
+  ctx.emplace(iEvent, outputToken, gpuAlgo.makeAsync(inputData, ctx.stream());
+
+  // Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished
+}
+```
+
+### Configuration
+
+```python
+```
+
+
+##################################################
 
 ## Choosing device
 
