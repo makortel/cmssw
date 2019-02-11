@@ -2,6 +2,7 @@
 <use name="FWCore/Framework"/>
 <use name="FWCore/ServiceRegistry"/>
 <use name="FWCore/ParameterSet"/>
+<use name="CUDADataFormats/Common"/>
 <use name="DataFormats/Provenance"/>
 <use name="HeterogeneousCore/CUDAServices"/>
 <use name="cuda"/>

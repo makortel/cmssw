@@ -1,9 +1,11 @@
 #ifndef CUDADataFormats_Common_CUDA_h
 #define CUDADataFormats_Common_CUDA_h
 
-#include <optional>
+#include <memory>
 
 #include <cuda/api_wrappers.h>
+
+#include "CUDADataFormats/Common/interface/CUDABase.h"
 
 namespace edm {
   template <typename T> class Wrapper;
@@ -25,7 +27,7 @@ namespace edm {
  * use them only where synchronization between streams is needed.
  */
 template <typename T>
-class CUDA {
+class CUDA: public CUDABase {
 public:
   CUDA() = default; // Needed only for ROOT dictionary generation
 
@@ -34,45 +36,16 @@ public:
   CUDA(CUDA&&) = default;
   CUDA& operator=(CUDA&&) = default;
 
-  bool isValid() const { return stream_.get() != nullptr; }
-
-  int device() const { return device_; }
-
-  const cuda::stream_t<>& stream() const { return *stream_; }
-  cuda::stream_t<>& stream() { return *stream_; }
-  const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
-
-  const cuda::event_t& event() const { return *event_; }
-  cuda::event_t& event() { return *event_; }
-
 private:
   friend class CUDAScopedContext;
   friend class edm::Wrapper<CUDA<T>>;
 
   explicit CUDA(int device, std::shared_ptr<cuda::stream_t<>> stream, T data):
-    stream_(std::move(stream)),
-    event_(std::make_unique<cuda::event_t>(cuda::event::create(device,
-                                                               cuda::event::sync_by_busy_waiting,   // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
-                                                               cuda::event::dont_record_timings))), // it should be a bit faster to ignore timings
-    data_(std::move(data)),
-    device_(device)
-  {
-    // Record CUDA event to the CUDA stream. The event will become
-    // "occurred" after all work queued to the stream before this
-    // point has been finished.
-    event_->record(stream_->id());
-  }
-
-  // The cuda::stream_t is really shared among edm::Event products, so
-  // using shared_ptr also here
-  std::shared_ptr<cuda::stream_t<>> stream_; //!
-  // Using unique_ptr to support the default constructor. Tried
-  // std::optional, but cuda::event_t has its move assignment
-  // operators deleted.
-  std::unique_ptr<cuda::event_t> event_; //!
+    CUDABase(device, std::move(stream)),
+    data_(std::move(data))
+  {}
 
   T data_; //!
-  int device_ = -1; //!
 };
 
 #endif
