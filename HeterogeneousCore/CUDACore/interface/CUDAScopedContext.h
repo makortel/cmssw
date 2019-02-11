@@ -91,18 +91,18 @@ public:
   }
 
   template <typename T>
-  std::unique_ptr<CUDA<T> > wrap(T data) {
+  std::unique_ptr<CUDA<T> > wrap(T data) const {
     // make_unique doesn't work because of private constructor
     //
     // CUDA<T> constructor records CUDA event to the CUDA stream. The
     // event will become "occurred" after all work queued to the
     // stream before this point has been finished.
-    return std::unique_ptr<CUDA<T> >(new CUDA<T>(*this, std::move(data)));
+    return std::unique_ptr<CUDA<T> >(new CUDA<T>(device(), streamPtr(), std::move(data)));
   }
 
   template <typename T, typename... Args>
-  auto emplace(edm::Event& iEvent, edm::EDPutTokenT<T> token, Args&&... args) {
-    return iEvent.emplace(token, *this, std::forward<Args>(args)...);
+  auto emplace(edm::Event& iEvent, edm::EDPutTokenT<T> token, Args&&... args) const {
+    return iEvent.emplace(token, device(), streamPtr(), std::forward<Args>(args)...);
   }
 
 private:

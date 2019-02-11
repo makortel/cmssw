@@ -49,15 +49,13 @@ private:
   friend class CUDAScopedContext;
   friend class edm::Wrapper<CUDA<T>>;
 
-  // Using template to break circular dependency
-  template <typename Context>
-  explicit CUDA(const Context& ctx, T data):
-    stream_(ctx.streamPtr()),
-    event_(std::make_unique<cuda::event_t>(cuda::event::create(ctx.device(),
+  explicit CUDA(int device, std::shared_ptr<cuda::stream_t<>> stream, T data):
+    stream_(std::move(stream)),
+    event_(std::make_unique<cuda::event_t>(cuda::event::create(device,
                                                                cuda::event::sync_by_busy_waiting,   // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
                                                                cuda::event::dont_record_timings))), // it should be a bit faster to ignore timings
     data_(std::move(data)),
-    device_(ctx.device())
+    device_(device)
   {
     // Record CUDA event to the CUDA stream. The event will become
     // "occurred" after all work queued to the stream before this
@@ -65,7 +63,6 @@ private:
     event_->record(stream_->id());
   }
 
-private:
   // The cuda::stream_t is really shared among edm::Event products, so
   // using shared_ptr also here
   std::shared_ptr<cuda::stream_t<>> stream_; //!
