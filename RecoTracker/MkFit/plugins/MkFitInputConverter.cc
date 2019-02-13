@@ -31,6 +31,8 @@
 #include "Track.h"
 #include "LayerNumberConverter.h"
 
+#include <iostream>
+
 class MkFitInputConverter: public edm::global::EDProducer<> {
 public:
   explicit MkFitInputConverter(edm::ParameterSet const& iConfig);
@@ -202,10 +204,13 @@ mkfit::TrackVec MkFitInputConverter::convertSeeds(const edm::View<TrajectorySeed
                  stateGlobal.momentum().y(),
                  stateGlobal.momentum().z());
 
-    const auto& cov = tsos.cartesianError().matrix();
+    const auto cartError = tsos.cartesianError(); // returns a temporary, so can't chain with the following line
+    const auto& cov = cartError.matrix();
     SMatrixSym66 err;
+    //std::cerr << "index " << index << " this " << this << " &err " << &err << " &cov " << &cov << std::endl;
     for(int i=0; i<6; ++i) {
       for(int j=i; j<6; ++j) {
+        //std::cerr << " i " << i << " j " << j << " &errAt " << &(err.At(i, j)) << " &cov[] " << &(cov[i][j]) << std::endl;
         err.At(i, j) = cov[i][j];
       }
     }
