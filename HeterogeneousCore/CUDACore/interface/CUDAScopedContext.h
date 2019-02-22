@@ -5,6 +5,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/StreamID.h"
+#include "FWCore/Utilities/interface/EDGetToken.h"
 #include "FWCore/Utilities/interface/EDPutToken.h"
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
@@ -88,6 +89,11 @@ public:
     }
 
     return data.data_;
+  }
+
+  template <typename T>
+  const T& get(const edm::Event& iEvent, edm::EDGetTokenT<CUDAProduct<T>> token) {
+    return get(iEvent.get(token));
   }
 
   template <typename T>
