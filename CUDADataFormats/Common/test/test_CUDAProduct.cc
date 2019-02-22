@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
@@ -17,9 +17,9 @@ namespace cudatest {
   };
 }
 
-TEST_CASE("Use of CUDA template", "[CUDACore]") {
+TEST_CASE("Use of CUDAProduct template", "[CUDACore]") {
   SECTION("Default constructed") {
-    auto foo = CUDA<int>();
+    auto foo = CUDAProduct<int>();
     REQUIRE(!foo.isValid());
 
     auto bar = std::move(foo);
@@ -37,7 +37,7 @@ TEST_CASE("Use of CUDA template", "[CUDACore]") {
   constexpr int defaultDevice = 0;
   {
     auto ctx = cudatest::TestCUDAScopedContext::make(defaultDevice);
-    std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
+    std::unique_ptr<CUDAProduct<int>> dataPtr = ctx.wrap(10);
     auto& data = *dataPtr;
 
     SECTION("Construct from CUDAScopedContext") {
@@ -48,13 +48,13 @@ TEST_CASE("Use of CUDA template", "[CUDACore]") {
     }
 
     SECTION("Move constructor") {
-      auto data2 = CUDA<int>(std::move(data));
+      auto data2 = CUDAProduct<int>(std::move(data));
       REQUIRE(data2.isValid());
       REQUIRE(!data.isValid());
     }
 
     SECTION("Move assignment") {
-      CUDA<int> data2;
+      CUDAProduct<int> data2;
       data2 = std::move(data);
       REQUIRE(data2.isValid());
       REQUIRE(!data.isValid());

@@ -1,4 +1,4 @@
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "CUDADataFormats/SiPixelCluster/interface/SiPixelClustersCUDA.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigiErrorsCUDA.h"
@@ -47,9 +47,9 @@ private:
 
   edm::EDGetTokenT<FEDRawDataCollection> rawGetToken_;
 
-  edm::EDPutTokenT<CUDA<SiPixelDigisCUDA>> digiPutToken_;
-  edm::EDPutTokenT<CUDA<SiPixelDigiErrorsCUDA>> digiErrorPutToken_;
-  edm::EDPutTokenT<CUDA<SiPixelClustersCUDA>> clusterPutToken_;
+  edm::EDPutTokenT<CUDAProduct<SiPixelDigisCUDA>> digiPutToken_;
+  edm::EDPutTokenT<CUDAProduct<SiPixelDigiErrorsCUDA>> digiErrorPutToken_;
+  edm::EDPutTokenT<CUDAProduct<SiPixelClustersCUDA>> clusterPutToken_;
 
   CUDAContextToken ctxTmp_;
 
@@ -72,8 +72,8 @@ private:
 
 SiPixelRawToClusterCUDA::SiPixelRawToClusterCUDA(const edm::ParameterSet& iConfig):
   rawGetToken_(consumes<FEDRawDataCollection>(iConfig.getParameter<edm::InputTag>("InputLabel"))),
-  digiPutToken_(produces<CUDA<SiPixelDigisCUDA>>()),
-  clusterPutToken_(produces<CUDA<SiPixelClustersCUDA>>()),
+  digiPutToken_(produces<CUDAProduct<SiPixelDigisCUDA>>()),
+  clusterPutToken_(produces<CUDAProduct<SiPixelClustersCUDA>>()),
   cablingMapLabel_(iConfig.getParameter<std::string>("CablingMapLabel")),
   includeErrors_(iConfig.getParameter<bool>("IncludeErrors")),
   useQuality_(iConfig.getParameter<bool>("UseQualityInfo")),
@@ -81,7 +81,7 @@ SiPixelRawToClusterCUDA::SiPixelRawToClusterCUDA(const edm::ParameterSet& iConfi
   convertADCtoElectrons_(iConfig.getParameter<bool>("ConvertADCtoElectrons"))
 {
   if(includeErrors_) {
-    digiErrorPutToken_ = produces<CUDA<SiPixelDigiErrorsCUDA>>();
+    digiErrorPutToken_ = produces<CUDAProduct<SiPixelDigiErrorsCUDA>>();
   }
 
   // regions

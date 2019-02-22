@@ -1,4 +1,4 @@
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigiErrorsCUDA.h"
 #include "DataFormats/SiPixelDigi/interface/SiPixelDigiErrorsSoA.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -22,7 +22,7 @@ private:
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
-  edm::EDGetTokenT<CUDA<SiPixelDigiErrorsCUDA>> digiErrorGetToken_;
+  edm::EDGetTokenT<CUDAProduct<SiPixelDigiErrorsCUDA>> digiErrorGetToken_;
   edm::EDPutTokenT<SiPixelDigiErrorsSoA> digiErrorPutToken_;
 
   cudautils::host::unique_ptr<PixelErrorCompact[]> data_;
@@ -31,7 +31,7 @@ private:
 };
 
 SiPixelDigiErrorsSoAFromCUDA::SiPixelDigiErrorsSoAFromCUDA(const edm::ParameterSet& iConfig):
-  digiErrorGetToken_(consumes<CUDA<SiPixelDigiErrorsCUDA>>(iConfig.getParameter<edm::InputTag>("src"))),
+  digiErrorGetToken_(consumes<CUDAProduct<SiPixelDigiErrorsCUDA>>(iConfig.getParameter<edm::InputTag>("src"))),
   digiErrorPutToken_(produces<SiPixelDigiErrorsSoA>())
 {}
 

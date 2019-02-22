@@ -1,4 +1,4 @@
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
 #include "DataFormats/SiPixelDigi/interface/SiPixelDigisSoA.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -23,7 +23,7 @@ private:
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
-  edm::EDGetTokenT<CUDA<SiPixelDigisCUDA>> digiGetToken_;
+  edm::EDGetTokenT<CUDAProduct<SiPixelDigisCUDA>> digiGetToken_;
   edm::EDPutTokenT<SiPixelDigisSoA> digiPutToken_;
 
   cudautils::host::unique_ptr<uint32_t[]> pdigi_;
@@ -35,7 +35,7 @@ private:
 };
 
 SiPixelDigisSoAFromCUDA::SiPixelDigisSoAFromCUDA(const edm::ParameterSet& iConfig):
-  digiGetToken_(consumes<CUDA<SiPixelDigisCUDA>>(iConfig.getParameter<edm::InputTag>("src"))),
+  digiGetToken_(consumes<CUDAProduct<SiPixelDigisCUDA>>(iConfig.getParameter<edm::InputTag>("src"))),
   digiPutToken_(produces<SiPixelDigisSoA>())
 {}
 

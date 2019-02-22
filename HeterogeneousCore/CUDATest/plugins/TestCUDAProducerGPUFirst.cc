@@ -5,7 +5,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
 
@@ -27,13 +27,13 @@ private:
 TestCUDAProducerGPUFirst::TestCUDAProducerGPUFirst(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label"))
 {
-  produces<CUDA<CUDAThing>>();
+  produces<CUDAProduct<CUDAThing>>();
 }
 
 void TestCUDAProducerGPUFirst::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   descriptions.addWithDefaultLabel(desc);
-  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this the first algorithm in the chain of the GPU EDProducers. Produces CUDA<CUDAThing>.");
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this the first algorithm in the chain of the GPU EDProducers. Produces CUDA<ProductCUDAThing>.");
 }
 
 void TestCUDAProducerGPUFirst::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {

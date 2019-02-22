@@ -5,7 +5,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
 
@@ -21,22 +21,22 @@ public:
   void produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
 private:
   std::string label_;
-  edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
-  edm::EDPutTokenT<CUDA<CUDAThing>> dstToken_;
+  edm::EDGetTokenT<CUDAProduct<CUDAThing>> srcToken_;
+  edm::EDPutTokenT<CUDAProduct<CUDAThing>> dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
 };
 
 TestCUDAProducerGPU::TestCUDAProducerGPU(const edm::ParameterSet& iConfig):
   label_(iConfig.getParameter<std::string>("@module_label")),
-  srcToken_(consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))),
-  dstToken_(produces<CUDA<CUDAThing>>())
+  srcToken_(consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))),
+  dstToken_(produces<CUDAProduct<CUDAThing>>())
 {}
 
 void TestCUDAProducerGPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source of CUDA<CUDAThing>.");
+  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source of CUDAProduct<CUDAThing>.");
   descriptions.addWithDefaultLabel(desc);
-  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this is not the first algorithm in the chain of the GPU EDProducers. Produces CUDA<CUDAThing>.");
+  descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this is not the first algorithm in the chain of the GPU EDProducers. Produces CUDAProduct<CUDAThing>.");
 }
 
 void TestCUDAProducerGPU::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {

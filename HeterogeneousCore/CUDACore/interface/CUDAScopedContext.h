@@ -6,7 +6,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "FWCore/Utilities/interface/EDPutToken.h"
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 
 #include <cuda/api_wrappers.h>
@@ -35,7 +35,7 @@ public:
   {}
 
   template<typename T>
-  explicit CUDAScopedContext(const CUDA<T>& data):
+  explicit CUDAScopedContext(const CUDAProduct<T>& data):
     currentDevice_(data.device()),
     setDeviceForThisScope_(currentDevice_),
     stream_(data.streamPtr())
@@ -48,7 +48,7 @@ public:
   }
 
   template <typename T>
-  explicit CUDAScopedContext(const CUDA<T>& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
+  explicit CUDAScopedContext(const CUDAProduct<T>& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
     CUDAScopedContext(data)
   {
     waitingTaskHolder_ = waitingTaskHolder;
@@ -67,7 +67,7 @@ public:
   }
 
   template <typename T>
-  const T& get(const CUDA<T>& data) {
+  const T& get(const CUDAProduct<T>& data) {
     if(data.device() != currentDevice_) {
       // Eventually replace with prefetch to current device (assuming unified memory works)
       // If we won't go to unified memory, need to figure out something else...
@@ -91,13 +91,13 @@ public:
   }
 
   template <typename T>
-  std::unique_ptr<CUDA<T> > wrap(T data) const {
+  std::unique_ptr<CUDAProduct<T> > wrap(T data) const {
     // make_unique doesn't work because of private constructor
     //
-    // CUDA<T> constructor records CUDA event to the CUDA stream. The
-    // event will become "occurred" after all work queued to the
-    // stream before this point has been finished.
-    return std::unique_ptr<CUDA<T> >(new CUDA<T>(device(), streamPtr(), std::move(data)));
+    // CUDAProduct<T> constructor records CUDA event to the CUDA
+    // stream. The event will become "occurred" after all work queued
+    // to the stream before this point has been finished.
+    return std::unique_ptr<CUDAProduct<T> >(new CUDAProduct<T>(device(), streamPtr(), std::move(data)));
   }
 
   template <typename T, typename... Args>

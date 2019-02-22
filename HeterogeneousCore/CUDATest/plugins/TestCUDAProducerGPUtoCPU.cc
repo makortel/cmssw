@@ -6,7 +6,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
@@ -25,20 +25,20 @@ public:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 private:
   std::string label_;
-  edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
+  edm::EDGetTokenT<CUDAProduct<CUDAThing>> srcToken_;
   edm::EDPutTokenT<int> dstToken_;
   cudautils::host::unique_ptr<float[]> buffer_;
 };
 
 TestCUDAProducerGPUtoCPU::TestCUDAProducerGPUtoCPU(const edm::ParameterSet& iConfig):
   label_{iConfig.getParameter<std::string>("@module_label")},
-  srcToken_{consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
+  srcToken_{consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
   dstToken_{produces<int>()}
 {}
 
 void TestCUDAProducerGPUtoCPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source for CUDA<CUDAThing>.");
+  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source for CUDAProduct<CUDAThing>.");
   descriptions.addWithDefaultLabel(desc);
   descriptions.setComment("This EDProducer is part of the TestCUDAProducer* family. It models the GPU->CPU data transfer and formatting of the data to legacy data format. Produces int, to be compatible with TestCUDAProducerCPU.");
 }

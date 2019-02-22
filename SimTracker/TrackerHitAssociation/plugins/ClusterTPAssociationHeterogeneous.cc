@@ -4,7 +4,7 @@
 
 #include <cuda_runtime.h>
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
@@ -91,7 +91,7 @@ private:
   edm::EDGetTokenT<edmNew::DetSetVector<Phase2TrackerCluster1D>> phase2OTClustersToken_;
   edm::EDGetTokenT<TrackingParticleCollection> trackingParticleToken_;
 
-  edm::EDGetTokenT<CUDA<SiPixelDigisCUDA>> tGpuDigis;
+  edm::EDGetTokenT<CUDAProduct<SiPixelDigisCUDA>> tGpuDigis;
   edm::EDGetTokenT<HeterogeneousProduct> tGpuHits;
 
   std::unique_ptr<clusterSLOnGPU::Kernel> gpuAlgo;
@@ -113,7 +113,7 @@ ClusterTPAssociationHeterogeneous::ClusterTPAssociationHeterogeneous(const edm::
     stripClustersToken_(consumes<edmNew::DetSetVector<SiStripCluster>>(cfg.getParameter<edm::InputTag>("stripClusterSrc"))),
     phase2OTClustersToken_(consumes<edmNew::DetSetVector<Phase2TrackerCluster1D>>(cfg.getParameter<edm::InputTag>("phase2OTClusterSrc"))),
     trackingParticleToken_(consumes<TrackingParticleCollection>(cfg.getParameter<edm::InputTag>("trackingParticleSrc"))),
-    tGpuDigis(consumes<CUDA<SiPixelDigisCUDA>>(cfg.getParameter<edm::InputTag>("heterogeneousPixelDigiClusterSrc"))),
+    tGpuDigis(consumes<CUDAProduct<SiPixelDigisCUDA>>(cfg.getParameter<edm::InputTag>("heterogeneousPixelDigiClusterSrc"))),
     tGpuHits(consumesHeterogeneous(cfg.getParameter<edm::InputTag>("heterogeneousPixelRecHitSrc"))),
     doDump(cfg.getParameter<bool>("dumpCSV"))
 {
@@ -186,7 +186,7 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
 
     //  gpu stuff ------------------------
 
-    edm::Handle<CUDA<SiPixelDigisCUDA>> gd;
+    edm::Handle<CUDAProduct<SiPixelDigisCUDA>> gd;
     iEvent.getByToken(tGpuDigis, gd);
     // temporary check (until the migration)
     edm::Service<CUDAService> cs;

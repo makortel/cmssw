@@ -2,7 +2,7 @@
 #include "FWCore/TestProcessor/interface/TestProcessor.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
 
@@ -76,7 +76,7 @@ process.moduleToTest(process.toTest)
   SECTION("Produce") {
     edm::test::TestProcessor tester{config};
     auto event = tester.test();
-    auto prod = event.get<CUDA<CUDAThing> >();
+    auto prod = event.get<CUDAProduct<CUDAThing> >();
     REQUIRE(prod->device() == defaultDevice);
     auto ctx = CUDAScopedContext(*prod);
     const CUDAThing& thing = ctx.get(*prod);

@@ -5,7 +5,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
 #include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
@@ -23,8 +23,8 @@ public:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 private:
   std::string label_;
-  edm::EDGetTokenT<CUDA<CUDAThing>> srcToken_;
-  edm::EDPutTokenT<CUDA<CUDAThing>> dstToken_;
+  edm::EDGetTokenT<CUDAProduct<CUDAThing>> srcToken_;
+  edm::EDPutTokenT<CUDAProduct<CUDAThing>> dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
   CUDAContextToken ctxTmp_;
   cudautils::device::unique_ptr<float[]> devicePtr_;
@@ -33,8 +33,8 @@ private:
 
 TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(const edm::ParameterSet& iConfig):
   label_{iConfig.getParameter<std::string>("@module_label")},
-  srcToken_{consumes<CUDA<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
-  dstToken_{produces<CUDA<CUDAThing>>()}
+  srcToken_{consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
+  dstToken_{produces<CUDAProduct<CUDAThing>>()}
 {}
 
 void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {

@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
@@ -18,7 +18,7 @@ namespace cudatest {
 }
 
 namespace {
-  std::unique_ptr<CUDA<int *> > produce(int device, int *d, int *h) {
+  std::unique_ptr<CUDAProduct<int *> > produce(int device, int *d, int *h) {
     auto ctx = cudatest::TestCUDAScopedContext::make(device);
 
     cuda::memory::async::copy(d, h, sizeof(int), ctx.stream().id());
@@ -45,15 +45,15 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       REQUIRE(cuda::device::current::get().id() == defaultDevice);
     }
 
-    SECTION("Wrap T to CUDA<T>") {
-      std::unique_ptr<CUDA<int> > dataPtr = ctx.wrap(10);
+    SECTION("Wrap T to CUDAProduct<T>") {
+      std::unique_ptr<CUDAProduct<int> > dataPtr = ctx.wrap(10);
       REQUIRE(dataPtr.get() != nullptr);
       REQUIRE(dataPtr->device() == ctx.device());
       REQUIRE(dataPtr->stream().id() == ctx.stream().id());
     }
 
-    SECTION("Construct from from CUDA<T>") {
-      std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
+    SECTION("Construct from from CUDAProduct<T>") {
+      std::unique_ptr<CUDAProduct<int>> dataPtr = ctx.wrap(10);
       const auto& data = *dataPtr;
 
       CUDAScopedContext ctx2{data};
@@ -64,7 +64,7 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
     SECTION("Storing state as CUDAContextToken") {
       CUDAContextToken ctxtok;
       { // acquire
-        std::unique_ptr<CUDA<int>> dataPtr = ctx.wrap(10);
+        std::unique_ptr<CUDAProduct<int>> dataPtr = ctx.wrap(10);
         const auto& data = *dataPtr;
         CUDAScopedContext ctx2{data};
         ctxtok = ctx2.toToken();

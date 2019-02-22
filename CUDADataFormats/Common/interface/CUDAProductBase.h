@@ -1,5 +1,5 @@
-#ifndef CUDADataFormats_Common_CUDABase_h
-#define CUDADataFormats_Common_CUDABase_h
+#ifndef CUDADataFormats_Common_CUDAProductBase_h
+#define CUDADataFormats_Common_CUDAProductBase_h
 
 #include <memory>
 
@@ -9,9 +9,9 @@
  * Base class for all instantiations of CUDA<T> to hold the
  * non-T-dependent members.
  */
-class CUDABase {
+class CUDAProductBase {
 public:
-  CUDABase() = default; // Needed only for ROOT dictionary generation
+  CUDAProductBase() = default; // Needed only for ROOT dictionary generation
 
   bool isValid() const { return stream_.get() != nullptr; }
 
@@ -25,7 +25,7 @@ public:
   cuda::event_t& event() { return *event_; }
 
 protected:
-  explicit CUDABase(int device, std::shared_ptr<cuda::stream_t<>> stream);
+  explicit CUDAProductBase(int device, std::shared_ptr<cuda::stream_t<>> stream);
 
   // The cuda::stream_t is really shared among edm::Event products, so
   // using shared_ptr also here

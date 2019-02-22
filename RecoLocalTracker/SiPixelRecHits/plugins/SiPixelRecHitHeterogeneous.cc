@@ -1,4 +1,4 @@
-#include "CUDADataFormats/Common/interface/CUDA.h"
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "CUDADataFormats/SiPixelCluster/interface/SiPixelClustersCUDA.h"
 #include "CUDADataFormats/SiPixelDigi/interface/SiPixelDigisCUDA.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
@@ -66,8 +66,8 @@ private:
 
   edm::EDGetTokenT<reco::BeamSpot> 	 tBeamSpot;
   // The mess with inputs will be cleaned up when migrating to the new framework
-  edm::EDGetTokenT<CUDA<SiPixelClustersCUDA>> token_;
-  edm::EDGetTokenT<CUDA<SiPixelDigisCUDA>> tokenDigi_;
+  edm::EDGetTokenT<CUDAProduct<SiPixelClustersCUDA>> token_;
+  edm::EDGetTokenT<CUDAProduct<SiPixelDigisCUDA>> tokenDigi_;
   edm::EDGetTokenT<SiPixelClusterCollectionNew> clusterToken_;
   std::string cpeName_;
 
@@ -83,8 +83,8 @@ private:
 SiPixelRecHitHeterogeneous::SiPixelRecHitHeterogeneous(const edm::ParameterSet& iConfig):
   HeterogeneousEDProducer(iConfig),
   tBeamSpot(consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamSpot"))),
-  token_(consumes<CUDA<SiPixelClustersCUDA>>(iConfig.getParameter<edm::InputTag>("heterogeneousSrc"))),
-  tokenDigi_(consumes<CUDA<SiPixelDigisCUDA>>(iConfig.getParameter<edm::InputTag>("heterogeneousSrc"))),
+  token_(consumes<CUDAProduct<SiPixelClustersCUDA>>(iConfig.getParameter<edm::InputTag>("heterogeneousSrc"))),
+  tokenDigi_(consumes<CUDAProduct<SiPixelDigisCUDA>>(iConfig.getParameter<edm::InputTag>("heterogeneousSrc"))),
   cpeName_(iConfig.getParameter<std::string>("CPE"))
 {
   enableConversion_ = iConfig.getParameter<bool>("gpuEnableConversion");
@@ -171,7 +171,7 @@ void SiPixelRecHitHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& i
     throw cms::Exception("Configuration") << "too bad, not a fast cpe gpu processing not possible....";
   }
 
-  edm::Handle<CUDA<SiPixelClustersCUDA>> hclusters;
+  edm::Handle<CUDAProduct<SiPixelClustersCUDA>> hclusters;
   iEvent.getByToken(token_, hclusters);
   // temporary check (until the migration)
   edm::Service<CUDAService> cs;
@@ -179,7 +179,7 @@ void SiPixelRecHitHeterogeneous::acquireGPUCuda(const edm::HeterogeneousEvent& i
   CUDAScopedContext ctx{*hclusters};
   auto const& clusters = ctx.get(*hclusters);
 
-  edm::Handle<CUDA<SiPixelDigisCUDA>> hdigis;
+  edm::Handle<CUDAProduct<SiPixelDigisCUDA>> hdigis;
   iEvent.getByToken(tokenDigi_, hdigis);
   auto const& digis = ctx.get(*hdigis);
 
