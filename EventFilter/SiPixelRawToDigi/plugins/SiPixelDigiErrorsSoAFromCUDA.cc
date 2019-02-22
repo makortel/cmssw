@@ -45,7 +45,7 @@ void SiPixelDigiErrorsSoAFromCUDA::acquire(const edm::Event& iEvent, const edm::
   // Do the transfer in a CUDA stream parallel to the computation CUDA stream
   CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
 
-  const auto& gpuDigiErrors = ctx.get(iEvent.get(digiErrorGetToken_));
+  const auto& gpuDigiErrors = ctx.get(iEvent, digiErrorGetToken_);
 
   auto tmp = gpuDigiErrors.dataErrorToHostAsync(ctx.stream());
   error_ = std::move(tmp.first);

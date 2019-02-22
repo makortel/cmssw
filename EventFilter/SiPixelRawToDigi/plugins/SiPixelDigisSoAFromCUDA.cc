@@ -49,7 +49,7 @@ void SiPixelDigisSoAFromCUDA::acquire(const edm::Event& iEvent, const edm::Event
   // Do the transfer in a CUDA stream parallel to the computation CUDA stream
   CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
 
-  const auto& gpuDigis = ctx.get(iEvent.get(digiGetToken_));
+  const auto& gpuDigis = ctx.get(iEvent, digiGetToken_);
 
   nDigis_ = gpuDigis.nDigis();
   pdigi_ = gpuDigis.pdigiToHostAsync(ctx.stream());
