@@ -5,6 +5,7 @@
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/exitSansCUDADevices.h"
 
 namespace {
   CUDAService makeCUDAService(edm::ParameterSet ps, edm::ActivityRegistry& ar) {
@@ -16,14 +17,7 @@ namespace {
 }
 
 TEST_CASE("copyAsync", "[cudaMemTools]") {
-  int deviceCount = 0;
-  auto ret = cudaGetDeviceCount( &deviceCount );
-  if( ret != cudaSuccess ) {
-    WARN("Unable to query the CUDA capable devices from the CUDA runtime API: ("
-         << ret << ") " << cudaGetErrorString( ret ) 
-         << ". Ignoring tests requiring device to be present.");
-    return;
-  }
+  exitSansCUDADevices();
 
   edm::ActivityRegistry ar;
   edm::ParameterSet ps;

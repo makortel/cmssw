@@ -5,6 +5,7 @@
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/exitSansCUDADevices.h"
 
 #include <iostream>
 
@@ -19,18 +20,18 @@ process.toTest = cms.EDProducer("TestCUDAProducerGPUFirst")
 process.moduleToTest(process.toTest)
 )_"
   };
-  
-  edm::test::TestProcessor::Config config{ baseConfig };  
+
+  edm::test::TestProcessor::Config config{ baseConfig };
   SECTION("base configuration is OK") {
     REQUIRE_NOTHROW(edm::test::TestProcessor(config));
   }
-  
+
   SECTION("No event data") {
     edm::test::TestProcessor tester(config);
 
     REQUIRE_NOTHROW(tester.test());
   }
-  
+
   SECTION("beginJob and endJob only") {
     edm::test::TestProcessor tester(config);
 
@@ -39,13 +40,13 @@ process.moduleToTest(process.toTest)
 
   SECTION("Run with no LuminosityBlocks") {
     edm::test::TestProcessor tester(config);
-    
+
     REQUIRE_NOTHROW(tester.testRunWithNoLuminosityBlocks());
   }
 
   SECTION("LuminosityBlock with no Events") {
     edm::test::TestProcessor tester(config);
-    
+
     REQUIRE_NOTHROW(tester.testLuminosityBlockWithNoEvents());
   }
 
@@ -60,16 +61,9 @@ process.toTest = cms.EDProducer("TestCUDAProducerGPUFirst")
 process.moduleToTest(process.toTest)
 )_"
   };
-  edm::test::TestProcessor::Config config{ baseConfig };  
+  edm::test::TestProcessor::Config config{ baseConfig };
 
-  int deviceCount = 0;
-  auto ret = cudaGetDeviceCount( &deviceCount );
-  if( ret != cudaSuccess ) {
-    WARN("Unable to query the CUDA capable devices from the CUDA runtime API: ("
-         << ret << ") " << cudaGetErrorString( ret ) 
-         << ". Ignoring tests requiring device to be present.");
-    return;
-  }
+  exitSansCUDADevices();
 
   constexpr int defaultDevice = 0;
 

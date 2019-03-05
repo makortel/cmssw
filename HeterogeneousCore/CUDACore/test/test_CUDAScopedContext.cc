@@ -3,6 +3,7 @@
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/exitSansCUDADevices.h"
 
 #include "test_CUDAScopedContextKernels.h"
 
@@ -28,14 +29,7 @@ namespace {
 }
 
 TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
-  int deviceCount = 0;
-  auto ret = cudaGetDeviceCount( &deviceCount );
-  if( ret != cudaSuccess ) {
-    WARN("Unable to query the CUDA capable devices from the CUDA runtime API: ("
-         << ret << ") " << cudaGetErrorString( ret ) 
-         << ". Ignoring tests requiring device to be present.");
-    return;
-  }
+  exitSansCUDADevices();
 
   constexpr int defaultDevice = 0;
   {

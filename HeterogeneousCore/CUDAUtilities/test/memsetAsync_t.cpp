@@ -6,6 +6,7 @@
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/memsetAsync.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/exitSansCUDADevices.h"
 
 namespace {
   CUDAService makeCUDAService(edm::ParameterSet ps, edm::ActivityRegistry& ar) {
@@ -17,14 +18,7 @@ namespace {
 }
 
 TEST_CASE("memsetAsync", "[cudaMemTools]") {
-  int deviceCount = 0;
-  auto ret = cudaGetDeviceCount( &deviceCount );
-  if( ret != cudaSuccess ) {
-    WARN("Unable to query the CUDA capable devices from the CUDA runtime API: ("
-         << ret << ") " << cudaGetErrorString( ret ) 
-         << ". Ignoring tests requiring device to be present.");
-    return;
-  }
+  exitSansCUDADevices();
 
   edm::ActivityRegistry ar;
   edm::ParameterSet ps;
@@ -61,7 +55,7 @@ TEST_CASE("memsetAsync", "[cudaMemTools]") {
     cudautils::memsetAsync(device, 0, N, stream);
     cudautils::copyAsync(host, device, N, stream);
     stream.synchronize();
-    
+
     for(int i=0; i < N; ++i) {
       CHECK(host[i] == 0);
     }
