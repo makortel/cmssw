@@ -27,6 +27,7 @@ public:
 protected:
   explicit CUDAProductBase(int device, std::shared_ptr<cuda::stream_t<>> stream);
 
+private:
   // The cuda::stream_t is really shared among edm::Event products, so
   // using shared_ptr also here
   std::shared_ptr<cuda::stream_t<>> stream_; //!
