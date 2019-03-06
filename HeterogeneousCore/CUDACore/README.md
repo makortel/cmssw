@@ -1,19 +1,35 @@
-# Prototype for CMSSW interface to CUDA algorithms
+# CUDA algorithms in CMSSW
 
 ## Outline
 
-* [Introduction](introduction)
-  * [Design goals]()
-  * [Overall guidelines]()
-* [Sub-packages]()
-* Examples
-  * Isolated producer (no CUDA input nor output)
-  * Producer with CUDA input
-  * Producer with CUDA output
-  * Produder with CUDA input and output (with ExternalWork)
-  * Producer with CUDA input and output (without ExternalWork)
-  * Configuration
-* More details
+* [Introduction](#introduction)
+  * [Design goals](#design-goals)
+  * [Overall guidelines](#overall-guidelines)
+* [Sub-packages](#sub-packages)
+* [Examples](#examples)
+  * [Isolated producer (no CUDA input nor output)](#isolated-producer-no-cuda-input-nor-output)
+  * [Producer with CUDA input](#producer-with-cuda-output)
+  * [Producer with CUDA output](#producer-with-cuda-input)
+  * [Producer with CUDA input and output (with ExternalWork)](#producer-with-cuda-input-and-output-with-externalwork)
+  * [Producer with CUDA input and output (without ExternalWork)](#producer-with-cuda-input-and-output-without-externalwork)
+  * [Configuration](#configuration)
+    * [GPU-only configuration](#gpu-only-configuration)
+    * [Automatic switching between CPU and GPU modules](#automatic-switching-between-cpu-and-gpu-modules)
+* [More details](#more-details)
+  * [Device choice](#device-choice)
+  * [Data model](#data-model)
+  * [CUDA EDProducer](#cuda-edproducer)
+    * [Class declaration](#class-declaration)
+    * [Memory allocation](#memory-allocation)
+      * [Caching allocator](#caching-allocator)
+      * [CUDA API](#cuda-api)
+    * [Setting the current device](#setting-the-current-device)
+    * [Getting input](#getting-input)
+    * [Calling the CUDA kernels](#calling-the-cuda-kernels)
+    * [Putting output](#putting-output)
+    * [`ExternalWork` extension](#externalwork-extension)
+    * [Transferring GPU data to CPU](#transferring-gpu-data-to-cpu)
+    * [Synchronizing between CUDA streams](#synchronizing-between-cuda-streams)
 
 
 ## Introduction
@@ -25,7 +41,7 @@ This page documents the CUDA integration within CMSSW
 1. Provide a mechanism for a chain of modules to share a resource
    * Resource can be e.g. CUDA device memory or a CUDA stream
 2. Minimize data movements between the CPU and the device
-3. Support multi devices
+3. Support multiple devices
 4. Allow the same job configuration to be used on all hardware combinations
 
 ### Overall guidelines
@@ -33,10 +49,10 @@ This page documents the CUDA integration within CMSSW
 1. Within the `acquire()`/`produce()` functions all CUDA operations should be asynchronous, i.e.
    * Use `cudaMemcpyAsync()`, `cudaMemsetAsync()`, `cudaMemPrefetchAsync()` etc.
    * Avoid `cudaMalloc*()`, `cudaHostAlloc()`, `cudaFree*()`, `cudaHostRegister()`, `cudaHostUnregister()` on every event
-     * Occasional calls are permitted through a caching allocator
+     * Occasional calls are permitted through a caching mechanism that amortizes the cost (see also [Caching allocator](#caching-allocator))
    * Avoid `assert()` in device functions, or use `#include HeterogeneousCore/CUDAUtilities/interface/cuda_assert.h`
-     * With the latter the `assert()`s in CUDA code are disabled by
-       default, but can be enabled by defining `GPU_DEBUG` macro
+     * With the latter the `assert()` calls in CUDA code are disabled by
+       default, but can be enabled by defining a `GPU_DEBUG` macro
        (before the aforementioned include)
 2. Synchronization needs should be fulfilled with
    [`ExternalWork`](https://twiki.cern.ch/twiki/bin/view/CMSPublic/FWMultithreadedFrameworkStreamModuleInterface#edm_ExternalWork)
@@ -51,12 +67,12 @@ This page documents the CUDA integration within CMSSW
    * A general breakdown of the possible steps:
      * Convert input legacy CPU data format to CPU SoA
      * Transfer input CPU SoA to GPU
-     * Run kernels
+     * Launch kernels
      * Transfer the number of output elements to CPU
      * Transfer the output data from GPU to CPU SoA
-     * Convert the output SoA to legacy GPU data formats
-3. Within `acquire()`/`produce()`, the CUDA device is set implicitly
-   and the CUDA stream is provided by the system (with
+     * Convert the output SoA to legacy CPU data formats
+3. Within `acquire()`/`produce()`, the current CUDA device is set
+   implicitly and the CUDA stream is provided by the system (with
    `CUDAScopedContext`)
    * It is strongly recommended to use the provided CUDA stream for all operations
      * If that is not feasible for some reason, the provided CUDA
@@ -82,8 +98,8 @@ This page documents the CUDA integration within CMSSW
 class IsolatedProducerCUDA: public edm::stream::EDProducer<ExternalWork> {
 public:
   ...
-  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
-  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  void acquire(edm::Event const& iEvent, edm::EventSetup const& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup const& iSetup) override;
   ...
 private:
   ...
@@ -92,7 +108,7 @@ private:
   edm::EDPutTokenT<OutputData> outputToken_;
 };
 ...
-void IsolatedProducerCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+void IsolatedProducerCUDA::acquire(edm::Event const& iEvent, edm::EventSetup const& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   // Sets the current device and creates a CUDA stream
   CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
 
@@ -107,7 +123,7 @@ void IsolatedProducerCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iS
 }
 
 // Called after the asynchronous work has finished
-void IsolatedProducerCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
+void IsolatedProducerCUDA::produce(edm::Event& iEvent, edm::EventSetup const& iSetup) {
   // Real life is likely more complex than this simple example. Here
   // getResult() returns some data in CPU memory that is passed
   // directly to the OutputData constructor.
@@ -121,8 +137,8 @@ void IsolatedProducerCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) 
 class ProducerOutputCUDA: public edm::stream::EDProducer<ExternalWork> {
 public:
   ...
-  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
-  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  void acquire(edm::Event const& iEvent, edm::EventSetup const& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup const& iSetup) override;
   ...
 private:
   ...
@@ -132,7 +148,7 @@ private:
   CUDAContextToken ctxTmp_;
 };
 ...
-void ProducerOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+void ProducerOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup const& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   // Sets the current device and creates a CUDA stream
   CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
 
@@ -151,7 +167,7 @@ void ProducerOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSet
 }
 
 // Called after the asynchronous work has finished
-void ProducerOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
+void ProducerOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup const& iSetup) {
   // Sets again the current device, uses the CUDA stream created in the acquire()
   CUDAScopedContext ctx{std::move(ctxTmp_)};
 
@@ -170,8 +186,8 @@ void ProducerOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
 class ProducerInputCUDA: public edm::stream::EDProducer<ExternalWork> {
 public:
   ...
-  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
-  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  void acquire(edm::Event const& iEvent, edm::EventSetup const& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup const& iSetup) override;
   ...
 private:
   ...
@@ -187,7 +203,7 @@ void ProducerInputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetu
   // InputData, and also use the same CUDA stream
   CUDAScopedContext ctx{inputDataWrapped, std::move(waitingTaskHolder)};
 
-  // Alternatively, if e.g. there is another module queuing //
+  // Alternatively, if e.g. there is another module queuing
   // independent work to the CUDA stream, a new CUDA stream can also be
   // created here with
   CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder);
@@ -319,69 +335,107 @@ void ProducerInputOutputCUDA::produce(edm::StreamID streamID, edm::Event& iEvent
 
 ### Configuration
 
+#### GPU-only configuration
+
+For a GPU-only configuration there is nothing special to be done, just
+construct the Paths/Sequences/Tasks from the GPU modules.
+
+#### Automatic switching between CPU and GPU modules
+
+The `SwitchProducer` mechanism can be used to switch automatically
+between CPU and GPU modules based on the availability of GPUs on the
+machine where the configuration is done. Framework decides at the
+beginning of the job which of the modules to run for a given module
+label.
+
+Framework requires that the modules in the switch must produce the
+same types of output products (the closer the actual results are the
+better, but the framework can not enforce that). This means that for a
+chain of GPU modules, it is the module that transforms the SoA data
+format back to the legacy data formats (possibly, but not necessarily,
+transferring the SoA data from GPU to CPU) that should be switched
+between the legacy CPU module. The rest of the GPU modules should be
+placed to a `Task`, in which case framework runs them only if their
+output is needed by another module.
+
 ```python
+from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+process.foo = SwitchProducerCUDA(
+    cpu = cms.EDProducer("FooProducer"), # legacy CPU
+    cuda = cms.EDProducer("FooProducerFromCUDA", src="fooCUDA")
+)
+process.fooCUDA = cms.EDProducer("FooProducerCUDA")
+
+process.fooTaskCUDA = cms.Task(process.fooCUDA)
+process.fooTask = cms.Task(
+    process.foo,
+    process.fooTaskCUDA
+)
 ```
 
+For a more complete example, see [here](../CUDATest/test/testCUDASwitch_cfg.py).
 
-##################################################
 
-## Choosing device
 
-### GPU and CPU
 
-Currently the device type choice (CPU vs. GPU) is done at the
-configuration level with `cms.Modifier`. In the near future this will
-be changed to a decision made at the beginning of the job with a
-[`SwitchProducer`](https://github.com/cms-sw/cmssw/pull/25439).
+
+## More details
+
+### Device choice
+
+As discussed above, with `SwitchProducer` the choice between CPU and
+GPU modules is done at the beginning of the job.
 
 For multi-GPU setup the device is chosen in the first CUDA module in a
-chain of modules by one of the constructors of
-`CUDAScopedContext`
+chain of modules by one of the constructors of `CUDAScopedContext`
 ```cpp
-auto ctx = CUDAScopedContext(iEvent.streamID());
+CUDAScopedContext ctx{iEvent.streamID()};
 ```
 As the choice is still the static EDM stream to device assignment, the
-EDM stream ID is needed. The logic will likely evolve in the future.
+EDM stream ID is needed. The logic will likely evolve in the future to
+be more dynamic, and likely the device choice has to be made for the
+full event.
 
-### Always on GPU
+### Data model
 
-In case the chain of modules should always be run on a GPU, the
-configuration should be built only with the GPU modules.
-
-
-## Data model
-
-The GPU data should be a class/struct containing smart pointer(s) to
-device data (see [Memory allocation](#memory-allocation)). When
-putting the data to event, the data is wrapped to `CUDA<T>` template,
-which holds
-* the GPU data
-  * must be movable, but no other restrictions
+The "GPU data product" should be a class/struct containing smart
+pointer(s) to device data (see [Memory allocation](#memory-allocation)).
+When putting the data to event, the data is wrapped to
+`CUDAProduct<T>` template, which holds
+* the GPU data product
+  * must be moveable, but no other restrictions
 * the current device where the data was produced, and the CUDA stream the data was produced with
 * [CUDA event for synchronization between multiple CUDA streams](#synchronizing-between-cuda-streams)
 
-Note that the `CUDA<T>` wrapper can be constructed only with
+Note that the `CUDAProduct<T>` wrapper can be constructed only with
 `CUDAScopedContext::wrap()`, and the data `T` can be obtained from it
 only with `CUDAScopedContext::get()`, as described further below. When
 putting the data product directly to `edm::Event`, also
 `CUDASCopedContext::emplace()` can be used.
 
-## CUDA EDProducer
+The GPU data products that depend on the CUDA runtime should be placed
+under `CUDADataFormats` package, using the same name for sub-package
+that would be used in `DataFormats`. Everything else, e.g. SoA for
+CPU, should go under `DataFormats` as usual.
 
-### Class declaration
 
-The CUDA producers are normal EDProducers. Contrary to
-`HeterogeneousEDProducer`, the `ExternalWork` extension is **not**
-required. Its use is recommended though when transferring data from
-GPU to CPU.
+### CUDA EDProducer
 
-### Memory allocation
+#### Class declaration
+
+The CUDA producers are normal EDProducers. The `ExternalWork`
+extension should be used if a synchronization between the GPU and CPU
+is needed, e.g. when transferring data from GPU to CPU.
+
+#### Memory allocation
+
+##### Caching allocator
 
 The memory allocations should be done dynamically with `CUDAService`
 ```cpp
 edm::Service<CUDAService> cs;
-edm::cuda::device::unique_ptr<float[]> device_buffer = cs->make_device_unique<float[]>(50, cudaStream);
-edm::cuda::host::unique_ptr<float[]>   host_buffer   = cs->make_host_unique<float[]>(50, cudaStream);
+cudautils::device::unique_ptr<float[]> device_buffer = cs->make_device_unique<float[]>(50, cudaStream);
+cudautils::host::unique_ptr<float[]>   host_buffer   = cs->make_host_unique<float[]>(50, cudaStream);
 ```
 
 in the `acquire()` and `produce()` functions. The same
@@ -393,47 +447,56 @@ guaranteed to be reserved
 * for the host: up to the destructor of the `unique_ptr`
 * for the device: until all work queued in the `cudaStream` up to the point when the `unique_ptr` destructor is called has finished
 
-### Setting the current device
+##### CUDA API
+
+The `cudaMalloc()` etc may be used outside of the event loop, but that
+should be limited to only relatively small allocations in order to
+allow as much re-use of device memory as possible.
+
+If really needed, the `cudaMalloc()` etc may be used also within the
+event loop, but then the cost of allocation and implicit
+synchronization should be explicitly amortized e.g. by caching.
+
+#### Setting the current device
 
 A CUDA producer should construct `CUDAScopedContext` in `acquire()`
-either with `edm::StreamID`, or with a `CUDA<T>` read as an input.
+(`produce()` if not using `ExternalWork`) either with `edm::StreamID`,
+or with a `CUDAProduct<T>` read as an input.
 
-A CUDA producer should read either `CUDAToken` (from
-`CUDADeviceChooser`) or one or more `CUDA<T>` products. Then, in the
-`acquire()`/`produce()`, it should construct `CUDAScopedContext` from
-one of them
 ```cpp
 // From edm::StreamID
-auto ctx = CUDAScopedContext(iEvent.streamID());
+CUDAScopedContext ctx{iEvent.streamID()};
 
-/// From CUDA<T>
-edm::Handle<CUDA<GPUClusters>> handle;
-iEvent.getByToken(srctoken_, handle);
-auto ctx = CUDAScopedContext(*handle);
+// From CUDAProduct<T>
+CUDAProduct<GPUClusters> cclus = iEvent.get(srcToken_);
+CUDAScopedContext ctx{cclus};
 ```
 
 `CUDAScopedContext` works in the RAII way and does the following
 * Sets the current device for the current scope
-  - If constructed from the `edm::StreamID`, makes the device choice and creates a new CUDA stream
-  - If constructed from the `CUDA<T>`, uses the same device and CUDA stream as was used to produce the `CUDA<T>`
+  - If constructed from the `edm::StreamID`, chooses the device and creates a new CUDA stream
+  - If constructed from the `CUDAProduct<T>`, uses the same device and CUDA stream as was used to produce the `CUDAProduct<T>`
 * Gives access to the CUDA stream the algorithm should use to queue asynchronous work
 * Calls `edm::WaitingTaskWithArenaHolder::doneWaiting()` when necessary
 * [Synchronizes between CUDA streams if necessary](#synchronizing-between-cuda-streams)
-* Needed to get/put `CUDA<T>` from/to the event
+* Needed to get/put `CUDAProduct<T>` from/to the event
 
 In case of multiple input products, from possibly different CUDA
 streams and/or CUDA devices, this approach gives the developer full
 control in which of them the kernels of the algorithm should be run.
 
-### Getting input
+#### Getting input
 
-The real product (`T`) can be obtained from `CUDA<T>` only with the
-help of `CUDAScopedContext`. 
+The real product (`T`) can be obtained from `CUDAProduct<T>` only with
+the help of `CUDAScopedContext`.
 
 ```cpp
-edm::Handle<CUDA<GPUClusters>> hclus;
-iEvent.getByToken(srctoken_, hclus);
-GPUClusters const& clus = ctx.get(*hclus);
+// From CUDAProduct<T>
+CUDAProduct<GPUClusters> cclus = iEvent.get(srcToken_);
+GPUClusters const& clus = ctx.get(cclus);
+
+// Directly from Event
+GPUClusters const& clus = ctx.get(iEvent, srcToken_);
 ```
 
 This step is needed to
@@ -441,18 +504,25 @@ This step is needed to
   * if not, throw an exception (with unified memory could prefetch instead)
 * if the CUDA streams are different, synchronize between them
 
-### Calling the CUDA kernels
+#### Calling the CUDA kernels
 
-There is nothing special, except the CUDA stream should be obtained from
-the `CUDAScopedContext`
+It is usually best to wrap the CUDA kernel calls to a separate class,
+and then call methods of that class from the EDProducer. The only
+requirement is that the CUDA stream where to queue the operations
+should be the one from the `CUDAScopedContext`
 
 ```cpp
 gpuAlgo.makeClustersAsync(..., ctx.stream());
 ```
 
-### Putting output
+If necessary, different CUDA streams may be used internally, but they
+should to be made to synchronize with the provided CUDA stream with
+CUDA events and `cudaStreamWaitEvent()`.
 
-The GPU data needs to be wrapped to `CUDA<T>` template with
+
+#### Putting output
+
+The GPU data needs to be wrapped to `CUDAProduct<T>` template with
 `CUDAScopedContext::wrap()` or `CUDAScopedContext::emplace()`
 
 ```cpp
@@ -465,34 +535,34 @@ iEvent.put(ctx.wrap(gpuAlgo.makeClustersAsync(ctx.stream())));
 
 // or avoid one unique_ptr with emplace
 edm::PutTokenT<CUDA<GPUClusters>> putToken_ = produces<CUDA<GPUClusters>>(); // in constructor
+...
 ctx.emplace(iEvent, putToken_, gpuAlgo.makeClustersAsync(ctx.stream()));
 ```
 
 This step is needed to
-* store the current device and CUDA stream into `CUDA<T>`
+* store the current device and CUDA stream into `CUDAProduct<T>`
 * record the CUDA event needed for CUDA stream synchronization
 
-### `ExternalWork` extension
+#### `ExternalWork` extension
 
 Everything above works both with and without `ExternalWork`.
 
 Without `ExternalWork` the `EDProducer`s act similar to TBB
 flowgraph's "streaming node". In other words, they just queue more
-asynchronous work in their `produce()`.
+asynchronous work to the CUDA stream in their `produce()`.
 
 The `ExternalWork` is needed when one would otherwise call
 `cudeStreamSynchronize()`. For example transferring something to CPU
 needed for downstream DQM, or queueing more asynchronous work. With
 `ExternalWork` an `acquire()` method needs to be implemented that gets
 an `edm::WaitingTaskWithArenaHolder` parameter. The
-`WaitingTaskWithArenaHolder` should then be passed to the constructor
-of `CUDAScopedContext` along
+`edm::WaitingTaskWithArenaHolder` should then be passed to the
+constructor of `CUDAScopedContext` along
 
 ```cpp
 void acquire(..., edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  edm::Handle<CUDA<GPUClusters>> handle;
-  iEvent.getByToken(token_, handle);
-  auto ctx = CUDAScopedContext(*handle, std::move(waitingTaskHolder)); // can also copy instead of move if waitingTaskHolder is needed for something else as well
+  CUDAProduct<GPUClusters> const& cclus = iEvent.get(token_);
+  CUDAScopedContext ctx{cclus, std::move(waitingTaskHolder)}; // can also copy instead of move if waitingTaskHolder is needed for something else as well
   ...
 ```
 
@@ -517,14 +587,14 @@ void acquire(...) {
 
 void produce(...( {
   ...
-  auto ctx = CUDAScopedContext(std::move(ctxTmp_));
+  CUDAScopedContext ctx{std::move(ctxTmp_)};
 }
 ```
 
 Ideas for improvements are welcome.
 
 
-### Transferring GPU data to CPU
+#### Transferring GPU data to CPU
 
 The GPU->CPU data transfer needs synchronization to ensure the CPU
 memory to have all data before putting that to the event. This means
@@ -537,65 +607,20 @@ the `ExternalWork` needs to be used along
   * Reformat data back to legacy data formats
   * Note: `CUDAScopedContext` is **not** needed in `produce()`
 
-### Synchronizing between CUDA streams
+#### Synchronizing between CUDA streams
 
 In case the producer needs input data that were produced in two (or
-more) CUDA streams, these streams have to be synchronized (since CMSSW
-framework no longer guarantees the synchronization as was the case
-with `HeterogeneousEDProducer`). Here this synchronization is achieved
-with CUDA events.
+more) CUDA streams, these streams have to be synchronized. Here this
+synchronization is achieved with CUDA events.
 
-Each `CUDA<T>` constains also a CUDA event object. The call to
+Each `CUDAProduct<T>` constains also a CUDA event object. The call to
 `CUDAScopedContext::wrap()` will *record* the event in the CUDA stream.
 This means that when all work queued to the CUDA stream up to that
 point has been finished, the CUDA event becomes *occurred*. Then, in
-`CUDAScopedContext::get()`, if the `CUDA<T>` to get from has a
+`CUDAScopedContext::get()`, if the `CUDAProduct<T>` to get from has a
 different CUDA stream than the `CUDAScopedContext`,
 `cudaStreamWaitEvent(stream, event)` is called. This means that all
 subsequent work queued to the CUDA stream will wait for the CUDA event
 to become occurred. Therefore this subsequent work can assume that the
 to-be-getted CUDA product exists.
 
-## Configuration
-
-### With `cms.Modifier`
-
-```python
-process.foo = cms.EDProducer("FooProducer") # legacy CPU
-
-from Configuration.ProcessModifiers.gpu_cff import gpu
-process.fooCUDA = cms.EDProducer("FooProducerCUDA")
-gpu.toReplaceWith(process.foo, cms.EDProducer("FooProducerFromCUDA", src="fooCUDA"))
-
-process.fooTaskCUDA = cms.Task(process.fooCUDA)
-process.fooTask = cms.Task(
-    process.foo,
-    process.fooTaskCUDA
-)
-```
-
-For a more complete example, see [here](../CUDATests/test/testCUDA_cfg.py).
-
-### With `SwitchProducer`
-
-```python
-from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
-process.foo = SwitchProducerCUDA(
-    cpu = cms.EDProducer("FooProducer"), # legacy CPU
-    cuda = cms.EDProducer("FooProducerFromCUDA", src="fooCUDA")
-)
-process.fooCUDA = cms.EDProducer("FooProducerCUDA")
-
-process.fooTaskCUDA = cms.Task(process.fooCUDA)
-process.fooTask = cms.Task(
-    process.foo,
-    process.fooTaskCUDA
-)
-```
-
-# Extension to other devices
-
-The C++ side extends in a straightforward way. One has to add classes
-similar to `CUDAToken`, `CUDA<T>`, and `CUDAScopedContext`. Of course,
-much depends on the exact details. The python configuration side
-extends as well.
