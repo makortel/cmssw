@@ -14,6 +14,10 @@ siPixelDigiErrorsSoA = _siPixelDigiErrorsSoAFromCUDA.clone(
     src = "siPixelClustersCUDAPreSplitting"
 )
 siPixelDigiErrors = _siPixelDigiErrorsFromSoA.clone()
+
+from Configuration.Eras.Modifier_phase1Pixel_cff import phase1Pixel
+phase1Pixel.toModify(siPixelDigiErrors, UsePhase1=True)
+
 siPixelDigisTaskCUDA = cms.Task(
     siPixelDigisSoA,
     siPixelDigiErrorsSoA,
