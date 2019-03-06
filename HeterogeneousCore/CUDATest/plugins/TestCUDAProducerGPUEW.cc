@@ -44,7 +44,7 @@ void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& des
 }
 
 void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
   const auto& in = iEvent.get(srcToken_);
   CUDAScopedContext ctx{in, std::move(waitingTaskHolder)};
@@ -56,19 +56,19 @@ void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSe
   // event.
   cuda::memory::async::copy(&hostData_, devicePtr_.get()+10, sizeof(float), ctx.stream().id());
 
-  edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
   ctxTmp_ = ctx.toToken();
 }
 
 void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " 10th element " << hostData_; 
+  edm::LogVerbatim("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " 10th element " << hostData_; 
 
   CUDAScopedContext ctx{std::move(ctxTmp_)};
 
   ctx.emplace(iEvent, dstToken_, std::move(devicePtr_));
 
-  edm::LogPrint("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }
 
 DEFINE_FWK_MODULE(TestCUDAProducerGPUEW);

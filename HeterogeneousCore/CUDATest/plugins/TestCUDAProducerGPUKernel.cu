@@ -87,7 +87,7 @@ cudautils::device::unique_ptr<float[]> TestCUDAProducerGPUKernel::runAlgo(const 
 
   auto d_c = cs->make_device_unique<float[]>(NUM_VALUES, stream);
   auto current_device = cuda::device::current::get();
-  edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU launching kernels device " << current_device.id() << " CUDA stream " << stream.id();
+  edm::LogVerbatim("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU launching kernels device " << current_device.id() << " CUDA stream " << stream.id();
   vectorAdd<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_a.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
   auto d_ma = cs->make_device_unique<float[]>(NUM_VALUES*NUM_VALUES, stream);
@@ -107,6 +107,6 @@ cudautils::device::unique_ptr<float[]> TestCUDAProducerGPUKernel::runAlgo(const 
 
   matrixMulVector<<<blocksPerGrid, threadsPerBlock, 0, stream.id()>>>(d_mc.get(), d_b.get(), d_c.get(), NUM_VALUES);
 
-  edm::LogPrint("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU kernels launched, returning return pointer device " << current_device.id() << " CUDA stream " << stream.id();
+  edm::LogVerbatim("TestHeterogeneousEDProducerGPU") << "  " << label << " GPU kernels launched, returning return pointer device " << current_device.id() << " CUDA stream " << stream.id();
   return d_a;
 }

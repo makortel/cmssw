@@ -37,14 +37,14 @@ void TestCUDAProducerGPUFirst::fillDescriptions(edm::ConfigurationDescriptions& 
 }
 
 void TestCUDAProducerGPUFirst::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
-  edm::LogPrint("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
   CUDAScopedContext ctx{streamID};
 
   cudautils::device::unique_ptr<float[]> output = gpuAlgo_.runAlgo(label_, ctx.stream());
   iEvent.put(ctx.wrap(CUDAThing(std::move(output))));
 
-  edm::LogPrint("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }
 
 DEFINE_FWK_MODULE(TestCUDAProducerGPUFirst);

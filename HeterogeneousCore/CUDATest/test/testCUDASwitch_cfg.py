@@ -1,5 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
+silent = True
+#silent = False
+
 from Configuration.ProcessModifiers.gpu_cff import gpu
 process = cms.Process("Test")
 process.load("FWCore.MessageService.MessageLogger_cfi")
@@ -7,7 +10,12 @@ process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
 
 process.source = cms.Source("EmptySource")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(3) )
+if not silent:
+    process.maxEvents.input = 10
+    process.MessageLogger.cerr.threshold = cms.untracked.string("INFO")
+    process.MessageLogger.cerr.INFO.limit = process.MessageLogger.cerr.default.limit
+
 
 process.options = cms.untracked.PSet(
 #    numberOfThreads = cms.untracked.uint32(4),
@@ -39,7 +47,7 @@ process.prod2CUDA = testCUDAProducerGPU.clone(src = "prod1CUDA")
 process.prod3CUDA = testCUDAProducerGPU.clone(src = "prod2CUDA")
 process.prod4CUDA = testCUDAProducerGPUEW.clone(src = "prod1CUDA")
 
-# CPU producers, ssiwtched with modules to copy data from GPU to CPU
+# CPU producers, switched with modules to copy data from GPU to CPU
 # (as "on demand" as any other EDProducer, i.e. according to
 # consumes() and prefetching). If a separate conversion step is needed
 # to get the same data formats as the CPU modules, those are then ones

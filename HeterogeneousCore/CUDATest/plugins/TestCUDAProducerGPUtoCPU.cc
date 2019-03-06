@@ -44,7 +44,7 @@ void TestCUDAProducerGPUtoCPU::fillDescriptions(edm::ConfigurationDescriptions& 
 }
 
 void TestCUDAProducerGPUtoCPU::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  edm::LogPrint("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
   const auto& in = iEvent.get(srcToken_);
   CUDAScopedContext ctx{in, std::move(waitingTaskHolder)};
@@ -55,11 +55,11 @@ void TestCUDAProducerGPUtoCPU::acquire(const edm::Event& iEvent, const edm::Even
   // Enqueue async copy, continue in produce once finished
   cuda::memory::async::copy(buffer_.get(), device.get(), TestCUDAProducerGPUKernel::NUM_VALUES*sizeof(float), ctx.stream().id());
 
-  edm::LogPrint("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }
 
 void TestCUDAProducerGPUtoCPU::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  edm::LogPrint("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
+  edm::LogVerbatim("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
   int counter = 0;
   for(int i=0; i<TestCUDAProducerGPUKernel::NUM_VALUES; ++i) {
@@ -69,7 +69,7 @@ void TestCUDAProducerGPUtoCPU::produce(edm::Event& iEvent, const edm::EventSetup
 
   iEvent.emplace(dstToken_, counter);
 
-  edm::LogPrint("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << counter;
+  edm::LogVerbatim("TestCUDAProducerGPUtoCPU") << label_ << " TestCUDAProducerGPUtoCPU::produce end event " << iEvent.id().event() << " stream " << iEvent.streamID() << " result " << counter;
 }
 
 DEFINE_FWK_MODULE(TestCUDAProducerGPUtoCPU);
