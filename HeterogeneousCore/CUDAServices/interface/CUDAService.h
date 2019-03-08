@@ -136,6 +136,10 @@ public:
   // will be returned to the cache by the shared_ptr destructor.
   std::shared_ptr<cuda::stream_t<>> getCUDAStream();
 
+  // Gets a (cached) CUDA event for the current device. The event
+  // will be returned to the cache by the shared_ptr destructor.
+  std::shared_ptr<cuda::event_t> getCUDAEvent();
+
 private:
   // PIMPL to hide details of allocator
   struct Allocator;
@@ -146,6 +150,10 @@ private:
   // PIMPL to hide details of the CUDA stream cache
   struct CUDAStreamCache;
   std::unique_ptr<CUDAStreamCache> cudaStreamCache_;
+
+  // PIMPL to hide details of the CUDA event cache
+  struct CUDAEventCache;
+  std::unique_ptr<CUDAEventCache> cudaEventCache_;
 
   int numberOfDevices_ = 0;
   unsigned int numberOfStreamsTotal_ = 0;
