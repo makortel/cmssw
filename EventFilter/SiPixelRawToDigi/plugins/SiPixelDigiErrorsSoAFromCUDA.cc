@@ -25,8 +25,8 @@ private:
   edm::EDGetTokenT<CUDAProduct<SiPixelDigiErrorsCUDA>> digiErrorGetToken_;
   edm::EDPutTokenT<SiPixelDigiErrorsSoA> digiErrorPutToken_;
 
+  cudautils::host::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_;
   cudautils::host::unique_ptr<PixelErrorCompact[]> data_;
-  GPU::SimpleVector<PixelErrorCompact> error_;
   const PixelFormatterErrors *formatterErrors_ = nullptr;
 };
 
@@ -64,9 +64,9 @@ void SiPixelDigiErrorsSoAFromCUDA::produce(edm::Event& iEvent, const edm::EventS
   //     host memory to be allocated without a CUDA stream
   // - What if a CPU algorithm would produce the same SoA? We can't
   //   use cudaMallocHost without a GPU...
-  iEvent.emplace(digiErrorPutToken_, error_.size(), error_.data(), formatterErrors_);
+  iEvent.emplace(digiErrorPutToken_, error_->size(), data_.get(), formatterErrors_);
 
-  error_ = GPU::make_SimpleVector<PixelErrorCompact>(0, nullptr);
+  error_.reset();
   data_.reset();
   formatterErrors_ = nullptr;
 }

@@ -6,6 +6,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/memsetAsync.h"
 
 SiPixelDigiErrorsCUDA::SiPixelDigiErrorsCUDA(size_t maxFedWords, PixelFormatterErrors errors, cuda::stream_t<>& stream):
+  maxFedWords_h(maxFedWords),
   formatterErrors_h(std::move(errors))
 {
   edm::Service<CUDAService> cs;
@@ -15,7 +16,7 @@ SiPixelDigiErrorsCUDA::SiPixelDigiErrorsCUDA(size_t maxFedWords, PixelFormatterE
 
   cudautils::memsetAsync(data_d, 0x00, maxFedWords, stream);
 
-  error_h = cs->make_host_unique<GPU::SimpleVector<PixelErrorCompact>>(stream);
+  auto error_h = cs->make_host_unique<GPU::SimpleVector<PixelErrorCompact>>(stream);
   GPU::make_SimpleVector(error_h.get(), maxFedWords, data_d.get());
   assert(error_h->size() == 0);
   assert(error_h->capacity() == static_cast<int>(maxFedWords));
@@ -23,22 +24,13 @@ SiPixelDigiErrorsCUDA::SiPixelDigiErrorsCUDA(size_t maxFedWords, PixelFormatterE
   cudautils::copyAsync(error_d, error_h, stream);
 }
 
-void SiPixelDigiErrorsCUDA::copyErrorToHostAsync(cuda::stream_t<>& stream) {
-  cudautils::copyAsync(error_h, error_d, stream);
-}
-
 SiPixelDigiErrorsCUDA::HostDataError SiPixelDigiErrorsCUDA::dataErrorToHostAsync(cuda::stream_t<>& stream) const {
   edm::Service<CUDAService> cs;
-  // On one hand size() could be sufficient. On the other hand, if
-  // someone copies the SimpleVector<>, (s)he might expect the data
-  // buffer to actually have space for capacity() elements.
-  auto data = cs->make_host_unique<PixelErrorCompact[]>(error_h->capacity(), stream);
+  auto error = cs->make_host_unique<GPU::SimpleVector<PixelErrorCompact>>(stream);
+  auto data = cs->make_host_unique<PixelErrorCompact[]>(maxFedWords_h, stream);
 
-  // but transfer only the required amount
-  if(error_h->size() > 0) {
-    cudautils::copyAsync(data, data_d, error_h->size(), stream);
-  }
-  auto err = *error_h;
-  err.set_data(data.get());
-  return HostDataError(std::move(err), std::move(data));
+  cudautils::copyAsync(error, error_d, stream);
+  cudautils::copyAsync(data, data_d, maxFedWords_h, stream);
+
+  return HostDataError(std::move(error), std::move(data));
 }

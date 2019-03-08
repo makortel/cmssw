@@ -25,15 +25,16 @@ public:
   GPU::SimpleVector<PixelErrorCompact> const *error() const { return error_d.get(); }
   GPU::SimpleVector<PixelErrorCompact> const *c_error() const { return error_d.get(); }
 
-  using HostDataError = std::pair<GPU::SimpleVector<PixelErrorCompact>, cudautils::host::unique_ptr<PixelErrorCompact[]>>;
+  // Note: the HostDataError.first.set_data(HostDataError.second) must
+  // be called explicitly after synchronizing
+  using HostDataError = std::pair<cudautils::host::unique_ptr<GPU::SimpleVector<PixelErrorCompact>>,
+                                  cudautils::host::unique_ptr<PixelErrorCompact[]>>;
   HostDataError dataErrorToHostAsync(cuda::stream_t<>& stream) const;
-
-  void copyErrorToHostAsync(cuda::stream_t<>& stream);
 
 private:
   cudautils::device::unique_ptr<PixelErrorCompact[]> data_d;
   cudautils::device::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_d;
-  cudautils::host::unique_ptr<GPU::SimpleVector<PixelErrorCompact>> error_h;
+  size_t maxFedWords_h;
   PixelFormatterErrors formatterErrors_h;
 };
 

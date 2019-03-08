@@ -554,10 +554,6 @@ namespace pixelgpudetails {
           includeErrors,
           debug);
       cudaCheck(cudaGetLastError());
-
-      if(includeErrors) {
-        digiErrors_d.copyErrorToHostAsync(stream);
-      }
     }
     // End  of Raw2Digi and passing data for cluserisation
 
