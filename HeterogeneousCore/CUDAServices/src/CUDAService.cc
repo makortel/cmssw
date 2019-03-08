@@ -338,6 +338,7 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
   }
 
   cudaStreamCache_ = std::make_unique<CUDAStreamCache>(numberOfDevices_);
+  cudaEventCache_ = std::make_unique<CUDAEventCache>(numberOfDevices_);
 
   log << "\n";
 
@@ -355,6 +356,7 @@ CUDAService::~CUDAService() {
     if(allocator_) {
       allocator_.reset();
     }
+    cudaEventCache_.reset();
     cudaStreamCache_.reset();
 
     for (int i = 0; i < numberOfDevices_; ++i) {
@@ -510,5 +512,22 @@ std::shared_ptr<cuda::stream_t<>> CUDAService::getCUDAStream() {
   return cudaStreamCache_->cache[getCurrentDevice()].makeOrGet([](){
       auto current_device = cuda::device::current::get();
       return std::make_unique<cuda::stream_t<>>(current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream));
+    });
+}
+
+// CUDA event cache
+struct CUDAService::CUDAEventCache {
+  explicit CUDAEventCache(int ndev): cache(ndev) {}
+
+  // Separate caches for each device for fast lookup
+  std::vector<edm::ReusableObjectHolder<cuda::event_t>> cache;
+};
+
+std::shared_ptr<cuda::event_t> CUDAService::getCUDAEvent() {
+  return cudaEventCache_->cache[getCurrentDevice()].makeOrGet([](){
+      auto current_device = cuda::device::current::get();
+      // We should not return a recorded, but not-yet-occurred event
+      return std::make_unique<cuda::event_t>(current_device.create_event(cuda::event::sync_by_busy_waiting,   // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
+                                                                         cuda::event::dont_record_timings)); // it should be a bit faster to ignore timings
     });
 }
