@@ -77,6 +77,3 @@ process.t = cms.Task(
 process.p = cms.Path()
 process.p.associate(process.t)
 process.ep = cms.EndPath(process.out)
-
-# Example of limiting the number of EDM streams per device
-#process.CUDAService.numberOfStreamsPerDevice = 1
