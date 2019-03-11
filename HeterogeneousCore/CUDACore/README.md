@@ -193,6 +193,7 @@ private:
   ...
   ProducerInputGPUAlgo gpuAlgo_;
   edm::EDGetTokenT<CUDAProduct<InputData>> inputToken_;
+  edm::EDGetTokenT<CUDAProduct<OtherInputData>> otherInputToken_;
   edm::EDPutTokenT<OutputData> outputToken_;
 };
 ...
@@ -203,9 +204,10 @@ void ProducerInputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetu
   // InputData, and also use the same CUDA stream
   CUDAScopedContext ctx{inputDataWrapped, std::move(waitingTaskHolder)};
 
-  // Alternatively, if e.g. there is another module queuing
-  // independent work to the CUDA stream, a new CUDA stream can also be
-  // created here with
+  // Alternatively a new CUDA stream can be created here. This is for
+  // a case where there are two (or more) consumers of
+  // CUDAProduct<InputData> whose work is independent and thus can be run
+  // in parallel.
   CUDAScopedContext ctx{iEvent.streamID(), std::move(waitingTaskHolder);
   
   // Grab the real input data. Checks that the input data is on the
@@ -214,9 +216,15 @@ void ProducerInputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetu
   // synchronization point with CUDA event and cudaStreamWaitEvent()
   auto const& inputData = ctx.get(inputDataWrapped);
 
+  // Input data from another producer
+  auto const& otherInputData = ctx.get(iEvent.get(otherInputToken_));
+  // or
+  auto const& otherInputData = ctx.get(iEvent, otherInputToken_);
+
+
   // Queues asynchronous data transfers and kernels to the CUDA stream
   // returned by CUDAScopedContext::stream()
-  gpuAlgo.makeAsync(inputData, ctx.stream());
+  gpuAlgo.makeAsync(inputData, otherInputData, ctx.stream());
 
   // Destructor of ctx queues a callback to the CUDA stream notifying
   // waitingTaskHolder when the queued asynchronous work has finished
@@ -362,7 +370,9 @@ output is needed by another module.
 from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
 process.foo = SwitchProducerCUDA(
     cpu = cms.EDProducer("FooProducer"), # legacy CPU
-    cuda = cms.EDProducer("FooProducerFromCUDA", src="fooCUDA")
+    cuda = cms.EDProducer("FooProducerFromCUDA",
+        src="fooCUDA"
+    )
 )
 process.fooCUDA = cms.EDProducer("FooProducerCUDA")
 
