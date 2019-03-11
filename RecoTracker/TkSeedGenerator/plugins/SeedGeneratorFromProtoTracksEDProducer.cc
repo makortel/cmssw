@@ -145,7 +145,10 @@ void SeedGeneratorFromProtoTracksEDProducer::produce(edm::Event& ev, const edm::
         SeedFromConsecutiveHitsCreator seedCreator(seedCreatorPSet);
         seedCreator.init(region, es, nullptr);
         seedCreator.makeSeed(*result,
-                             SeedingHitSet(hits[0], hits[1], hits.size() > 2 ? hits[2] : SeedingHitSet::nullPtr()));
+                             SeedingHitSet(hits[0],
+                                           hits[1],
+                                           hits.size() > 2 ? hits[2] : SeedingHitSet::nullPtr(),
+                                           hits.size() > 3 ? hits[3] : SeedingHitSet::nullPtr()));
       }
     }
   }
