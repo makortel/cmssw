@@ -334,8 +334,8 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
     log << "cub::CachingDeviceAllocator disabled\n";
   }
 
-  cudaStreamCache_ = std::make_unique<CUDAStreamCache>(numberOfDevices_);
-  cudaEventCache_ = std::make_unique<CUDAEventCache>(numberOfDevices_);
+  cudaStreamCache_ = std::make_unique<CUDAStreamCache>(lastDevice+1);
+  cudaEventCache_ = std::make_unique<CUDAEventCache>(lastDevice+1);
 
   log << "\n";
 
