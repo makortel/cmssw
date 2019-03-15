@@ -11,16 +11,22 @@ namespace cudatest {
   class TestCUDAScopedContext {
   public:
     static
-    CUDAScopedContext make(int dev) {
+    CUDAScopedContext make(int dev, bool createEvent) {
       auto device = cuda::device::get(dev);
-      return CUDAScopedContext(dev, std::make_unique<cuda::stream_t<>>(device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream)));
+      std::unique_ptr<cuda::event_t> event;
+      if(createEvent) {
+        event = std::make_unique<cuda::event_t>(device.create_event());
+      }
+      return CUDAScopedContext(dev,
+                               std::make_unique<cuda::stream_t<>>(device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream)),
+                               std::move(event));
     }
   };
 }
 
 namespace {
   std::unique_ptr<CUDAProduct<int *> > produce(int device, int *d, int *h) {
-    auto ctx = cudatest::TestCUDAScopedContext::make(device);
+    auto ctx = cudatest::TestCUDAScopedContext::make(device, true);
 
     cuda::memory::async::copy(d, h, sizeof(int), ctx.stream().id());
     testCUDAScopedContextKernels_single(d, ctx.stream());
@@ -33,7 +39,7 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
 
   constexpr int defaultDevice = 0;
   {
-    auto ctx = cudatest::TestCUDAScopedContext::make(defaultDevice);
+    auto ctx = cudatest::TestCUDAScopedContext::make(defaultDevice, true);
 
     SECTION("Construct from device ID") {
       REQUIRE(cuda::device::current::get().id() == defaultDevice);
@@ -96,7 +102,8 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       auto d_a3 = cuda::memory::device::make_unique<int>(current_device);
       testCUDAScopedContextKernels_join(prod1, prod2, d_a3.get(), ctx.stream());
       ctx.stream().synchronize();
-      REQUIRE(wprod2->event().has_occurred());
+      REQUIRE(wprod2->isAvailable());
+      REQUIRE(wprod2->event()->has_occurred());
 
       h_a1 = 0;
       h_a2 = 0;
