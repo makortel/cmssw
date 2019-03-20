@@ -66,6 +66,13 @@ process.prod4 = SwitchProducerCUDA(
     cuda = testCUDAProducerGPUtoCPU.clone(src = "prod4CUDA")
 )
 
+# GPU analyzer
+from HeterogeneousCore.CUDATest.testCUDAAnalyzerGPU_cfi import testCUDAAnalyzerGPU
+process.anaCUDA = testCUDAAnalyzerGPU.clone(src="prod6CUDA")
+if silent:
+    process.anaCUDA.minValue = 2.3e7
+    process.anaCUDA.maxValue = 2.5e7
+
 process.out = cms.OutputModule("AsciiOutputModule",
     outputCommands = cms.untracked.vstring(
         "keep *_prod3_*_*",
@@ -87,6 +94,6 @@ process.t = cms.Task(
     process.prod5Task,
     process.prod6Task
 )
-process.p = cms.Path()
+process.p = cms.Path(process.anaCUDA)
 process.p.associate(process.t)
 process.ep = cms.EndPath(process.out)
