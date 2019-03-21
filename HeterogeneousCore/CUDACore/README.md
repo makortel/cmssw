@@ -344,7 +344,7 @@ void ProducerInputOutputCUDA::produce(edm::StreamID streamID, edm::Event& iEvent
 
 ### Analyzer with CUDA input
 
-Analyzer with CudA input is similar to [producer with CUDA input](#producer-with-cuda-input)
+Analyzer with CUDA input is similar to [producer with CUDA input](#producer-with-cuda-input)
 
 ```cpp
 class AnalyzerInputCUDA: public edm::global::EDAnalyzer<> {
