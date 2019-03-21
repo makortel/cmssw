@@ -344,7 +344,12 @@ void ProducerInputOutputCUDA::produce(edm::StreamID streamID, edm::Event& iEvent
 
 ### Analyzer with CUDA input
 
-Analyzer with CUDA input is similar to [producer with CUDA input](#producer-with-cuda-input)
+Analyzer with CUDA input is similar to [producer with CUDA
+input](#producer-with-cuda-input). Note that currently we do not have
+a mechanism for portable configurations with analyzers (like
+[`SwitchProducer`](#automatic-switching-between-cpu-and-gpu-modules)
+for producers). This means that a configuration with a CUDA analyzer
+can only run on a machine with CUDA device(s).
 
 ```cpp
 class AnalyzerInputCUDA: public edm::global::EDAnalyzer<> {
@@ -360,17 +365,7 @@ private:
 };
 ...
 void AnalyzerInputCUDA::analyze(edm::Event const& iEvent, edm::EventSetup& iSetup) {
-
-  // Currently there is no specific support for CUDA-analyzers in the
-  // configuration, so have to check here that the input data product was
-  // actually produced (unless the configuration is crafted such that the
-  // CUDA producer is always run, of course)
-
-  auto inputHandle = iEvent.getHandle(inputToken_);
-  if(not inputHandle.isValid()) {
-    return;
-  }
-  CUDAProduct<InputData> const& inputDataWrapped = *inputHandle;
+  CUDAProduct<InputData> const& inputDataWrapped = iEvent.get(inputToken_);
 
   // Set the current device to the same that was used to produce
   // InputData, and also use the same CUDA stream
