@@ -24,6 +24,8 @@ public:
 
   bool hasQuality() const { return hasQuality_; }
 
+  const SiPixelFedCablingMapGPU *getCPUProduct() const { return cablingMapHost; }
+
   // returns pointer to GPU memory
   const SiPixelFedCablingMapGPU *getGPUProductAsync(cuda::stream_t<>& cudaStream) const;
 

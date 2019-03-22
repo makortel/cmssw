@@ -33,6 +33,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <iostream>
 
 class SiPixelRawToClusterCUDA: public edm::stream::EDProducer<edm::ExternalWork> {
 public:
@@ -213,6 +215,13 @@ void SiPixelRawToClusterCUDA::acquire(const edm::Event& iEvent, const edm::Event
     wordCounterGPU+=(ew-bw);
 
   } // end of for loop
+
+  std::ofstream file{"dump.bin", std::ios::binary};
+  file.write(reinterpret_cast<const char *>(hgpuMap->getCPUProduct()), sizeof(SiPixelFedCablingMapGPU));
+  file.write(reinterpret_cast<const char *>(&wordCounterGPU), sizeof(decltype(wordCounterGPU)));
+  file.write(reinterpret_cast<const char *>(wordFedAppender.word()), sizeof(unsigned int)*wordCounterGPU);
+  file.write(reinterpret_cast<const char *>(wordFedAppender.fedId()), sizeof(unsigned char)*wordCounterGPU/2);
+  file.close();
 
   gpuAlgo_.makeClustersAsync(gpuMap, gpuModulesToUnpack, gpuGains,
                              wordFedAppender,
