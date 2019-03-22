@@ -8,20 +8,19 @@ namespace pixelgpudetails {
   constexpr unsigned int MAX_LINK =  48;  // maximum links/channels for Phase 1
   constexpr unsigned int MAX_ROC  =   8;
   constexpr unsigned int MAX_SIZE = MAX_FED * MAX_LINK * MAX_ROC;
-  constexpr unsigned int MAX_SIZE_BYTE_INT  = MAX_SIZE * sizeof(unsigned int);
   constexpr unsigned int MAX_SIZE_BYTE_BOOL = MAX_SIZE * sizeof(unsigned char);
 }
 
 // TODO: since this has more information than just cabling map, maybe we should invent a better name?
-struct SiPixelFedCablingMapGPU {
+struct alignas(128) SiPixelFedCablingMapGPU {
+  unsigned int fed[pixelgpudetails::MAX_SIZE];
+  unsigned int link[pixelgpudetails::MAX_SIZE];
+  unsigned int roc[pixelgpudetails::MAX_SIZE];
+  unsigned int RawId[pixelgpudetails::MAX_SIZE];
+  unsigned int rocInDet[pixelgpudetails::MAX_SIZE];
+  unsigned int moduleId[pixelgpudetails::MAX_SIZE];
+  unsigned char badRocs[pixelgpudetails::MAX_SIZE];
   unsigned int size = 0;
-  unsigned int * fed = nullptr;
-  unsigned int * link = nullptr;
-  unsigned int * roc = nullptr;
-  unsigned int * RawId = nullptr;
-  unsigned int * rocInDet = nullptr;
-  unsigned int * moduleId = nullptr;
-  unsigned char * badRocs = nullptr;
 };
 
 #endif
