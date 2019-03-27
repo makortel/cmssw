@@ -23,6 +23,8 @@
 
 #include "SimGeneral/MixingModule/interface/PileUpEventPrincipal.h"
 
+#include "DataFormats/Math/interface/liblogintpack.h"
+
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -49,6 +51,33 @@ namespace mtd_digitizer {
       return false;
     }
   }
+
+  inline
+  void saveSimHitAccumulator(PHGCSimAccumulator& simResult, const MTDSimHitDataAccumulator&  simData, const float minCharge, const float maxCharge) {
+    constexpr auto nEnergies = std::tuple_size<decltype(MTDCellInfo().hit_info)>::value;
+    static_assert(nEnergies <= PHGCSimAccumulator::Data::energyMask+1, "PHGCSimAccumulator bit pattern needs to updated");
+    static_assert(nSamples <= PHGCSimAccumulator::Data::sampleMask+1, "PHGCSimAccumulator bit pattern needs to updated");
+
+    const float minPackChargeLog = minCharge > 0.f ? std::log(minCharge) : -2;
+    const float maxPackChargeLog = std::log(maxCharge);
+    constexpr uint16_t base = 1<<PHGCSimAccumulator::Data::sampleOffset;
+
+    simResult.reserve(simData.size());
+    // mimicing the digitization
+    for(const auto& elem: simData) {
+      // store only non-zero
+      for(size_t iEn = 0; iEn < nEnergies; ++iEn) {
+        const auto& samples = found->second.hit_info[iEn];
+        for(size_t iSample = 0; iSample < nSamples; ++iSample) {
+          if(samples[iSample] > minCharge) {
+            const auto packed = logintpack::pack16log(samples[iSample], minPackChargeLog, maxPackChargeLog, base);
+            simResult.emplace_back(id.rawId(), iEn, iSample, packed);
+          }
+        }
+      }
+    }
+  }
+
 
   template<class Traits>
   class MTDDigitizer : public MTDDigitizerBase
@@ -160,16 +189,25 @@ namespace mtd_digitizer {
   template<class Traits>
   void MTDDigitizer<Traits>::initializeEvent(edm::Event const& e, edm::EventSetup const& c) {
     deviceSim_.getEvent(e);
-    electronicsSim_.getEvent(e);
+    if(not premixStage1) {
+      electronicsSim_.getEvent(e);
+    }
   }
   
   template<class Traits>
   void MTDDigitizer<Traits>::finalizeEvent(edm::Event& e, edm::EventSetup const& c, 
 					   CLHEP::HepRandomEngine* hre) {
-    
-    auto digiCollection = std::make_unique<DigiCollection>();
-    electronicsSim_.run(simHitAccumulator_,*digiCollection, hre);
-    e.put(std::move(digiCollection),digiCollection_);
+
+    if(premixStage1_) {
+      auto simResult = std::make_unique<PHGCSimAccumulator>();
+      saveSimHitAccumulator(*simResult, simHitAccumulator);
+      e.put(std::move(simResult), digiCollection_);
+    }
+    else {
+      auto digiCollection = std::make_unique<DigiCollection>();
+      electronicsSim_.run(simHitAccumulator_,*digiCollection, hre);
+      e.put(std::move(digiCollection),digiCollection_);
+    }
     
     //release memory for next event
     resetSimHitDataAccumulator();
@@ -184,7 +222,9 @@ namespace mtd_digitizer {
     geom_ = geom.product();
 
     deviceSim_.getEventSetup(es);
-    electronicsSim_.getEventSetup(es);
+    if(not premixStage1_) {
+      electronicsSim_.getEventSetup(es);
+    }
 
   }
 }
