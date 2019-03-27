@@ -37,6 +37,8 @@ class MTDDigitizerBase {
   digiCollection_( config.getParameter<std::string>("digiCollectionTag") ),
   verbosity_( config.getUntrackedParameter< uint32_t >("verbosity",0) ),   
   refSpeed_( 0.1*CLHEP::c_light ),   
+  premixStage1MinCharge_( config.getParameter<double>("premixStage1MinCharge") ),
+  premixStage1MaxCharge_( config.getParameter<double>("premixStage1MaxCharge") ),
   premixStage1_( config.getParameter<bool>("premixStage1")),
   name_( config.getParameter<std::string>("digitizerName") ) {
     iC.consumes<std::vector<PSimHit> >(inputSimHits_);
@@ -72,7 +74,7 @@ class MTDDigitizerBase {
   virtual void accumulate(PileUpEventPrincipal const& e, edm::EventSetup const& c, CLHEP::HepRandomEngine* hre) = 0;
   virtual void accumulate(edm::Handle<edm::PSimHitContainer> const &hits, int bxCrossing, CLHEP::HepRandomEngine* hre) = 0;
   // for premixing
-  virtual void accumulate(const PHGCSimAccumulator& simAccumulator) = 0;
+  virtual void accumulate(const PMTDSimAccumulator& simAccumulator) = 0;
   
   /**
      @short actions at the start/end of event
@@ -101,6 +103,11 @@ class MTDDigitizerBase {
 
   //reference speed to evaluate time of arrival at the sensititive detector, assuming the center of CMS
   const float refSpeed_;  
+
+  // Minimum charge threshold for premixing stage1
+  double premixStage1MinCharge_;
+  // Maximum charge for packing in premixing stage1
+  double premixStage1MaxCharge_;
 
   // flag telling whether we are runing in premixing stage1
   const bool premixStage1_;
