@@ -79,6 +79,31 @@ namespace mtd_digitizer {
     }
   }
 
+  inline
+  void loadSimHitAccumulator(MTDSimHitDataAccumulator& simData, const PMTDSimAccumulator& simAccumulator, const float minCharge, const float maxCharge) {
+    const float minPackChargeLog = minCharge > 0.f ? std::log(minCharge) : -2;
+    const float maxPackChargeLog = std::log(maxCharge);
+    constexpr uint16_t base = 1<<PHGCSimAccumulator::Data::sampleOffset;
+
+    for(const auto& detIdIndexHitInfo: simAccumulator) {
+      auto simIt = simData.emplace(MTDCellId(detIdIndexHitInfo.detId(), detIdIndexHitInfo.row(), detIdIndexHitInfo.column()),
+                                   MTDCellInfo()).first;
+      auto& hit_info = simIt->second.hit_info;
+
+      size_t iEn = detIdIndexHitInfo.energyIndex();
+      size_t iSample = detIdIndexHitInfo.sampleIndex();
+
+      float value = logintpack::unpack16log(detIdIndexHitInfo.data(), minPackChargeLog, maxPackChargeLog, base);
+
+      if(iEn == 0) {
+        hit_info[iEn][iSample] += value;
+      }
+      else if(hit_info[iEn][iSample] == 0) {
+        // For iEn==1 the digitizers just set the TOF of the first SimHit
+        hit_info[iEn][iSample] = value;
+      }
+    }
+  }
 
   template<class Traits>
   class MTDDigitizer : public MTDDigitizerBase
@@ -106,7 +131,9 @@ namespace mtd_digitizer {
     void accumulate(edm::Event const& e, edm::EventSetup const& c, CLHEP::HepRandomEngine* hre) override;
     void accumulate(PileUpEventPrincipal const& e, edm::EventSetup const& c, CLHEP::HepRandomEngine* hre) override;
     void accumulate(edm::Handle<edm::PSimHitContainer> const &hits, int bxCrossing, CLHEP::HepRandomEngine* hre) override;
-    
+    // for premixing
+    void accumulate(const PHGCSimAccumulator& simAccumulator) override;
+
     /**
        @short actions at the start/end of event
     */
@@ -185,6 +212,11 @@ namespace mtd_digitizer {
 
     hitRefs.clear();
 
+  }
+
+  template<class Traits>
+  void MTDDigitizer<Traits>::accumulate(const PHGCSimAccumulator& simAccumulator) {
+    loadSimHitAccumulator(simHitAccumulator_, simAccumulator, 0.0, 0.0); // FIXME
   }
   
   template<class Traits>

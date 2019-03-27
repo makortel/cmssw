@@ -71,6 +71,8 @@ class MTDDigitizerBase {
   virtual void accumulate(edm::Event const& e, edm::EventSetup const& c, CLHEP::HepRandomEngine* hre) = 0;
   virtual void accumulate(PileUpEventPrincipal const& e, edm::EventSetup const& c, CLHEP::HepRandomEngine* hre) = 0;
   virtual void accumulate(edm::Handle<edm::PSimHitContainer> const &hits, int bxCrossing, CLHEP::HepRandomEngine* hre) = 0;
+  // for premixing
+  virtual void accumulate(const PHGCSimAccumulator& simAccumulator) = 0;
   
   /**
      @short actions at the start/end of event
