@@ -25,3 +25,4 @@ from Configuration.Eras.Modifier_phase2_timing_cff import phase2_timing
 phase2_timing.toModify( SimFastTimingRAW, outputCommands = SimFastTimingRAW.outputCommands + _phase2_timing_extraCommands )
 phase2_timing.toModify( SimFastTimingFEVTDEBUG, outputCommands = SimFastTimingFEVTDEBUG.outputCommands + _phase2_timing_extraCommands )
 phase2_timing.toModify( SimFastTimingRECO, outputCommands = SimFastTimingRECO.outputCommands + _phase2_timing_extraCommands )
+phase2_timing.toModify( SimFastTimingPREMIX, outputCommands = SimFastTimingRECO.outputCommands + _phase2_timing_extraCommands )
