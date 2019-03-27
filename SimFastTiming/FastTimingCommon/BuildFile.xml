@@ -3,7 +3,6 @@
 <use   name="FWCore/Utilities"/>
 <use   name="SimGeneral/MixingModule"/>
 <use   name="DataFormats/ForwardDetId"/>
-<use   name="DataFormats/HGCDigi"/>
 <use   name="SimDataFormats/CaloTest"/>
 <use   name="Geometry/Records"/>
 <use   name="Geometry/MTDGeometryBuilder"/>

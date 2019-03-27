@@ -10,9 +10,8 @@
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
 
 #include "DataFormats/FTLDigi/interface/FTLDigiCollections.h"
+#include "DataFormats/FTLDigi/interface/PMTDSimAccumulator.h"
 #include "SimFastTiming/FastTimingCommon/interface/MTDDigitizerTypes.h"
-
-#include "DataFormats/HGCDigi/interface/PHGCSimAccumulator.h"
 
 #include "CLHEP/Units/GlobalPhysicalConstants.h"
 
@@ -45,7 +44,7 @@ class MTDDigitizerBase {
     if ( name_ == "BTLTileDigitizer" || name_ == "BTLBarDigitizer" ) {
       parent.produces<BTLDigiCollection>(digiCollection_);  
       if(premixStage1_) {
-        parent.produces<PHGCSimAccumulator>(digiCollection_);
+        parent.produces<PMTDSimAccumulator>(digiCollection_);
       }
       else {
         parent.produces<BTLDigiCollection>(digiCollection_);
@@ -53,7 +52,7 @@ class MTDDigitizerBase {
     }
     else if ( name_ == "ETLDigitizer" )
       if(premixStage1_) {
-        parent.produces<PHGCSimAccumulator>(digiCollection_);
+        parent.produces<PMTDSimAccumulator>(digiCollection_);
       }
       else {
         parent.produces<ETLDigiCollection>(digiCollection_);
