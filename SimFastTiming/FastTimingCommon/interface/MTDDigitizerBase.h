@@ -44,7 +44,6 @@ class MTDDigitizerBase {
     iC.consumes<std::vector<PSimHit> >(inputSimHits_);
 
     if ( name_ == "BTLTileDigitizer" || name_ == "BTLBarDigitizer" ) {
-      parent.produces<BTLDigiCollection>(digiCollection_);  
       if(premixStage1_) {
         parent.produces<PMTDSimAccumulator>(digiCollection_);
       }
