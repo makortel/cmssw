@@ -78,8 +78,6 @@ namespace mtd_digitizer {
             else {
               packed = logintpack::pack16log(samples[iSample], minPackChargeLog, maxPackChargeLog, base);
             }
-            //edm::LogPrint("foo") << "DetID " << elem.first.detid_ << " row " << static_cast<int>(elem.first.row_) << " column " << static_cast<int>(elem.first.column_)
-            //                     << " iEn " << iEn << " iSample " << iSample << " value " << samples[iSample] << " packed " << packed;
             simResult.emplace_back(elem.first.detid_, elem.first.row_, elem.first.column_,
                                    iEn, iSample, packed);
           }
@@ -93,8 +91,6 @@ namespace mtd_digitizer {
     const float minPackChargeLog = minCharge > 0.f ? std::log(minCharge) : -2;
     const float maxPackChargeLog = std::log(maxCharge);
     constexpr uint16_t base = 1<<PMTDSimAccumulator::Data::sampleOffset;
-
-    //edm::LogPrint("foo") << "loadSimHitAccumulator with simData existing size " << simData.size();
 
     for(const auto& detIdIndexHitInfo: simAccumulator) {
       auto foo = simData.emplace(MTDCellId(detIdIndexHitInfo.detId(), detIdIndexHitInfo.row(), detIdIndexHitInfo.column()),
@@ -122,8 +118,6 @@ namespace mtd_digitizer {
         // For iEn==1 the digitizers just set the TOF of the first SimHit
         hit_info[iEn][iSample] = value;
       }
-      //edm::LogPrint("foo") << "DetID " << simIt->first.detid_ << " row " << static_cast<int>(simIt->first.row_) << " column " << static_cast<int>(simIt->first.column_)
-      //                     << " iEn " << iEn << " iSample " << iSample << " value " << value << " before " << before << " total " << hit_info[iEn][iSample] << " packed " << detIdIndexHitInfo.data() << " inserted " << foo.second;
     }
   }
 
@@ -238,9 +232,7 @@ namespace mtd_digitizer {
 
   template<class Traits>
   void MTDDigitizer<Traits>::accumulate(const PMTDSimAccumulator& simAccumulator) {
-    //edm::LogPrint("foo") << "MTDDigitizer::accumulate() begin, simHitAccumulator_ size " << simHitAccumulator_.size();
     loadSimHitAccumulator(simHitAccumulator_, simAccumulator, premixStage1MinCharge_, premixStage1MaxCharge_);
-    //edm::LogPrint("foo") << "MTDDigitizer::accumulate() end, simHitAccumulator_ size " << simHitAccumulator_.size();
   }
   
   template<class Traits>
@@ -254,8 +246,6 @@ namespace mtd_digitizer {
   template<class Traits>
   void MTDDigitizer<Traits>::finalizeEvent(edm::Event& e, edm::EventSetup const& c, 
 					   CLHEP::HepRandomEngine* hre) {
-
-    //edm::LogPrint("foo") << "MTDDigitizer::finalizeEvent()";
     if(premixStage1_) {
       auto simResult = std::make_unique<PMTDSimAccumulator>();
       saveSimHitAccumulator(*simResult, simHitAccumulator_, premixStage1MinCharge_, premixStage1MaxCharge_); // FIXME
