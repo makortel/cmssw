@@ -62,11 +62,12 @@ private:
   // shared_ptr because of caching in CUDAService
   std::shared_ptr<cuda::event_t> event_; //!
 
-  // This flag tellswhether the CUDA stream may be reused by a
+  // This flag tells whether the CUDA stream may be reused by a
   // consumer or not. The goal is to have a "chain" of modules to
   // queue their work to the same stream.
   mutable std::atomic<bool> mayReuseStream_ = true; //!
 
+  // The CUDA device associated with this product
   int device_ = -1; //!
 };
 
