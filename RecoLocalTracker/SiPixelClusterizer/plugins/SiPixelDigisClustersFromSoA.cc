@@ -44,8 +44,6 @@ namespace {
       return true;
     }
   };
-
-  constexpr uint32_t dummydetid = 0xffffffff;
 }
 
 class SiPixelDigisClustersFromSoA: public edm::global::EDProducer<> {
