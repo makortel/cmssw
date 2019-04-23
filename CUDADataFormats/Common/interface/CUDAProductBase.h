@@ -13,6 +13,7 @@
 class CUDAProductBase {
 public:
   CUDAProductBase() = default; // Needed only for ROOT dictionary generation
+  ~CUDAProductBase();
 
   CUDAProductBase(CUDAProductBase&& other):
     stream_{std::move(other.stream_)},
