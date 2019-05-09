@@ -21,7 +21,6 @@
 #include "Geometry/CommonTopologies/interface/GeometryAligner.h"
 
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/ModuleFactory.h"
 #include "FWCore/Framework/interface/ESProducer.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
@@ -37,7 +36,16 @@ MTDDigiGeometryESModule::MTDDigiGeometryESModule(const edm::ParameterSet & p)
     applyAlignment_ = p.getParameter<bool>("applyAlignment");
     fromDDD_ = p.getParameter<bool>("fromDDD");
 
-    setWhatProduced(this);
+    auto cc = setWhatProduced(this);
+    geomToken_ = cc.consumesFrom<GeometricTimingDet, IdealGeometryRecord>(edm::ESInputTag{});
+    topoToken_ = cc.consumesFrom<MTDTopology, MTDTopologyRcd>(edm::ESInputTag{});
+    paramToken_ = cc.consumesFrom<PMTDParameters, PMTDParametersRcd>(edm::ESInputTag{});
+    if(applyAlignment_) {
+      globalPositionToken_ = cc.consumesFrom<Alignments, GlobalPositionRcd>(edm::ESInputTag{"", alignmentsLabel_});
+      alignmentsToken_ = cc.consumesFrom<Alignments, MTDAlignmentRcd>(edm::ESInputTag{"", alignmentsLabel_});
+      alignmentErrorsToken_ = cc.consumesFrom<AlignmentErrorsExtended, MTDAlignmentErrorExtendedRcd>(edm::ESInputTag{"", alignmentsLabel_});
+      surfaceDeformationsToken_ = cc.consumesFrom<AlignmentSurfaceDeformations, MTDSurfaceDeformationRcd>(edm::ESInputTag{"", alignmentsLabel_});
+    }
 
     edm::LogInfo("Geometry") << "@SUB=MTDDigiGeometryESModule"
 			     << "Label '" << myLabel_ << "' "
@@ -73,51 +81,42 @@ MTDDigiGeometryESModule::produce(const MTDDigiGeometryRecord & iRecord)
   //
   // Called whenever the alignments, alignment errors or global positions change
   //
-  edm::ESHandle<GeometricTimingDet> gD;
-  iRecord.getRecord<IdealGeometryRecord>().get( gD );
-
-  edm::ESHandle<MTDTopology> tTopoHand;
-  iRecord.getRecord<MTDTopologyRcd>().get(tTopoHand);
-  const MTDTopology *tTopo=tTopoHand.product();
-
-  edm::ESHandle<PMTDParameters> ptp;
-  iRecord.getRecord<PMTDParametersRcd>().get( ptp );
+  const auto& gD = iRecord.get(geomToken_);
+  const auto& tTopoR = iRecord.get(topoToken_);
+  const MTDTopology *tTopo = &tTopoR;
+  const auto& ptp = iRecord.get(paramToken_);
   
   MTDGeomBuilderFromGeometricTimingDet builder;
-  std::unique_ptr<MTDGeometry> mtd(builder.build(&(*gD), *ptp, tTopo));
+  std::unique_ptr<MTDGeometry> mtd(builder.build(&gD, ptp, tTopo));
 
   if (applyAlignment_) {
     // Since fake is fully working when checking for 'empty', we should get rid of applyAlignment_!
-    edm::ESHandle<Alignments> globalPosition;
-    iRecord.getRecord<GlobalPositionRcd>().get(alignmentsLabel_, globalPosition);
-    edm::ESHandle<Alignments> alignments;
-    iRecord.getRecord<MTDAlignmentRcd>().get(alignmentsLabel_, alignments);
-    edm::ESHandle<AlignmentErrorsExtended> alignmentErrors;
-    iRecord.getRecord<MTDAlignmentErrorExtendedRcd>().get(alignmentsLabel_, alignmentErrors);
+    const auto& globalPosition = iRecord.get(globalPositionToken_);
+    const auto& alignments = iRecord.get(alignmentsToken_);
+    const auto& alignmentErrors = iRecord.get(alignmentErrorsToken_);
     // apply if not empty:
-    if (alignments->empty() && alignmentErrors->empty() && globalPosition->empty()) {
+    if (alignments.empty() && alignmentErrors.empty() && globalPosition.empty()) {
       edm::LogInfo("Config") << "@SUB=MTDDigiGeometryRecord::produce"
 			     << "Alignment(Error)s and global position (label '"
 	 		     << alignmentsLabel_ << "') empty: Geometry producer (label "
 			     << "'" << myLabel_ << "') assumes fake and does not apply.";
     } else {
       GeometryAligner ali;
-      ali.applyAlignments<MTDGeometry>(&(*mtd), &(*alignments), &(*alignmentErrors),
-				       align::DetectorGlobalPosition(*globalPosition,
+      ali.applyAlignments<MTDGeometry>(mtd.get(), &alignments, &alignmentErrors,
+				       align::DetectorGlobalPosition(globalPosition,
 								     DetId(DetId::Forward)));
     }
 
-    edm::ESHandle<AlignmentSurfaceDeformations> surfaceDeformations;
-    iRecord.getRecord<MTDSurfaceDeformationRcd>().get(alignmentsLabel_, surfaceDeformations);
+    const auto& surfaceDeformations = iRecord.get(surfaceDeformationsToken_);
     // apply if not empty:
-    if (surfaceDeformations->empty()) {
+    if (surfaceDeformations.empty()) {
       edm::LogInfo("Config") << "@SUB=MTDDigiGeometryRecord::produce"
 			     << "AlignmentSurfaceDeformations (label '"
 			     << alignmentsLabel_ << "') empty: Geometry producer (label "
 			     << "'" << myLabel_ << "') assumes fake and does not apply.";
     } else {
       GeometryAligner ali;
-      ali.attachSurfaceDeformations<MTDGeometry>(&(*mtd), &(*surfaceDeformations));
+      ali.attachSurfaceDeformations<MTDGeometry>(mtd.get(), &surfaceDeformations);
     }
   }
   

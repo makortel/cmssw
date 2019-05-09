@@ -2,7 +2,6 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Framework/interface/ModuleFactory.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/ESTransientHandle.h"
 #include "DetectorDescription/Core/interface/DDCompactView.h"
 #include "Geometry/Records/interface/IdealGeometryRecord.h"
@@ -11,10 +10,9 @@
 #include "CondFormats/GeometryObjects/interface/PMTDParameters.h"
 
 MTDParametersESModule::MTDParametersESModule( const edm::ParameterSet& pset) 
+  : cpvToken_{setWhatProduced(this).consumesFrom<DDCompactView, IdealGeometryRecord>(edm::ESInputTag{})}
 {
   edm::LogInfo("TRACKER") << "MTDParametersESModule::MTDParametersESModule";
-
-  setWhatProduced(this);
 }
 
 MTDParametersESModule::~MTDParametersESModule()
@@ -32,11 +30,10 @@ MTDParametersESModule::ReturnType
 MTDParametersESModule::produce( const PMTDParametersRcd& iRecord )
 {
   edm::LogInfo("MTDParametersESModule") <<  "MTDParametersESModule::produce(const PMTDParametersRcd& iRecord)" << std::endl;
-  edm::ESTransientHandle<DDCompactView> cpv;
-  iRecord.getRecord<IdealGeometryRecord>().get( cpv );
+  edm::ESTransientHandle<DDCompactView> cpv = iRecord.getTransientHandle(cpvToken_);
     
   auto ptp = std::make_unique<PMTDParameters>();
-  builder.build( &(*cpv), *ptp );
+  builder_.build( cpv.product(), *ptp );
   
   return ptp;
 }

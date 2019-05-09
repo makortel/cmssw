@@ -3,6 +3,7 @@
 
 #include "FWCore/Framework/interface/ESProducer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/ESGetToken.h"
 #include "Geometry/Records/interface/IdealGeometryRecord.h"
 #include "Geometry/MTDGeometryBuilder/interface/MTDParametersFromDD.h"
 #include <memory>
@@ -27,7 +28,8 @@ class  MTDParametersESModule: public edm::ESProducer
   ReturnType produce( const PMTDParametersRcd & );
 
  private:
-  MTDParametersFromDD builder;
+  MTDParametersFromDD builder_;
+  edm::ESGetToken<DDCompactView, IdealGeometryRecord> cpvToken_;
 };
 
 #endif
