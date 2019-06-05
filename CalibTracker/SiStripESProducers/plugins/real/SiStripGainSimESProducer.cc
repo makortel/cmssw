@@ -59,8 +59,6 @@ SiStripGainSimESProducer::SiStripGainSimESProducer(const edm::ParameterSet& iCon
 
 std::unique_ptr<SiStripGain> SiStripGainSimESProducer::produce(const SiStripGainSimRcd& iRecord)
 {
-  const auto& rcd = iRecord.getRecord<SiStripApvGainSimRcd>();
-
   const auto& apvGain = iRecord.get(tokenLabels_[0].token_);
   auto gain = std::make_unique<SiStripGain>(apvGain, factor_.get(apvGain, 0), tokenLabels_[0].recordLabel_);
 
