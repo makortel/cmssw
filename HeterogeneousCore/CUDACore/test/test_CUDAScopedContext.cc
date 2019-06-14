@@ -69,18 +69,17 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       REQUIRE(ctx3.stream().id() != data.stream().id());
     }
 
-    SECTION("Storing state as CUDAContextToken") {
-      CUDAContextToken ctxtok;
+    SECTION("Storing state in CUDAContextState") {
+      CUDAContextState ctxstate;
       { // acquire
         std::unique_ptr<CUDAProduct<int>> dataPtr = ctx.wrap(10);
         const auto& data = *dataPtr;
         edm::WaitingTaskWithArenaHolder dummy{edm::make_waiting_task(tbb::task::allocate_root(), [](std::exception_ptr const* iPtr){})};
-        CUDAScopedContextAcquire ctx2{data, std::move(dummy)};
-        ctxtok = ctx2.toToken();
+        CUDAScopedContextAcquire ctx2{data, std::move(dummy), ctxstate};
       }
 
       { // produce
-        CUDAScopedContextProduce ctx2{std::move(ctxtok)};
+        CUDAScopedContextProduce ctx2{ctxstate};
         REQUIRE(cuda::device::current::get().id() == ctx.device());
         REQUIRE(ctx2.stream().id() == ctx.stream().id());
       }

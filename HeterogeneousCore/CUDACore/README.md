@@ -146,12 +146,12 @@ private:
   ProducerOutputGPUAlgo gpuAlgo_;
   edm::EDGetTokenT<InputData> inputToken_;
   edm::EDPutTokenT<CUDAProduct<OutputData>> outputToken_;
-  CUDAContextToken ctxTmp_;
+  CUDAContextState ctxState_;
 };
 ...
 void ProducerOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup const& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   // Sets the current device and creates a CUDA stream
-  CUDAScopedContextAcquire ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
+  CUDAScopedContextAcquire ctx{iEvent.streamID(), std::move(waitingTaskHolder), ctxState_};
 
   auto const& inputData = iEvent.get(inputToken_);
 
@@ -159,18 +159,15 @@ void ProducerOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup const
   // returned by CUDAScopedContextAcquire::stream()
   gpuAlgo.makeAsync(inputData, ctx.stream());
 
-  // Passes the current device and CUDA stream to produce()
-  // Feels a bit silly, and will hopefully get improved in the future
-  ctxTmp_ = ctx.toToken();
-
   // Destructor of ctx queues a callback to the CUDA stream notifying
-  // waitingTaskHolder when the queued asynchronous work has finished
+  // waitingTaskHolder when the queued asynchronous work has finished,
+  // and saves the device and CUDA stream to ctxState_
 }
 
 // Called after the asynchronous work has finished
 void ProducerOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup const& iSetup) {
   // Sets again the current device, uses the CUDA stream created in the acquire()
-  CUDAScopedContextProduce ctx{std::move(ctxTmp_)};
+  CUDAScopedContextProduce ctx{ctxState_};
 
   // Now getResult() returns data in GPU memory that is passed to the
   // constructor of OutputData. CUDAScopedContextProduce::emplace() wraps the
@@ -254,7 +251,6 @@ private:
   ProducerInputGPUAlgo gpuAlgo_;
   edm::EDGetTokenT<CUDAProduct<InputData>> inputToken_;
   edm::EDPutTokenT<CUDAProduct<OutputData>> outputToken_;
-  CUDAContextToken ctxTmp_;
 };
 ...
 void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
@@ -262,7 +258,7 @@ void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup&
 
   // Set the current device to the same that was used to produce
   // InputData, and also use the same CUDA stream
-  CUDAScopedContextAcquire ctx{inputDataWrapped, std::move(waitingTaskHolder)};
+  CUDAScopedContextAcquire ctx{inputDataWrapped, std::move(waitingTaskHolder), ctxState_};
 
   // Grab the real input data. Checks that the input data is on the
   // current device. If the input data was produced in a different CUDA
@@ -274,18 +270,15 @@ void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup&
   // returned by CUDAScopedContextAcquire::stream()
   gpuAlgo.makeAsync(inputData, ctx.stream());
 
-  // Passes the current device and CUDA stream to produce()
-  // Feels a bit silly, and will hopefully get improved in the future
-  ctxTmp_ = ctx.toToken();
-
-// Destructor of ctx queues a callback to the CUDA stream notifying
-  // waitingTaskHolder when the queued asynchronous work has finished
+  // Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished,
+  // and saves the device and CUDA stream to ctxState_
 }
 
 // Called after the asynchronous work has finished
 void ProducerInputOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
   // Sets again the current device, uses the CUDA stream created in the acquire()
-  CUDAScopedContextProduce ctx{std::move(ctxTmp_)};
+  CUDAScopedContextProduce ctx{ctxState_};
 
   // Now getResult() returns data in GPU memory that is passed to the
   // constructor of OutputData. CUDAScopedContextProduce::emplace() wraps the
@@ -654,27 +647,30 @@ callback function to the CUDA stream in its destructor to call
 `waitingTaskHolder.doneWaiting()`.
 
 A GPU->GPU producer needs a `CUDAScopedContext` also in its
-`produce()`. Currently the best way is to store the state of
-`CUDAScopedContext` to `CUDAContextToken` member variable:
+`produce()`. The device and CUDA stream are transferred via
+`CUDAContextState` member variable:
 
 ```cpp
 class FooProducerCUDA ... {
   ...
-  CUDAContextToken ctxTmp_;
+  CUDAContextState ctxState_;
 };
 
 void acquire(...) {
   ...
-  ctxTmp_ = ctx.toToken();
+  CUDAScopedContextAcquire ctx{..., std::move(waitingTaskHolder), ctxState_};
+  ...
 }
 
 void produce(...( {
   ...
-  CUDAScopedContextProduce ctx{std::move(ctxTmp_)};
+  CUDAScopedContextProduce ctx{ctxState_};
 }
 ```
 
-Ideas for improvements are welcome.
+The `CUDAScopedContextAcquire` saves its state to the `ctxState_` in
+the destructor, and `CUDAScopedContextProduce` then restores the
+context.
 
 
 #### Transferring GPU data to CPU

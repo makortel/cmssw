@@ -77,6 +77,9 @@ CUDAScopedContextAcquire::~CUDAScopedContextAcquire() {
                                 }
                               }
                             });
+  if(contextState_) {
+    contextState_->set(device(), std::move(streamPtr()));
+  }
 }
 
 ////////////////////

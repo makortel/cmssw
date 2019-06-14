@@ -7,7 +7,7 @@
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "FWCore/Utilities/interface/EDPutToken.h"
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAContextToken.h"
+#include "HeterogeneousCore/CUDACore/interface/CUDAContextState.h"
 
 #include <cuda/api_wrappers.h>
 
@@ -46,6 +46,8 @@ protected:
 
   void synchronizeStreams(int dataDevice, const cuda::stream_t<>& dataStream, bool available, const cuda::event_t *dataEvent);
 
+  std::shared_ptr<cuda::stream_t<>>& streamPtr() { return stream_; }
+
 private:
   int currentDevice_;
   cuda::device::current::scoped_override_t<> setDeviceForThisScope_;
@@ -66,19 +68,28 @@ public:
     waitingTaskHolder_{std::move(waitingTaskHolder)}
   {}
 
+  explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
+    CUDAScopedContextBase(streamID),
+    waitingTaskHolder_{std::move(waitingTaskHolder)},
+    contextState_{&state}
+  {}
+
   explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
     CUDAScopedContextBase(data),
     waitingTaskHolder_{std::move(waitingTaskHolder)}
   {}
 
-  ~CUDAScopedContextAcquire();
+  explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
+    CUDAScopedContextBase(data),
+    waitingTaskHolder_{std::move(waitingTaskHolder)},
+    contextState_{&state}
+  {}
 
-  CUDAContextToken toToken() {
-    return CUDAContextToken(device(), streamPtr());
-  }
+  ~CUDAScopedContextAcquire();
 
 private:
   edm::WaitingTaskWithArenaHolder waitingTaskHolder_;
+  CUDAContextState *contextState_ = nullptr;
 };
 
 /**
@@ -97,7 +108,7 @@ public:
     CUDAScopedContextBase(data)
   {}
 
-  explicit CUDAScopedContextProduce(CUDAContextToken&& token):
+  explicit CUDAScopedContextProduce(CUDAContextState& token):
     CUDAScopedContextBase(token.device(), std::move(token.streamPtr()))
   {}
 
