@@ -19,7 +19,8 @@ public:
   CUDAContextToken& operator=(CUDAContextToken&& other) = default;
 
 private:
-  friend class CUDAScopedContext;
+  friend class CUDAScopedContextAcquire;
+  friend class CUDAScopedContextProduce;
 
   explicit CUDAContextToken(int device, std::shared_ptr<cuda::stream_t<>> stream):
     stream_(std::move(stream)),

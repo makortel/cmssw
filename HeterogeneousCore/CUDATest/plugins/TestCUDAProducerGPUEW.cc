@@ -47,7 +47,7 @@ void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSe
   edm::LogVerbatim("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire begin event " << iEvent.id().event() << " stream " << iEvent.streamID();
 
   const auto& in = iEvent.get(srcToken_);
-  CUDAScopedContext ctx{in, std::move(waitingTaskHolder)};
+  CUDAScopedContextAcquire ctx{in, std::move(waitingTaskHolder)};
   const CUDAThing& input = ctx.get(in);
 
   devicePtr_ = gpuAlgo_.runAlgo(label_, input.get(), ctx.stream());
@@ -64,7 +64,7 @@ void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent, const edm::EventSe
 void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::LogVerbatim("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::produce begin event " << iEvent.id().event() << " stream " << iEvent.streamID() << " 10th element " << hostData_; 
 
-  CUDAScopedContext ctx{std::move(ctxTmp_)};
+  CUDAScopedContextProduce ctx{std::move(ctxTmp_)};
 
   ctx.emplace(iEvent, dstToken_, std::move(devicePtr_));
 

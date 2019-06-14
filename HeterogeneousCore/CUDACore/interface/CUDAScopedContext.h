@@ -17,48 +17,14 @@ namespace cudatest {
   class TestCUDAScopedContext;
 }
 
-/**
- * The aim of this class is to do necessary per-event "initialization":
- * - setting the current device
- * - calling edm::WaitingTaskWithArenaHolder::doneWaiting() when necessary
- * - synchronizing between CUDA streams if necessary
- * and enforce that those get done in a proper way in RAII fashion.
- */
-class CUDAScopedContext {
+// This class is intended to be derived by other CUDAScopedContext*, not for general use
+class CUDAScopedContextBase {
 public:
-  explicit CUDAScopedContext(edm::StreamID streamID);
-
-  explicit CUDAScopedContext(CUDAContextToken&& token):
-    currentDevice_(token.device()),
-    setDeviceForThisScope_(currentDevice_),
-    stream_(std::move(token.streamPtr()))
-  {}
-
-  explicit CUDAScopedContext(const CUDAProductBase& data);
-
-  explicit CUDAScopedContext(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
-    CUDAScopedContext(streamID)
-  {
-    waitingTaskHolder_ = std::move(waitingTaskHolder);
-  }
-
-  explicit CUDAScopedContext(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
-    CUDAScopedContext(data)
-  {
-    waitingTaskHolder_ = std::move(waitingTaskHolder);
-  }
-
-  ~CUDAScopedContext();
-
   int device() const { return currentDevice_; }
 
   cuda::stream_t<>& stream() { return *stream_; }
   const cuda::stream_t<>& stream() const { return *stream_; }
   const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
-
-  CUDAContextToken toToken() {
-    return CUDAContextToken(currentDevice_, stream_);
-  }
 
   template <typename T>
   const T& get(const CUDAProduct<T>& data) {
@@ -70,6 +36,72 @@ public:
   const T& get(const edm::Event& iEvent, edm::EDGetTokenT<CUDAProduct<T>> token) {
     return get(iEvent.get(token));
   }
+
+protected:
+  explicit CUDAScopedContextBase(edm::StreamID streamID);
+
+  explicit CUDAScopedContextBase(const CUDAProductBase& data);
+
+  explicit CUDAScopedContextBase(int device, std::shared_ptr<cuda::stream_t<>> stream);
+
+  void synchronizeStreams(int dataDevice, const cuda::stream_t<>& dataStream, bool available, const cuda::event_t *dataEvent);
+
+private:
+  int currentDevice_;
+  cuda::device::current::scoped_override_t<> setDeviceForThisScope_;
+  std::shared_ptr<cuda::stream_t<>> stream_;
+};
+
+/**
+ * The aim of this class is to do necessary per-event "initialization" in ExternalWork acquire():
+ * - setting the current device
+ * - calling edm::WaitingTaskWithArenaHolder::doneWaiting() when necessary
+ * - synchronizing between CUDA streams if necessary
+ * and enforce that those get done in a proper way in RAII fashion.
+ */
+class CUDAScopedContextAcquire: public CUDAScopedContextBase {
+public:
+  explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
+    CUDAScopedContextBase(streamID),
+    waitingTaskHolder_{std::move(waitingTaskHolder)}
+  {}
+
+  explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
+    CUDAScopedContextBase(data),
+    waitingTaskHolder_{std::move(waitingTaskHolder)}
+  {}
+
+  ~CUDAScopedContextAcquire();
+
+  CUDAContextToken toToken() {
+    return CUDAContextToken(device(), streamPtr());
+  }
+
+private:
+  edm::WaitingTaskWithArenaHolder waitingTaskHolder_;
+};
+
+/**
+ * The aim of this class is to do necessary per-event "initialization" in ExternalWork produce() or normal produce():
+ * - setting the current device
+ * - synchronizing between CUDA streams if necessary
+ * and enforce that those get done in a proper way in RAII fashion.
+ */
+class CUDAScopedContextProduce: public CUDAScopedContextBase {
+public:
+  explicit CUDAScopedContextProduce(edm::StreamID streamID):
+    CUDAScopedContextBase(streamID)
+  {}
+
+  explicit CUDAScopedContextProduce(const CUDAProductBase& data):
+    CUDAScopedContextBase(data)
+  {}
+
+  explicit CUDAScopedContextProduce(CUDAContextToken&& token):
+    CUDAScopedContextBase(token.device(), std::move(token.streamPtr()))
+  {}
+
+  ~CUDAScopedContextProduce();
 
   template <typename T>
   std::unique_ptr<CUDAProduct<T> > wrap(T data) {
@@ -96,15 +128,13 @@ private:
   friend class cudatest::TestCUDAScopedContext;
 
   // This construcor is only meant for testing
-  explicit CUDAScopedContext(int device, std::unique_ptr<cuda::stream_t<>> stream, std::unique_ptr<cuda::event_t> event);
+  explicit CUDAScopedContextProduce(int device, std::unique_ptr<cuda::stream_t<>> stream, std::unique_ptr<cuda::event_t> event):
+    CUDAScopedContextBase(device, std::move(stream)),
+    event_{std::move(event)}
+  {}
 
   void createEventIfStreamBusy();
-  void synchronizeStreams(int dataDevice, const cuda::stream_t<>& dataStream, bool available, const cuda::event_t *dataEvent);
 
-  int currentDevice_;
-  std::optional<edm::WaitingTaskWithArenaHolder> waitingTaskHolder_;
-  cuda::device::current::scoped_override_t<> setDeviceForThisScope_;
-  std::shared_ptr<cuda::stream_t<>> stream_;
   std::shared_ptr<cuda::event_t> event_;
 };
 
