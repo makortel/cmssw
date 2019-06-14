@@ -63,22 +63,26 @@ private:
  */
 class CUDAScopedContextAcquire: public CUDAScopedContextBase {
 public:
+  /// Constructor to create a new CUDA stream (no need for context beyond acquire())
   explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
     CUDAScopedContextBase(streamID),
     waitingTaskHolder_{std::move(waitingTaskHolder)}
   {}
 
+  /// Constructor to create a new CUDA stream, and the context is needed after acquire()
   explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
     CUDAScopedContextBase(streamID),
     waitingTaskHolder_{std::move(waitingTaskHolder)},
     contextState_{&state}
   {}
 
+  /// Constructor to (possibly) re-use a CUDA stream (no need for context beyond acquire())
   explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
     CUDAScopedContextBase(data),
     waitingTaskHolder_{std::move(waitingTaskHolder)}
   {}
 
+  /// Constructor to (possibly) re-use a CUDA stream, and the context is needed after acquire()
   explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
     CUDAScopedContextBase(data),
     waitingTaskHolder_{std::move(waitingTaskHolder)},
@@ -100,14 +104,17 @@ private:
  */
 class CUDAScopedContextProduce: public CUDAScopedContextBase {
 public:
+  /// Constructor to create a new CUDA stream (non-ExternalWork module)
   explicit CUDAScopedContextProduce(edm::StreamID streamID):
     CUDAScopedContextBase(streamID)
   {}
 
+  /// Constructor to (possibly) re-use a CUDA stream (non-ExternalWork module)
   explicit CUDAScopedContextProduce(const CUDAProductBase& data):
     CUDAScopedContextBase(data)
   {}
 
+  /// Constructor to re-use the CUDA stream of acquire() (ExternalWork module)
   explicit CUDAScopedContextProduce(CUDAContextState& token):
     CUDAScopedContextBase(token.device(), std::move(token.streamPtr()))
   {}
