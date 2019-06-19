@@ -34,13 +34,13 @@ public:
   struct QualityCuts {
     // chi2 cut = chi2Scale * (chi2Coeff[0] + pT/GeV * (chi2Coeff[1] + pT/GeV * (chi2Coeff[2] + pT/GeV * chi2Coeff[3])))
     float chi2Coeff[4];
-    float chi2MaxPt;    // GeV
+    float chi2MaxPt;  // GeV
     float chi2Scale;
 
     struct region {
-      float maxTip;     // cm
-      float minPt;      // GeV
-      float maxZip;     // cm
+      float maxTip;  // cm
+      float minPt;   // GeV
+      float maxZip;  // cm
     };
 
     region triplet;
@@ -76,12 +76,9 @@ public:
         hardCurvCut_(hardCurvCut),
         dcaCutInnerTriplet_(dcaCutInnerTriplet),
         dcaCutOuterTriplet_(dcaCutOuterTriplet),
-        cuts_(cuts)
-  { }
+        cuts_(cuts) {}
 
-  ~CAHitQuadrupletGeneratorKernels() {
-    deallocateOnGPU();
-  }
+  ~CAHitQuadrupletGeneratorKernels() { deallocateOnGPU(); }
 
   TupleMultiplicity const* tupleMultiplicity() const { return device_tupleMultiplicity_; }
 
@@ -131,26 +128,24 @@ private:
   const float dcaCutOuterTriplet_;
 
   // quality cuts
-  QualityCuts cuts_
-  {
-    // polynomial coefficients for the pT-dependent chi2 cut
-    { 0.68177776, 0.74609577, -0.08035491, 0.00315399 },
-    // max pT used to determine the chi2 cut
-    10.,
-    // chi2 scale factor: 30 for broken line fit, 45 for Riemann fit
-    30.,
-    // regional cuts for triplets
-    {
-      0.3,  // |Tip| < 0.3 cm
-      0.5,  // pT > 0.5 GeV
-      12.0  // |Zip| < 12.0 cm
-    },
-    // regional cuts for quadruplets
-    {
-      0.5,  // |Tip| < 0.5 cm
-      0.3,  // pT > 0.3 GeV
-      12.0  // |Zip| < 12.0 cm
-    }};
+  QualityCuts cuts_{// polynomial coefficients for the pT-dependent chi2 cut
+                    {0.68177776, 0.74609577, -0.08035491, 0.00315399},
+                    // max pT used to determine the chi2 cut
+                    10.,
+                    // chi2 scale factor: 30 for broken line fit, 45 for Riemann fit
+                    30.,
+                    // regional cuts for triplets
+                    {
+                        0.3,  // |Tip| < 0.3 cm
+                        0.5,  // pT > 0.5 GeV
+                        12.0  // |Zip| < 12.0 cm
+                    },
+                    // regional cuts for quadruplets
+                    {
+                        0.5,  // |Tip| < 0.5 cm
+                        0.3,  // pT > 0.3 GeV
+                        12.0  // |Zip| < 12.0 cm
+                    }};
 };
 
 #endif  // RecoPixelVertexing_PixelTriplets_plugins_CAHitQuadrupletGeneratorKernels_h

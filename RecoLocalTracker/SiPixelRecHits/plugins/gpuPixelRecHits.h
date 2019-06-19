@@ -15,20 +15,19 @@ namespace gpuPixelRecHits {
 
   __global__ void getHits(pixelCPEforGPU::ParamsOnGPU const* __restrict__ cpeParams,
                           BeamSpotCUDA::Data const* __restrict__ bs,
-                          SiPixelDigisCUDA::DeviceConstView const * __restrict__ pdigis,
+                          SiPixelDigisCUDA::DeviceConstView const* __restrict__ pdigis,
                           int numElements,
-                          SiPixelClustersCUDA::DeviceConstView const * __restrict__ pclusters,
+                          SiPixelClustersCUDA::DeviceConstView const* __restrict__ pclusters,
                           TrackingRecHit2DSOAView* phits) {
-
     // FIXME
     // the compiler seems NOT to optimize loads from views (even in a simple test case)
     // The whole gimnastic here of copying or not is a pure heuristic exercise that seems to produce the fastest code with the above signature
-    // not using views (passing a gazzilion of array pointers) seems to produce the fastest code (but it is harder to mantain)  
+    // not using views (passing a gazzilion of array pointers) seems to produce the fastest code (but it is harder to mantain)
 
     auto& hits = *phits;
 
-    auto const digis = *pdigis; // the copy is intentional!
-    auto const & clusters = *pclusters;
+    auto const digis = *pdigis;  // the copy is intentional!
+    auto const& clusters = *pclusters;
 
     // to be moved in common namespace...
     constexpr uint16_t InvId = 9999;  // must be > MaxNumModules
@@ -111,7 +110,7 @@ namespace gpuPixelRecHits {
     __syncthreads();
 
     for (int i = first; i < numElements; i += blockDim.x) {
-      auto id =    digis.moduleInd(i);
+      auto id = digis.moduleInd(i);
       if (id == InvId)
         continue;  // not valid
       if (id != me)
@@ -120,7 +119,7 @@ namespace gpuPixelRecHits {
       if (cl >= nclus)
         continue;
       auto x = digis.xx(i);
-      auto y = digis.yy(i);      
+      auto y = digis.yy(i);
       auto ch = digis.adc(i);
       atomicAdd(&clusParams.charge[cl], ch);
       if (clusParams.minRow[cl] == x)

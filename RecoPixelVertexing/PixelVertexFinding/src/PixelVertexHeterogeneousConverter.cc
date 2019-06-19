@@ -8,8 +8,7 @@
 
 #include "RecoPixelVertexing/PixelVertexFinding/interface/pixelVertexHeterogeneousProduct.h"
 
-
-class PixelVertexHeterogeneousConverter: public edm::global::EDProducer<> {
+class PixelVertexHeterogeneousConverter : public edm::global::EDProducer<> {
 public:
   explicit PixelVertexHeterogeneousConverter(edm::ParameterSet const& iConfig);
   ~PixelVertexHeterogeneousConverter() override = default;
@@ -22,9 +21,8 @@ private:
   edm::EDGetTokenT<HeterogeneousProduct> token_;
 };
 
-PixelVertexHeterogeneousConverter::PixelVertexHeterogeneousConverter(edm::ParameterSet const& iConfig):
-  token_(consumes<HeterogeneousProduct>(iConfig.getParameter<edm::InputTag>("src")))
-{
+PixelVertexHeterogeneousConverter::PixelVertexHeterogeneousConverter(edm::ParameterSet const& iConfig)
+    : token_(consumes<HeterogeneousProduct>(iConfig.getParameter<edm::InputTag>("src"))) {
   produces<reco::VertexCollection>();
 }
 
@@ -40,16 +38,18 @@ namespace {
   auto copy_unique(const T& t) {
     return std::make_unique<T>(t);
   }
-}
+}  // namespace
 
-void PixelVertexHeterogeneousConverter::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+void PixelVertexHeterogeneousConverter::produce(edm::StreamID,
+                                                edm::Event& iEvent,
+                                                const edm::EventSetup& iSetup) const {
   edm::Handle<HeterogeneousProduct> hinput;
   iEvent.getByToken(token_, hinput);
 
-  const auto& input = hinput->get<pixelVertexHeterogeneousProduct::HeterogeneousPixelVertices>().getProduct<HeterogeneousDevice::kCPU>();
+  const auto& input =
+      hinput->get<pixelVertexHeterogeneousProduct::HeterogeneousPixelVertices>().getProduct<HeterogeneousDevice::kCPU>();
 
   iEvent.put(copy_unique(input.collection));
 }
-
 
 DEFINE_FWK_MODULE(PixelVertexHeterogeneousConverter);
