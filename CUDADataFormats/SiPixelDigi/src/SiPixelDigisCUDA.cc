@@ -7,14 +7,14 @@
 SiPixelDigisCUDA::SiPixelDigisCUDA(size_t maxFedWords, cuda::stream_t<>& stream) {
   edm::Service<CUDAService> cs;
 
-  xx_d              = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
-  yy_d              = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
-  adc_d             = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
-  moduleInd_d       = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
-  clus_d            = cs->make_device_unique< int32_t[]>(maxFedWords, stream);
+  xx_d = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
+  yy_d = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
+  adc_d = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
+  moduleInd_d = cs->make_device_unique<uint16_t[]>(maxFedWords, stream);
+  clus_d = cs->make_device_unique<int32_t[]>(maxFedWords, stream);
 
-  pdigi_d           = cs->make_device_unique<uint32_t[]>(maxFedWords, stream);
-  rawIdArr_d        = cs->make_device_unique<uint32_t[]>(maxFedWords, stream);
+  pdigi_d = cs->make_device_unique<uint32_t[]>(maxFedWords, stream);
+  rawIdArr_d = cs->make_device_unique<uint32_t[]>(maxFedWords, stream);
 
   auto view = cs->make_host_unique<DeviceConstView>(stream);
   view->xx_ = xx_d.get();

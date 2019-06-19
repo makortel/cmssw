@@ -44,7 +44,10 @@ protected:
 
   explicit CUDAScopedContextBase(int device, std::shared_ptr<cuda::stream_t<>> stream);
 
-  void synchronizeStreams(int dataDevice, const cuda::stream_t<>& dataStream, bool available, const cuda::event_t *dataEvent);
+  void synchronizeStreams(int dataDevice,
+                          const cuda::stream_t<>& dataStream,
+                          bool available,
+                          const cuda::event_t* dataEvent);
 
   std::shared_ptr<cuda::stream_t<>>& streamPtr() { return stream_; }
 
@@ -61,39 +64,33 @@ private:
  * - synchronizing between CUDA streams if necessary
  * and enforce that those get done in a proper way in RAII fashion.
  */
-class CUDAScopedContextAcquire: public CUDAScopedContextBase {
+class CUDAScopedContextAcquire : public CUDAScopedContextBase {
 public:
   /// Constructor to create a new CUDA stream (no need for context beyond acquire())
-  explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
-    CUDAScopedContextBase(streamID),
-    waitingTaskHolder_{std::move(waitingTaskHolder)}
-  {}
+  explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder)
+      : CUDAScopedContextBase(streamID), waitingTaskHolder_{std::move(waitingTaskHolder)} {}
 
   /// Constructor to create a new CUDA stream, and the context is needed after acquire()
-  explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
-    CUDAScopedContextBase(streamID),
-    waitingTaskHolder_{std::move(waitingTaskHolder)},
-    contextState_{&state}
-  {}
+  explicit CUDAScopedContextAcquire(edm::StreamID streamID,
+                                    edm::WaitingTaskWithArenaHolder waitingTaskHolder,
+                                    CUDAContextState& state)
+      : CUDAScopedContextBase(streamID), waitingTaskHolder_{std::move(waitingTaskHolder)}, contextState_{&state} {}
 
   /// Constructor to (possibly) re-use a CUDA stream (no need for context beyond acquire())
-  explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
-    CUDAScopedContextBase(data),
-    waitingTaskHolder_{std::move(waitingTaskHolder)}
-  {}
+  explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder)
+      : CUDAScopedContextBase(data), waitingTaskHolder_{std::move(waitingTaskHolder)} {}
 
   /// Constructor to (possibly) re-use a CUDA stream, and the context is needed after acquire()
-  explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
-    CUDAScopedContextBase(data),
-    waitingTaskHolder_{std::move(waitingTaskHolder)},
-    contextState_{&state}
-  {}
+  explicit CUDAScopedContextAcquire(const CUDAProductBase& data,
+                                    edm::WaitingTaskWithArenaHolder waitingTaskHolder,
+                                    CUDAContextState& state)
+      : CUDAScopedContextBase(data), waitingTaskHolder_{std::move(waitingTaskHolder)}, contextState_{&state} {}
 
   ~CUDAScopedContextAcquire();
 
 private:
   edm::WaitingTaskWithArenaHolder waitingTaskHolder_;
-  CUDAContextState *contextState_ = nullptr;
+  CUDAContextState* contextState_ = nullptr;
 };
 
 /**
@@ -102,33 +99,28 @@ private:
  * - synchronizing between CUDA streams if necessary
  * and enforce that those get done in a proper way in RAII fashion.
  */
-class CUDAScopedContextProduce: public CUDAScopedContextBase {
+class CUDAScopedContextProduce : public CUDAScopedContextBase {
 public:
   /// Constructor to create a new CUDA stream (non-ExternalWork module)
-  explicit CUDAScopedContextProduce(edm::StreamID streamID):
-    CUDAScopedContextBase(streamID)
-  {}
+  explicit CUDAScopedContextProduce(edm::StreamID streamID) : CUDAScopedContextBase(streamID) {}
 
   /// Constructor to (possibly) re-use a CUDA stream (non-ExternalWork module)
-  explicit CUDAScopedContextProduce(const CUDAProductBase& data):
-    CUDAScopedContextBase(data)
-  {}
+  explicit CUDAScopedContextProduce(const CUDAProductBase& data) : CUDAScopedContextBase(data) {}
 
   /// Constructor to re-use the CUDA stream of acquire() (ExternalWork module)
-  explicit CUDAScopedContextProduce(CUDAContextState& token):
-    CUDAScopedContextBase(token.device(), std::move(token.streamPtr()))
-  {}
+  explicit CUDAScopedContextProduce(CUDAContextState& token)
+      : CUDAScopedContextBase(token.device(), std::move(token.streamPtr())) {}
 
   ~CUDAScopedContextProduce();
 
   template <typename T>
-  std::unique_ptr<CUDAProduct<T> > wrap(T data) {
+  std::unique_ptr<CUDAProduct<T>> wrap(T data) {
     // make_unique doesn't work because of private constructor
     //
     // CUDAProduct<T> constructor records CUDA event to the CUDA
     // stream. The event will become "occurred" after all work queued
     // to the stream before this point has been finished.
-    std::unique_ptr<CUDAProduct<T> > ret(new CUDAProduct<T>(device(), streamPtr(), std::move(data)));
+    std::unique_ptr<CUDAProduct<T>> ret(new CUDAProduct<T>(device(), streamPtr(), std::move(data)));
     createEventIfStreamBusy();
     ret->setEvent(event_);
     return ret;
@@ -146,10 +138,10 @@ private:
   friend class cudatest::TestCUDAScopedContext;
 
   // This construcor is only meant for testing
-  explicit CUDAScopedContextProduce(int device, std::unique_ptr<cuda::stream_t<>> stream, std::unique_ptr<cuda::event_t> event):
-    CUDAScopedContextBase(device, std::move(stream)),
-    event_{std::move(event)}
-  {}
+  explicit CUDAScopedContextProduce(int device,
+                                    std::unique_ptr<cuda::stream_t<>> stream,
+                                    std::unique_ptr<cuda::event_t> event)
+      : CUDAScopedContextBase(device, std::move(stream)), event_{std::move(event)} {}
 
   void createEventIfStreamBusy();
 

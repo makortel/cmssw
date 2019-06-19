@@ -11,17 +11,18 @@ namespace cudautils {
       class DeviceDeleter {
       public:
         DeviceDeleter() = default;
-        explicit DeviceDeleter(std::function<void(void *)> f): f_(f) {}
+        explicit DeviceDeleter(std::function<void(void *)> f) : f_(f) {}
 
         void operator()(void *ptr) { f_(ptr); }
+
       private:
         std::function<void(void *)> f_;
       };
-    }
+    }  // namespace impl
 
     template <typename T>
     using unique_ptr = std::unique_ptr<T, impl::DeviceDeleter>;
-  }
-}
+  }  // namespace device
+}  // namespace cudautils
 
 #endif

@@ -8,7 +8,8 @@
 #include "CUDADataFormats/Common/interface/CUDAProductBase.h"
 
 namespace edm {
-  template <typename T> class Wrapper;
+  template <typename T>
+  class Wrapper;
 }
 
 /**
@@ -27,9 +28,9 @@ namespace edm {
  * use them only where synchronization between streams is needed.
  */
 template <typename T>
-class CUDAProduct: public CUDAProductBase {
+class CUDAProduct : public CUDAProductBase {
 public:
-  CUDAProduct() = default; // Needed only for ROOT dictionary generation
+  CUDAProduct() = default;  // Needed only for ROOT dictionary generation
 
   CUDAProduct(const CUDAProduct&) = delete;
   CUDAProduct& operator=(const CUDAProduct&) = delete;
@@ -41,18 +42,14 @@ private:
   friend class CUDAScopedContextProduce;
   friend class edm::Wrapper<CUDAProduct<T>>;
 
-  explicit CUDAProduct(int device, std::shared_ptr<cuda::stream_t<>> stream, T data):
-    CUDAProductBase(device, std::move(stream)),
-    data_(std::move(data))
-  {}
+  explicit CUDAProduct(int device, std::shared_ptr<cuda::stream_t<>> stream, T data)
+      : CUDAProductBase(device, std::move(stream)), data_(std::move(data)) {}
 
   template <typename... Args>
-  explicit CUDAProduct(int device, std::shared_ptr<cuda::stream_t<>> stream, Args&&... args):
-    CUDAProductBase(device, std::move(stream)),
-    data_(std::forward<Args>(args)...)
-  {}
+  explicit CUDAProduct(int device, std::shared_ptr<cuda::stream_t<>> stream, Args&&... args)
+      : CUDAProductBase(device, std::move(stream)), data_(std::forward<Args>(args)...) {}
 
-  T data_; //!
+  T data_;  //!
 };
 
 #endif

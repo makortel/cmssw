@@ -5,9 +5,8 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/memsetAsync.h"
 
-SiPixelDigiErrorsCUDA::SiPixelDigiErrorsCUDA(size_t maxFedWords, PixelFormatterErrors errors, cuda::stream_t<>& stream):
-  formatterErrors_h(std::move(errors))
-{
+SiPixelDigiErrorsCUDA::SiPixelDigiErrorsCUDA(size_t maxFedWords, PixelFormatterErrors errors, cuda::stream_t<>& stream)
+    : formatterErrors_h(std::move(errors)) {
   edm::Service<CUDAService> cs;
 
   error_d = cs->make_device_unique<GPU::SimpleVector<PixelErrorCompact>>(stream);

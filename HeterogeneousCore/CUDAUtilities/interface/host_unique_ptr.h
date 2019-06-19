@@ -11,17 +11,18 @@ namespace cudautils {
       class HostDeleter {
       public:
         HostDeleter() = default;
-        explicit HostDeleter(std::function<void(void *)> f): f_(f) {}
+        explicit HostDeleter(std::function<void(void *)> f) : f_(f) {}
 
         void operator()(void *ptr) { f_(ptr); }
+
       private:
         std::function<void(void *)> f_;
       };
-    }
+    }  // namespace impl
 
     template <typename T>
     using unique_ptr = std::unique_ptr<T, impl::HostDeleter>;
-  }
-}
+  }  // namespace host
+}  // namespace cudautils
 
 #endif

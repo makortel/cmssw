@@ -7,10 +7,10 @@
 SiPixelClustersCUDA::SiPixelClustersCUDA(size_t maxClusters, cuda::stream_t<>& stream) {
   edm::Service<CUDAService> cs;
 
-  moduleStart_d     = cs->make_device_unique<uint32_t[]>(maxClusters+1, stream);
-  clusInModule_d    = cs->make_device_unique<uint32_t[]>(maxClusters, stream);
-  moduleId_d        = cs->make_device_unique<uint32_t[]>(maxClusters, stream);
-  clusModuleStart_d = cs->make_device_unique<uint32_t[]>(maxClusters+1, stream);
+  moduleStart_d = cs->make_device_unique<uint32_t[]>(maxClusters + 1, stream);
+  clusInModule_d = cs->make_device_unique<uint32_t[]>(maxClusters, stream);
+  moduleId_d = cs->make_device_unique<uint32_t[]>(maxClusters, stream);
+  clusModuleStart_d = cs->make_device_unique<uint32_t[]>(maxClusters + 1, stream);
 
   auto view = cs->make_host_unique<DeviceConstView>(stream);
   view->moduleStart_ = moduleStart_d.get();

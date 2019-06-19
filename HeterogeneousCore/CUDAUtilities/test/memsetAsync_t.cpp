@@ -15,7 +15,7 @@ namespace {
     desc.validate(ps, "CUDAService");
     return CUDAService(ps, ar);
   }
-}
+}  // namespace
 
 TEST_CASE("memsetAsync", "[cudaMemTools]") {
   exitSansCUDADevices();
@@ -45,7 +45,7 @@ TEST_CASE("memsetAsync", "[cudaMemTools]") {
     constexpr int N = 100;
 
     auto host_orig = cs.make_host_unique<int[]>(N, stream);
-    for(int i=0; i<N; ++i) {
+    for (int i = 0; i < N; ++i) {
       host_orig[i] = i;
     }
 
@@ -56,7 +56,7 @@ TEST_CASE("memsetAsync", "[cudaMemTools]") {
     cudautils::copyAsync(host, device, N, stream);
     stream.synchronize();
 
-    for(int i=0; i < N; ++i) {
+    for (int i = 0; i < N; ++i) {
       CHECK(host[i] == 0);
     }
   }
@@ -64,4 +64,3 @@ TEST_CASE("memsetAsync", "[cudaMemTools]") {
   //Fake the end-of-job signal.
   ar.postEndJobSignal_();
 }
-
