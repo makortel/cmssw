@@ -23,6 +23,7 @@ public:
 private:
   friend class CUDAScopedContextAcquire;
   friend class CUDAScopedContextProduce;
+  friend class CUDAScopedContextTask;
 
   void set(int device, std::shared_ptr<cuda::stream_t<>> stream) {
     throwIfStream();
@@ -31,9 +32,9 @@ private:
   }
 
   int device() { return device_; }
-  std::shared_ptr<cuda::stream_t<>>&& streamPtr() {
+  std::shared_ptr<cuda::stream_t<>>& streamPtr() {
     throwIfNoStream();
-    return std::move(stream_);
+    return stream_;
   }
 
   void throwIfStream() const;

@@ -2,6 +2,7 @@
 #define HeterogeneousCore_CUDACore_CUDAScopedContext_h
 
 #include "FWCore/Concurrency/interface/WaitingTaskWithArenaHolder.h"
+#include "FWCore/Concurrency/interface/make_waiting_task_with_holder.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
@@ -17,42 +18,74 @@ namespace cudatest {
   class TestCUDAScopedContext;
 }
 
-// This class is intended to be derived by other CUDAScopedContext*, not for general use
-class CUDAScopedContextBase {
-public:
-  int device() const { return currentDevice_; }
+namespace impl {
+  // This class is intended to be derived by other CUDAScopedContext*, not for general use
+  class CUDAScopedContextBase {
+  public:
+    int device() const { return currentDevice_; }
 
-  cuda::stream_t<>& stream() { return *stream_; }
-  const cuda::stream_t<>& stream() const { return *stream_; }
-  const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
+    cuda::stream_t<>& stream() { return *stream_; }
+    const cuda::stream_t<>& stream() const { return *stream_; }
+    const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
 
-  template <typename T>
-  const T& get(const CUDAProduct<T>& data) {
-    synchronizeStreams(data.device(), data.stream(), data.isAvailable(), data.event());
-    return data.data_;
-  }
+  protected:
+    explicit CUDAScopedContextBase(edm::StreamID streamID);
 
-  template <typename T>
-  const T& get(const edm::Event& iEvent, edm::EDGetTokenT<CUDAProduct<T>> token) {
-    return get(iEvent.get(token));
-  }
+    explicit CUDAScopedContextBase(const CUDAProductBase& data);
 
-protected:
-  explicit CUDAScopedContextBase(edm::StreamID streamID);
+    explicit CUDAScopedContextBase(int device, std::shared_ptr<cuda::stream_t<>> stream);
 
-  explicit CUDAScopedContextBase(const CUDAProductBase& data);
+    std::shared_ptr<cuda::stream_t<>>& streamPtr() { return stream_; }
 
-  explicit CUDAScopedContextBase(int device, std::shared_ptr<cuda::stream_t<>> stream);
+  private:
+    int currentDevice_;
+    cuda::device::current::scoped_override_t<> setDeviceForThisScope_;
+    std::shared_ptr<cuda::stream_t<>> stream_;
+  };
 
-  void synchronizeStreams(int dataDevice, const cuda::stream_t<>& dataStream, bool available, const cuda::event_t *dataEvent);
+  class CUDAScopedContextGetterBase: public CUDAScopedContextBase {
+  public:
+    template <typename T>
+    const T& get(const CUDAProduct<T>& data) {
+      synchronizeStreams(data.device(), data.stream(), data.isAvailable(), data.event());
+      return data.data_;
+    }
 
-  std::shared_ptr<cuda::stream_t<>>& streamPtr() { return stream_; }
+    template <typename T>
+    const T& get(const edm::Event& iEvent, edm::EDGetTokenT<CUDAProduct<T>> token) {
+      return get(iEvent.get(token));
+    }
 
-private:
-  int currentDevice_;
-  cuda::device::current::scoped_override_t<> setDeviceForThisScope_;
-  std::shared_ptr<cuda::stream_t<>> stream_;
-};
+  protected:
+    template <typename... Args>
+    CUDAScopedContextGetterBase(Args&&... args): CUDAScopedContextBase(std::forward<Args>(args)...) {}
+
+    void synchronizeStreams(int dataDevice, const cuda::stream_t<>& dataStream, bool available, const cuda::event_t *dataEvent);
+  };
+
+  class CUDAScopedContextHolderHelper {
+  public:
+    CUDAScopedContextHolderHelper(edm::WaitingTaskWithArenaHolder waitingTaskHolder):
+      waitingTaskHolder_{std::move(waitingTaskHolder)}
+    {}
+
+    template <typename F>
+    void insertNextTask(F&& f) {
+      replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task_with_holder(tbb::task::allocate_root(),
+                                                                                                  std::move(waitingTaskHolder_),
+                                                                                                  std::forward<F>(f))});
+    }
+
+    void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+      waitingTaskHolder_ = std::move(waitingTaskHolder);
+    }
+
+    void enqueueCallback(int device, cuda::stream_t<>& stream);
+
+  private:
+    edm::WaitingTaskWithArenaHolder waitingTaskHolder_;
+  };
+}
 
 /**
  * The aim of this class is to do necessary per-event "initialization" in ExternalWork acquire():
@@ -61,38 +94,47 @@ private:
  * - synchronizing between CUDA streams if necessary
  * and enforce that those get done in a proper way in RAII fashion.
  */
-class CUDAScopedContextAcquire: public CUDAScopedContextBase {
+class CUDAScopedContextAcquire: public impl::CUDAScopedContextGetterBase {
 public:
   /// Constructor to create a new CUDA stream (no need for context beyond acquire())
   explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
-    CUDAScopedContextBase(streamID),
-    waitingTaskHolder_{std::move(waitingTaskHolder)}
+    CUDAScopedContextGetterBase(streamID),
+    holderHelper_{std::move(waitingTaskHolder)}
   {}
 
   /// Constructor to create a new CUDA stream, and the context is needed after acquire()
   explicit CUDAScopedContextAcquire(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
-    CUDAScopedContextBase(streamID),
-    waitingTaskHolder_{std::move(waitingTaskHolder)},
+    CUDAScopedContextGetterBase(streamID),
+    holderHelper_{std::move(waitingTaskHolder)},
     contextState_{&state}
   {}
 
   /// Constructor to (possibly) re-use a CUDA stream (no need for context beyond acquire())
   explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
-    CUDAScopedContextBase(data),
-    waitingTaskHolder_{std::move(waitingTaskHolder)}
+    CUDAScopedContextGetterBase(data),
+    holderHelper_{std::move(waitingTaskHolder)}
   {}
 
   /// Constructor to (possibly) re-use a CUDA stream, and the context is needed after acquire()
   explicit CUDAScopedContextAcquire(const CUDAProductBase& data, edm::WaitingTaskWithArenaHolder waitingTaskHolder, CUDAContextState& state):
-    CUDAScopedContextBase(data),
-    waitingTaskHolder_{std::move(waitingTaskHolder)},
+    CUDAScopedContextGetterBase(data),
+    holderHelper_{std::move(waitingTaskHolder)},
     contextState_{&state}
   {}
 
   ~CUDAScopedContextAcquire();
 
+  template <typename F>
+  void insertNextTask(F&& f) {
+    holderHelper_.insertNextTask(std::forward<F>(f));
+  }
+
+  void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+    holderHelper_.replaceWaitingTaskHolder(std::move(waitingTaskHolder));
+  }
+
 private:
-  edm::WaitingTaskWithArenaHolder waitingTaskHolder_;
+  impl::CUDAScopedContextHolderHelper holderHelper_;
   CUDAContextState *contextState_ = nullptr;
 };
 
@@ -102,21 +144,21 @@ private:
  * - synchronizing between CUDA streams if necessary
  * and enforce that those get done in a proper way in RAII fashion.
  */
-class CUDAScopedContextProduce: public CUDAScopedContextBase {
+class CUDAScopedContextProduce: public impl::CUDAScopedContextGetterBase {
 public:
   /// Constructor to create a new CUDA stream (non-ExternalWork module)
   explicit CUDAScopedContextProduce(edm::StreamID streamID):
-    CUDAScopedContextBase(streamID)
+    CUDAScopedContextGetterBase(streamID)
   {}
 
   /// Constructor to (possibly) re-use a CUDA stream (non-ExternalWork module)
   explicit CUDAScopedContextProduce(const CUDAProductBase& data):
-    CUDAScopedContextBase(data)
+    CUDAScopedContextGetterBase(data)
   {}
 
   /// Constructor to re-use the CUDA stream of acquire() (ExternalWork module)
   explicit CUDAScopedContextProduce(CUDAContextState& token):
-    CUDAScopedContextBase(token.device(), std::move(token.streamPtr()))
+    CUDAScopedContextGetterBase(token.device(), std::move(token.streamPtr()))
   {}
 
   ~CUDAScopedContextProduce();
@@ -147,7 +189,7 @@ private:
 
   // This construcor is only meant for testing
   explicit CUDAScopedContextProduce(int device, std::unique_ptr<cuda::stream_t<>> stream, std::unique_ptr<cuda::event_t> event):
-    CUDAScopedContextBase(device, std::move(stream)),
+    CUDAScopedContextGetterBase(device, std::move(stream)),
     event_{std::move(event)}
   {}
 
@@ -155,5 +197,35 @@ private:
 
   std::shared_ptr<cuda::event_t> event_;
 };
+
+/**
+ * The aim of this class is to do necessary per-task "initialization" tasks created in ExternalWork acquire():
+ * - setting the current device
+ * - calling edm::WaitingTaskWithArenaHolder::doneWaiting() when necessary
+ * and enforce that those get done in a proper way in RAII fashion.
+ */
+class CUDAScopedContextTask: public impl::CUDAScopedContextBase {
+public:
+  /// Constructor to re-use the CUDA stream of acquire() (ExternalWork module)
+  explicit CUDAScopedContextTask(CUDAContextState& state, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
+    CUDAScopedContextBase(state.device(), state.streamPtr()), // don't move, state is re-used afterwards
+    holderHelper_{std::move(waitingTaskHolder)}
+  {}
+
+  ~CUDAScopedContextTask();
+
+  template <typename F>
+  void insertNextTask(F&& f) {
+    holderHelper_.insertNextTask(std::forward<F>(f));
+  }
+
+  void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+    holderHelper_.replaceWaitingTaskHolder(std::move(waitingTaskHolder));
+  }
+
+private:
+  impl::CUDAScopedContextHolderHelper holderHelper_;
+};
+
 
 #endif
