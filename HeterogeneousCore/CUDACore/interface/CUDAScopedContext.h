@@ -227,5 +227,25 @@ private:
   impl::CUDAScopedContextHolderHelper holderHelper_;
 };
 
+/**
+ * The aim of this class is to do necessary per-event "initialization" in analyze()
+ * - setting the current device
+ * - synchronizing between CUDA streams if necessary
+ * and enforce that those get done in a proper way in RAII fashion.
+ */
+/**
+ * The aim of this class is to do necessary per-event "initialization" in ExternalWork produce() or normal produce():
+ * - setting the current device
+ * - synchronizing between CUDA streams if necessary
+ * and enforce that those get done in a proper way in RAII fashion.
+ */
+class CUDAScopedContextAnalyze: public impl::CUDAScopedContextGetterBase {
+public:
+  /// Constructor to (possibly) re-use a CUDA stream
+  explicit CUDAScopedContextAnalyze(const CUDAProductBase& data):
+    CUDAScopedContextGetterBase(data)
+  {}
+};
+
 
 #endif
