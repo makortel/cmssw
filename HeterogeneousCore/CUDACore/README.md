@@ -8,9 +8,10 @@
 * [Sub-packages](#sub-packages)
 * [Examples](#examples)
   * [Isolated producer (no CUDA input nor output)](#isolated-producer-no-cuda-input-nor-output)
-  * [Producer with CUDA input](#producer-with-cuda-output)
-  * [Producer with CUDA output](#producer-with-cuda-input)
+  * [Producer with CUDA output](#producer-with-cuda-output)
+  * [Producer with CUDA input](#producer-with-cuda-input)
   * [Producer with CUDA input and output (with ExternalWork)](#producer-with-cuda-input-and-output-with-externalwork)
+  * [Producer with CUDA input and output, and internal chain of CPU and GPU tasks (with ExternalWork)](producer-with-cuda-input-and-output-and-internal-chain-of-cpu-and-gpu-tasks-with-externalwork)
   * [Producer with CUDA input and output (without ExternalWork)](#producer-with-cuda-input-and-output-without-externalwork)
   * [Analyzer with CUDA input](#analyzer-with-cuda-input)
   * [Configuration](#configuration)
@@ -29,6 +30,7 @@
     * [Calling the CUDA kernels](#calling-the-cuda-kernels)
     * [Putting output](#putting-output)
     * [`ExternalWork` extension](#externalwork-extension)
+    * [Module-internal chain of CPU and GPU tasks](#module-internal-chain-of-cpu-and-gpu-tasks)
     * [Transferring GPU data to CPU](#transferring-gpu-data-to-cpu)
     * [Synchronizing between CUDA streams](#synchronizing-between-cuda-streams)
   * [CUDA ESProduct](#cuda-esproduct)
@@ -289,6 +291,86 @@ void ProducerInputOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetu
 }
 ```
 
+[Complete example](../CUDATest/plugins/TestCUDAProducerGPUEW.cc)
+
+
+### Producer with CUDA input and output, and internal chain of CPU and GPU tasks (with ExternalWork)
+
+```cpp
+class ProducerInputOutputCUDA: public edm::stream::EDProducer<ExternalWork> {
+public:
+  ...
+  void acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, edm::EventSetup& iSetup) override;
+  ...
+private:
+  void addMoreWork(edm::WaitingTaskWithArenaHolder waitingTashHolder);
+
+  ...
+  ProducerInputGPUAlgo gpuAlgo_;
+  edm::EDGetTokenT<CUDAProduct<InputData>> inputToken_;
+  edm::EDPutTokenT<CUDAProduct<OutputData>> outputToken_;
+};
+...
+void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  CUDAProduct<InputData> const& inputDataWrapped = iEvent.get(inputToken_);
+
+  // Set the current device to the same that was used to produce
+  // InputData, and also use the same CUDA stream
+  CUDAScopedContextAcquire ctx{inputDataWrapped, std::move(waitingTaskHolder), ctxState_};
+
+  // Grab the real input data. Checks that the input data is on the
+  // current device. If the input data was produced in a different CUDA
+  // stream than the CUDAScopedContextAcquire holds, create an inter-stream
+  // synchronization point with CUDA event and cudaStreamWaitEvent()
+  auto const& inputData = ctx.get(inputDataWrapped);
+
+  // Queues asynchronous data transfers and kernels to the CUDA stream
+  // returned by CUDAScopedContextAcquire::stream()
+  gpuAlgo.makeAsync(inputData, ctx.stream());
+
+  // Insert a functor to be run as a next task after the work queued
+  // above instead of produce(). In this case the h holds the task
+  // that will run produce().
+  ctx.insertNextTask([this](edm::WaitingTaskWithArenaHolder h) {
+    addMoreWork(std::move(h));
+  });
+
+  // Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished,
+  // and saves the device and CUDA stream to ctxState_
+}
+
+// Called after the asynchronous work queued in acquire() has finished
+void ProducerInputOutputCUDA::addMoreWork(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  // Sets again the current device, uses the CUDA stream created in the acquire()
+  CUDAScopedContextTask ctx{ctxState_};
+
+  // Queues more asyncrhonous data transfer and kernels to the CUDA
+  // stream returned by CUDAScopedContextTask::stream()
+  gpuAlgo.makeMoreAsync(ctx.stream());
+
+  // Destructor of ctx queues a callback to the CUDA stream notifying
+  // waitingTaskHolder when the queued asynchronous work has finished
+}
+
+// Called after the asynchronous work queued in addMoreWork() has finished
+void ProducerInputOutputCUDA::produce(edm::Event& iEvent, edm::EventSetup& iSetup) {
+  // Sets again the current device, uses the CUDA stream created in the acquire()
+  CUDAScopedContextProduce ctx{ctxState_};
+
+  // Now getResult() returns data in GPU memory that is passed to the
+  // constructor of OutputData. CUDAScopedContextProduce::emplace() wraps the
+  // OutputData to CUDAProduct<OutputData>. CUDAProduct<T> stores also
+  // the current device and the CUDA stream since those will be needed
+  // in the consumer side.
+  ctx.emplace(iEvent, outputToken_, gpuAlgo.getResult());
+}
+```
+
+[Complete example](../CUDATest/plugins/TestCUDAProducerGPUEWTask.cc)
+
+
 ### Producer with CUDA input and output (without ExternalWork)
 
 If the producer does not need to transfer anything back to CPU (like
@@ -334,6 +416,9 @@ void ProducerInputOutputCUDA::produce(edm::StreamID streamID, edm::Event& iEvent
   // waitingTaskHolder when the queued asynchronous work has finished
 }
 ```
+
+[Complete example](../CUDATest/plugins/TestCUDAProducerGPU.cc)
+
 
 ### Analyzer with CUDA input
 
@@ -381,6 +466,8 @@ void AnalyzerInputCUDA::analyze(edm::Event const& iEvent, edm::EventSetup& iSetu
   gpuAlgo.analyzeAsync(inputData, otherInputData, ctx.stream());
 }
 ```
+
+[Complete example](../CUDATest/plugins/TestCUDAAnalyzerGPU.cc)
 
 
 ### Configuration
@@ -663,19 +750,74 @@ class FooProducerCUDA ... {
 
 void acquire(...) {
   ...
-  CUDAScopedContextAcquire ctx{..., std::move(waitingTaskHolder), ctxState_};
+  FooProducerCUDA::CUDAScopedContextAcquire ctx{..., std::move(waitingTaskHolder), ctxState_};
   ...
 }
 
 void produce(...( {
   ...
-  CUDAScopedContextProduce ctx{ctxState_};
+  FooProducerCUDA::CUDAScopedContextProduce ctx{ctxState_};
 }
 ```
 
 The `CUDAScopedContextAcquire` saves its state to the `ctxState_` in
 the destructor, and `CUDAScopedContextProduce` then restores the
 context.
+
+#### Module-internal chain of CPU and GPU tasks
+
+Technically `ExternalWork` works such that the framework calls
+`acquire()` with a `edm::WaitingTaskWithArenaHolder` that holds an
+`edm::WaitingTask` (that inherits from `tbb::task`) for calling
+`produce()` in a `std::shared_ptr` semantics: spawn the task when
+reference count hits `0`. It is also possible to create a longer chain
+of such tasks, alternating between CPU and GPU work. This mechanism
+can also be used to re-run (part of) the GPU work.
+
+A functor for the next-after-`acquire()` task can be added with
+(following the example of the previous section)
+
+```cpp
+void FooProducerCUDA::acquire(...) {
+   ...
+   ctx.insertNextTask([this](edm::WaitingTaskWithArenaHolder h) {
+     ...
+   });
+   ...
+}
+```
+
+In this case the `h` argument to the function is the holder holding
+the task for `produce()`. The `insertNextTask()` can be called many
+times, on each invocation it inserts a new task to the chain right
+next to the currently executing one (i.e. in front of the chain).
+
+In order to have use same CUDA device and stream inside the functor,
+the `CUDAContextState` object has to be passed. A simple pattern is to
+pass `this` in the lambda capture, and call a member function from the
+lambda. A `CUDAScopedContextTask` can then be used to set the device
+and get access to the CUDA stream as with other `CUDAScopedContext*`
+objects. It can also be used to insert a next task with
+`CUDAScopedContextTask::insertNextTask()`.
+
+```cpp
+void FooProducerCUDA::functionCalledFromLambda(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  CUDAScopedContexTask ctx{ctxState_, std::move(waitingTaskHolder)};
+  ...
+}
+```
+
+**Note** that the `CUDAService` is **not** available (nor is any other
+service) in these intermediate tasks. In the near future memory
+allocations etc. will be made possible by taking them out from the
+`CUDAService`.
+
+The `CUDAScopedContextAcquire`/`CUDAScopedContextTask` have also a
+more generic member function, `replaceWaitingTaskHolder()`, that can
+be used to just replace the currently-hold
+`edm::WaitingTaskWithArenaHolder` (that will get notified by the
+callback function) with anything. In this case the caller is
+responsible of creating the task(s) and setting up the chain of them.
 
 
 #### Transferring GPU data to CPU
