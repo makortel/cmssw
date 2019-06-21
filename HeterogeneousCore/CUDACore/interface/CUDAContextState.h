@@ -31,8 +31,14 @@ private:
     stream_ = std::move(stream);
   }
 
-  int device() { return device_; }
+  int device() const { return device_; }
+
   std::shared_ptr<cuda::stream_t<>>& streamPtr() {
+    throwIfNoStream();
+    return stream_;
+  }
+
+  const std::shared_ptr<cuda::stream_t<>>& streamPtr() const {
     throwIfNoStream();
     return stream_;
   }

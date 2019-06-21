@@ -70,11 +70,7 @@ namespace impl {
     {}
 
     template <typename F>
-    void insertNextTask(F&& f) {
-      replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task_with_holder(tbb::task::allocate_root(),
-                                                                                                  std::move(waitingTaskHolder_),
-                                                                                                  std::forward<F>(f))});
-    }
+    void insertNextTask(F&& f, CUDAContextState const* state);
 
     void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
       waitingTaskHolder_ = std::move(waitingTaskHolder);
@@ -126,7 +122,8 @@ public:
 
   template <typename F>
   void insertNextTask(F&& f) {
-    holderHelper_.insertNextTask(std::forward<F>(f));
+    if (contextState_ == nullptr) throwNoState();
+    holderHelper_.insertNextTask(std::forward<F>(f), contextState_);
   }
 
   void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
@@ -134,6 +131,8 @@ public:
   }
 
 private:
+  void throwNoState();
+
   impl::CUDAScopedContextHolderHelper holderHelper_;
   CUDAContextState *contextState_ = nullptr;
 };
@@ -207,16 +206,17 @@ private:
 class CUDAScopedContextTask: public impl::CUDAScopedContextBase {
 public:
   /// Constructor to re-use the CUDA stream of acquire() (ExternalWork module)
-  explicit CUDAScopedContextTask(CUDAContextState& state, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
-    CUDAScopedContextBase(state.device(), state.streamPtr()), // don't move, state is re-used afterwards
-    holderHelper_{std::move(waitingTaskHolder)}
+  explicit CUDAScopedContextTask(CUDAContextState const* state, edm::WaitingTaskWithArenaHolder waitingTaskHolder):
+    CUDAScopedContextBase(state->device(), state->streamPtr()), // don't move, state is re-used afterwards
+    holderHelper_{std::move(waitingTaskHolder)},
+    contextState_{state}
   {}
 
   ~CUDAScopedContextTask();
 
   template <typename F>
   void insertNextTask(F&& f) {
-    holderHelper_.insertNextTask(std::forward<F>(f));
+    holderHelper_.insertNextTask(std::forward<F>(f), contextState_);
   }
 
   void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
@@ -225,6 +225,7 @@ public:
 
 private:
   impl::CUDAScopedContextHolderHelper holderHelper_;
+  CUDAContextState const* contextState_;
 };
 
 /**
@@ -247,5 +248,17 @@ public:
   {}
 };
 
+
+
+namespace impl {
+  template <typename F>
+  void CUDAScopedContextHolderHelper::insertNextTask(F&& f, CUDAContextState const* state) {
+    replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task_with_holder(tbb::task::allocate_root(),
+                                                                                                std::move(waitingTaskHolder_),
+                                                                                                [state,func=std::move(f)](edm::WaitingTaskWithArenaHolder h) {
+                                                                                                  func(CUDAScopedContextTask{state, std::move(h)});
+                                                                                                })});
+  }
+}
 
 #endif

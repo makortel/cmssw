@@ -89,6 +89,10 @@ CUDAScopedContextAcquire::~CUDAScopedContextAcquire() {
   }
 }
 
+void CUDAScopedContextAcquire::throwNoState() {
+  throw cms::Exception("LogicError") << "Calling CUDAScopedContextAcquire::insertNextTask() requires CUDAScopedContextAcquire to be constructed with CUDAContextState, but that was not the case";
+}
+
 ////////////////////
 
 CUDAScopedContextProduce::~CUDAScopedContextProduce() {

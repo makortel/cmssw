@@ -330,10 +330,12 @@ void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup&
   gpuAlgo.makeAsync(inputData, ctx.stream());
 
   // Insert a functor to be run as a next task after the work queued
-  // above instead of produce(). In this case the h holds the task
-  // that will run produce().
-  ctx.insertNextTask([this](edm::WaitingTaskWithArenaHolder h) {
-    addMoreWork(std::move(h));
+  // above instead of produce(). In this case ctx is a context constructed
+  // by the calling TBB task, and therefore the current device and CUDA
+  // stream have been already set up. The ctx internally holds the
+  // WaitingTaskWithArenaHolder for the next task.
+  ctx.insertNextTask([this](CUDAScopedContextTask ctx) {
+    addMoreWork(ctx);
   });
 
   // Destructor of ctx queues a callback to the CUDA stream notifying
@@ -342,9 +344,8 @@ void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup&
 }
 
 // Called after the asynchronous work queued in acquire() has finished
-void ProducerInputOutputCUDA::addMoreWork(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  // Sets again the current device, uses the CUDA stream created in the acquire()
-  CUDAScopedContextTask ctx{ctxState_};
+void ProducerInputOutputCUDA::addMoreWork(CUDAScopedContextTask& ctx) {
+  // Current device and CUDA stream have already been set
 
   // Queues more asyncrhonous data transfer and kernels to the CUDA
   // stream returned by CUDAScopedContextTask::stream()
@@ -780,32 +781,19 @@ A functor for the next-after-`acquire()` task can be added with
 ```cpp
 void FooProducerCUDA::acquire(...) {
    ...
-   ctx.insertNextTask([this](edm::WaitingTaskWithArenaHolder h) {
+   ctx.insertNextTask([this](CUDAScopedContextTask ctx) {
      ...
    });
    ...
 }
 ```
 
-In this case the `h` argument to the function is the holder holding
-the task for `produce()`. The `insertNextTask()` can be called many
+In this case the `ctx`argument to the function is a
+`CUDAScopedContexTask` object constructed by the TBB task calling the
+user-given function. It follows that the current device and CUDA
+stream have been set up already. The `insertNextTask()` can be called many
 times, on each invocation it inserts a new task to the chain right
 next to the currently executing one (i.e. in front of the chain).
-
-In order to have use same CUDA device and stream inside the functor,
-the `CUDAContextState` object has to be passed. A simple pattern is to
-pass `this` in the lambda capture, and call a member function from the
-lambda. A `CUDAScopedContextTask` can then be used to set the device
-and get access to the CUDA stream as with other `CUDAScopedContext*`
-objects. It can also be used to insert a next task with
-`CUDAScopedContextTask::insertNextTask()`.
-
-```cpp
-void FooProducerCUDA::functionCalledFromLambda(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-  CUDAScopedContexTask ctx{ctxState_, std::move(waitingTaskHolder)};
-  ...
-}
-```
 
 **Note** that the `CUDAService` is **not** available (nor is any other
 service) in these intermediate tasks. In the near future memory

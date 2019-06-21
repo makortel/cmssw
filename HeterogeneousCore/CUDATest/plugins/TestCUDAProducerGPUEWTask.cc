@@ -30,7 +30,7 @@ public:
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 private:
-  void addSimpleWork(edm::EventNumber_t eventID, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
+  void addSimpleWork(edm::EventNumber_t eventID, edm::StreamID streamID, CUDAScopedContextTask& ctx);
 
   std::string label_;
   edm::EDGetTokenT<CUDAProduct<CUDAThing>> srcToken_;
@@ -64,8 +64,8 @@ void TestCUDAProducerGPUEWTask::acquire(const edm::Event& iEvent, const edm::Eve
   const auto& in = iEvent.get(srcToken_);
   CUDAScopedContextAcquire ctx{in, waitingTaskHolder, ctxState_};
 
-  ctx.insertNextTask([iev = iEvent.id().event(), istr=iEvent.streamID(), this](edm::WaitingTaskWithArenaHolder h) {
-      addSimpleWork(iev, istr, std::move(h));
+  ctx.insertNextTask([iev = iEvent.id().event(), istr=iEvent.streamID(), this](CUDAScopedContextTask ctx) {
+      addSimpleWork(iev, istr, ctx);
     });
 
   const CUDAThing& input = ctx.get(in);
@@ -79,12 +79,11 @@ void TestCUDAProducerGPUEWTask::acquire(const edm::Event& iEvent, const edm::Eve
   edm::LogVerbatim("TestCUDAProducerGPUEWTask") << label_ << " TestCUDAProducerGPUEWTask::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }
 
-void TestCUDAProducerGPUEWTask::addSimpleWork(edm::EventNumber_t eventID, edm::StreamID streamID, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+void TestCUDAProducerGPUEWTask::addSimpleWork(edm::EventNumber_t eventID, edm::StreamID streamID, CUDAScopedContextTask& ctx) {
   if(*hostData_ < 13) {
     edm::LogVerbatim("TestCUDAProducerGPUEWTask") << label_ << " TestCUDAProducerGPUEWTask::addSimpleWork begin event " << eventID << " stream " << streamID << " 10th element " << *hostData_ << " not satisfied, queueing more work";
-    CUDAScopedContextTask ctx{ctxState_, std::move(waitingTaskHolder)};
-    ctx.insertNextTask([eventID, streamID, this](edm::WaitingTaskWithArenaHolder h) {
-        addSimpleWork(eventID, streamID, std::move(h));
+    ctx.insertNextTask([eventID, streamID, this](CUDAScopedContextTask ctx) {
+        addSimpleWork(eventID, streamID, ctx);
       });
     gpuAlgo_.runSimpleAlgo(devicePtr_.get(), ctx.stream());
     cuda::memory::async::copy(hostData_.get(), devicePtr_.get()+10, sizeof(float), ctx.stream().id());
