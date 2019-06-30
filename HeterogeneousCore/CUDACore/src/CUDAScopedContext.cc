@@ -4,6 +4,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 
 #include "chooseCUDADevice.h"
 
@@ -105,8 +106,7 @@ void CUDAScopedContextProduce::createEventIfStreamBusy() {
   if(event_ or stream().is_clear()) {
     return;
   }
-  edm::Service<CUDAService> cs;
-  event_ = cs->getCUDAEvent();
+  event_ = cudautils::getCUDAEventCache().getCUDAEvent();
 }
 
 ////////////////////
