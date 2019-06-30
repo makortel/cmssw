@@ -14,6 +14,7 @@
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 
 namespace {
   CUDAService makeCUDAService(edm::ParameterSet ps, edm::ActivityRegistry& ar) {
@@ -142,7 +143,7 @@ TEST_CASE("Tests of CUDAService", "[CUDAService]") {
     ps.addUntrackedParameter("allocator", alloc);
     auto cs = makeCUDAService(ps, ar);
     cs.setCurrentDevice(0);
-    auto cudaStreamPtr = cs.getCUDAStream();
+    auto cudaStreamPtr = cudautils::getCUDAStreamCache().getCUDAStream();
     auto& cudaStream = *cudaStreamPtr;
     
     SECTION("Destructor") {
@@ -177,7 +178,7 @@ TEST_CASE("Tests of CUDAService", "[CUDAService]") {
     ps.addUntrackedParameter("allocator", alloc);
     auto cs = makeCUDAService(ps, ar);
     cs.setCurrentDevice(0);
-    auto cudaStreamPtr = cs.getCUDAStream();
+    auto cudaStreamPtr = cudautils::getCUDAStreamCache().getCUDAStream();
     auto& cudaStream = *cudaStreamPtr;
     
     SECTION("Destructor") {

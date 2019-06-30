@@ -3,8 +3,8 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 
 #include "chooseCUDADevice.h"
 
@@ -13,8 +13,7 @@ namespace impl {
     currentDevice_(cudacore::chooseCUDADevice(streamID)),
     setDeviceForThisScope_(currentDevice_)
   {
-    edm::Service<CUDAService> cs;
-    stream_ = cs->getCUDAStream();
+    stream_ = cudautils::getCUDAStreamCache().getCUDAStream();
   }
 
   CUDAScopedContextBase::CUDAScopedContextBase(const CUDAProductBase& data):
@@ -25,8 +24,7 @@ namespace impl {
       stream_ = data.streamPtr();
     }
     else {
-      edm::Service<CUDAService> cs;
-      stream_ = cs->getCUDAStream();
+      stream_ = cudautils::getCUDAStreamCache().getCUDAStream();
     }
   }
 
