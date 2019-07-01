@@ -24,7 +24,7 @@ namespace cudautils {
     // intended to be called only from CUDAService destructor
     void clear();
 
-    std::vector<edm::ReusableObjectHolder<cuda::stream_t<>>> cache_;
+    std::vector<edm::ReusableObjectHolder<cuda::stream_t<> > > cache_;
   };
 
   // Gets the global instance of a CUDAStreamCache
