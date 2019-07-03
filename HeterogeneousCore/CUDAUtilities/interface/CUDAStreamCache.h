@@ -2,6 +2,7 @@
 #define HeterogeneousCore_CUDAUtilities_CUDAStreamCache_h
 
 #include <memory>
+#include <vector>
 
 #include <cuda/api_wrappers.h>
 
