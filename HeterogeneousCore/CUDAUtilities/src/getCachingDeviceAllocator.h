@@ -1,8 +1,11 @@
 #ifndef HeterogeneousCore_CUDACore_src_getCachingDeviceAllocator
 #define HeterogeneousCore_CUDACore_src_getCachingDeviceAllocator
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "CachingDeviceAllocator.h"
+
+#include <iomanip>
 
 namespace cudautils {
   namespace allocator {
@@ -17,7 +20,7 @@ namespace cudautils {
     // Total storage for the allocator. 0 means no limit.
     constexpr size_t maxCachedBytes = 0;
     // Fraction of total device memory taken for the allocator. In case there are multiple devices with different amounts of memory, the smallest of them is taken. If maxCachedBytes is non-zero, the smallest of them is taken.
-    constexpr unsigned int maxCachedFraction = 0.8;
+    constexpr double maxCachedFraction = 0.8;
     constexpr bool debug = false;
 
     inline
@@ -41,6 +44,27 @@ namespace cudautils {
 
     inline
     notcub::CachingDeviceAllocator& getCachingDeviceAllocator() {
+      LogDebug("CachingDeviceAllocator").log([](auto& log) {
+          log << "cub::CachingDeviceAllocator settings\n"
+              << "  bin growth " << binGrowth << "\n"
+              << "  min bin    " << minBin << "\n"
+              << "  max bin    " << maxBin << "\n"
+              << "  resulting bins:\n";
+          for (auto bin = minBin; bin <= maxBin; ++bin) {
+            auto binSize = notcub::CachingDeviceAllocator::IntPow(binGrowth, bin);
+            if (binSize >= (1<<30) and binSize % (1<<30) == 0) {
+              log << "    " << std::setw(8) << (binSize >> 30) << " GB\n";
+            } else if (binSize >= (1<<20) and binSize % (1<<20) == 0) {
+              log << "    " << std::setw(8) << (binSize >> 20) << " MB\n";
+            } else if (binSize >= (1<<10) and binSize % (1<<10) == 0) {
+              log << "    " << std::setw(8) << (binSize >> 10) << " kB\n";
+            } else {
+              log << "    " << std::setw(9) << binSize << " B\n";
+            }
+          }
+          log << "  maximum amount of cached memory: " << (minCachedBytes() >> 20) << " MB\n";
+        });
+
       static notcub::CachingDeviceAllocator allocator {
         binGrowth, minBin, maxBin, minCachedBytes(),
           false, // do not skip cleanup
