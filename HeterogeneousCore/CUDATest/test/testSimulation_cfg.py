@@ -43,9 +43,22 @@ process.transfer.numberOfElements = 1 # 4 B
 #process.transfer.numberOfElements = 262144 # 1 MB
 #process.transfer.useCachingAllocator = False
 process.transfer.transferDevice = True
-process.transfer.kernels = 1
+process.transfer.kernels = 40
 process.transfer.kernelLoops = 1
 #process.transfer.kernelLoops = 1024
 #process.transfer.kernelLoops = 8192
 process.transfer.transferHost = True
-process.p_transfer = cms.Path(process.transfer)
+
+from HeterogeneousCore.CUDATest.testCUDAProducerCPUCrunch_cfi import testCUDAProducerCPUCrunch
+process.cpu1 = testCUDAProducerCPUCrunch.clone()
+process.cpu2 = testCUDAProducerCPUCrunch.clone(srcs=["cpu1", "transfer"])
+
+process.cpu1.crunchForSeconds = 50e-6
+process.cpu2.crunchForSeconds = 100e-6
+
+process.maxEvents.input = 10
+
+process.p_transfer = cms.Path(
+    process.cpu2,
+    cms.Task(process.transfer, process.cpu1)
+)
