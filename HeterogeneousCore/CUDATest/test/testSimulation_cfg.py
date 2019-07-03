@@ -53,12 +53,17 @@ from HeterogeneousCore.CUDATest.testCUDAProducerCPUCrunch_cfi import testCUDAPro
 process.cpu1 = testCUDAProducerCPUCrunch.clone()
 process.cpu2 = testCUDAProducerCPUCrunch.clone(srcs=["cpu1", "transfer"])
 
-process.cpu1.crunchForSeconds = 50e-6
-process.cpu2.crunchForSeconds = 100e-6
-
-process.maxEvents.input = 10
+process.cpu1.crunchForSeconds = 250e-6
+process.cpu2.crunchForSeconds = 400e-6
 
 process.p_transfer = cms.Path(
     process.cpu2,
     cms.Task(process.transfer, process.cpu1)
 )
+
+#process.maxEvents.input = 80
+#process.maxEvents.input = 10
+#process.options.numberOfThreads = 1
+#process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
+#process.NVProfilerService.skipFirstEvent = True
+#process.MessageLogger.cerr.FwkReport.reportEvery = 1
