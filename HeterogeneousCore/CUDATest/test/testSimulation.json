@@ -1,0 +1,13 @@
+{
+  "moduleDeclarations": [],
+  "moduleDefinitions": {
+    "transfer": {
+      "acquire": [
+        {"name": "memcpyHtoD", "values": [32768], "unit": "bytes"},
+         {"name": "kernel", "values": [400000], "unit": "ns"},
+         {"name": "memcpyDtoH", "values": [32768], "unit": "bytes"}
+        ],
+      "produce": []
+    }
+  }
+}

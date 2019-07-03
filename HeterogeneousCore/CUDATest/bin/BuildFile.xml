@@ -1,0 +1,7 @@
+<bin file="cudaCalibration.cu">
+  <use name="cuda"/>
+</bin>
+
+<bin file="cpuCalibration.cc">
+  <use name="tbb"/>
+</bin>
