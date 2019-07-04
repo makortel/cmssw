@@ -16,10 +16,22 @@
 
 #include "TestCUDAProducerSimEWGPUKernel.h"
 
+#include <atomic>
 #include <random>
 
 namespace {
   edm::SerialTaskQueue taskQueue;
+
+  template <typename F>
+  auto make_lambda_with_holder(F&& f, edm::WaitingTaskWithArenaHolder h) {
+    return [f,h]() mutable {
+      try {
+        f(h);
+      } catch(...) {
+        h.doneWaiting(std::current_exception());
+      }
+    };
+  }
 }
 
 class TestCUDAProducerSimEWSerialTaskQueue: public edm::stream::EDProducer<edm::ExternalWork> {
@@ -31,8 +43,8 @@ public:
 
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
-private:
-  
+
+private:  
   const edm::EDPutTokenT<int> dstToken_;
   const size_t numberOfElements_;
   const int kernels_;
@@ -40,6 +52,9 @@ private:
   const bool useCachingAllocator_;
   const bool transferDevice_;
   const bool transferHost_;
+
+  std::atomic<bool> queueingFinished_;
+  CUDAContextState ctxState_;
 
   float *data_d_ = nullptr;
   cudautils::host::noncached::unique_ptr<float[]> data_h_;
@@ -87,8 +102,13 @@ void TestCUDAProducerSimEWSerialTaskQueue::fillDescriptions(edm::ConfigurationDe
 }
 
 void TestCUDAProducerSimEWSerialTaskQueue::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder h) {
-  taskQueue.push([this,h,streamID=iEvent.streamID()](){
-    CUDAScopedContextAcquire ctx{streamID, std::move(h)};
+  {
+    // This is now a bit stupid, but I need the ctxState_ to be fully set before calling taskQueue::push()
+    CUDAScopedContextAcquire ctx{iEvent.streamID(), h, ctxState_};
+  }
+  queueingFinished_.store(false);
+  taskQueue.push(make_lambda_with_holder([this](edm::WaitingTaskWithArenaHolder h){
+    CUDAScopedContextTask ctx{&ctxState_, std::move(h)};
     float *data_d = data_d_;
     cudautils::device::unique_ptr<float[]> data_d_own;
 
@@ -107,11 +127,15 @@ void TestCUDAProducerSimEWSerialTaskQueue::acquire(const edm::Event& iEvent, con
         cuda::memory::async::copy(data_h_.get(), data_d, numberOfElements_*sizeof(float), ctx.stream().id());
       }
     }
-
-  });
+    queueingFinished_.store(true);
+  }, std::move(h)));
 }
 
 void TestCUDAProducerSimEWSerialTaskQueue::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+  CUDAScopedContextProduce ctx{ctxState_};
+  if(not queueingFinished_.load()) {
+    throw cms::Exception("Assert") << "Work was not yet fully queued in acquire!";
+  }
   iEvent.emplace(dstToken_, 42);
 }
 
