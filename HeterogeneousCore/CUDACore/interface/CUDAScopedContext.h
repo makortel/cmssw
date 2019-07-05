@@ -2,7 +2,6 @@
 #define HeterogeneousCore_CUDACore_CUDAScopedContext_h
 
 #include "FWCore/Concurrency/interface/WaitingTaskWithArenaHolder.h"
-#include "FWCore/Concurrency/interface/make_waiting_task_with_holder.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
@@ -255,7 +254,7 @@ namespace impl {
   void CUDAScopedContextHolderHelper::insertNextTask(F&& f, CUDAContextState const* state) {
     replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task_with_holder(tbb::task::allocate_root(),
                                                                                                 std::move(waitingTaskHolder_),
-                                                                                                [state,func=std::move(f)](edm::WaitingTaskWithArenaHolder h) {
+                                                                                                [state,func=std::forward<F>(f)](edm::WaitingTaskWithArenaHolder h) {
                                                                                                   func(CUDAScopedContextTask{state, std::move(h)});
                                                                                                 })});
   }
