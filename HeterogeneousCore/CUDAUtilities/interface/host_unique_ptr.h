@@ -50,6 +50,27 @@ namespace cudautils {
   template <typename T, typename ...Args>
   typename host::impl::make_host_unique_selector<T>::bounded_array
   make_host_unique(Args&&...) = delete;
+
+
+  // No check for the trivial constructor, make it clear in the interface
+  template <typename T>
+  typename host::impl::make_host_unique_selector<T>::non_array
+  make_host_unique_uninitialized(cuda::stream_t<>& stream) {
+    void *mem = allocate_host(sizeof(T), stream);
+    return typename host::impl::make_host_unique_selector<T>::non_array{reinterpret_cast<T *>(mem)};
+  }
+
+  template <typename T>
+  typename host::impl::make_host_unique_selector<T>::unbounded_array
+  make_host_unique_uninitialized(size_t n, cuda::stream_t<>& stream) {
+    using element_type = typename std::remove_extent<T>::type;
+    void *mem = allocate_host(n*sizeof(element_type), stream);
+    return typename host::impl::make_host_unique_selector<T>::unbounded_array{reinterpret_cast<element_type *>(mem)};
+  }
+
+  template <typename T, typename ...Args>
+  typename host::impl::make_host_unique_selector<T>::bounded_array
+  make_host_unique_uninitialized(Args&&...) = delete;
 }
 
 #endif

@@ -63,6 +63,31 @@ namespace cudautils {
   template <typename T, typename ...Args>
   typename device::impl::make_device_unique_selector<T>::bounded_array
   make_device_unique(Args&&...) = delete;
+
+
+  // No check for the trivial constructor, make it clear in the interface
+  template <typename T>
+  typename device::impl::make_device_unique_selector<T>::non_array
+  make_device_unique_uninitialized(cuda::stream_t<>& stream) {
+    int dev = cuda::device::current::get().id();
+    void *mem = cudautils::allocate_device(dev, sizeof(T), stream);
+    return typename device::impl::make_device_unique_selector<T>::non_array{reinterpret_cast<T *>(mem),
+                                                                            device::impl::DeviceDeleter{dev}};
+  }
+
+  template <typename T>
+  typename device::impl::make_device_unique_selector<T>::unbounded_array
+  make_device_unique_uninitialized(size_t n, cuda::stream_t<>& stream) {
+    using element_type = typename std::remove_extent<T>::type;
+    int dev = cuda::device::current::get().id();
+    void *mem = cudautils::allocate_device(dev, n*sizeof(element_type), stream);
+    return typename device::impl::make_device_unique_selector<T>::unbounded_array{reinterpret_cast<element_type *>(mem),
+                                                                                  device::impl::DeviceDeleter{dev}};
+  }
+
+  template <typename T, typename ...Args>
+  typename device::impl::make_device_unique_selector<T>::bounded_array
+  make_device_unique_uninitialized(Args&&...) = delete;
 }
 
 #endif
