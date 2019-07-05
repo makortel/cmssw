@@ -14,6 +14,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
 
+#include "TimeCruncher.h"
 #include "TestCUDAProducerSimEWGPUKernel.h"
 
 #include <atomic>
@@ -45,6 +46,7 @@ public:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
 private:  
+  std::vector<edm::EDGetTokenT<int>> srcTokens_;
   const edm::EDPutTokenT<int> dstToken_;
   const size_t numberOfElements_;
   const int kernels_;
@@ -52,6 +54,7 @@ private:
   const bool useCachingAllocator_;
   const bool transferDevice_;
   const bool transferHost_;
+  const std::chrono::microseconds crunchForMicroSeconds_;
 
   std::atomic<bool> queueingFinished_;
   CUDAContextState ctxState_;
@@ -67,7 +70,8 @@ TestCUDAProducerSimEWSerialTaskQueue::TestCUDAProducerSimEWSerialTaskQueue(const
   kernelLoops_{iConfig.getParameter<int>("kernelLoops")},
   useCachingAllocator_{iConfig.getParameter<bool>("useCachingAllocator")},
   transferDevice_{iConfig.getParameter<bool>("transferDevice")},
-  transferHost_{iConfig.getParameter<bool>("transferHost")}
+  transferHost_{iConfig.getParameter<bool>("transferHost")},
+  crunchForMicroSeconds_{static_cast<long unsigned int>(iConfig.getParameter<double>("crunchForSeconds")*1e6)}
 {
   edm::Service<CUDAService> cs;
   if(cs->enabled()) {
@@ -83,6 +87,11 @@ TestCUDAProducerSimEWSerialTaskQueue::TestCUDAProducerSimEWSerialTaskQueue(const
       cuda::throw_if_error(cudaMalloc(&data_d_, numberOfElements_*sizeof(float)));
     }
   }
+
+  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
+    srcTokens_.emplace_back(consumes<int>(src));
+  }
+  cudatest::getTimeCruncher();
 }
 
 TestCUDAProducerSimEWSerialTaskQueue::~TestCUDAProducerSimEWSerialTaskQueue() {
@@ -92,16 +101,27 @@ TestCUDAProducerSimEWSerialTaskQueue::~TestCUDAProducerSimEWSerialTaskQueue() {
 }
 void TestCUDAProducerSimEWSerialTaskQueue::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
+  desc.add<std::vector<edm::InputTag>> ("srcs", std::vector<edm::InputTag>{});
   desc.add<unsigned int>("numberOfElements", 1);
   desc.add<bool>("useCachingAllocator", true);
   desc.add<bool>("transferDevice", false);
   desc.add<int>("kernels", 1);
   desc.add<int>("kernelLoops", -1);
   desc.add<bool>("transferHost", false);
+  desc.add<double>("crunchForSeconds", 0);
   descriptions.addWithDefaultLabel(desc);
 }
 
 void TestCUDAProducerSimEWSerialTaskQueue::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder h) {
+  // to make sure the dependencies are set correctly
+  for(const auto& t: srcTokens_) {
+    iEvent.get(t);
+  }
+
+  if(crunchForMicroSeconds_.count() > 0) {
+    cudatest::getTimeCruncher().crunch_for(crunchForMicroSeconds_);
+  }
+
   {
     // This is now a bit stupid, but I need the ctxState_ to be fully set before calling taskQueue::push()
     CUDAScopedContextAcquire ctx{iEvent.streamID(), h, ctxState_};
