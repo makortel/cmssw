@@ -38,32 +38,57 @@ process.options = cms.untracked.PSet(
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
 #from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
 process.transfer = testCUDAProducerSimEW.clone()
-process.transfer.numberOfElements = 1 # 4 B
-#process.transfer.numberOfElements = 8192 # 32 kB
+#process.transfer.numberOfElements = 1 # 4 B
+process.transfer.numberOfElements = 8192 # 32 kB
 #process.transfer.numberOfElements = 262144 # 1 MB
 #process.transfer.useCachingAllocator = False
 process.transfer.transferDevice = True
-process.transfer.kernels = 40
-process.transfer.kernelLoops = 1
-#process.transfer.kernelLoops = 1024
+process.transfer.kernels = 1
+#process.transfer.kernelLoops = 1
+process.transfer.kernelLoops = 1024
 #process.transfer.kernelLoops = 8192
 process.transfer.transferHost = True
+
+process.p = cms.Path(process.transfer)
 
 from HeterogeneousCore.CUDATest.testCUDAProducerCPUCrunch_cfi import testCUDAProducerCPUCrunch
 process.cpu1 = testCUDAProducerCPUCrunch.clone()
 process.cpu2 = testCUDAProducerCPUCrunch.clone(srcs=["cpu1", "transfer"])
 
-process.cpu1.crunchForSeconds = 250e-6
-process.cpu2.crunchForSeconds = 400e-6
+process.cpu1.crunchForSeconds = 100e-6
+process.cpu2.crunchForSeconds = 200e-6
 
-process.p_transfer = cms.Path(
-    process.cpu2,
-    cms.Task(process.transfer, process.cpu1)
+process.t_transfer = cms.Task(process.transfer, process.cpu1, process .cpu2)
+process.p_transfer = cms.Path(process.t_transfer)
+process.out = cms.OutputModule("AsciiOutputModule",
+    outputCommands = cms.untracked.vstring(
+        "keep *_cpu2_*_*",
+    ),
+    verbosity = cms.untracked.uint32(0),
 )
+process.p_out = cms.EndPath(process.out)
 
-#process.maxEvents.input = 80
-#process.maxEvents.input = 10
-#process.options.numberOfThreads = 1
+process.maxEvents.input = process.maxEvents.input.value()/10
+process.MessageLogger.cerr.FwkReport.reportEvery = process.MessageLogger.cerr.FwkReport.reportEvery.value()/10
+factor = 32
+process.transfer.numberOfElements = factor*process.transfer.numberOfElements.value()
+process.transfer.kernelLoops = factor*process.transfer.kernelLoops.value()
+#process.cpu1.crunchForSeconds = factor*process.cpu1.crunchForSeconds.value()
+#process.cpu2.crunchForSeconds = factor*process.cpu2.crunchForSeconds.value()
+
+if factor > 1:
+    for i in xrange(1, factor):
+        m1 = process.cpu1.clone()
+        m2 = process.cpu2.clone(srcs=["cpu1c%d"%i, "transfer"])
+        setattr(process, "cpu1c%d"%i, m1)
+        setattr(process, "cpu2c%d"%i, m2)
+        process.t_transfer.add(m1, m2)
+        process.out.outputCommands.append("keep *_cpu2c%d_*_*" % i)
+
+#process.maxEvents.input = 2
+#process.Tracer = cms.Service("Tracer")
+#process.out.verbosity = 1
+#process.options.numberOfThreads = 8
 #process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
 #process.NVProfilerService.skipFirstEvent = True
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1
