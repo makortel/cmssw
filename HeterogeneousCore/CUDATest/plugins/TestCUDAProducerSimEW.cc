@@ -19,6 +19,60 @@
 #include <random>
 
 namespace {
+  enum class OpType {
+    CPU,
+    kernel,
+    memcpyHtoD,
+    memcpyDToH
+  };
+
+  OpType stringToOpType(std::string const& name) {
+    if(name == "cpu") {
+      return OpType::CPU;
+    }
+    else if(name == "kernel") {
+      return OpType::kernel;
+    }
+    else if(name == "memcptHtoD") {
+      return OpType::memcpyHtoD;
+    }
+    else if(name == "memcptDtoH") {
+      return OpType::memcpyDtoH;
+    }
+    throw cms::Exception("Assert") << "Invalid op type " << name;
+  }
+
+  struct State {
+    float* kernel_data;
+    size_t kernel_elements;
+
+    std::vector<char *> data_h_src;
+    std::vector<char *> data_d_src;
+
+    std::vector<cudautils::host::unique_ptr<char[]>> data_h_dst;
+    std::vector<cudautils::host::unique_ptr<char[]>> data_d_dst;
+  };
+
+
+  class Operation {
+  public:
+    Operation(const edm::ParameterSet& iConfig):
+      type_{stringToOpType(iConfig.getParameter<std::string>("name"))},
+      time_{(type_ == OpType::CPU or type_ == OpType::kernel) ? iConfig.getParameter<unsigned long int>("time") : 0},
+      bytes_{(type == OpType::memcpyHtoD or type == OpType::memcpyDtoH) ? iConfig.getParameter<unsigned int>("bytes")}
+    {}
+
+    OpType type() const { return type_; }
+
+    unsigned int bytes() const { return bytes_; }
+
+  private:
+    const OpType type_;
+    const std::chrono::nanoseconds time_;
+    const unsigned int bytes_;
+  };
+
+
   class OperationBase {
   public:
     OperationBase() = default;
@@ -173,7 +227,7 @@ void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& des
 
   edm::ParameterSetDescription opValidator;
   opValidator.add("name", std::string("cpu"));
-  opValidator.addNode( edm::ParameterDescription<double>("time", 0., true) xor
+  opValidator.addNode( edm::ParameterDescription<unsigned long int>("time", 0., true) xor
                        edm::ParameterDescription<unsigned int>("bytes", 0, true) );
 
   edm::ParameterSetDescription eventValidator;
