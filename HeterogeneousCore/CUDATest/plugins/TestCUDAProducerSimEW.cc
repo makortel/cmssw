@@ -18,6 +18,67 @@
 
 #include <random>
 
+namespace {
+  class OperationBase {
+  public:
+    OperationBase() = default;
+    virtual ~OperationBase() = default;
+
+    virtual unsigned int bytes() const { return 0; }
+
+    virtual void operate() const = 0;
+
+  private:
+  };
+
+  class OperationCPU: public OperationBase {
+  public:
+    OperationCPU(const edm::ParameterSet& iConfig):
+      time_{static_cast<unsigned long int>(iConfig.getParameter<double>("time"))}
+    {}
+
+    void operate() const override {
+      cudatest::getTimeCruncher().crunch_for(time_);
+    };
+  private:
+    const std::chrono::microseconds time_;
+  };
+
+  class OperationMemcpyToDevice: public OperationBase {
+  public:
+    OperationMemcpyToDevice(const edm::ParameterSet& iConfig):
+      bytes_{iConfig.getParameter<unsigned int>("bytes")}
+    {}
+
+    unsigned int bytes() const override { return bytes_; }
+
+    void operate(cudautils::host::unique_ptr<float[]> const& data_h, cuda::stream_t<>& stream) const override {
+      auto data_d = cudautils::make_device_unique<float[]>( (bytes_ + sizeof(float) - 1)/sizeof(float), stream);
+      cuda::memory::async::copy(data_d, data_h, bytes_, stream.id());
+    }
+
+  private:
+    const unsigned int bytes_;
+  };
+
+  class OperationMemcpyToHost: public OperationBase {
+  public:
+    OperationMemcpyToHost(const edm::ParameterSet& iConfig):
+      bytes_{iConfig.getParameter<unsigned int>("bytes")}
+    {}
+
+    unsigned int bytes() const override { return bytes_; }
+
+    void operate(cudautils::host::unique_ptr<float[]> const& data_d, cuda::stream_t<>& stream) const override {
+      auto data_h = cudautils::make_host_unique<float[]>( (bytes_ + sizeof(float) - 1)/sizeof(float), stream);
+      cuda::memory::async::copy(data_h, data_d, bytes_, stream.id());
+    }
+
+  private:
+    const unsigned int bytes_;
+  };
+}
+
 
 class TestCUDAProducerSimEW: public edm::stream::EDProducer<edm::ExternalWork> {
 public:
@@ -108,11 +169,20 @@ TestCUDAProducerSimEW::~TestCUDAProducerSimEW() {
 void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<std::vector<edm::InputTag>> ("srcs", std::vector<edm::InputTag>{});
-  desc.add<std::vector<unsigned int>>("numberOfElementsToDevice", std::vector<unsigned int>{});
-  desc.add<std::vector<unsigned int>>("kernelLoops", std::vector<unsigned int>{});
-  desc.add<std::vector<unsigned int>>("numberOfElementsToHost", std::vector<unsigned int>{});
+
+
+  edm::ParameterSetDescription opValidator;
+  opValidator.add("name", std::string("cpu"));
+  opValidator.addNode( edm::ParameterDescription<double>("time", 0., true) xor
+                       edm::ParameterDescription<unsigned int>("bytes", 0, true) );
+
+  edm::ParameterSetDescription eventValidator;
+  eventValidator.addVPSet("event", opValidator, std::vector<edm::ParameterSet>{});
+
+  desc.addVPSet("acquire", eventValidator, std::vector<edm::ParameterSet>{});
+  desc.addVPSet("produce", eventValidator, std::vector<edm::ParameterSet>{});
+
   desc.add<bool>("useCachingAllocator", true);
-  desc.add<double>("crunchForSeconds", 0);
   descriptions.addWithDefaultLabel(desc);
 }
 
