@@ -19,29 +19,6 @@
 #include <random>
 
 namespace {
-  enum class OpType {
-    CPU,
-    kernel,
-    memcpyHtoD,
-    memcpyDToH
-  };
-
-  OpType stringToOpType(std::string const& name) {
-    if(name == "cpu") {
-      return OpType::CPU;
-    }
-    else if(name == "kernel") {
-      return OpType::kernel;
-    }
-    else if(name == "memcptHtoD") {
-      return OpType::memcpyHtoD;
-    }
-    else if(name == "memcptDtoH") {
-      return OpType::memcpyDtoH;
-    }
-    throw cms::Exception("Assert") << "Invalid op type " << name;
-  }
-
   struct State {
     float* kernel_data;
     size_t kernel_elements;
@@ -53,34 +30,15 @@ namespace {
     std::vector<cudautils::host::unique_ptr<char[]>> data_d_dst;
   };
 
-
-  class Operation {
-  public:
-    Operation(const edm::ParameterSet& iConfig):
-      type_{stringToOpType(iConfig.getParameter<std::string>("name"))},
-      time_{(type_ == OpType::CPU or type_ == OpType::kernel) ? iConfig.getParameter<unsigned long int>("time") : 0},
-      bytes_{(type == OpType::memcpyHtoD or type == OpType::memcpyDtoH) ? iConfig.getParameter<unsigned int>("bytes")}
-    {}
-
-    OpType type() const { return type_; }
-
-    unsigned int bytes() const { return bytes_; }
-
-  private:
-    const OpType type_;
-    const std::chrono::nanoseconds time_;
-    const unsigned int bytes_;
-  };
-
-
   class OperationBase {
   public:
     OperationBase() = default;
     virtual ~OperationBase() = default;
 
-    virtual unsigned int bytes() const { return 0; }
+    virtual unsigned int bytesToDevice() const { return 0; }
+    virtual unsigned int bytesToHost() const { return 0; }
 
-    virtual void operate() const = 0;
+    virtual void operate(State& state, cuda::stream_t<> *stream) const = 0;
 
   private:
   };
@@ -88,15 +46,27 @@ namespace {
   class OperationCPU: public OperationBase {
   public:
     OperationCPU(const edm::ParameterSet& iConfig):
-      time_{static_cast<unsigned long int>(iConfig.getParameter<double>("time"))}
+      time_{iConfig.getParameter<unsigned long int>("time")}
     {}
 
-    void operate() const override {
+    void operate(State& state, cuda::stream_t<> *stream) const override {
       cudatest::getTimeCruncher().crunch_for(time_);
     };
   private:
-    const std::chrono::microseconds time_;
+    const std::chrono::nanoseconds time_;
   };
+
+  class OperationKernel: public OperationBase {
+    OperationCPU(const edm::ParameterSet& iConfig):
+      time_{iConfig.getParameter<unsigned long int>("time"))}
+    {}
+
+    void operate(State& state, cuda::stream_t<> *stream) const override {
+      // ???
+    };
+  private:
+    const std::chrono::nanoseconds time_;
+  }
 
   class OperationMemcpyToDevice: public OperationBase {
   public:
@@ -104,11 +74,14 @@ namespace {
       bytes_{iConfig.getParameter<unsigned int>("bytes")}
     {}
 
-    unsigned int bytes() const override { return bytes_; }
+    unsigned int bytesToDevice() const override { return bytes_; }
 
-    void operate(cudautils::host::unique_ptr<float[]> const& data_h, cuda::stream_t<>& stream) const override {
-      auto data_d = cudautils::make_device_unique<float[]>( (bytes_ + sizeof(float) - 1)/sizeof(float), stream);
-      cuda::memory::async::copy(data_d, data_h, bytes_, stream.id());
+    void operate(State& state, cuda::stream_t<> *stream) const override {
+      const auto i = state.data_d_dst.size();
+
+      auto data_d = cudautils::make_device_unique<char[]>(bytes, *stream);
+      cuda::memory::async::copy(data_d.get(), state.data_h_src[i], bytes_, stream->id());
+      state.data_d_dst.emplace_back(data_d);
     }
 
   private:
@@ -121,11 +94,14 @@ namespace {
       bytes_{iConfig.getParameter<unsigned int>("bytes")}
     {}
 
-    unsigned int bytes() const override { return bytes_; }
+    unsigned int bytesToHost() const override { return bytes_; }
 
-    void operate(cudautils::host::unique_ptr<float[]> const& data_d, cuda::stream_t<>& stream) const override {
-      auto data_h = cudautils::make_host_unique<float[]>( (bytes_ + sizeof(float) - 1)/sizeof(float), stream);
-      cuda::memory::async::copy(data_h, data_d, bytes_, stream.id());
+    void operate(State& state, cuda::stream_t<> *stream) const override {
+      const auto i = state.data_h_dst.size();
+
+      auto data_d = cudautils::make_host_unique<char[]>(bytes, *stream);
+      cuda::memory::async::copy(data_h.get(), state.data_d_src[i], bytes_, stream->id());
+      state.data_h_dst.emplace_back(data_h);
     }
 
   private:
@@ -147,27 +123,53 @@ private:
   
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
   const edm::EDPutTokenT<int> dstToken_;
-  std::vector<unsigned int> numberOfElementsToDevice_;
-  std::vector<unsigned int> kernelLoops_;
-  std::vector<unsigned int> numberOfElementsToHost_;
-  std::vector<unsigned int> numberOfElementsAlloc_;
-  const bool useCachingAllocator_;
-  const std::chrono::microseconds crunchForMicroSeconds_;
 
-  std::vector<float *> data_d_;
-  std::vector<cudautils::host::noncached::unique_ptr<float[]>> data_h_;
+  using OpsPerEventVector = std::vector<std::unique_ptr<OperationBase> >;
+  using OpVector = std::vector<OpsPerEventVector>;
+
+  OpVector acquireOps_;
+  OpVector produceOps_;
+
+  static constexpr size_t kernel_elements_ = 32;
+  float* kernel_data_d_;
+
+  std::vector<float* > data_d_src_;
+  std::vector<cudautils::host::noncached::unique_ptr<float[]>> data_h_src_;
 };
 
 TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
   dstToken_{produces<int>()},
-  numberOfElementsToDevice_{iConfig.getParameter<std::vector<unsigned int>>("numberOfElementsToDevice")},
-  kernelLoops_{iConfig.getParameter<std::vector<unsigned int>>("kernelLoops")},
-  numberOfElementsToHost_{iConfig.getParameter<std::vector<unsigned int>>("numberOfElementsToHost")},
-  useCachingAllocator_{iConfig.getParameter<bool>("useCachingAllocator")},
-  crunchForMicroSeconds_{static_cast<long unsigned int>(iConfig.getParameter<double>("crunchForSeconds")*1e6)}
 {
+  auto createOps = [&](const std::string& psetName) {
+    OpVector ret;
+    for(const auto& ps: iConfig.getParameter<std::vector<edm::ParameterSet> >(psetName)) {
+      ret.emplace();
+      auto& opsPerEvent = ret.back();
+      for(const auto& psOp: ps.getParameter<std::vector<edm::ParameterSet> >("event")) {
+        auto opname = psOp.getParameter<std::string>("name");
+        if(opname == "cpu") {
+          opsPerEvent.emplace_back(std::make_unique<OperationCPU>(psOp));
+        }
+        else if(opname == "kernel") {
+          opsPerEvent.emplace_back(std::make_unique<OperationKernel>(psOp));
+        }
+        else if(opname == "memcpyHtoD") {
+          opsPerEvent.emplace_back(std::make_unique<OperationMemcpyToDevice>(psOp));
+        }
+        else if(opname == "memcpyDtoH") {
+          opsPerEvent.emplace_back(std::make_unique<OperationMemcpyToHost>(psOp));
+        }
+      }
+    }
+  };
+
+
   edm::Service<CUDAService> cs;
   if(cs->enabled()) {
+    cuda::throw_if_error(cudaMalloc(&kernel_data_d_, kernel_elements_*sizeof(float)));
+
+    
+
     numberOfElementsAlloc_.resize(std::max(numberOfElementsToDevice_.size(), numberOfElementsToHost_.size()));
     data_h_.resize(numberOfElementsAlloc_.size());
     for(size_t i=0; i<data_h_.size(); ++i) {
@@ -215,7 +217,8 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
 }
 
 TestCUDAProducerSimEW::~TestCUDAProducerSimEW() {
-  for(auto& ptr: data_d_) {
+  cuda::throw_if_error(cudaFree(kernel_data_d_));
+  for(auto& ptr: data_d_src_) {
     cuda::throw_if_error(cudaFree(ptr));
   }
 }
