@@ -522,14 +522,14 @@ std::pair<TrajectoryStateOnSurface, const GeomDet*> MkFitOutputConverter::backwa
   KFTrajectoryFitter backFitter(
       &propagatorAlong, &aKFUpdator, &aChi2MeasurementEstimator, firstHits.size(), nullptr, &hitCloner);
 
-  PropagationDirection backFitDirection =
-      oppositeToMomentum;  // assume for now that the propagation in mkfit always alongMomentum
+  // assume for now that the propagation in mkfit always alongMomentum
+  PropagationDirection backFitDirection = oppositeToMomentum;
 
-  // only direction matters in this contest
+  // only direction matters in this context
   TrajectorySeed fakeSeed(PTrajectoryStateOnDet(), edm::OwnVector<TrackingRecHit>(), backFitDirection);
 
-  Trajectory fitres =
-      backFitter.fitOne(fakeSeed, firstHits, startingState, TrajectoryFitter::standard);  // ignore loopers for now
+  // ignore loopers for now
+  Trajectory fitres = backFitter.fitOne(fakeSeed, firstHits, startingState, TrajectoryFitter::standard);
 
   LogDebug("MkFitOutputConverter") << "using a backward fit of :" << firstHits.size() << " hits, starting from:\n"
                                    << startingState << " to get the estimate of the initial state of the track.";
