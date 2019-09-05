@@ -20,6 +20,15 @@
 
 namespace {
   struct State {
+    State(float *kd, size_t ke, std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
+      kernel_data(kd), kernel_elements(ke), data_d_src(std::move(d_src))
+    {
+      data_h_src.resize(h_src.size());
+      std::transform(h_src.begin(), h_src.end(), data_h_src.begin(), [](auto& ptr) {
+          return ptr.get();
+        });
+    }
+
     float* kernel_data;
     size_t kernel_elements;
 
@@ -27,7 +36,7 @@ namespace {
     std::vector<char *> data_d_src;
 
     std::vector<cudautils::host::unique_ptr<char[]>> data_h_dst;
-    std::vector<cudautils::host::unique_ptr<char[]>> data_d_dst;
+    std::vector<cudautils::device::unique_ptr<char[]>> data_d_dst;
   };
 
   class OperationBase {
@@ -35,77 +44,169 @@ namespace {
     OperationBase() = default;
     virtual ~OperationBase() = default;
 
-    virtual unsigned int bytesToDevice() const { return 0; }
-    virtual unsigned int bytesToHost() const { return 0; }
+    virtual bool emplace_back(const edm::ParameterSet& iConfig) = 0;
+    virtual void pop_back() = 0;
+    virtual size_t size() const = 0;
 
-    virtual void operate(State& state, cuda::stream_t<> *stream) const = 0;
+    virtual unsigned int maxBytesToDevice() const { return 0; }
+    virtual unsigned int maxBytesToHost() const { return 0; }
+
+    virtual void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const = 0;
 
   private:
   };
 
-  class OperationCPU: public OperationBase {
+  class OperationTime: public OperationBase {
   public:
-    OperationCPU(const edm::ParameterSet& iConfig):
-      time_{iConfig.getParameter<unsigned long int>("time")}
-    {}
+    explicit OperationTime(const edm::ParameterSet& iConfig)
+    {
+      assert(emplace_back(iConfig));
+    }
 
-    void operate(State& state, cuda::stream_t<> *stream) const override {
-      cudatest::getTimeCruncher().crunch_for(time_);
-    };
+    bool emplace_back(const edm::ParameterSet& iConfig) override {
+      if(not checkName(iConfig.getParameter<std::string>("name"))) {
+        return false;
+      }
+
+      time_.emplace_back(iConfig.getParameter<unsigned long long>("time"));
+      return true;
+    }
+
+    void pop_back() override {
+      time_.pop_back();
+    }
+
+    size_t size() const override {
+      return time_.size();
+    }
+
+  protected:
+    std::chrono::nanoseconds totalTime(const std::vector<size_t>& indices) const {
+      std::chrono::nanoseconds total;
+      for(size_t i: indices) {
+        total += time_[i];
+      }
+      return total;
+    }
+
+    virtual bool checkName(const std::string& name) const = 0;
+
   private:
-    const std::chrono::nanoseconds time_;
+    std::vector<std::chrono::nanoseconds> time_;
   };
 
-  class OperationKernel: public OperationBase {
-    OperationCPU(const edm::ParameterSet& iConfig):
-      time_{iConfig.getParameter<unsigned long int>("time"))}
-    {}
-
-    void operate(State& state, cuda::stream_t<> *stream) const override {
-      // ???
-    };
-  private:
-    const std::chrono::nanoseconds time_;
-  }
-
-  class OperationMemcpyToDevice: public OperationBase {
+  class OperationCPU final: public OperationTime {
   public:
-    OperationMemcpyToDevice(const edm::ParameterSet& iConfig):
-      bytes_{iConfig.getParameter<unsigned int>("bytes")}
-    {}
+    explicit OperationCPU(const edm::ParameterSet& iConfig): OperationTime(iConfig) {}
 
-    unsigned int bytesToDevice() const override { return bytes_; }
+    bool checkName(const std::string& name) const override {
+      return name == "cpu";
+    }
 
-    void operate(State& state, cuda::stream_t<> *stream) const override {
+    void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
+      cudatest::getTimeCruncher().crunch_for(std::chrono::duration_cast<std::chrono::microseconds>(totalTime(indices)));
+    };
+  };
+
+  class OperationKernel final: public OperationTime {
+  public:
+    explicit OperationKernel(const edm::ParameterSet& iConfig): OperationTime(iConfig) {}
+
+    bool checkName(const std::string& name) const override{
+      return name == "kernel";
+    }
+
+    void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
+      // something(totalTime(indices)) ???
+    };
+  };
+
+  class OperationBytes: public OperationBase {
+  public:
+    explicit OperationBytes(const edm::ParameterSet& iConfig)
+    {
+      assert(emplace_back(iConfig));
+    }
+
+    bool emplace_back(const edm::ParameterSet& iConfig) override {
+      if(not checkName(iConfig.getParameter<std::string>("name"))) {
+        return false;
+      }
+
+      bytes_.emplace_back(iConfig.getParameter<unsigned int>("bytes"));
+      return true;
+    }
+
+    void pop_back() override {
+      bytes_.pop_back();
+    }
+
+    size_t size() const override {
+      return bytes_.size();
+    }
+
+  protected:
+    unsigned long int totalBytes(const std::vector<size_t>& indices) const {
+      unsigned long total = 0;
+      for(size_t i: indices) {
+        total += bytes_[i];
+      }
+      return total;
+    }
+
+    unsigned long int maxBytes() const {
+      auto maxel = std::max_element(bytes_.begin(), bytes_.end());
+      if(maxel == bytes_.end())
+        return 0;
+      return *maxel;
+    }
+
+    virtual bool checkName(const std::string& name) const = 0;
+
+  private:
+    std::vector<unsigned long int> bytes_;
+  };  
+
+  class OperationMemcpyToDevice final: public OperationBytes {
+  public:
+    explicit OperationMemcpyToDevice(const edm::ParameterSet& iConfig): OperationBytes(iConfig) {}
+
+    unsigned int maxBytesToDevice() const override { return maxBytes(); }
+
+    bool checkName(const std::string& name) const override {
+      return name == "memcpyHtoD";
+    }
+
+    void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
       const auto i = state.data_d_dst.size();
 
-      auto data_d = cudautils::make_device_unique<char[]>(bytes, *stream);
-      cuda::memory::async::copy(data_d.get(), state.data_h_src[i], bytes_, stream->id());
-      state.data_d_dst.emplace_back(data_d);
-    }
+      const auto bytes = totalBytes(indices);
 
-  private:
-    const unsigned int bytes_;
+      auto data_d = cudautils::make_device_unique<char[]>(bytes, *stream);
+      cuda::memory::async::copy(data_d.get(), state.data_h_src[i], bytes, stream->id());
+      state.data_d_dst.emplace_back(std::move(data_d));
+    }
   };
 
-  class OperationMemcpyToHost: public OperationBase {
+  class OperationMemcpyToHost final: public OperationBytes {
   public:
-    OperationMemcpyToHost(const edm::ParameterSet& iConfig):
-      bytes_{iConfig.getParameter<unsigned int>("bytes")}
-    {}
+    explicit OperationMemcpyToHost(const edm::ParameterSet& iConfig): OperationBytes(iConfig) {}
 
-    unsigned int bytesToHost() const override { return bytes_; }
+    unsigned int maxBytesToHost() const override { return maxBytes(); }
 
-    void operate(State& state, cuda::stream_t<> *stream) const override {
-      const auto i = state.data_h_dst.size();
-
-      auto data_d = cudautils::make_host_unique<char[]>(bytes, *stream);
-      cuda::memory::async::copy(data_h.get(), state.data_d_src[i], bytes_, stream->id());
-      state.data_h_dst.emplace_back(data_h);
+    bool checkName(const std::string& name) const override{
+      return name == "memcpyDtoH";
     }
 
-  private:
-    const unsigned int bytes_;
+    void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
+      const auto i = state.data_h_dst.size();
+
+      const auto bytes = totalBytes(indices);
+
+      auto data_h = cudautils::make_host_unique<char[]>(bytes, *stream);
+      cuda::memory::async::copy(data_h.get(), state.data_d_src[i], bytes, stream->id());
+      state.data_h_dst.emplace_back(std::move(data_h));
+    }
   };
 }
 
@@ -123,9 +224,9 @@ private:
   
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
   const edm::EDPutTokenT<int> dstToken_;
+  CUDAContextState ctxState_;
 
-  using OpsPerEventVector = std::vector<std::unique_ptr<OperationBase> >;
-  using OpVector = std::vector<OpsPerEventVector>;
+  using OpVector = std::vector<std::unique_ptr<OperationBase>>;
 
   OpVector acquireOps_;
   OpVector produceOps_;
@@ -133,79 +234,118 @@ private:
   static constexpr size_t kernel_elements_ = 32;
   float* kernel_data_d_;
 
-  std::vector<float* > data_d_src_;
-  std::vector<cudautils::host::noncached::unique_ptr<float[]>> data_h_src_;
+  // These are indexed by the operation index in acquireOps and produceOps_
+  // They are likely to contain null elements
+  std::vector<char* > data_d_src_;
+  std::vector<cudautils::host::noncached::unique_ptr<char[]>> data_h_src_;
 };
 
 TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
-  dstToken_{produces<int>()},
+  dstToken_{produces<int>()}
 {
   auto createOps = [&](const std::string& psetName) {
     OpVector ret;
+    bool first = true;
     for(const auto& ps: iConfig.getParameter<std::vector<edm::ParameterSet> >(psetName)) {
-      ret.emplace();
-      auto& opsPerEvent = ret.back();
-      for(const auto& psOp: ps.getParameter<std::vector<edm::ParameterSet> >("event")) {
-        auto opname = psOp.getParameter<std::string>("name");
-        if(opname == "cpu") {
-          opsPerEvent.emplace_back(std::make_unique<OperationCPU>(psOp));
+      if(first) {
+        for(const auto& psOp: ps.getParameter<std::vector<edm::ParameterSet> >("event")) {
+          auto opname = psOp.getParameter<std::string>("name");
+          if(opname == "cpu") {
+            ret.emplace_back(std::make_unique<OperationCPU>(psOp));
+          }
+          else if(opname == "kernel") {
+            ret.emplace_back(std::make_unique<OperationKernel>(psOp));
+          }
+          else if(opname == "memcpyHtoD") {
+            ret.emplace_back(std::make_unique<OperationMemcpyToDevice>(psOp));
+          }
+          else if(opname == "memcpyDtoH") {
+            ret.emplace_back(std::make_unique<OperationMemcpyToHost>(psOp));
+          }
         }
-        else if(opname == "kernel") {
-          opsPerEvent.emplace_back(std::make_unique<OperationKernel>(psOp));
+        first = false;
+      }
+      else {
+        auto ops = ps.getParameter<std::vector<edm::ParameterSet> >("event");
+        // If different number of operations, skip the event
+        if(ops.size() != ret.size()) {
+          continue;
         }
-        else if(opname == "memcpyHtoD") {
-          opsPerEvent.emplace_back(std::make_unique<OperationMemcpyToDevice>(psOp));
-        }
-        else if(opname == "memcpyDtoH") {
-          opsPerEvent.emplace_back(std::make_unique<OperationMemcpyToHost>(psOp));
+
+        int iOp=0;
+        for(const auto& psOp: ops) {
+          if(not ret[iOp]->emplace_back(psOp)) {
+            // If insertion failed (because of wrong type of operation), roll back the added operations from this ps
+            for(--iOp; iOp >= 0; --iOp) {
+              ret[iOp]->pop_back();
+            }
+            break;
+          }
+          ++iOp;
         }
       }
     }
+
+    // sanity check
+    if(not ret.empty()) {
+      const auto nevs = ret[0]->size();
+      for(const auto& op: ret) {
+        if(op->size() != nevs) {
+          throw cms::Exception("Configuration") << "Incorrect number of events " << op->size() << " vs " << nevs;
+        }
+      }
+    }
+    return ret;
   };
 
+  acquireOps_ = createOps("acquire");
+  produceOps_ = createOps("produce");
+
+  if((not acquireOps_.empty()) and (not produceOps_.empty()) and (acquireOps_[0]->size() != produceOps_[0]->size())) {
+    throw cms::Exception("Configuration") << "Got " << acquireOps_[0]->size() << " events for acquire and " << produceOps_[0]->size() << " for produce";
+  }
 
   edm::Service<CUDAService> cs;
   if(cs->enabled()) {
-    cuda::throw_if_error(cudaMalloc(&kernel_data_d_, kernel_elements_*sizeof(float)));
-
-    
-
-    numberOfElementsAlloc_.resize(std::max(numberOfElementsToDevice_.size(), numberOfElementsToHost_.size()));
-    data_h_.resize(numberOfElementsAlloc_.size());
-    for(size_t i=0; i<data_h_.size(); ++i) {
-      unsigned int elem = 0;
-      if(i < numberOfElementsToDevice_.size()) {
-        elem = numberOfElementsToDevice_[i];
-      }
-      if(i < numberOfElementsToHost_.size()) {
-        elem = std::max(elem, numberOfElementsToDevice_[i]);
-      }
-
-      data_h_[i] = cudautils::make_host_noncached_unique<float[]>(elem /*, cudaHostAllocWriteCombined*/);
-    }
-
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dis(1e-5, 100.);
-    for(size_t i=0; i<numberOfElementsAlloc_.size(); ++i) {
-      for(size_t j=0; j<numberOfElementsAlloc_[i]; ++j) {
-        data_h_[i][j] = dis(gen);
+    std::uniform_real_distribution<float> disf(1e-5, 100.);
+    std::uniform_int_distribution<char> disc(-100, 100);
+
+    // Data for kernel
+    {
+      auto h_src = cudautils::make_host_noncached_unique<char[]>(kernel_elements_*sizeof(float) /*, cudaHostAllocWriteCombined*/);
+      cuda::throw_if_error(cudaMalloc(&kernel_data_d_, kernel_elements_*sizeof(float)));
+      for(size_t i=0; i!=kernel_elements_; ++i) {
+        h_src[i] = disf(gen);
       }
+      cuda::throw_if_error(cudaMemcpy(kernel_data_d_, h_src.get(), kernel_elements_*sizeof(float), cudaMemcpyDefault));
     }
 
-    if(not kernelLoops_.empty()) {
-      if(numberOfElementsAlloc_.empty()) {
-        numberOfElementsAlloc_.resize(32);
-      }
-      else if(numberOfElementsAlloc_[0] < 32) {
-        numberOfElementsAlloc_[0] = 32;
-      }
-    }
 
-    if(not useCachingAllocator_) {
-      data_d_.resize(numberOfElementsAlloc_.size());
-      for(size_t i=0; i<data_d_.size(); ++i) {
-        cuda::throw_if_error(cudaMalloc(&data_d_[i], numberOfElementsAlloc_[i]*sizeof(float)));
+    // Data for transfer operations
+    const size_t maxops = std::max(acquireOps_.size(), produceOps_.size());
+
+    data_d_src_.resize(maxops, nullptr);
+    data_h_src_.resize(maxops);
+    for(size_t i=0; i!=maxops; ++i) {
+      if(const auto bytesToD = std::max(acquireOps_.size() < i ? acquireOps_[i]->maxBytesToDevice() : 0U,
+                                     produceOps_.size() < i ? produceOps_[i]->maxBytesToDevice() : 0U);
+         bytesToD > 0) {
+        data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
+        for(unsigned int j=0; j<bytesToD; ++j) {
+          data_h_src_[i][j] = disc(gen);
+        }
+      }
+      if(const auto bytesToH = std::max(acquireOps_.size() < i ? acquireOps_[i]->maxBytesToHost() : 0U,
+                                     produceOps_.size() < i ? produceOps_[i]->maxBytesToHost() : 0U);
+         bytesToH > 0) {
+        cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
+        auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
+        for(unsigned int j=0; j<bytesToH; ++j) {
+          h_src[j] = disc(gen);
+        }
+        cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
       }
     }
   }
@@ -230,7 +370,7 @@ void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& des
 
   edm::ParameterSetDescription opValidator;
   opValidator.add("name", std::string("cpu"));
-  opValidator.addNode( edm::ParameterDescription<unsigned long int>("time", 0., true) xor
+  opValidator.addNode( edm::ParameterDescription<unsigned long long>("time", 0., true) xor
                        edm::ParameterDescription<unsigned int>("bytes", 0, true) );
 
   edm::ParameterSetDescription eventValidator;
@@ -239,7 +379,7 @@ void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& des
   desc.addVPSet("acquire", eventValidator, std::vector<edm::ParameterSet>{});
   desc.addVPSet("produce", eventValidator, std::vector<edm::ParameterSet>{});
 
-  desc.add<bool>("useCachingAllocator", true);
+  //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);
 }
 
@@ -249,33 +389,24 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
     iEvent.get(t);
   }
 
-  if(crunchForMicroSeconds_.count() > 0) {
-    cudatest::getTimeCruncher().crunch_for(crunchForMicroSeconds_);
-  }
+  CUDAScopedContextAcquire ctx{iEvent.streamID(), std::move(h), ctxState_};
 
-  CUDAScopedContextAcquire ctx{iEvent.streamID(), std::move(h)};
-  std::vector<float *> data_d = data_d;
-  std::vector<cudautils::device::unique_ptr<float[]>> data_d_own;
-  if(useCachingAllocator_) {
-    data_d.resize(numberOfElementsAlloc_.size());
-    data_d_own.resize(numberOfElementsAlloc_.size());
-    for(size_t i=0; i<numberOfElementsAlloc_.size(); ++i) {
-      data_d_own[i] = cudautils::make_device_unique<float[]>(numberOfElementsAlloc_[i], ctx.stream());
-      data_d[i] = data_d_own[i].get();
-    }
-  }
-  for(size_t i=0; i<numberOfElementsToDevice_.size(); ++i) {
-    cuda::memory::async::copy(data_d[i], data_h_[i].get(), numberOfElementsToDevice_[i]*sizeof(float), ctx.stream().id());
-  }
-  for(size_t i=0; i<kernelLoops_.size(); ++i) {
-    TestCUDAProducerSimEWGPUKernel::kernel(data_d[0], numberOfElementsToDevice_[0], kernelLoops_[i], ctx.stream());
-  }
-  for(size_t i=0; i<numberOfElementsToHost_.size(); ++i) {
-    cuda::memory::async::copy(data_h_[i].get(), data_d[i], numberOfElementsToHost_[i]*sizeof(float), ctx.stream().id());
+  State opState{kernel_data_d_, kernel_elements_, data_h_src_, data_d_src_};
+
+  for(auto& op: acquireOps_) {
+    op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());
   }
 }
 
 void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+  CUDAScopedContextProduce ctx{ctxState_};
+
+  State opState{kernel_data_d_, kernel_elements_, data_h_src_, data_d_src_};
+
+  for(auto& op: produceOps_) {
+    op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());
+  }
+
   iEvent.emplace(dstToken_, 42);
 }
 
