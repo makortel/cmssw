@@ -14,23 +14,20 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
 
 #include "TimeCruncher.h"
-#include "TestCUDAProducerSimEWGPUKernel.h"
+#include "GPUTimeCruncher.h"
 
 #include <random>
 
 namespace {
   struct State {
-    State(float *kd, size_t ke, std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
-      kernel_data(kd), kernel_elements(ke), data_d_src(std::move(d_src))
+    State(std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
+      data_d_src(std::move(d_src))
     {
       data_h_src.resize(h_src.size());
       std::transform(h_src.begin(), h_src.end(), data_h_src.begin(), [](auto& ptr) {
           return ptr.get();
         });
     }
-
-    float* kernel_data;
-    size_t kernel_elements;
 
     std::vector<char *> data_h_src;
     std::vector<char *> data_d_src;
@@ -117,7 +114,8 @@ namespace {
     }
 
     void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
-      // something(totalTime(indices)) ???
+      assert(stream != nullptr);
+      cudatest::getGPUTimeCruncher().crunch_for(std::chrono::duration_cast<std::chrono::microseconds>(totalTime(indices)), *stream);
     };
   };
 
@@ -231,9 +229,6 @@ private:
   OpVector acquireOps_;
   OpVector produceOps_;
 
-  static constexpr size_t kernel_elements_ = 32;
-  float* kernel_data_d_;
-
   // These are indexed by the operation index in acquireOps and produceOps_
   // They are likely to contain null elements
   std::vector<char* > data_d_src_;
@@ -309,19 +304,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
   if(cs->enabled()) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> disf(1e-5, 100.);
-    std::uniform_int_distribution<char> disc(-100, 100);
-
-    // Data for kernel
-    {
-      auto h_src = cudautils::make_host_noncached_unique<char[]>(kernel_elements_*sizeof(float) /*, cudaHostAllocWriteCombined*/);
-      cuda::throw_if_error(cudaMalloc(&kernel_data_d_, kernel_elements_*sizeof(float)));
-      for(size_t i=0; i!=kernel_elements_; ++i) {
-        h_src[i] = disf(gen);
-      }
-      cuda::throw_if_error(cudaMemcpy(kernel_data_d_, h_src.get(), kernel_elements_*sizeof(float), cudaMemcpyDefault));
-    }
-
+    std::uniform_int_distribution<char> dis(-100, 100);
 
     // Data for transfer operations
     const size_t maxops = std::max(acquireOps_.size(), produceOps_.size());
@@ -334,7 +317,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
          bytesToD > 0) {
         data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
         for(unsigned int j=0; j<bytesToD; ++j) {
-          data_h_src_[i][j] = disc(gen);
+          data_h_src_[i][j] = dis(gen);
         }
       }
       if(const auto bytesToH = std::max(acquireOps_.size() < i ? acquireOps_[i]->maxBytesToHost() : 0U,
@@ -343,7 +326,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
         cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
         auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
         for(unsigned int j=0; j<bytesToH; ++j) {
-          h_src[j] = disc(gen);
+          h_src[j] = dis(gen);
         }
         cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
       }
@@ -354,10 +337,10 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
     srcTokens_.emplace_back(consumes<int>(src));
   }
   cudatest::getTimeCruncher();
+  cudatest::getGPUTimeCruncher();
 }
 
 TestCUDAProducerSimEW::~TestCUDAProducerSimEW() {
-  cuda::throw_if_error(cudaFree(kernel_data_d_));
   for(auto& ptr: data_d_src_) {
     cuda::throw_if_error(cudaFree(ptr));
   }
@@ -391,7 +374,7 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
 
   CUDAScopedContextAcquire ctx{iEvent.streamID(), std::move(h), ctxState_};
 
-  State opState{kernel_data_d_, kernel_elements_, data_h_src_, data_d_src_};
+  State opState{data_h_src_, data_d_src_};
 
   for(auto& op: acquireOps_) {
     op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());
@@ -401,7 +384,7 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
 void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   CUDAScopedContextProduce ctx{ctxState_};
 
-  State opState{kernel_data_d_, kernel_elements_, data_h_src_, data_d_src_};
+  State opState{data_h_src_, data_d_src_};
 
   for(auto& op: produceOps_) {
     op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());
