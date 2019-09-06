@@ -26,7 +26,7 @@ namespace cudatest {
     unsigned int getLoops(const std::chrono::nanoseconds& time) const;
 
     std::vector<unsigned int> niters_ = {
-      0, 1, 16, 32, 64, 128, 256, 512, 1024, 1536, 2048,
+      0, 32, 64, 128, 256, 512, 1024, 1536, 2048,
         2560, 3072, 3584, 4096, 5120, 6144, 7168, 8192,
         9216, 10240, 12288, 14336, 16384, 20480, 28672, 32768,
         49152, 65536, 98304, 131072

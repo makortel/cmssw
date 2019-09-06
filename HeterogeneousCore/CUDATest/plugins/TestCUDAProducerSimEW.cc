@@ -34,6 +34,8 @@ namespace {
 
     std::vector<cudautils::host::unique_ptr<char[]>> data_h_dst;
     std::vector<cudautils::device::unique_ptr<char[]>> data_d_dst;
+
+    int opIndex = 0;
   };
 
   class OperationBase {
@@ -176,11 +178,12 @@ namespace {
     }
 
     void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
-      const auto i = state.data_d_dst.size();
+      const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
 
       auto data_d = cudautils::make_device_unique<char[]>(bytes, *stream);
+      LogTrace("foo") << "MemcpyToDevice " << i << " from 0x" << static_cast<const void*>(state.data_h_src[i]) << " to " << static_cast<const void*>(data_d.get());
       cuda::memory::async::copy(data_d.get(), state.data_h_src[i], bytes, stream->id());
       state.data_d_dst.emplace_back(std::move(data_d));
     }
@@ -197,11 +200,12 @@ namespace {
     }
 
     void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
-      const auto i = state.data_h_dst.size();
+      const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
 
       auto data_h = cudautils::make_host_unique<char[]>(bytes, *stream);
+      LogTrace("foo") << "MemcpyToHost " << i << " from 0x" << static_cast<const void*>(state.data_d_src[i]) << " to " << static_cast<const void*>(data_h.get());
       cuda::memory::async::copy(data_h.get(), state.data_d_src[i], bytes, stream->id());
       state.data_h_dst.emplace_back(std::move(data_h));
     }
@@ -316,6 +320,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
                                         i < produceOps_.size() ? produceOps_[i]->maxBytesToDevice() : 0U);
          bytesToD > 0) {
         data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
+        LogTrace("foo") << "Host ptr " << i << " bytes " << bytesToD << " ptr " << static_cast<const void*>(data_h_src_[i].get());
         for(unsigned int j=0; j<bytesToD; ++j) {
           data_h_src_[i][j] = dis(gen);
         }
@@ -324,6 +329,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
                                         i < produceOps_.size() ? produceOps_[i]->maxBytesToHost() : 0U);
          bytesToH > 0) {
         cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
+        LogTrace("foo") << "Device ptr " << i << " bytes " << bytesToH << " ptr " << static_cast<const void*>(data_d_src_[i]);
         auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
         for(unsigned int j=0; j<bytesToH; ++j) {
           h_src[j] = dis(gen);
@@ -378,6 +384,7 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
 
   for(auto& op: acquireOps_) {
     op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());
+    opState.opIndex++;
   }
 }
 
@@ -388,6 +395,7 @@ void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& i
 
   for(auto& op: produceOps_) {
     op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());
+    opState.opIndex++;
   }
 
   iEvent.emplace(dstToken_, 42);

@@ -45,6 +45,7 @@ namespace cudatest {
 
       times_.push_back(ms*1000); // convert to us
     }
+    times_[0] = 0.;
 
 
     cudaEventDestroy(start);
