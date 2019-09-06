@@ -20,10 +20,10 @@ namespace cudatest {
     GPUTimeCruncher(GPUTimeCruncher&&) = default;
     GPUTimeCruncher& operator=(GPUTimeCruncher&&) = default;
 
-    void crunch_for(const std::chrono::microseconds& time, cuda::stream_t<>& stream) const;
+    void crunch_for(const std::chrono::nanoseconds& time, cuda::stream_t<>& stream) const;
 
   private:
-    unsigned int getLoops(const std::chrono::microseconds& time) const;
+    unsigned int getLoops(const std::chrono::nanoseconds& time) const;
 
     std::vector<unsigned int> niters_ = {
       0, 1, 16, 32, 64, 128, 256, 512, 1024, 1536, 2048,
@@ -31,7 +31,7 @@ namespace cudatest {
         9216, 10240, 12288, 14336, 16384, 20480, 28672, 32768,
         49152, 65536, 98304, 131072
     };
-    std::vector<float> times_; // in us
+    std::vector<double> times_; // in us
 
     static constexpr size_t kernel_elements_ = 32;
     float* kernel_data_d_;

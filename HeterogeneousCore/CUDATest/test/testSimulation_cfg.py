@@ -38,16 +38,20 @@ process.options = cms.untracked.PSet(
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
 #from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
 process.transfer = testCUDAProducerSimEW.clone()
-#process.transfer.numberOfElements = 1 # 4 B
-process.transfer.numberOfElements = 8192 # 32 kB
-#process.transfer.numberOfElements = 262144 # 1 MB
-#process.transfer.useCachingAllocator = False
-process.transfer.transferDevice = True
-process.transfer.kernels = 1
-#process.transfer.kernelLoops = 1
-process.transfer.kernelLoops = 1024
-#process.transfer.kernelLoops = 8192
-process.transfer.transferHost = True
+#numElements = 4
+numElements = 32*1024
+#numElements = 1024*1024
+process.transfer.acquire = [
+    cms.PSet(event = cms.VPSet(
+        cms.PSet(name = cms.string("memcpyHtoD"), bytes = cms.uint32(numElements)),
+        cms.PSet(name = cms.string("kernel"), time = cms.uint64(
+            #1000
+            #50*1000
+            400*1000
+        )),
+        cms.PSet(name = cms.string("memcpyDtoH"), bytes = cms.uint32(numElements)),
+    )),
+]
 
 process.p = cms.Path(process.transfer)
 
@@ -70,9 +74,9 @@ process.p_out = cms.EndPath(process.out)
 
 process.maxEvents.input = process.maxEvents.input.value()/10
 process.MessageLogger.cerr.FwkReport.reportEvery = process.MessageLogger.cerr.FwkReport.reportEvery.value()/10
-factor = 32
-process.transfer.numberOfElements = factor*process.transfer.numberOfElements.value()
-process.transfer.kernelLoops = factor*process.transfer.kernelLoops.value()
+factor = 1
+#process.transfer.numberOfElements = factor*process.transfer.numberOfElements.value()
+#process.transfer.kernelLoops = factor*process.transfer.kernelLoops.value()
 #process.cpu1.crunchForSeconds = factor*process.cpu1.crunchForSeconds.value()
 #process.cpu2.crunchForSeconds = factor*process.cpu2.crunchForSeconds.value()
 

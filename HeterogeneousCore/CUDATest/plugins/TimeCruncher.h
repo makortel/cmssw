@@ -70,14 +70,14 @@ namespace cudatest {
           findPrimes( niters );
           auto stop_cali       = tbb::tick_count::now();
           auto deltat          = ( stop_cali - start_cali ).seconds();
-          times_vect_[i] = deltat * 1000000; // in microseconds
+          times_vect_[i] = deltat * 1000000.; // in microseconds
           edm::LogPrint("foo") << " Calibration: # iters = " << niters << " => " << times_vect_[i] << " us";
           trials--;
         } while ( trials > 0 && times_vect_[i] < times_vect_[i-1] ); // make sure that they are monotonic
       }
     }
 
-    void crunch_for(const std::chrono::microseconds& crunchtime) const {
+    void crunch_for(const std::chrono::nanoseconds& crunchtime) const {
       const unsigned int niters = getNCaliIters( crunchtime );
       auto start_cali = tbb::tick_count::now();
       findPrimes( niters );
@@ -86,17 +86,17 @@ namespace cudatest {
       std::chrono::microseconds actual( int( 1e6 * ( stop_cali - start_cali ).seconds() ) );
 
       LogDebug("foo") << "crunch for " << crunchtime.count() << " us == " << niters << " iter. actual time: " << actual.count()
-                           << " us. ratio: " << float( actual.count() ) / crunchtime.count();
+                      << " us. ratio: " << float( actual.count() ) / crunchtime.count();
 
 
     }
 
   private:
-    unsigned int getNCaliIters( const std::chrono::microseconds& runtime ) const {
+    unsigned int getNCaliIters( const std::chrono::nanoseconds& runtime ) const {
       unsigned int smaller_i   = 0;
       double       time        = 0.;
       bool         found       = false;
-      double       corrRuntime = runtime.count(); // * m_corrFact;
+      double       corrRuntime = runtime.count()/1000.; // * m_corrFact;
       // We know that the first entry is 0, so we start to iterate from 1
       for ( unsigned int i = 1; i < times_vect_.size(); i++ ) {
         time = times_vect_[i];
@@ -123,13 +123,13 @@ namespace cudatest {
     }
 
     std::vector<unsigned int> niters_vect_ = {
-      0,     500,   600,   700,   800,   1000,  1300,  1600,  2000,  2300,
+      0, 10, 30, 50, 70, 100, 200, 300, 400, 500,   600,   700,   800,   1000,  1300,  1600,  2000,  2300,
       2600,  3000,  3300,  3500,  3900,  4200,  5000,  6000,  8000,  10000,
       12000, 15000, 17000, 20000, 25000, 30000, 35000, 40000, 50000, 60000
       // long calib
       //80000, 100000, 150000, 200000
     };
-    std::vector<unsigned int> times_vect_;
+    std::vector<double> times_vect_; // in us
   };
 
   inline

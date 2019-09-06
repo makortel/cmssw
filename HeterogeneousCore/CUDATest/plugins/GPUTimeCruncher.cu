@@ -55,13 +55,13 @@ namespace cudatest {
     cuda::throw_if_error(cudaFree(kernel_data_d_));
   }
 
-  void GPUTimeCruncher::crunch_for(const std::chrono::microseconds& time, cuda::stream_t<>& stream) const {
+  void GPUTimeCruncher::crunch_for(const std::chrono::nanoseconds& time, cuda::stream_t<>& stream) const {
     const auto loops = getLoops(time);
     TestCUDAProducerSimEWGPUKernel::kernel(kernel_data_d_, kernel_elements_, loops, stream);
   }
 
-  unsigned int GPUTimeCruncher::getLoops(const std::chrono::microseconds& time) const {
-    const float runtime = time.count();
+  unsigned int GPUTimeCruncher::getLoops(const std::chrono::nanoseconds& time) const {
+    const double runtime = time.count()/1000.;
     bool found;
     size_t smaller_i = 0;
     for(size_t i=1; i<times_.size(); ++i) {

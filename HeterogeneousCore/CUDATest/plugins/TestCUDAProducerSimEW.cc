@@ -57,7 +57,7 @@ namespace {
   public:
     explicit OperationTime(const edm::ParameterSet& iConfig)
     {
-      assert(emplace_back(iConfig));
+      time_.emplace_back(iConfig.getParameter<unsigned long long>("time"));
     }
 
     bool emplace_back(const edm::ParameterSet& iConfig) override {
@@ -79,7 +79,7 @@ namespace {
 
   protected:
     std::chrono::nanoseconds totalTime(const std::vector<size_t>& indices) const {
-      std::chrono::nanoseconds total;
+      std::chrono::nanoseconds total{};
       for(size_t i: indices) {
         total += time_[i];
       }
@@ -101,7 +101,7 @@ namespace {
     }
 
     void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
-      cudatest::getTimeCruncher().crunch_for(std::chrono::duration_cast<std::chrono::microseconds>(totalTime(indices)));
+      cudatest::getTimeCruncher().crunch_for(totalTime(indices));
     };
   };
 
@@ -115,7 +115,7 @@ namespace {
 
     void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
       assert(stream != nullptr);
-      cudatest::getGPUTimeCruncher().crunch_for(std::chrono::duration_cast<std::chrono::microseconds>(totalTime(indices)), *stream);
+      cudatest::getGPUTimeCruncher().crunch_for(totalTime(indices), *stream);
     };
   };
 
@@ -123,7 +123,7 @@ namespace {
   public:
     explicit OperationBytes(const edm::ParameterSet& iConfig)
     {
-      assert(emplace_back(iConfig));
+      bytes_.emplace_back(iConfig.getParameter<unsigned int>("bytes"));
     }
 
     bool emplace_back(const edm::ParameterSet& iConfig) override {
@@ -192,7 +192,7 @@ namespace {
 
     unsigned int maxBytesToHost() const override { return maxBytes(); }
 
-    bool checkName(const std::string& name) const override{
+    bool checkName(const std::string& name) const override {
       return name == "memcpyDtoH";
     }
 
@@ -312,16 +312,16 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
     data_d_src_.resize(maxops, nullptr);
     data_h_src_.resize(maxops);
     for(size_t i=0; i!=maxops; ++i) {
-      if(const auto bytesToD = std::max(acquireOps_.size() < i ? acquireOps_[i]->maxBytesToDevice() : 0U,
-                                     produceOps_.size() < i ? produceOps_[i]->maxBytesToDevice() : 0U);
+      if(const auto bytesToD = std::max(i < acquireOps_.size() ? acquireOps_[i]->maxBytesToDevice() : 0U,
+                                        i < produceOps_.size() ? produceOps_[i]->maxBytesToDevice() : 0U);
          bytesToD > 0) {
         data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
         for(unsigned int j=0; j<bytesToD; ++j) {
           data_h_src_[i][j] = dis(gen);
         }
       }
-      if(const auto bytesToH = std::max(acquireOps_.size() < i ? acquireOps_[i]->maxBytesToHost() : 0U,
-                                     produceOps_.size() < i ? produceOps_[i]->maxBytesToHost() : 0U);
+      if(const auto bytesToH = std::max(i < acquireOps_.size() ? acquireOps_[i]->maxBytesToHost() : 0U,
+                                        i < produceOps_.size() ? produceOps_[i]->maxBytesToHost() : 0U);
          bytesToH > 0) {
         cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
         auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
@@ -331,13 +331,13 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
         cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
       }
     }
+    cudatest::getGPUTimeCruncher();
   }
 
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
   cudatest::getTimeCruncher();
-  cudatest::getGPUTimeCruncher();
 }
 
 TestCUDAProducerSimEW::~TestCUDAProducerSimEW() {
