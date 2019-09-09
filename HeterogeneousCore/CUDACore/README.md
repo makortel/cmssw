@@ -329,12 +329,13 @@ void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup&
   // returned by CUDAScopedContextAcquire::stream()
   gpuAlgo.makeAsync(inputData, ctx.stream());
 
-  // Insert a functor to be run as a next task after the work queued
-  // above instead of produce(). In this case ctx is a context constructed
-  // by the calling TBB task, and therefore the current device and CUDA
-  // stream have been already set up. The ctx internally holds the
-  // WaitingTaskWithArenaHolder for the next task.
-  ctx.insertNextTask([this](CUDAScopedContextTask ctx) {
+  // Push a functor on top of "a stack of tasks" to be run as a next
+  // task after the work queued above before produce(). In this case ctx
+  // is a context constructed by the calling TBB task, and therefore the
+  // current device and CUDA stream have been already set up. The ctx
+  // internally holds the WaitingTaskWithArenaHolder for the next task.
+
+  ctx.pushNextTask([this](CUDAScopedContextTask ctx) {
     addMoreWork(ctx);
   });
 
@@ -347,7 +348,7 @@ void ProducerInputOutputCUDA::acquire(edm::Event const& iEvent, edm::EventSetup&
 void ProducerInputOutputCUDA::addMoreWork(CUDAScopedContextTask& ctx) {
   // Current device and CUDA stream have already been set
 
-  // Queues more asyncrhonous data transfer and kernels to the CUDA
+  // Queues more asynchronous data transfer and kernels to the CUDA
   // stream returned by CUDAScopedContextTask::stream()
   gpuAlgo.makeMoreAsync(ctx.stream());
 
@@ -775,13 +776,28 @@ reference count hits `0`. It is also possible to create a longer chain
 of such tasks, alternating between CPU and GPU work. This mechanism
 can also be used to re-run (part of) the GPU work.
 
-A functor for the next-after-`acquire()` task can be added with
-(following the example of the previous section)
+The "next tasks" to run are essentially structured as a stack, such
+that
+- `CUDAScopedContextAcquire`/`CUDAScopedContextTask::pushNextTask()`
+  pushes a new functor on top of the stack
+- Completion of both the asynchronous work and the queueing function
+  pops the top task of the stack and enqueues it (so that TBB
+  eventually runs the task)
+  * Technically the task is made eligible to run when all copies of
+    `edm::WaitingTaskWithArenaHolder` of the acquire() (or "previous"
+    function) have either been destructed or their `doneWaiting()` has
+    been called
+  * The code calling `acquire()` or the functor holds one copy of
+    `edm::WaitingTaskWithArenaHolder` so it is guaranteed that the
+    next function will not run before the earlier one has finished
 
+
+Below is an example how to push a functor on top of the stack of tasks
+to run next (following the example of the previous section)
 ```cpp
 void FooProducerCUDA::acquire(...) {
    ...
-   ctx.insertNextTask([this](CUDAScopedContextTask ctx) {
+   ctx.pushNextTask([this](CUDAScopedContextTask ctx) {
      ...
    });
    ...
@@ -791,9 +807,25 @@ void FooProducerCUDA::acquire(...) {
 In this case the `ctx`argument to the function is a
 `CUDAScopedContexTask` object constructed by the TBB task calling the
 user-given function. It follows that the current device and CUDA
-stream have been set up already. The `insertNextTask()` can be called many
-times, on each invocation it inserts a new task to the chain right
-next to the currently executing one (i.e. in front of the chain).
+stream have been set up already. The `pushNextTask()` can be called
+many times. On each invocation the `pushNextTask()` pushes a new task
+on top of the stack (i.e. in front of the chain). It follows that in
+```cpp
+void FooProducerCUDA::acquire(...) {
+   ...
+   ctx.pushNextTask([this](CUDAScopedContextTask ctx) {
+     ... // function 1
+   });
+   ctx.pushNextTask([this](CUDAScopedContextTask ctx) {
+     ... // function 2
+   });
+   ctx.pushNextTask([this](CUDAScopedContextTask ctx) {
+     ... // function 3
+   });
+   ...
+}
+```
+the functions will be run in the order 3, 2, 1.
 
 **Note** that the `CUDAService` is **not** available (nor is any other
 service) in these intermediate tasks. In the near future memory

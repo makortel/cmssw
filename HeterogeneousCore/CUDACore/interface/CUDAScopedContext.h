@@ -69,7 +69,7 @@ namespace impl {
     {}
 
     template <typename F>
-    void insertNextTask(F&& f, CUDAContextState const* state);
+    void pushNextTask(F&& f, CUDAContextState const* state);
 
     void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
       waitingTaskHolder_ = std::move(waitingTaskHolder);
@@ -120,9 +120,9 @@ public:
   ~CUDAScopedContextAcquire();
 
   template <typename F>
-  void insertNextTask(F&& f) {
+  void pushNextTask(F&& f) {
     if (contextState_ == nullptr) throwNoState();
-    holderHelper_.insertNextTask(std::forward<F>(f), contextState_);
+    holderHelper_.pushNextTask(std::forward<F>(f), contextState_);
   }
 
   void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
@@ -214,8 +214,8 @@ public:
   ~CUDAScopedContextTask();
 
   template <typename F>
-  void insertNextTask(F&& f) {
-    holderHelper_.insertNextTask(std::forward<F>(f), contextState_);
+  void pushNextTask(F&& f) {
+    holderHelper_.pushNextTask(std::forward<F>(f), contextState_);
   }
 
   void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
@@ -251,7 +251,7 @@ public:
 
 namespace impl {
   template <typename F>
-  void CUDAScopedContextHolderHelper::insertNextTask(F&& f, CUDAContextState const* state) {
+  void CUDAScopedContextHolderHelper::pushNextTask(F&& f, CUDAContextState const* state) {
     replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task_with_holder(tbb::task::allocate_root(),
                                                                                                 std::move(waitingTaskHolder_),
                                                                                                 [state,func=std::forward<F>(f)](edm::WaitingTaskWithArenaHolder h) {

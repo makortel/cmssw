@@ -64,10 +64,6 @@ void TestCUDAProducerGPUEWTask::acquire(const edm::Event& iEvent, const edm::Eve
   const auto& in = iEvent.get(srcToken_);
   CUDAScopedContextAcquire ctx{in, waitingTaskHolder, ctxState_};
 
-  ctx.insertNextTask([iev = iEvent.id().event(), istr=iEvent.streamID(), this](CUDAScopedContextTask ctx) {
-      addSimpleWork(iev, istr, ctx);
-    });
-
   const CUDAThing& input = ctx.get(in);
 
   devicePtr_ = gpuAlgo_.runAlgo(label_, input.get(), ctx.stream());
@@ -76,17 +72,24 @@ void TestCUDAProducerGPUEWTask::acquire(const edm::Event& iEvent, const edm::Eve
   // event.
   cuda::memory::async::copy(hostData_.get(), devicePtr_.get()+10, sizeof(float), ctx.stream().id());
 
+  // Push a task to run addSimpleWork() after the asynchronous work
+  // (and acquire()) has finished instead of produce()
+  ctx.pushNextTask([iev = iEvent.id().event(), istr=iEvent.streamID(), this](CUDAScopedContextTask ctx) {
+      addSimpleWork(iev, istr, ctx);
+    });
+
   edm::LogVerbatim("TestCUDAProducerGPUEWTask") << label_ << " TestCUDAProducerGPUEWTask::acquire end event " << iEvent.id().event() << " stream " << iEvent.streamID();
 }
 
 void TestCUDAProducerGPUEWTask::addSimpleWork(edm::EventNumber_t eventID, edm::StreamID streamID, CUDAScopedContextTask& ctx) {
   if(*hostData_ < 13) {
     edm::LogVerbatim("TestCUDAProducerGPUEWTask") << label_ << " TestCUDAProducerGPUEWTask::addSimpleWork begin event " << eventID << " stream " << streamID << " 10th element " << *hostData_ << " not satisfied, queueing more work";
-    ctx.insertNextTask([eventID, streamID, this](CUDAScopedContextTask ctx) {
+    cuda::memory::async::copy(hostData_.get(), devicePtr_.get()+10, sizeof(float), ctx.stream().id());
+
+    ctx.pushNextTask([eventID, streamID, this](CUDAScopedContextTask ctx) {
         addSimpleWork(eventID, streamID, ctx);
       });
     gpuAlgo_.runSimpleAlgo(devicePtr_.get(), ctx.stream());
-    cuda::memory::async::copy(hostData_.get(), devicePtr_.get()+10, sizeof(float), ctx.stream().id());
     edm::LogVerbatim("TestCUDAProducerGPUEWTask") << label_ << " TestCUDAProducerGPUEWTask::addSimpleWork end event " << eventID << " stream " << streamID;
   }
   else {
