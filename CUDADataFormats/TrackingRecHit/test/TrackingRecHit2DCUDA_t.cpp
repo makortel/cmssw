@@ -4,9 +4,6 @@
 #include "FWCore/ParameterSetReader/interface/ParameterSetReader.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
-#include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
-#include "FWCore/ServiceRegistry/interface/ServiceRegistry.h"
-#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/exitSansCUDADevices.h"
 
@@ -15,15 +12,6 @@ namespace testTrackingRecHit2D {
   void runKernels(TrackingRecHit2DSOAView* hits);
 
 }
-
-namespace {
-  CUDAService makeCUDAService(edm::ParameterSet ps, edm::ActivityRegistry& ar) {
-    auto desc = edm::ConfigurationDescriptions("Service", "CUDAService");
-    CUDAService::fillDescriptions(desc);
-    desc.validate(ps, "CUDAService");
-    return CUDAService(ps, ar);
-  }
-}  // namespace
 
 int main() {
   exitSansCUDADevices();
@@ -42,10 +30,6 @@ process.CUDAService = cms.Service('CUDAService')
   edm::ServiceToken tempToken(edm::ServiceRegistry::createServicesFromConfig(std::move(params)));
   operate_.reset(new edm::ServiceRegistry::Operate(tempToken));
 
-  edm::ActivityRegistry ar;
-  edm::ParameterSet ps;
-  auto cs = makeCUDAService(ps, ar);
-
   auto current_device = cuda::device::current::get();
   auto stream = current_device.create_stream(cuda::stream::implicitly_synchronizes_with_default_stream);
 
@@ -53,9 +37,6 @@ process.CUDAService = cms.Service('CUDAService')
   TrackingRecHit2DCUDA tkhit(nHits, nullptr, nullptr, stream);
 
   testTrackingRecHit2D::runKernels(tkhit.view());
-
-  //Fake the end-of-job signal.
-  ar.postEndJobSignal_();
 
   return 0;
 }
