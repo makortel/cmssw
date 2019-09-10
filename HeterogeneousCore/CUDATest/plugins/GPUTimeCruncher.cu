@@ -27,13 +27,14 @@ namespace cudatest {
     }
     cuda::throw_if_error(cudaMemcpy(kernel_data_d, h_src.get(), kernel_elements*sizeof(float), cudaMemcpyDefault));
 
+
+    // calibrate
+    times_.reserve(niters_.size());
+#ifdef CALIBRATE_EVENT
     auto streamPtr = cudautils::getCUDAStreamCache().getCUDAStream();
     cudaEvent_t start, stop;
     cuda::throw_if_error(cudaEventCreate(&start));
     cuda::throw_if_error(cudaEventCreate(&stop));
-
-    // calibrate
-    times_.reserve(niters_.size());
     for(auto n: niters_) {
       cuda::throw_if_error(cudaEventRecord(start, streamPtr->id()));
       TestCUDAProducerSimEWGPUKernel::kernel(kernel_data_d, kernel_elements, n, *streamPtr);
@@ -48,9 +49,42 @@ namespace cudatest {
     }
     times_[0] = 0.;
 
-
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
+#endif
+    // Calibration with events seems to be too imprecise (I get
+    // smallest kernel runtime of 10us, while nvvp shows 2 us), so
+    // let's do it by hand...
+    times_ = {2.144,
+              3.168,
+              3.616,
+              5.823,
+              10.176,
+              18.88,
+              36.255,
+              53.76,
+              71.136,
+              88.447,
+              105.823,
+              123.135,
+              140.479,
+              175.134,
+              209.983,
+              244.607,
+              279.614,
+              314.334,
+              349.053,
+              418.269,
+              487.932,
+              557.692,
+              696.635,
+              973.946,
+              1112.09,
+              1667.96,
+              2223.73,
+              3335.66,
+              4447.62};
+    assert(times_.size() == niters_.size());
   }
 
   void GPUTimeCruncher::crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const {
