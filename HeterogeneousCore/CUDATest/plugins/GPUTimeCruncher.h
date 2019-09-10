@@ -13,14 +13,10 @@ namespace cudatest {
   class GPUTimeCruncher {
   public:
     GPUTimeCruncher();
-    ~GPUTimeCruncher();
 
-    GPUTimeCruncher(const GPUTimeCruncher&) = delete;
-    GPUTimeCruncher& operator=(const GPUTimeCruncher&) = delete;
-    GPUTimeCruncher(GPUTimeCruncher&&) = default;
-    GPUTimeCruncher& operator=(GPUTimeCruncher&&) = default;
+    void crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const;
 
-    void crunch_for(const std::chrono::nanoseconds& time, cuda::stream_t<>& stream) const;
+    static constexpr size_t kernel_elements = 32;
 
   private:
     unsigned int getLoops(const std::chrono::nanoseconds& time) const;
@@ -32,9 +28,6 @@ namespace cudatest {
         49152, 65536, 98304, 131072
     };
     std::vector<double> times_; // in us
-
-    static constexpr size_t kernel_elements_ = 32;
-    float* kernel_data_d_;
   };
 
   

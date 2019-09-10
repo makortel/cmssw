@@ -20,14 +20,17 @@
 
 namespace {
   struct State {
-    State(std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
-      data_d_src(std::move(d_src))
+    State(float* kernel_data, std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
+      kernel_data_d{kernel_data},
+      data_d_src{std::move(d_src)}
     {
       data_h_src.resize(h_src.size());
       std::transform(h_src.begin(), h_src.end(), data_h_src.begin(), [](auto& ptr) {
           return ptr.get();
         });
     }
+
+    float* kernel_data_d;
 
     std::vector<char *> data_h_src;
     std::vector<char *> data_d_src;
@@ -117,7 +120,7 @@ namespace {
 
     void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
       assert(stream != nullptr);
-      cudatest::getGPUTimeCruncher().crunch_for(totalTime(indices), *stream);
+      cudatest::getGPUTimeCruncher().crunch_for(totalTime(indices), state.kernel_data_d, *stream);
     };
   };
 
@@ -233,6 +236,8 @@ private:
   OpVector acquireOps_;
   OpVector produceOps_;
 
+  float* kernel_data_d_;
+
   // These are indexed by the operation index in acquireOps and produceOps_
   // They are likely to contain null elements
   std::vector<char* > data_d_src_;
@@ -308,8 +313,20 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
   if(cs->enabled()) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<char> dis(-100, 100);
+    std::uniform_real_distribution<float> disf(1e-5, 100.);
+    std::uniform_int_distribution<char> disc(-100, 100);
 
+    // Data for kernel
+    {
+      constexpr auto elements = cudatest::GPUTimeCruncher::kernel_elements;
+      auto h_src = cudautils::make_host_noncached_unique<char[]>(elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
+      cuda::throw_if_error(cudaMalloc(&kernel_data_d_, elements*sizeof(float)));
+      for(size_t i=0; i!=elements; ++i) {
+        h_src[i] = disf(gen);
+      }
+      cuda::throw_if_error(cudaMemcpy(kernel_data_d_, h_src.get(), elements*sizeof(float), cudaMemcpyDefault));
+    }
+      
     // Data for transfer operations
     const size_t maxops = std::max(acquireOps_.size(), produceOps_.size());
 
@@ -322,7 +339,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
         data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
         LogTrace("foo") << "Host ptr " << i << " bytes " << bytesToD << " ptr " << static_cast<const void*>(data_h_src_[i].get());
         for(unsigned int j=0; j<bytesToD; ++j) {
-          data_h_src_[i][j] = dis(gen);
+          data_h_src_[i][j] = disc(gen);
         }
       }
       if(const auto bytesToH = std::max(i < acquireOps_.size() ? acquireOps_[i]->maxBytesToHost() : 0U,
@@ -332,7 +349,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
         LogTrace("foo") << "Device ptr " << i << " bytes " << bytesToH << " ptr " << static_cast<const void*>(data_d_src_[i]);
         auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
         for(unsigned int j=0; j<bytesToH; ++j) {
-          h_src[j] = dis(gen);
+          h_src[j] = disc(gen);
         }
         cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
       }
@@ -347,6 +364,7 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
 }
 
 TestCUDAProducerSimEW::~TestCUDAProducerSimEW() {
+  cuda::throw_if_error(cudaFree(kernel_data_d_));
   for(auto& ptr: data_d_src_) {
     cuda::throw_if_error(cudaFree(ptr));
   }
@@ -380,7 +398,7 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
 
   CUDAScopedContextAcquire ctx{iEvent.streamID(), std::move(h), ctxState_};
 
-  State opState{data_h_src_, data_d_src_};
+  State opState{kernel_data_d_, data_h_src_, data_d_src_};
 
   for(auto& op: acquireOps_) {
     op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());
@@ -391,7 +409,7 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
 void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   CUDAScopedContextProduce ctx{ctxState_};
 
-  State opState{data_h_src_, data_d_src_};
+  State opState{kernel_data_d_, data_h_src_, data_d_src_};
 
   for(auto& op: produceOps_) {
     op->operate(std::vector<size_t>{iEvent.id().event() % op->size()}, opState, &ctx.stream());

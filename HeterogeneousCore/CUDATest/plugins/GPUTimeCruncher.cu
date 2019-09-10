@@ -19,12 +19,13 @@ namespace cudatest {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dis(1e-5, 100.);
 
-    auto h_src = cudautils::make_host_noncached_unique<char[]>(kernel_elements_*sizeof(float) /*, cudaHostAllocWriteCombined*/);
-    cuda::throw_if_error(cudaMalloc(&kernel_data_d_, kernel_elements_*sizeof(float)));
-    for(size_t i=0; i!=kernel_elements_; ++i) {
+    float *kernel_data_d;
+    auto h_src = cudautils::make_host_noncached_unique<char[]>(kernel_elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
+    cuda::throw_if_error(cudaMalloc(&kernel_data_d, kernel_elements*sizeof(float)));
+    for(size_t i=0; i!=kernel_elements; ++i) {
       h_src[i] = dis(gen);
     }
-    cuda::throw_if_error(cudaMemcpy(kernel_data_d_, h_src.get(), kernel_elements_*sizeof(float), cudaMemcpyDefault));
+    cuda::throw_if_error(cudaMemcpy(kernel_data_d, h_src.get(), kernel_elements*sizeof(float), cudaMemcpyDefault));
 
     auto streamPtr = cudautils::getCUDAStreamCache().getCUDAStream();
     cudaEvent_t start, stop;
@@ -35,7 +36,7 @@ namespace cudatest {
     times_.reserve(niters_.size());
     for(auto n: niters_) {
       cuda::throw_if_error(cudaEventRecord(start, streamPtr->id()));
-      TestCUDAProducerSimEWGPUKernel::kernel(kernel_data_d_, kernel_elements_, n, *streamPtr);
+      TestCUDAProducerSimEWGPUKernel::kernel(kernel_data_d, kernel_elements, n, *streamPtr);
       cuda::throw_if_error(cudaEventRecord(stop, streamPtr->id()));
       cuda::throw_if_error(cudaEventSynchronize(stop));
       float ms;
@@ -52,13 +53,9 @@ namespace cudatest {
     cudaEventDestroy(stop);
   }
 
-  GPUTimeCruncher::~GPUTimeCruncher() {
-    cuda::throw_if_error(cudaFree(kernel_data_d_));
-  }
-
-  void GPUTimeCruncher::crunch_for(const std::chrono::nanoseconds& time, cuda::stream_t<>& stream) const {
+  void GPUTimeCruncher::crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const {
     const auto loops = getLoops(time);
-    TestCUDAProducerSimEWGPUKernel::kernel(kernel_data_d_, kernel_elements_, loops, stream);
+    TestCUDAProducerSimEWGPUKernel::kernel(kernel_data_d, kernel_elements, loops, stream);
   }
 
   unsigned int GPUTimeCruncher::getLoops(const std::chrono::nanoseconds& time) const {
