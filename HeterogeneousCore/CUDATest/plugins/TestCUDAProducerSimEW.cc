@@ -18,6 +18,10 @@
 
 #include <random>
 
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
+
 namespace {
   struct State {
     State(float* kernel_data, std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
@@ -46,7 +50,7 @@ namespace {
     OperationBase() = default;
     virtual ~OperationBase() = default;
 
-    virtual bool emplace_back(const edm::ParameterSet& iConfig) = 0;
+    virtual bool emplace_back(const boost::property_tree::ptree& conf) = 0;
     virtual void pop_back() = 0;
     virtual size_t size() const = 0;
 
@@ -60,17 +64,17 @@ namespace {
 
   class OperationTime: public OperationBase {
   public:
-    explicit OperationTime(const edm::ParameterSet& iConfig)
+    explicit OperationTime(const boost::property_tree::ptree& conf)
     {
-      time_.emplace_back(iConfig.getParameter<unsigned long long>("time"));
+      time_.emplace_back(conf.get<unsigned long long>("time"));
     }
 
-    bool emplace_back(const edm::ParameterSet& iConfig) override {
-      if(not checkName(iConfig.getParameter<std::string>("name"))) {
+    bool emplace_back(const boost::property_tree::ptree& conf) override {
+      if(not checkName(conf.get<std::string>("name"))) {
         return false;
       }
 
-      time_.emplace_back(iConfig.getParameter<unsigned long long>("time"));
+      time_.emplace_back(conf.get<unsigned long long>("time"));
       return true;
     }
 
@@ -99,7 +103,7 @@ namespace {
 
   class OperationCPU final: public OperationTime {
   public:
-    explicit OperationCPU(const edm::ParameterSet& iConfig): OperationTime(iConfig) {}
+    explicit OperationCPU(const boost::property_tree::ptree& conf): OperationTime(conf) {}
 
     bool checkName(const std::string& name) const override {
       return name == "cpu";
@@ -112,7 +116,7 @@ namespace {
 
   class OperationKernel final: public OperationTime {
   public:
-    explicit OperationKernel(const edm::ParameterSet& iConfig): OperationTime(iConfig) {}
+    explicit OperationKernel(const boost::property_tree::ptree& conf): OperationTime(conf) {}
 
     bool checkName(const std::string& name) const override{
       return name == "kernel";
@@ -126,17 +130,17 @@ namespace {
 
   class OperationBytes: public OperationBase {
   public:
-    explicit OperationBytes(const edm::ParameterSet& iConfig)
+    explicit OperationBytes(const boost::property_tree::ptree& conf)
     {
-      bytes_.emplace_back(iConfig.getParameter<unsigned int>("bytes"));
+      bytes_.emplace_back(conf.get<unsigned int>("bytes"));
     }
 
-    bool emplace_back(const edm::ParameterSet& iConfig) override {
-      if(not checkName(iConfig.getParameter<std::string>("name"))) {
+    bool emplace_back(const boost::property_tree::ptree& conf) override {
+      if(not checkName(conf.get<std::string>("name"))) {
         return false;
       }
 
-      bytes_.emplace_back(iConfig.getParameter<unsigned int>("bytes"));
+      bytes_.emplace_back(conf.get<unsigned int>("bytes"));
       return true;
     }
 
@@ -172,7 +176,7 @@ namespace {
 
   class OperationMemcpyToDevice final: public OperationBytes {
   public:
-    explicit OperationMemcpyToDevice(const edm::ParameterSet& iConfig): OperationBytes(iConfig) {}
+    explicit OperationMemcpyToDevice(const boost::property_tree::ptree& conf): OperationBytes(conf) {}
 
     unsigned int maxBytesToDevice() const override { return maxBytes(); }
 
@@ -194,7 +198,7 @@ namespace {
 
   class OperationMemcpyToHost final: public OperationBytes {
   public:
-    explicit OperationMemcpyToHost(const edm::ParameterSet& iConfig): OperationBytes(iConfig) {}
+    explicit OperationMemcpyToHost(const boost::property_tree::ptree& conf): OperationBytes(conf) {}
 
     unsigned int maxBytesToHost() const override { return maxBytes(); }
 
@@ -247,38 +251,43 @@ private:
 TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
   dstToken_{produces<int>()}
 {
+
+  const auto& configFileName = iConfig.getParameter<edm::FileInPath>("config");
+  boost::property_tree::ptree root_node;
+  boost::property_tree::read_json(configFileName.fullPath(), root_node);
+  const auto& module_node = root_node.get_child("moduleDefinitions."+iConfig.getParameter<std::string>("@module_label"));
+  
   auto createOps = [&](const std::string& psetName) {
     OpVector ret;
     bool first = true;
-    for(const auto& ps: iConfig.getParameter<std::vector<edm::ParameterSet> >(psetName)) {
+    for(const auto& ev: module_node.get_child(psetName)) {
       if(first) {
-        for(const auto& psOp: ps.getParameter<std::vector<edm::ParameterSet> >("event")) {
-          auto opname = psOp.getParameter<std::string>("name");
+        for(const auto& op: ev.second.get_child("")) {
+          auto opname = op.second.get<std::string>("name");
           if(opname == "cpu") {
-            ret.emplace_back(std::make_unique<OperationCPU>(psOp));
+            ret.emplace_back(std::make_unique<OperationCPU>(op.second));
           }
           else if(opname == "kernel") {
-            ret.emplace_back(std::make_unique<OperationKernel>(psOp));
+            ret.emplace_back(std::make_unique<OperationKernel>(op.second));
           }
           else if(opname == "memcpyHtoD") {
-            ret.emplace_back(std::make_unique<OperationMemcpyToDevice>(psOp));
+            ret.emplace_back(std::make_unique<OperationMemcpyToDevice>(op.second));
           }
           else if(opname == "memcpyDtoH") {
-            ret.emplace_back(std::make_unique<OperationMemcpyToHost>(psOp));
+            ret.emplace_back(std::make_unique<OperationMemcpyToHost>(op.second));
           }
         }
-        first = false;
       }
       else {
-        auto ops = ps.getParameter<std::vector<edm::ParameterSet> >("event");
+        const auto& ops = ev.second.get_child("");
         // If different number of operations, skip the event
         if(ops.size() != ret.size()) {
           continue;
         }
 
         int iOp=0;
-        for(const auto& psOp: ops) {
-          if(not ret[iOp]->emplace_back(psOp)) {
+        for(const auto& op: ops) {
+          if(not ret[iOp]->emplace_back(op.second)) {
             // If insertion failed (because of wrong type of operation), roll back the added operations from this ps
             for(--iOp; iOp >= 0; --iOp) {
               ret[iOp]->pop_back();
@@ -372,19 +381,9 @@ TestCUDAProducerSimEW::~TestCUDAProducerSimEW() {
 
 void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<std::vector<edm::InputTag>> ("srcs", std::vector<edm::InputTag>{});
+  desc.add<std::vector<edm::InputTag>>("srcs", std::vector<edm::InputTag>{});
 
-
-  edm::ParameterSetDescription opValidator;
-  opValidator.add("name", std::string("cpu"));
-  opValidator.addNode( edm::ParameterDescription<unsigned long long>("time", 0., true) xor
-                       edm::ParameterDescription<unsigned int>("bytes", 0, true) );
-
-  edm::ParameterSetDescription eventValidator;
-  eventValidator.addVPSet("event", opValidator, std::vector<edm::ParameterSet>{});
-
-  desc.addVPSet("acquire", eventValidator, std::vector<edm::ParameterSet>{});
-  desc.addVPSet("produce", eventValidator, std::vector<edm::ParameterSet>{});
+  desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
 
   //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);

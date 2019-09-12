@@ -37,21 +37,9 @@ process.options = cms.untracked.PSet(
 
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
 #from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
-process.transfer = testCUDAProducerSimEW.clone()
-#numElements = 4
-numElements = 32*1024
-#numElements = 1024*1024
-process.transfer.acquire = [
-    cms.PSet(event = cms.VPSet(
-        cms.PSet(name = cms.string("memcpyHtoD"), bytes = cms.uint32(numElements)),
-        cms.PSet(name = cms.string("kernel"), time = cms.uint64(
-            #1000
-            #50*1000
-            400*1000
-        )),
-        cms.PSet(name = cms.string("memcpyDtoH"), bytes = cms.uint32(numElements)),
-    )),
-]
+process.transfer = testCUDAProducerSimEW.clone(
+    config = "HeterogeneousCore/CUDATest/test/testSimulation.json"
+)
 
 process.p = cms.Path(process.transfer)
 

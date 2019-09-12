@@ -2,6 +2,7 @@
 
 import os
 import sys
+import json
 import sqlite3
 import argparse
 import subprocess
@@ -85,12 +86,21 @@ class Op:
             return "cms.PSet(name = cms.string('%s'), bytes = cms.uint32(%d))" % (self._name, self._value)
         else:
             return "cms.PSet(name = cms.string('%s'), time = cms.uint64(%d))" % (self._name, self._value)
+
+    def toDict(self):
+        if "memcpy" in self._name:
+            return dict(name = self._name, bytes = self._value)
+        else:
+            return dict(name = self._name, time = self._value)
    
 class Module:
     def __init__(self, name):
         self._name = name
         self._acquire = []
         self._produce = []
+
+    def name(self):
+        return self._name
 
     def rename(self, name):
         self._name = name
@@ -138,6 +148,21 @@ class Module:
         ret += ")\n"
         return ret
 
+    def toDict(self):
+        ret = {}
+        if self.hasAcquire():
+            if len(self._acquire) != len(self._produce):
+                raise Exception("Module %s got different amount of acquire events (%d) and produce events (%d)" % (self._name, len(self._acquire), len(self._produce)))
+            acquire = []
+            for ev in self._acquire:
+                acquire.append([op.toDict() for op in ev])
+            ret["acquire"] = acquire
+        produce = []
+        for ev in self._produce:
+            produce.append([op.toDict() for op in ev])
+        ret["produce"] = produce
+        return ret
+
 def main(opts):
     conn = sqlite3.connect(opts.file)
     strings = {}
@@ -159,7 +184,7 @@ def main(opts):
             markersDict[r[0]] = Marker(r[0], name, r[2], r[4], r[3])
             if " construction" in name:
                 modules.add(name.split(" ")[0])
-    print("\n".join(modules))
+    #print("\n".join(modules))
 
     # Ignore some "modules"
     for x in ["raw2digi_step", "reconstruction_step", "TriggerResults", "outPath", "out", "TVreco", "Raw2Hit"]:
@@ -249,18 +274,13 @@ def main(opts):
     #mods["source"].rename("sourceNew")
     del mods["source"]
 
+    data = dict(
+        moduleDeclarations = [mod.declaration() for mod in mods.values() if mod.hasContent()],
+        moduleDefinitions = {mod.name(): mod.toDict() for mod in mods.values() if mod.hasContent()}
+    )
+
     with open(opts.output, "w") as out:
-        out.write("# Module declarations\n")
-        for mod in mods.values():
-            if mod.hasContent():
-                out.write(mod.declaration())
-                out.write("\n")
-        out.write("\n# Insert module dependencies here\n\n\n")
-        out.write("# Module resource use\n")
-        for mod in mods.values():
-            if mod.hasContent():
-                out.write(str(mod))
-                out.write("\n")
+        json.dump(data, out, indent=2)
         
 def demangle(name):
     """Demangle a C++ identifier using c++filt"""
@@ -276,8 +296,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exctract module kernels, memory transfers, and additional spent CPU time into a python configuration for CMSSW")
     parser.add_argument("file", type=str,
                         help="nvvp file for input")
-    parser.add_argument("-o", "--output", type=str, default="config.py",
-                        help="Output file (default: config.py)")
+    parser.add_argument("-o", "--output", type=str, default="config.json",
+                        help="Output file (default: config.json)")
     parser.add_argument("--maxModules", type=int, default=-1,
                         help="Maximum number of modules to process, -1 for all (default: -1")
     parser.add_argument("--maxEvents", type=int, default=10,
