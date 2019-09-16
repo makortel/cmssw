@@ -23,11 +23,11 @@ public:
   }
   ~CUDAESProduct() = default;
 
-  // transferAsync should be a function of (T&, cuda::stream_t<>&)
+  // transferAsync should be a function of (T&, cudaStream_t)
   // which enqueues asynchronous transfers (possibly kernels as well)
   // to the CUDA stream
   template <typename F>
-  const T& dataForCurrentDeviceAsync(cuda::stream_t<>& cudaStream, F transferAsync) const {
+  const T& dataForCurrentDeviceAsync(cudaStream_t cudaStream, F transferAsync) const {
     auto device = cuda::device::current::get().id();
 
     auto& data = gpuDataPerDevice_[device];
@@ -54,12 +54,12 @@ public:
           auto should_be_false = data.m_filled.exchange(true);
           assert(!should_be_false);
           data.m_fillingStream = nullptr;
-        } else if (data.m_fillingStream != cudaStream.id()) {
+        } else if (data.m_fillingStream != cudaStream) {
           // Filling is still going on. For other CUDA stream, add
           // wait on the CUDA stream and return the value. Subsequent
           // work queued on the stream will wait for the event to
           // occur (i.e. transfer to finish).
-          auto ret = cudaStreamWaitEvent(cudaStream.id(), data.m_event->id(), 0);
+          auto ret = cudaStreamWaitEvent(cudaStream, data.m_event->id(), 0);
           cuda::throw_if_error(ret, "Failed to make a stream to wait for an event");
         }
         // else: filling is still going on. But for the same CUDA
@@ -72,7 +72,7 @@ public:
         // this thread is the first to try that.
         transferAsync(data.m_data, cudaStream);
         assert(data.m_fillingStream == nullptr);
-        data.m_fillingStream = cudaStream.id();
+        data.m_fillingStream = cudaStream;
         // Now the filling has been enqueued to the cudaStream, so we
         // can return the GPU data immediately, since all subsequent
         // work must be either enqueued to the cudaStream, or the cudaStream

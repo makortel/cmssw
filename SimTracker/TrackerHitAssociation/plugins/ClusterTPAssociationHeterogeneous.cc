@@ -143,7 +143,7 @@ void ClusterTPAssociationHeterogeneous::fillDescriptions(edm::ConfigurationDescr
 }
 
 void ClusterTPAssociationHeterogeneous::beginStreamGPUCuda(edm::StreamID streamId, cuda::stream_t<> &cudaStream) {
-  gpuAlgo = std::make_unique<clusterSLOnGPU::Kernel>(cudaStream, doDump);
+  gpuAlgo = std::make_unique<clusterSLOnGPU::Kernel>(cudaStream.id(), doDump);
 }
 
 void ClusterTPAssociationHeterogeneous::makeMap(const edm::HeterogeneousEvent &iEvent) {
@@ -233,7 +233,7 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
   std::sort(digi2tp.begin(), digi2tp.end());
   cudaCheck(cudaMemcpyAsync(
       gpuAlgo->slgpu.links_d, digi2tp.data(), sizeof(Clus2TP) * digi2tp.size(), cudaMemcpyDefault, cudaStream.id()));
-  gpuAlgo->algo(gDigis, ndigis, gHits, nhits, digi2tp.size(), cudaStream);
+  gpuAlgo->algo(gDigis, ndigis, gHits, nhits, digi2tp.size(), cudaStream.id());
 
   //  end gpu stuff ---------------------
 }
