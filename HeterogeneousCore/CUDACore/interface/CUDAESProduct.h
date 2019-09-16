@@ -8,17 +8,15 @@
 
 #include "FWCore/Concurrency/interface/hardware_pause.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 
 template <typename T>
 class CUDAESProduct {
 public:
   CUDAESProduct() : gpuDataPerDevice_(cuda::device::count()) {
     for (size_t i = 0; i < gpuDataPerDevice_.size(); ++i) {
-      gpuDataPerDevice_[i].m_event = std::make_unique<cuda::event_t>(cuda::event::create(
-          cuda::device::current::get_id(),
-          cuda::event::
-              sync_by_busy_waiting,  // default; we should try to avoid explicit synchronization, so maybe the value doesn't matter much?
-          cuda::event::dont_record_timings));  // it should be a bit faster to ignore timings
+      gpuDataPerDevice_[i].m_event = cudautils::getCUDAEventCache().getCUDAEvent();
     }
   }
   ~CUDAESProduct() = default;
@@ -47,7 +45,7 @@ public:
         // Someone else is filling
 
         // Check first if the recorded event has occurred
-        if (data.m_event->has_occurred()) {
+        if (cudautils::eventIsOccurred(data.m_event->id())) {
           // It was, so data is accessible from all CUDA streams on
           // the device. Set the 'filled' for all subsequent calls and
           // return the value
@@ -86,7 +84,7 @@ public:
 private:
   struct Item {
     mutable std::mutex m_mutex;
-    CMS_THREAD_GUARD(m_mutex) mutable std::unique_ptr<cuda::event_t> m_event;
+    CMS_THREAD_GUARD(m_mutex) mutable std::shared_ptr<cuda::event_t> m_event;
     CMS_THREAD_GUARD(m_mutex)
     mutable cudaStream_t m_fillingStream =
         nullptr;  // non-null if some thread is already filling (cudaStream_t is just a pointer)

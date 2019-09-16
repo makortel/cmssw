@@ -60,7 +60,7 @@ namespace impl {
   void CUDAScopedContextGetterBase::synchronizeStreams(int dataDevice,
                                                        cudaStream_t dataStream,
                                                        bool available,
-                                                       const cuda::event_t* dataEvent) {
+                                                       cudaEvent_t dataEvent) {
     if (dataDevice != device()) {
       // Eventually replace with prefetch to current device (assuming unified memory works)
       // If we won't go to unified memory, need to figure out something else...
@@ -75,7 +75,7 @@ namespace impl {
         // wait for an event, so all subsequent work in the stream
         // will run only after the event has "occurred" (i.e. data
         // product became available).
-        auto ret = cudaStreamWaitEvent(stream(), dataEvent->id(), 0);
+        auto ret = cudaStreamWaitEvent(stream(), dataEvent, 0);
         cuda::throw_if_error(ret, "Failed to make a stream to wait for an event");
       }
     }

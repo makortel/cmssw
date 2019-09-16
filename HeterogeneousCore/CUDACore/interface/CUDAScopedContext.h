@@ -63,7 +63,7 @@ namespace impl {
     template <typename... Args>
     CUDAScopedContextGetterBase(Args&&... args) : CUDAScopedContextBase(std::forward<Args>(args)...) {}
 
-    void synchronizeStreams(int dataDevice, cudaStream_t dataStream, bool available, const cuda::event_t* dataEvent);
+    void synchronizeStreams(int dataDevice, cudaStream_t dataStream, bool available, cudaEvent_t dataEvent);
   };
 
   class CUDAScopedContextHolderHelper {

@@ -32,6 +32,7 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDACore/interface/GPUCuda.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
 #include "HeterogeneousCore/Producer/interface/HeterogeneousEDProducer.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/TrackerDigiSimLink/interface/PixelDigiSimLink.h"
@@ -196,11 +197,11 @@ void ClusterTPAssociationHeterogeneous::acquireGPUCuda(const edm::HeterogeneousE
   // synchronize explicitly (implementation is from
   // CUDAScopedContext). In practice these should not be needed
   // (because of synchronizations upstream), but let's play generic.
-  if (not gd->isAvailable() and not gd->event()->has_occurred()) {
-    cudaCheck(cudaStreamWaitEvent(cudaStream.id(), gd->event()->id(), 0));
+  if (not gd->isAvailable() and not cudautils::eventIsOccurred(gd->event())) {
+    cudaCheck(cudaStreamWaitEvent(cudaStream.id(), gd->event(), 0));
   }
-  if (not gh->isAvailable() and not gh->event()->has_occurred()) {
-    cudaCheck(cudaStreamWaitEvent(cudaStream.id(), gh->event()->id(), 0));
+  if (not gh->isAvailable() and not cudautils::eventIsOccurred(gh->event())) {
+    cudaCheck(cudaStreamWaitEvent(cudaStream.id(), gh->event(), 0));
   }
 
   CUDAScopedContextProduce ctx{*gd};
