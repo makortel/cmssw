@@ -39,6 +39,7 @@ from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProduce
 #from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
 process.transfer = testCUDAProducerSimEW.clone(
     config = "HeterogeneousCore/CUDATest/test/testSimulation.json",
+    cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json",
     produce = True
 )
 

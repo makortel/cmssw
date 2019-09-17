@@ -14,7 +14,19 @@
 #include <random>
 
 namespace cudatest {
-  GPUTimeCruncher::GPUTimeCruncher() {
+  GPUTimeCruncher::GPUTimeCruncher(const std::vector<unsigned int>& iters, const std::vector<double>& times) {
+    if(iters.size() != times.size()) {
+      throw cms::Exception("Configuration") << "CUDA Calibration: got " << iters.size() << " iterations and " << times.size() << " times";
+    }
+    if(iters.empty()) {
+      throw cms::Exception("Configuration") << "CUDA Calibration: iterations is empty";
+    }
+    if(times.empty()) {
+      throw cms::Exception("Configuration") << "CUDA Calibration: times is empty";
+    }
+    niters_ = iters;
+    times_ = times;
+
     // Data for kernel
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -27,30 +39,6 @@ namespace cudatest {
       h_src[i] = dis(gen);
     }
     cuda::throw_if_error(cudaMemcpy(kernel_data_d, h_src.get(), kernel_elements*sizeof(float), cudaMemcpyDefault));
-  }
-
-  void GPUTimeCruncher::setCalibration(const std::vector<unsigned int>& iters, const std::vector<double>& times) {
-    if(iters.size() != times.size()) {
-      throw cms::Exception("Configuration") << "CUDA Calibration: got " << iters.size() << " iterations and " << times.size() << " times";
-    }
-    if(iters.empty()) {
-      throw cms::Exception("Configuration") << "CUDA Calibration: iterations is empty";
-    }
-    if(times.empty()) {
-      throw cms::Exception("Configuration") << "CUDA Calibration: times is empty";
-    }
-    if(niters_.empty()) {
-      niters_ = iters;
-      times_ = times;
-    }
-    else {
-      if(niters_ != iters) {
-        throw cms::Exception("Configuration") << "CUDA Calibration: input iterations differ from already stored ones";
-      }
-      if(times_ != times) {
-        throw cms::Exception("Configuration") << "CUDA Calibration: input times differ from already stored ones";
-      }
-    }
   }
 
   void GPUTimeCruncher::crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const {

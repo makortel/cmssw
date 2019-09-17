@@ -11,6 +11,7 @@
 
 namespace cudatest {
   class OperationBase;
+  class GPUTimeCruncher;
 
   class SimOperations {
   public:
@@ -31,6 +32,8 @@ namespace cudatest {
   private:
     using OpVector = std::vector<std::unique_ptr<OperationBase>>;
     OpVector ops_;
+
+    std::unique_ptr<GPUTimeCruncher> gpuCruncher_;
     float* kernel_data_d_;
 
     // These are indexed by the operation index in ops_

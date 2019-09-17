@@ -13,9 +13,7 @@ namespace cudatest {
    */
   class GPUTimeCruncher {
   public:
-    GPUTimeCruncher();
-
-    void setCalibration(const std::vector<unsigned int>& iters, const std::vector<double>& times) const;
+    GPUTimeCruncher(const std::vector<unsigned int>& iters, const std::vector<double>& times);
 
     void crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const;
 
@@ -27,15 +25,6 @@ namespace cudatest {
     std::vector<unsigned int> niters_;
     std::vector<double> times_; // in us
   };
-
-  
-
-  inline
-  const GPUTimeCruncher& getGPUTimeCruncher() {
-    const static GPUTimeCruncher cruncher;
-    return cruncher;
-  }
-
 }
 
 #endif

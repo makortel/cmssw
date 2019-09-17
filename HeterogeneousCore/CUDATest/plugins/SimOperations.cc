@@ -18,7 +18,8 @@
 
 namespace {
   struct State {
-    State(float* kernel_data, std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
+    State(const cudatest::GPUTimeCruncher* gtc,  float* kernel_data, std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
+      gpuCruncher{gtc},
       kernel_data_d{kernel_data},
       data_d_src{std::move(d_src)}
     {
@@ -27,6 +28,8 @@ namespace {
           return ptr.get();
         });
     }
+
+    const cudatest::GPUTimeCruncher* gpuCruncher;
 
     float* kernel_data_d;
 
@@ -120,7 +123,7 @@ namespace {
 
     void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const override {
       assert(stream != nullptr);
-      cudatest::getGPUTimeCruncher().crunch_for(totalTime(indices), state.kernel_data_d, *stream);
+      state.gpuCruncher->crunch_for(totalTime(indices), state.kernel_data_d, *stream);
     };
   };
 
@@ -318,10 +321,16 @@ namespace cudatest {
       }
       boost::property_tree::ptree calib_root_node;
       boost::property_tree::read_json(cudaCalibrationFile, calib_root_node);
-      auto iters = calib_root_node.get<std::vector<unsigned int>>("niters");
-      auto times = calib_root_node.get<std::vector<double>>("timesInMicroSeconds");
+      std::vector<unsigned int> iters;
+      std::vector<double> times;
+      for(const auto& elem: calib_root_node.get_child("niters")) {
+        iters.push_back(elem.second.get<unsigned int>(""));
+      }
+      for(const auto& elem: calib_root_node.get_child("timesInMicroSeconds")) {
+        times.push_back(elem.second.get<double>(""));
+      }
 
-      cudatest::getGPUTimeCruncher().setCalibration(iters, times);
+      gpuCruncher_ = std::make_unique<GPUTimeCruncher>(iters, times);
     }
 
     // Initialize CPU cruncher
@@ -342,7 +351,7 @@ namespace cudatest {
   }
 
   void SimOperations::operate(const std::vector<size_t>& indices, cuda::stream_t<>* stream) {
-    State opState{kernel_data_d_, data_h_src_, data_d_src_};
+    State opState{gpuCruncher_.get(), kernel_data_d_, data_h_src_, data_d_src_};
     for(auto& op: ops_) {
       op->operate(indices, opState, stream);
       opState.opIndex++;
