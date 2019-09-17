@@ -4,6 +4,7 @@
 #include <cuda/api_wrappers.h>
 
 #include <chrono>
+#include <vector>
 
 namespace cudatest {
   /**
@@ -14,6 +15,8 @@ namespace cudatest {
   public:
     GPUTimeCruncher();
 
+    void setCalibration(const std::vector<unsigned int>& iters, const std::vector<double>& times) const;
+
     void crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const;
 
     static constexpr size_t kernel_elements = 32;
@@ -21,12 +24,7 @@ namespace cudatest {
   private:
     unsigned int getLoops(const std::chrono::nanoseconds& time) const;
 
-    std::vector<unsigned int> niters_ = {
-      0, 32, 64, 128, 256, 512, 1024, 1536, 2048,
-        2560, 3072, 3584, 4096, 5120, 6144, 7168, 8192,
-        9216, 10240, 12288, 14336, 16384, 20480, 28672, 32768,
-        49152, 65536, 98304, 131072
-    };
+    std::vector<unsigned int> niters_;
     std::vector<double> times_; // in us
   };
 

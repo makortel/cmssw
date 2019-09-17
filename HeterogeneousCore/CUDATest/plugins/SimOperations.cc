@@ -217,9 +217,11 @@ namespace {
 
 
 namespace cudatest {
-  SimOperations::SimOperations(const std::string& filename, const std::string& nodepath) {
+  SimOperations::SimOperations(const std::string& configFile,
+                               const std::string& cudaCalibrationFile,
+                               const std::string& nodepath) {
     boost::property_tree::ptree root_node;
-    boost::property_tree::read_json(filename, root_node);
+    boost::property_tree::read_json(configFile, root_node);
     const auto& modfunc_node = root_node.get_child(nodepath);
 
     bool first = true;
@@ -314,7 +316,12 @@ namespace cudatest {
           cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
         }
       }
-      cudatest::getGPUTimeCruncher();
+      boost::property_tree::ptree calib_root_node;
+      boost::property_tree::read_json(cudaCalibrationFile, calib_root_node);
+      auto iters = calib_root_node.get<std::vector<unsigned int>>("niters");
+      auto times = calib_root_node.get<std::vector<double>>("timesInMicroSeconds");
+
+      cudatest::getGPUTimeCruncher().setCalibration(iters, times);
     }
 
     // Initialize CPU cruncher

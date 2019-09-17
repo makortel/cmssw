@@ -31,8 +31,12 @@ private:
 };
 
 TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
-  acquireOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(), "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire"},
-  produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(), "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
+  acquireOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
+              iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
+              "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire"},
+  produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
+              iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
+              "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
 {
   if(acquireOps_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
@@ -64,6 +68,7 @@ void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& des
   desc.add<bool>("produceCUDA", false);
 
   desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
+  desc.add<edm::FileInPath>("cudaCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CUDA calibration");
 
   //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);

@@ -14,7 +14,9 @@ namespace cudatest {
 
   class SimOperations {
   public:
-    explicit SimOperations(const std::string& filename, const std::string& nodepath);
+    explicit SimOperations(const std::string& configFile,
+                           const std::string& cudaCalibrationFile,
+                           const std::string& nodepath);
     ~SimOperations();
 
     SimOperations(const SimOperations&) = delete;
