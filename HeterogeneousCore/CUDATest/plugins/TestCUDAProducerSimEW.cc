@@ -5,6 +5,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 
 #include "SimOperations.h"
@@ -20,7 +21,9 @@ public:
 private:
   
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
-  const edm::EDPutTokenT<int> dstToken_;
+  std::vector<edm::EDGetTokenT<CUDAProduct<int>>> cudaSrcTokens_;
+  edm::EDPutTokenT<int> dstToken_;
+  edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
   CUDAContextState ctxState_;
 
   cudatest::SimOperations acquireOps_;
@@ -28,7 +31,6 @@ private:
 };
 
 TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
-  dstToken_{produces<int>()},
   acquireOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(), "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire"},
   produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(), "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
 {
@@ -38,11 +40,28 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
   if(acquireOps_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
   }
+
+  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
+    srcTokens_.emplace_back(consumes<int>(src));
+  }
+  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
+    cudaSrcTokens_.emplace_back(consumes<CUDAProduct<int>>(src));
+  }
+
+  if(iConfig.getParameter<bool>("produce")) {
+    dstToken_ = produces<int>();
+  }
+  if(iConfig.getParameter<bool>("produceCUDA")) {
+    cudaDstToken_ = produces<CUDAProduct<int>>();
+  }
 }
 
 void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<std::vector<edm::InputTag>>("srcs", std::vector<edm::InputTag>{});
+  desc.add<std::vector<edm::InputTag>>("cudaSrcs", std::vector<edm::InputTag>{});
+  desc.add<bool>("produce", false);
+  desc.add<bool>("produceCUDA", false);
 
   desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
 
@@ -56,7 +75,17 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
     iEvent.get(t);
   }
 
-  CUDAScopedContextAcquire ctx{iEvent.streamID(), std::move(h), ctxState_};
+  std::vector<const CUDAProduct<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
+      return &iEvent.get(tok);
+    });
+
+  auto ctx = cudaProducts.empty() ? CUDAScopedContextAcquire(iEvent.streamID(), std::move(h), ctxState_) :
+    CUDAScopedContextAcquire(*cudaProducts[0], std::move(h), ctxState_);
+
+  for(const auto ptr: cudaProducts) {
+    ctx.get(*ptr);
+  }
 
   acquireOps_.operate(std::vector<size_t>{iEvent.id().event() % acquireOps_.events()}, &ctx.stream());
 }
@@ -66,7 +95,12 @@ void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& i
 
   produceOps_.operate(std::vector<size_t>{iEvent.id().event() % produceOps_.events()}, &ctx.stream());
 
-  iEvent.emplace(dstToken_, 42);
+  if(not dstToken_.isUninitialized()) {
+    iEvent.emplace(dstToken_, 42);
+  }
+  if(not cudaDstToken_.isUninitialized()) {
+    ctx.emplace(iEvent, cudaDstToken_, 42);
+  }
 }
 
 DEFINE_FWK_MODULE(TestCUDAProducerSimEW);
