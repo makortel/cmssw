@@ -38,7 +38,8 @@ process.options = cms.untracked.PSet(
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
 #from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
 process.transfer = testCUDAProducerSimEW.clone(
-    config = "HeterogeneousCore/CUDATest/test/testSimulation.json"
+    config = "HeterogeneousCore/CUDATest/test/testSimulation.json",
+    produce = True
 )
 
 process.p = cms.Path(process.transfer)

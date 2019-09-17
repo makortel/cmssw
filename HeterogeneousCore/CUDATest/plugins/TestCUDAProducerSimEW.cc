@@ -34,11 +34,11 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
   acquireOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(), "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire"},
   produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(), "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
 {
-  if(acquireOps_.events() != produceOps_.events()) {
-    throw cms::Exception("Configuration") << "Got " << acquireOps_.events() << " events for acquire and " << produceOps_.events() << " for produce";
-  }
   if(acquireOps_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
+  }
+  if(acquireOps_.events() != produceOps_.events() and produceOps_.events() > 0) {
+    throw cms::Exception("Configuration") << "Got " << acquireOps_.events() << " events for acquire and " << produceOps_.events() << " for produce";
   }
 
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
@@ -93,7 +93,9 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
 void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   CUDAScopedContextProduce ctx{ctxState_};
 
-  produceOps_.operate(std::vector<size_t>{iEvent.id().event() % produceOps_.events()}, &ctx.stream());
+  if(produceOps_.events() > 0) {
+    produceOps_.operate(std::vector<size_t>{iEvent.id().event() % produceOps_.events()}, &ctx.stream());
+  }
 
   if(not dstToken_.isUninitialized()) {
     iEvent.emplace(dstToken_, 42);
