@@ -71,7 +71,7 @@ namespace cudatest {
           auto stop_cali       = tbb::tick_count::now();
           auto deltat          = ( stop_cali - start_cali ).seconds();
           times_vect_[i] = deltat * 1000000.; // in microseconds
-          edm::LogPrint("foo") << " Calibration: # iters = " << niters << " => " << times_vect_[i] << " us";
+          LogTrace("foo") << " Calibration: # iters = " << niters << " => " << times_vect_[i] << " us";
           trials--;
         } while ( trials > 0 && times_vect_[i] < times_vect_[i-1] ); // make sure that they are monotonic
       }
@@ -85,7 +85,7 @@ namespace cudatest {
 
       std::chrono::nanoseconds actual( int( 1e9 * ( stop_cali - start_cali ).seconds() ) );
 
-      edm::LogPrint("foo") << "crunch for " << (crunchtime.count()*1e-3) << " us == " << niters << " iter. actual time: " << (actual.count()*1e-3)
+      LogTrace("foo") << "crunch for " << (crunchtime.count()*1e-3) << " us == " << niters << " iter. actual time: " << (actual.count()*1e-3)
                       << " us. ratio: " << float( actual.count() ) / crunchtime.count();
 
 
