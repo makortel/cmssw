@@ -196,12 +196,16 @@ def main(opts):
     markers = list(filter(lambda x: x.name() in modules or ("acquire" in x.name() and x.name().split(" ")[0] in modules), markersDict.values()))
     markers.sort(key = lambda x: x._start)
     # Skip first event
-    pos = None
-    for i, m in enumerate(markers[1:]):
-        if m.name() == "source":
-            pos = i+1
-            break
-    markers = markers[pos:]
+    if opts.skipEvents > 0:
+        pos = None
+        nskip = opts.skipEvents+1
+        for i, m in enumerate(markers):
+            if m.name() == "source":
+                pos = i+1
+                nskip -= 1
+                if nskip == 0:
+                    break
+        markers = markers[pos:]
         
 
     #for i in sorted(markersDict.keys()):
@@ -272,7 +276,8 @@ def main(opts):
                 break
 
     #mods["source"].rename("sourceNew")
-    del mods["source"]
+    if "source" in mods:
+        del mods["source"]
 
     data = dict(
         moduleDeclarations = [mod.declaration() for mod in mods.values() if mod.hasContent()],
@@ -302,6 +307,8 @@ if __name__ == "__main__":
                         help="Maximum number of modules to process, -1 for all (default: -1")
     parser.add_argument("--maxEvents", type=int, default=10,
                         help="Maximum number of events to process, -1 for all (default: 10")
+    parser.add_argument("--skipEvents", type=int, default=1,
+                        help="Number of events to be skipped (default: 1)")
 
     opts = parser.parse_args()
 
