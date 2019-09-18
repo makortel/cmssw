@@ -1,5 +1,7 @@
 <use name="cuda-api-wrappers"/>
+<use name="DataFormats/Common"/>
 <use name="HeterogeneousCore/CUDAUtilities"/>
+<use name="root"/>
 
 <export>
     <lib name="1"/>
