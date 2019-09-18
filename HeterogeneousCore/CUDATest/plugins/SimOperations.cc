@@ -189,7 +189,7 @@ namespace {
       const auto bytes = totalBytes(indices);
 
       auto data_d = cudautils::make_device_unique<char[]>(bytes, *stream);
-      LogTrace("foo") << "MemcpyToDevice " << i << " from 0x" << static_cast<const void*>(state.data_h_src[i]) << " to " << static_cast<const void*>(data_d.get());
+      LogTrace("foo") << "MemcpyToDevice " << i << " from 0x" << static_cast<const void*>(state.data_h_src[i]) << " to " << static_cast<const void*>(data_d.get()) << " " << bytes << " bytes";
       cuda::memory::async::copy(data_d.get(), state.data_h_src[i], bytes, stream->id());
       state.data_d_dst.emplace_back(std::move(data_d));
     }
@@ -211,7 +211,7 @@ namespace {
       const auto bytes = totalBytes(indices);
 
       auto data_h = cudautils::make_host_unique<char[]>(bytes, *stream);
-      LogTrace("foo") << "MemcpyToHost " << i << " from 0x" << static_cast<const void*>(state.data_d_src[i]) << " to " << static_cast<const void*>(data_h.get());
+      LogTrace("foo") << "MemcpyToHost " << i << " from 0x" << static_cast<const void*>(state.data_d_src[i]) << " to " << static_cast<const void*>(data_h.get()) << " " << bytes << " bytes";
       cuda::memory::async::copy(data_h.get(), state.data_d_src[i], bytes, stream->id());
       state.data_h_dst.emplace_back(std::move(data_h));
     }
@@ -222,7 +222,8 @@ namespace {
 namespace cudatest {
   SimOperations::SimOperations(const std::string& configFile,
                                const std::string& cudaCalibrationFile,
-                               const std::string& nodepath) {
+                               const std::string& nodepath,
+                               const unsigned int gangSize) {
     boost::property_tree::ptree root_node;
     boost::property_tree::read_json(configFile, root_node);
     const auto& modfunc_node = root_node.get_child(nodepath);
@@ -303,7 +304,7 @@ namespace cudatest {
       data_d_src_.resize(ops_.size(), nullptr);
       data_h_src_.resize(ops_.size());
       for(size_t i=0; i!=ops_.size(); ++i) {
-        if(const auto bytesToD = ops_[i]->maxBytesToDevice();
+        if(const auto bytesToD = gangSize*ops_[i]->maxBytesToDevice();
            bytesToD > 0) {
           data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
           LogTrace("foo") << "Host ptr " << i << " bytes " << bytesToD << " ptr " << static_cast<const void*>(data_h_src_[i].get());
@@ -311,7 +312,7 @@ namespace cudatest {
             data_h_src_[i][j] = disc(gen);
           }
         }
-        if(const auto bytesToH = ops_[i]->maxBytesToHost();
+        if(const auto bytesToH = gangSize*ops_[i]->maxBytesToHost();
            bytesToH > 0) {
           cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
           LogTrace("foo") << "Device ptr " << i << " bytes " << bytesToH << " ptr " << static_cast<const void*>(data_d_src_[i]);
