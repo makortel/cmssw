@@ -230,7 +230,7 @@ def main(opts):
         if m._stop is None:
             continue
         ops = []
-        ops_time = 0.
+        ops_time = 0
         for c in memcpy:
             if c._apiStart >= m._start and c._apiStop <= m._stop:
                 ops.append(c)
@@ -246,8 +246,8 @@ def main(opts):
                 break
         ops.sort(key = lambda x: x._apiStart)
 
-        cpuTime = (m.duration()-ops_time)/1000.
-        #print("%s time %f us, ops time %f us, diff %f us" % (m.name(), m.duration()/1000., ops_time/1000., cpuTime))
+        cpuTime = m.duration()-ops_time
+        #print("%s time %f us, ops time %f us, diff %f us" % (m.name(), m.duration()/1000., ops_time/1000., cpuTime/1000.))
         #for op in ops:
         #    print(" %s" % str(op))
         if "acquire" in m.name():
