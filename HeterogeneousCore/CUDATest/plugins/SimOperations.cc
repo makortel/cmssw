@@ -245,6 +245,7 @@ namespace cudatest {
             ops_.emplace_back(std::make_unique<OperationMemcpyToHost>(op.second));
           }
         }
+        first = false;
       }
       else {
         const auto& ops = ev.second.get_child("");
@@ -276,6 +277,8 @@ namespace cudatest {
         }
       }
     }
+
+    LogDebug("foo") << "Configured with " << ops_.size() << " operations for " << events() << " events";
 
     // Initialize GPU stuff
     edm::Service<CUDAService> cs;
