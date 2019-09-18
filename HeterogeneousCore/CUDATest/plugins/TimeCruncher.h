@@ -83,9 +83,9 @@ namespace cudatest {
       findPrimes( niters );
       auto stop_cali = tbb::tick_count::now();
 
-      std::chrono::microseconds actual( int( 1e6 * ( stop_cali - start_cali ).seconds() ) );
+      std::chrono::nanoseconds actual( int( 1e9 * ( stop_cali - start_cali ).seconds() ) );
 
-      LogDebug("foo") << "crunch for " << crunchtime.count() << " us == " << niters << " iter. actual time: " << actual.count()
+      edm::LogPrint("foo") << "crunch for " << (crunchtime.count()*1e-3) << " us == " << niters << " iter. actual time: " << (actual.count()*1e-3)
                       << " us. ratio: " << float( actual.count() ) / crunchtime.count();
 
 
