@@ -18,7 +18,8 @@ namespace cudatest {
     explicit SimOperations(const std::string& configFile,
                            const std::string& cudaCalibrationFile,
                            const std::string& nodepath,
-                           const unsigned int gangSize = 1);
+                           const unsigned int gangSize = 1,
+                           const double gangKernelFactor = 1.0);
     ~SimOperations();
 
     SimOperations(const SimOperations&) = delete;

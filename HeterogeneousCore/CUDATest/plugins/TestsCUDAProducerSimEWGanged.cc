@@ -25,8 +25,9 @@ namespace {
       const auto calibPath = iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath();
       const auto nodePath = "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire";
       const auto gangNum = iConfig.getParameter<unsigned int>("gangNumber");
+      const auto gangKernelFactor = iConfig.getParameter<double>("gangKernelFactor");
       for(unsigned int i=0; i<gangNum; ++i) {
-        auto tmp = std::make_unique<cudatest::SimOperations>(configPath, calibPath, nodePath, gangSize_);
+        auto tmp = std::make_unique<cudatest::SimOperations>(configPath, calibPath, nodePath, gangSize_, gangKernelFactor);
         events_ = tmp->events();
         acquireOps_.add(std::move(tmp));
       }
@@ -169,6 +170,7 @@ void TestCUDAProducerSimEWGanged::fillDescriptions(edm::ConfigurationDescription
   desc.add<bool>("produceCUDA", false);
   desc.add<unsigned int>("gangSize", 1);
   desc.add<unsigned int>("gangNumber", 1);
+  desc.add<double>("gangKernelFactor", 1.0);
 
   desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
   desc.add<edm::FileInPath>("cudaCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CUDA calibration");

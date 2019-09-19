@@ -63,7 +63,8 @@ namespace cudatest {
 namespace {
   class OperationTime: public cudatest::OperationBase {
   public:
-    explicit OperationTime(const boost::property_tree::ptree& conf)
+    explicit OperationTime(const boost::property_tree::ptree& conf, const double gangFactor = 1.0):
+      gangFactor_{gangFactor}
     {
       time_.emplace_back(conf.get<unsigned long long>("time"));
     }
@@ -88,16 +89,19 @@ namespace {
   protected:
     std::chrono::nanoseconds totalTime(const std::vector<size_t>& indices) const {
       std::chrono::nanoseconds total{};
+      std::chrono::nanoseconds max{};
       for(size_t i: indices) {
         total += time_[i];
+        max = std::max(max, time_[i]);
       }
-      return total;
+      return max + std::chrono::nanoseconds(static_cast<long int>((total-max).count()*gangFactor_));
     }
 
     virtual bool checkName(const std::string& name) const = 0;
 
   private:
     std::vector<std::chrono::nanoseconds> time_;
+    const double gangFactor_;
   };
 
   class OperationCPU final: public OperationTime {
@@ -115,7 +119,7 @@ namespace {
 
   class OperationKernel final: public OperationTime {
   public:
-    explicit OperationKernel(const boost::property_tree::ptree& conf): OperationTime(conf) {}
+    explicit OperationKernel(const boost::property_tree::ptree& conf, const double gangKernelFactor): OperationTime(conf, gangKernelFactor) {}
 
     bool checkName(const std::string& name) const override{
       return name == "kernel";
@@ -223,7 +227,8 @@ namespace cudatest {
   SimOperations::SimOperations(const std::string& configFile,
                                const std::string& cudaCalibrationFile,
                                const std::string& nodepath,
-                               const unsigned int gangSize) {
+                               const unsigned int gangSize,
+                               const double gangKernelFactor) {
     boost::property_tree::ptree root_node;
     boost::property_tree::read_json(configFile, root_node);
     const auto& modfunc_node = root_node.get_child(nodepath);
@@ -237,7 +242,7 @@ namespace cudatest {
             ops_.emplace_back(std::make_unique<OperationCPU>(op.second));
           }
           else if(opname == "kernel") {
-            ops_.emplace_back(std::make_unique<OperationKernel>(op.second));
+            ops_.emplace_back(std::make_unique<OperationKernel>(op.second, gangKernelFactor));
           }
           else if(opname == "memcpyHtoD") {
             ops_.emplace_back(std::make_unique<OperationMemcpyToDevice>(op.second));
