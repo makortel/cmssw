@@ -14,12 +14,11 @@ def main(opts):
              9216, 10240, 12288, 14336, 16384, 20480, 28672, 32768,
              49152, 65536, 98304, 131072]
 
-    p = subprocess.Popen(["nvprof", "-f", "-o", "cudaCalibration.nvvp", "cudaCalibration"] + [str(x) for x in iters])
+    p = subprocess.Popen(["nvprof", "-f", "-o", "cudaCalibration.nvvp", "cudaCalibration"] + [str(x) for x in iters], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (stdout, stderr) = p.communicate()
     if p.returncode != 0:
         print("nvprof cudaCalibration command failed with exit code %d" % p.returncode)
         print(stdout)
-        print(stderr)
         return
 
     conn = sqlite3.connect("cudaCalibration.nvvp")

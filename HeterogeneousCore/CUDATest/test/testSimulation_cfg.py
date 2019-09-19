@@ -36,8 +36,19 @@ process.options = cms.untracked.PSet(
 #process.p_overhead = cms.Path(process.overhead)
 
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged
 #from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
-process.transfer = testCUDAProducerSimEW.clone(
+template = testCUDAProducerSimEW.clone()
+template = testCUDAProducerSimEWGanged.clone(
+    gangSize = 1
+)
+template.gangNumber = process.options.numberOfStreams.value()
+if template.gangNumber.value() == 0:
+    template.gangNumber = process.options.numberOfThreads.value()
+if template.gangNumber.value() % template.gangSize.value() != 0:
+    raise Exception("Number of streams %d is not divisible with the gang size %d" % (template.gangNumber.value(), template.gangSize.value()))
+template.gangNumber = template.gangNumber.value()/template.gangSize.value()
+process.transfer = template.clone(
     config = "HeterogeneousCore/CUDATest/test/testSimulation.json",
     cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json",
     produce = True
@@ -79,10 +90,13 @@ if factor > 1:
         process.t_transfer.add(m1, m2)
         process.out.outputCommands.append("keep *_cpu2c%d_*_*" % i)
 
-#process.maxEvents.input = 2
+process.maxEvents.input = 16
+process.options.numberOfStreams = 4
+process.transfer.gangSize = 2
+process.transfer.gangNumber = 2
 #process.Tracer = cms.Service("Tracer")
 #process.out.verbosity = 1
 #process.options.numberOfThreads = 8
 #process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
 #process.NVProfilerService.skipFirstEvent = True
-#process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
