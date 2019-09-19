@@ -29,7 +29,13 @@ namespace cudatest {
 
     size_t events() const;
 
+    // Operate all operations
     void operate(const std::vector<size_t>& indices, cuda::stream_t<>* stream);
+
+    // Operate CPU operations
+    void operateCPU(const std::vector<size_t>& indices);
+    // Operate GPU operations
+    void operateGPU(const std::vector<size_t>& indices, cuda::stream_t<>* stream);
 
   private:
     using OpVector = std::vector<std::unique_ptr<OperationBase>>;

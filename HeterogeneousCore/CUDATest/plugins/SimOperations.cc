@@ -46,8 +46,10 @@ namespace {
 namespace cudatest {
   class OperationBase {
   public:
-    OperationBase() = default;
+    explicit OperationBase(bool isCPU): isCPU_{isCPU} {}
     virtual ~OperationBase() = default;
+
+    bool isCPU() const { return isCPU_; }
 
     virtual bool emplace_back(const boost::property_tree::ptree& conf) = 0;
     virtual void pop_back() = 0;
@@ -57,13 +59,17 @@ namespace cudatest {
     virtual unsigned int maxBytesToHost() const { return 0; }
 
     virtual void operate(const std::vector<size_t>& indices, State& state, cuda::stream_t<> *stream) const = 0;
+
+  private:
+    const bool isCPU_;
   };
 }
 
 namespace {
   class OperationTime: public cudatest::OperationBase {
   public:
-    explicit OperationTime(const boost::property_tree::ptree& conf, const double gangFactor = 1.0):
+    explicit OperationTime(const boost::property_tree::ptree& conf, bool isCPU, const double gangFactor = 1.0):
+      OperationBase{isCPU},
       gangFactor_{gangFactor}
     {
       time_.emplace_back(conf.get<unsigned long long>("time"));
@@ -106,7 +112,7 @@ namespace {
 
   class OperationCPU final: public OperationTime {
   public:
-    explicit OperationCPU(const boost::property_tree::ptree& conf): OperationTime(conf) {}
+    explicit OperationCPU(const boost::property_tree::ptree& conf): OperationTime(conf, true) {}
 
     bool checkName(const std::string& name) const override {
       return name == "cpu";
@@ -119,7 +125,7 @@ namespace {
 
   class OperationKernel final: public OperationTime {
   public:
-    explicit OperationKernel(const boost::property_tree::ptree& conf, const double gangKernelFactor): OperationTime(conf, gangKernelFactor) {}
+    explicit OperationKernel(const boost::property_tree::ptree& conf, const double gangKernelFactor): OperationTime(conf, false, gangKernelFactor) {}
 
     bool checkName(const std::string& name) const override{
       return name == "kernel";
@@ -133,7 +139,8 @@ namespace {
 
   class OperationBytes: public cudatest::OperationBase {
   public:
-    explicit OperationBytes(const boost::property_tree::ptree& conf)
+    explicit OperationBytes(const boost::property_tree::ptree& conf):
+      OperationBase{false}
     {
       bytes_.emplace_back(conf.get<unsigned int>("bytes"));
     }
@@ -363,6 +370,25 @@ namespace cudatest {
     State opState{gpuCruncher_.get(), kernel_data_d_, data_h_src_, data_d_src_};
     for(auto& op: ops_) {
       op->operate(indices, opState, stream);
+      opState.opIndex++;
+    }
+  }
+
+  void SimOperations::operateCPU(const std::vector<size_t>& indices) {
+    State opState{nullptr, nullptr, data_h_src_, data_d_src_};
+    for(auto& op: ops_) {
+      if(op->isCPU()) {
+        op->operate(indices, opState, nullptr);
+      }
+    }
+  }
+
+  void SimOperations::operateGPU(const std::vector<size_t>& indices, cuda::stream_t<>* stream) {
+    State opState{gpuCruncher_.get(), kernel_data_d_, data_h_src_, data_d_src_};
+    for(auto& op: ops_) {
+      if(not op->isCPU()) {
+        op->operate(indices, opState, stream);
+      }
       opState.opIndex++;
     }
   }
