@@ -235,7 +235,8 @@ namespace cudatest {
                                const std::string& cudaCalibrationFile,
                                const std::string& nodepath,
                                const unsigned int gangSize,
-                               const double gangKernelFactor) {
+                               const double gangKernelFactor,
+                               const bool ignoreGPU) {
     boost::property_tree::ptree root_node;
     boost::property_tree::read_json(configFile, root_node);
     const auto& modfunc_node = root_node.get_child(nodepath);
@@ -293,60 +294,69 @@ namespace cudatest {
 
     LogDebug("foo") << "Configured with " << ops_.size() << " operations for " << events() << " events";
 
-    // Initialize GPU stuff
-    edm::Service<CUDAService> cs;
-    if(cs->enabled()) {
-      std::random_device rd;
-      std::mt19937 gen(rd());
-      std::uniform_real_distribution<float> disf(1e-5, 100.);
-      std::uniform_int_distribution<char> disc(-100, 100);
+    if(ignoreGPU) {
+      // Remove GPU stuff if asked to ignore
+      ops_.erase(std::remove_if(ops_.begin(), ops_.end(),[](const auto& ptr) {
+            return not ptr->isCPU();
+          }),
+        ops_.end());
+    }
+    else {
+      // Initialize GPU stuff
+      edm::Service<CUDAService> cs;
+      if(cs->enabled()) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> disf(1e-5, 100.);
+        std::uniform_int_distribution<char> disc(-100, 100);
 
-      // Data for kernel
-      {
-        constexpr auto elements = cudatest::GPUTimeCruncher::kernel_elements;
-        auto h_src = cudautils::make_host_noncached_unique<char[]>(elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
-        cuda::throw_if_error(cudaMalloc(&kernel_data_d_, elements*sizeof(float)));
-        for(size_t i=0; i!=elements; ++i) {
-          h_src[i] = disf(gen);
+        // Data for kernel
+        {
+          constexpr auto elements = cudatest::GPUTimeCruncher::kernel_elements;
+          auto h_src = cudautils::make_host_noncached_unique<char[]>(elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
+          cuda::throw_if_error(cudaMalloc(&kernel_data_d_, elements*sizeof(float)));
+          for(size_t i=0; i!=elements; ++i) {
+            h_src[i] = disf(gen);
+          }
+          cuda::throw_if_error(cudaMemcpy(kernel_data_d_, h_src.get(), elements*sizeof(float), cudaMemcpyDefault));
         }
-        cuda::throw_if_error(cudaMemcpy(kernel_data_d_, h_src.get(), elements*sizeof(float), cudaMemcpyDefault));
-      }
       
-      // Data for transfer operations
-      data_d_src_.resize(ops_.size(), nullptr);
-      data_h_src_.resize(ops_.size());
-      for(size_t i=0; i!=ops_.size(); ++i) {
-        if(const auto bytesToD = gangSize*ops_[i]->maxBytesToDevice();
-           bytesToD > 0) {
-          data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
-          LogTrace("foo") << "Host ptr " << i << " bytes " << bytesToD << " ptr " << static_cast<const void*>(data_h_src_[i].get());
-          for(unsigned int j=0; j<bytesToD; ++j) {
-            data_h_src_[i][j] = disc(gen);
+        // Data for transfer operations
+        data_d_src_.resize(ops_.size(), nullptr);
+        data_h_src_.resize(ops_.size());
+        for(size_t i=0; i!=ops_.size(); ++i) {
+          if(const auto bytesToD = gangSize*ops_[i]->maxBytesToDevice();
+             bytesToD > 0) {
+            data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
+            LogTrace("foo") << "Host ptr " << i << " bytes " << bytesToD << " ptr " << static_cast<const void*>(data_h_src_[i].get());
+            for(unsigned int j=0; j<bytesToD; ++j) {
+              data_h_src_[i][j] = disc(gen);
+            }
+          }
+          if(const auto bytesToH = gangSize*ops_[i]->maxBytesToHost();
+             bytesToH > 0) {
+            cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
+            LogTrace("foo") << "Device ptr " << i << " bytes " << bytesToH << " ptr " << static_cast<const void*>(data_d_src_[i]);
+            auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
+            for(unsigned int j=0; j<bytesToH; ++j) {
+              h_src[j] = disc(gen);
+            }
+            cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
           }
         }
-        if(const auto bytesToH = gangSize*ops_[i]->maxBytesToHost();
-           bytesToH > 0) {
-          cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
-          LogTrace("foo") << "Device ptr " << i << " bytes " << bytesToH << " ptr " << static_cast<const void*>(data_d_src_[i]);
-          auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
-          for(unsigned int j=0; j<bytesToH; ++j) {
-            h_src[j] = disc(gen);
-          }
-          cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
+        boost::property_tree::ptree calib_root_node;
+        boost::property_tree::read_json(cudaCalibrationFile, calib_root_node);
+        std::vector<unsigned int> iters;
+        std::vector<double> times;
+        for(const auto& elem: calib_root_node.get_child("niters")) {
+          iters.push_back(elem.second.get<unsigned int>(""));
         }
-      }
-      boost::property_tree::ptree calib_root_node;
-      boost::property_tree::read_json(cudaCalibrationFile, calib_root_node);
-      std::vector<unsigned int> iters;
-      std::vector<double> times;
-      for(const auto& elem: calib_root_node.get_child("niters")) {
-        iters.push_back(elem.second.get<unsigned int>(""));
-      }
-      for(const auto& elem: calib_root_node.get_child("timesInMicroSeconds")) {
-        times.push_back(elem.second.get<double>(""));
-      }
+        for(const auto& elem: calib_root_node.get_child("timesInMicroSeconds")) {
+          times.push_back(elem.second.get<double>(""));
+        }
 
-      gpuCruncher_ = std::make_unique<GPUTimeCruncher>(iters, times);
+        gpuCruncher_ = std::make_unique<GPUTimeCruncher>(iters, times);
+      }
     }
 
     // Initialize CPU cruncher
@@ -371,15 +381,6 @@ namespace cudatest {
     for(auto& op: ops_) {
       op->operate(indices, opState, stream);
       opState.opIndex++;
-    }
-  }
-
-  void SimOperations::operateCPU(const std::vector<size_t>& indices) {
-    State opState{nullptr, nullptr, data_h_src_, data_d_src_};
-    for(auto& op: ops_) {
-      if(op->isCPU()) {
-        op->operate(indices, opState, nullptr);
-      }
     }
   }
 

@@ -73,7 +73,7 @@ namespace {
           throw cms::Exception("LogicError") << "Tried to get acquire operations in Ganger::enqueue, but got none. Are gangSize and gangNum compatible with numberOfStreams?";
         }
 
-        optsPtr->operate(indicesToLaunch, &ctx.stream());
+        optsPtr->operateGPU(indicesToLaunch, &ctx.stream());
         ctx.replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task(tbb::task::allocate_root(),
                                                                                             [holders=std::move(holdersToLaunch),
                                                                                              optsPtr=std::move(optsPtr)](std::exception_ptr const* excptr) mutable {
@@ -131,10 +131,16 @@ private:
   edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
   CUDAContextState ctxState_;
 
+  cudatest::SimOperations acquireOpsCPU_;
   cudatest::SimOperations produceOps_;
 };
 
 TestCUDAProducerSimEWGanged::TestCUDAProducerSimEWGanged(const edm::ParameterSet& iConfig, const Ganger* ganger):
+  acquireOpsCPU_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
+                 iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
+                 "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce",
+                 1, 1.0,
+                 true},
   produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
               iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
               "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
@@ -142,6 +148,9 @@ TestCUDAProducerSimEWGanged::TestCUDAProducerSimEWGanged(const edm::ParameterSet
   const auto acquireEvents = ganger->events();
   if(acquireEvents == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
+  }
+  if(acquireEvents != acquireOpsCPU_.events()) {
+    throw cms::Exception("LogicError") << "Got " << acquireEvents << " from GPU acquire ops, but " << acquireOpsCPU_.events() << " from CPU ops";
   }
   if(acquireEvents != produceOps_.events() and produceOps_.events() > 0) {
     throw cms::Exception("Configuration") << "Got " << acquireEvents << " events for acquire and " << produceOps_.events() << " for produce";
@@ -197,6 +206,7 @@ void TestCUDAProducerSimEWGanged::acquire(const edm::Event& iEvent, const edm::E
   auto ctx = cudaProducts.empty() ? CUDAScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
     CUDAScopedContextAcquire(*cudaProducts[0], h, ctxState_);
 
+  acquireOpsCPU_.operate(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()}, nullptr);
   globalCache()->enqueue(iEvent.id().event(), std::move(cudaProducts), std::move(h), ctx);
 }
 

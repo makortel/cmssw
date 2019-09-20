@@ -19,7 +19,8 @@ namespace cudatest {
                            const std::string& cudaCalibrationFile,
                            const std::string& nodepath,
                            const unsigned int gangSize = 1,
-                           const double gangKernelFactor = 1.0);
+                           const double gangKernelFactor = 1.0,
+                           const bool ignoreGPU=false);
     ~SimOperations();
 
     SimOperations(const SimOperations&) = delete;
@@ -32,8 +33,6 @@ namespace cudatest {
     // Operate all operations
     void operate(const std::vector<size_t>& indices, cuda::stream_t<>* stream);
 
-    // Operate CPU operations
-    void operateCPU(const std::vector<size_t>& indices);
     // Operate GPU operations
     void operateGPU(const std::vector<size_t>& indices, cuda::stream_t<>* stream);
 
