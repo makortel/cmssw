@@ -6,8 +6,13 @@ import json
 import argparse
 import subprocess
 
+# felk40
+cores = [0, 1, 2, 3]
+cores = [str(x) for x in cores]
+background_time = 10*60
+
 nev_quantum = 100
-nev_per_stream = 1*nev_quantum
+nev_per_stream = 100*nev_quantum
 
 times = 1
 n_streams_threads = [(0, i) for i in range(1,2)]
@@ -41,12 +46,25 @@ def throughput(output):
     print("Processed %d events in %f seconds, throuhgput %s ev/s" % (nevents, time*nevents, thr))
     return thr
 
-def run(nev, nstr, nth, config):
-    cmssw = subprocess.Popen(["cmsRun", config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+def partition_cores(nth):
+    if nth >= len(cores):
+        return (cores, [])
+
+    return (cores[1:nth+1], [cores[0]] + cores[nth+1:])
+
+def run(nev, nstr, cores_main, config):
+    nth = len(cores_main)
+    cmssw = subprocess.Popen(["taskset", "-c", ",".join(cores_main), "cmsRun", config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     (stdout, stderr) = cmssw.communicate()
     if cmssw.returncode != 0:
         raise Exception("Got return code %d, output\n%s" % (cmssw.returncode, stdout))
     return throughput(stdout)
+
+def launchBackground(cores_bkg):
+    nth = len(cores_bkg)
+    evs = background_time * nth
+    cmssw = subprocess.Popen(["taskset", "-c", ",".join(cores_bkg), "cmsRun", "HeterogeneousCore/CUDATest/test/cpucruncher_cfg.py", "maxEvents=%d"%evs, "numberOfStreams=%d"%nth, "numberOfThreads=%d"%nth], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    return cmssw
 
 def main(opts):
     results = []
@@ -55,10 +73,17 @@ def main(opts):
         if nstr == 0:
             nstr = nth
         nev = nev_per_stream*nstr
-        print("Number of streams %d threads %d events %d" % (nstr, nth, nev))
+        (cores_main, cores_bkg) = partition_cores(nth)
+
+        cmsswBackground = launchBackground(cores_bkg)
+        print("Background CMSSW pid %d, running on cores %s" % (cmsswBackground.pid, ",".join(cores_bkg)))
+
+        print("Number of streams %d threads %d events %d, running on cores %s" % (nstr, nth, nev, ",".join(cores_main)))
         thrs = []
         for i in range(times):
-            thrs.append(run(nev, nstr, nth, opts.config))
+            thrs.append(run(nev, nstr, cores_main, opts.config))
+        cmsswBackground.kill()
+
         print("Number of streams %d threads %d, average throughput %f" % (nstr, nth, (sum(thrs)/len(thrs))))
         results.append(dict(
             threads=nth,
