@@ -304,7 +304,7 @@ namespace cudatest {
     else {
       // Initialize GPU stuff
       edm::Service<CUDAService> cs;
-      if(cs->enabled()) {
+      if(cs.isAvailable() and cs->enabled()) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> disf(1e-5, 100.);
@@ -364,9 +364,11 @@ namespace cudatest {
   }
 
   SimOperations::~SimOperations() {
-    cuda::throw_if_error(cudaFree(kernel_data_d_));
-    for(auto& ptr: data_d_src_) {
-      cuda::throw_if_error(cudaFree(ptr));
+    if(kernel_data_d_ != nullptr) {
+      cuda::throw_if_error(cudaFree(kernel_data_d_));
+      for(auto& ptr: data_d_src_) {
+        cuda::throw_if_error(cudaFree(ptr));
+      }
     }
   }
 

@@ -41,7 +41,7 @@ namespace cudatest {
     OpVector ops_;
 
     std::unique_ptr<GPUTimeCruncher> gpuCruncher_;
-    float* kernel_data_d_;
+    float* kernel_data_d_ = nullptr;
 
     // These are indexed by the operation index in ops_
     // They are likely to contain null elements
