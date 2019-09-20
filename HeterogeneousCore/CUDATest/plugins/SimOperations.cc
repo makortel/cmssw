@@ -241,6 +241,7 @@ namespace cudatest {
     boost::property_tree::read_json(configFile, root_node);
     const auto& modfunc_node = root_node.get_child(nodepath);
 
+    int ignored = 0;
     bool first = true;
     for(const auto& ev: modfunc_node) {
       if(first) {
@@ -275,6 +276,7 @@ namespace cudatest {
             for(--iOp; iOp >= 0; --iOp) {
               ops_[iOp]->pop_back();
             }
+            ++ignored;
             break;
           }
           ++iOp;
@@ -291,8 +293,6 @@ namespace cudatest {
         }
       }
     }
-
-    LogDebug("foo") << "Configured with " << ops_.size() << " operations for " << events() << " events";
 
     if(ignoreGPU) {
       // Remove GPU stuff if asked to ignore
@@ -361,6 +361,8 @@ namespace cudatest {
 
     // Initialize CPU cruncher
     cudatest::getTimeCruncher();
+
+    edm::LogWarning("foo") << "SimOperations initialized with " << ops_.size() << " operations for " << events() << " events, dropped " << ignored << " because of inconsistent configuration";
   }
 
   SimOperations::~SimOperations() {

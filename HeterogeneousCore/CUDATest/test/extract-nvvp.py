@@ -231,6 +231,12 @@ def main(opts):
     maxEv = opts.maxEvents
     mods = {x: Module(x) for x in modules}
     for m in markers:
+        #print(m.name())
+        if maxEv >= 0 and m.name() == "source":
+            maxEv -= 1
+            if maxEv == 0:
+                break
+
         if m._stop is None:
             continue
         ops = []
@@ -269,10 +275,6 @@ def main(opts):
         if maxMod >= 0:
             maxMod -= 1
             if maxMod == 0:
-                break
-        if maxEv >= 0 and m.name() == "source":
-            maxEv -= 1
-            if maxEv == 0:
                 break
 
     #mods["source"].rename("sourceNew")
