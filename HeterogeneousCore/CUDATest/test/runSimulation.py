@@ -7,19 +7,19 @@ import argparse
 import subprocess
 
 # felk40
-cores = [0, 1, 2, 3]
+cores_felk40 = [0, 1, 2, 3]
+
+cores = cores_felk40
 cores = [str(x) for x in cores]
 background_time = 10*60
 
-nev_quantum = 100
-nev_per_stream = 100*nev_quantum
+nev_quantum = 400
+nev_per_stream = 20*nev_quantum
 
 times = 1
-n_streams_threads = [(0, i) for i in range(1,2)]
-#n_streams_threads = [(4*i, i) for i in xrange(1,9)]
+n_streams_threads = [(d*i, i) for i in range(1,len(cores)+1)]
 events_re = re.compile("TrigReport Events total = (?P<events>\d+) passed")
 time_re = re.compile("event loop Real/event = (?P<time>\d+.\d+)")
-#time_re = re.compile("event loop Real/event")
 
 def seconds(m):
     return ( float(m.group("hour"))*60 + float(m.group("min")) )*60 + float(m.group("sec"))
@@ -62,6 +62,8 @@ def run(nev, nstr, cores_main, config):
 
 def launchBackground(cores_bkg):
     nth = len(cores_bkg)
+    if nth == 0:
+        return None
     evs = background_time * nth
     cmssw = subprocess.Popen(["taskset", "-c", ",".join(cores_bkg), "cmsRun", "HeterogeneousCore/CUDATest/test/cpucruncher_cfg.py", "maxEvents=%d"%evs, "numberOfStreams=%d"%nth, "numberOfThreads=%d"%nth], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     return cmssw
@@ -76,18 +78,21 @@ def main(opts):
         (cores_main, cores_bkg) = partition_cores(nth)
 
         cmsswBackground = launchBackground(cores_bkg)
-        print("Background CMSSW pid %d, running on cores %s" % (cmsswBackground.pid, ",".join(cores_bkg)))
+        if cmsswBackground is not None:
+            print("Background CMSSW pid %d, running on cores %s" % (cmsswBackground.pid, ",".join(cores_bkg)))
 
         print("Number of streams %d threads %d events %d, running on cores %s" % (nstr, nth, nev, ",".join(cores_main)))
         thrs = []
         for i in range(times):
             thrs.append(run(nev, nstr, cores_main, opts.config))
-        cmsswBackground.kill()
+        if cmsswBackground is not None:
+            cmsswBackground.kill()
 
         print("Number of streams %d threads %d, average throughput %f" % (nstr, nth, (sum(thrs)/len(thrs))))
+        print()
         results.append(dict(
             threads=nth,
-            straems=nstr,
+            streams=nstr,
             events=nev,
             throughput=sum(thrs)/len(thrs)
         ))
