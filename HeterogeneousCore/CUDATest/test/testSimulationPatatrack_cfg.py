@@ -45,14 +45,16 @@ process.options = cms.untracked.PSet(
 
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
+from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU as _testCUDAProducerSimCPU
 custom = dict(
     config = "config.json",
     cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json",
 )
 testCUDAProducerSimEW = _testCUDAProducerSimEW.clone(**custom)
 testCUDAProducerSim = _testCUDAProducerSim.clone(**custom)
+testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone(config=custom["config"])
 # Module declarations
-process.offlineBeamSpot = testCUDAProducerSim.clone(produce=True)
+process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
 process.offlineBeamSpotCUDA = testCUDAProducerSim.clone(produceCUDA=True)
 
 process.siPixelClustersCUDAPreSplitting = testCUDAProducerSimEW.clone(produceCUDA=True)
