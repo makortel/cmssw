@@ -3,6 +3,7 @@
 import re
 import sys
 import json
+import signal
 import argparse
 import subprocess
 
@@ -11,13 +12,15 @@ cores_felk40 = [0, 1, 2, 3]
 
 cores = cores_felk40
 cores = [str(x) for x in cores]
-background_time = 10*60
+background_time = 15*60
 
-nev_quantum = 400
-nev_per_stream = 20*nev_quantum
+# felk40: 1700 ev/s on 8 threads, 
+nev_quantum = 4000
+#nev_per_stream = 300*nev_quantum
+nev_per_stream = 1*nev_quantum
 
 times = 1
-n_streams_threads = [(d*i, i) for i in range(1,len(cores)+1)]
+n_streams_threads = [(i, i) for i in range(1,len(cores)+1)]
 events_re = re.compile("TrigReport Events total = (?P<events>\d+) passed")
 time_re = re.compile("event loop Real/event = (?P<time>\d+.\d+)")
 
@@ -27,7 +30,7 @@ def seconds(m):
 def throughput(output):
     nevents = None
     time = None
-    for line in output.splitlines():
+    for line in output:
         if nevents is None:
             m = events_re.search(line)
             if m:
@@ -52,20 +55,28 @@ def partition_cores(nth):
 
     return (cores[1:nth+1], [cores[0]] + cores[nth+1:])
 
-def run(nev, nstr, cores_main, config):
+def run(nev, nstr, cores_main, opts, logfilename):
     nth = len(cores_main)
-    cmssw = subprocess.Popen(["taskset", "-c", ",".join(cores_main), "cmsRun", config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-    (stdout, stderr) = cmssw.communicate()
-    if cmssw.returncode != 0:
-        raise Exception("Got return code %d, output\n%s" % (cmssw.returncode, stdout))
-    return throughput(stdout)
+    with open(logfilename, "w") as logfile:
+        taskset = ["taskset", "-c", ",".join(cores_main)]
+        nvprof = []
+        cmsRun = ["cmsRun", opts.config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth]
+        if opts.nvprof:
+            nvprof = ["nvprof", "-o", logfilename.replace("_log_", "_prof_").replace(".txt", ".nvvp")]
 
-def launchBackground(cores_bkg):
+        cmssw = subprocess.Popen(taskset+nvprof+cmsRun, stdout=logfile, stderr=subprocess.STDOUT, universal_newlines=True)
+        cmssw.communicate()
+        if cmssw.returncode != 0:
+            raise Exception("Got return code %d, see output in the log file %s" % (cmssw.returncode, logfilename))
+    with open(logfilename) as logfile:
+        return throughput(logfile)
+
+def launchBackground(cores_bkg, logfile):
     nth = len(cores_bkg)
     if nth == 0:
         return None
     evs = background_time * nth
-    cmssw = subprocess.Popen(["taskset", "-c", ",".join(cores_bkg), "cmsRun", "HeterogeneousCore/CUDATest/test/cpucruncher_cfg.py", "maxEvents=%d"%evs, "numberOfStreams=%d"%nth, "numberOfThreads=%d"%nth], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    cmssw = subprocess.Popen(["taskset", "-c", ",".join(cores_bkg), "cmsRun", "HeterogeneousCore/CUDATest/test/cpucruncher_cfg.py", "maxEvents=%d"%evs, "numberOfStreams=%d"%nth, "numberOfThreads=%d"%nth], stdout=logfile, stderr=subprocess.STDOUT, universal_newlines=True)
     return cmssw
 
 def main(opts):
@@ -77,16 +88,20 @@ def main(opts):
         nev = nev_per_stream*nstr
         (cores_main, cores_bkg) = partition_cores(nth)
 
-        cmsswBackground = launchBackground(cores_bkg)
-        if cmsswBackground is not None:
-            print("Background CMSSW pid %d, running on cores %s" % (cmsswBackground.pid, ",".join(cores_bkg)))
-
-        print("Number of streams %d threads %d events %d, running on cores %s" % (nstr, nth, nev, ",".join(cores_main)))
         thrs = []
-        for i in range(times):
-            thrs.append(run(nev, nstr, cores_main, opts.config))
-        if cmsswBackground is not None:
-            cmsswBackground.kill()
+        with open(opts.output+"_log_bkg_nstr%d_nth%d.txt"%(nstr, nth), "w") as bkglogfile:
+            cmsswBackground = launchBackground(cores_bkg, bkglogfile)
+            if cmsswBackground is not None:
+                print("Background CMSSW pid %d, running on cores %s" % (cmsswBackground.pid, ",".join(cores_bkg)))
+
+            try:
+                print("Number of streams %d threads %d events %d, running on cores %s" % (nstr, nth, nev, ",".join(cores_main)))
+                for i in range(times):
+                    thrs.append(run(nev, nstr, cores_main, opts, opts.output+"_log_nstr%d_nth%d_n%d.txt"%(nstr, nth, i)))
+            finally:
+                if cmsswBackground is not None:
+                    print("Run complete, terminating background CMSSW")
+                    cmsswBackground.send_signal(signal.SIGUSR2)
 
         print("Number of streams %d threads %d, average throughput %f" % (nstr, nth, (sum(thrs)/len(thrs))))
         print()
@@ -100,14 +115,16 @@ def main(opts):
         config=opts.config,
         results=results
     )
-    with open(opts.output, "w") as out:
+    with open(opts.output+".json", "w") as out:
         json.dump(data, out, indent=2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calibrate vector addition loop timing for CUDA simulation")
     parser.add_argument("config", type=str,
                         help="CMSSW configuration file to run")
-    parser.add_argument("-o", "--output", type=str, default="result.json",
-                        help="Output JSON file")
+    parser.add_argument("-o", "--output", type=str, default="result",
+                        help="Prefix of output JSON and log files (default: 'result')")
+    parser.add_argument("--nvprof", action="store_true",
+                        help="Run the main program through nvprof")
     opts = parser.parse_args()
     main(opts)
