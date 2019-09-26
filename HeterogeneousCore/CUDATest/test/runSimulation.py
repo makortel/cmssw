@@ -11,11 +11,11 @@ import multiprocessing
 # felk40
 cores_felk40 = [0, 1, 2, 3]
 
-background_time = 15*60
+background_time = 60*60
 # felk40: 1700 ev/s on 8 threads, 
 nev_quantum = 4000
 #nev_per_stream = 300*nev_quantum
-nev_per_stream = 1*nev_quantum
+nev_per_stream = 85*nev_quantum
 
 times = 1
 events_re = re.compile("TrigReport Events total = (?P<events>\d+) passed")
@@ -92,9 +92,17 @@ def main(opts):
     if opts.taskset:
         cores = cores_felk40
     cores = [str(x) for x in cores]
-    cores = cores[0:opts.maxThreads]
 
-    n_streams_threads = [(i, i) for i in range(opts.minThreads,len(cores)+1)]
+    maxThreads = len(cores)
+    if opts.maxThreads > 0:
+        maxThreads = min(maxThreads, opts.maxThreads)
+
+    n_streams_threads = [(i, i) for i in range(opts.minThreads,maxThreads+1)]
+
+    data = dict(
+        config=opts.config,
+        results=[]
+    )
 
     for nstr, nth in n_streams_threads:
         if nstr == 0:
@@ -131,12 +139,10 @@ def main(opts):
             events=nev,
             throughput=sum(thrs)/len(thrs)
         ))
-    data = dict(
-        config=opts.config,
-        results=results
-    )
-    with open(opts.output+".json", "w") as out:
-        json.dump(data, out, indent=2)
+        # Save results after each test
+        data["results"] = results
+        with open(opts.output+".json", "w") as out:
+            json.dump(data, out, indent=2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calibrate vector addition loop timing for CUDA simulation")
