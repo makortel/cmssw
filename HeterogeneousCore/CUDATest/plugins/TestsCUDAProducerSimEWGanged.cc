@@ -46,7 +46,7 @@ namespace {
         workIndices_.push_back(eventIndex % events());
         workHolders_.emplace_back(std::move(holder));
         workInputs_.emplace_back(std::move(inputData));
-        edm::LogPrint("Foo") << "Enqueued work for event " << eventIndex << ", queue size is " << workIndices_.size() << " last index " << workIndices_.back() << ", has info for events " << events();
+        LogDebug("Foo") << "Enqueued work for event " << eventIndex << ", queue size is " << workIndices_.size() << " last index " << workIndices_.back() << ", has info for events " << events();
         if(workIndices_.size() == gangSize_) {
           std::swap(workIndices_, indicesToLaunch);
           std::swap(workHolders_, holdersToLaunch);
@@ -55,7 +55,7 @@ namespace {
         }
       }
       if(not indicesToLaunch.empty()) {
-        edm::LogPrint("Foo").log([&](auto& l) {
+        LogDebug("Foo").log([&](auto& l) {
             l << "Launching work for indices ";
             for(auto i: indicesToLaunch) {
               l << i << " ";
@@ -138,7 +138,7 @@ private:
 TestCUDAProducerSimEWGanged::TestCUDAProducerSimEWGanged(const edm::ParameterSet& iConfig, const Ganger* ganger):
   acquireOpsCPU_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
                  iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
-                 "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce",
+                 "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire",
                  1, 1.0,
                  true},
   produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),

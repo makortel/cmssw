@@ -362,7 +362,7 @@ namespace cudatest {
     // Initialize CPU cruncher
     cudatest::getTimeCruncher();
 
-    edm::LogWarning("foo") << "SimOperations initialized with " << ops_.size() << " operations for " << events() << " events, dropped " << ignored << " because of inconsistent configuration";
+    edm::LogWarning("foo") << "SimOperations initialized with " << ops_.size() << " operations for " << events() << " events, dropped " << ignored << " because of inconsistent configuration, node path " << nodepath;
   }
 
   SimOperations::~SimOperations() {
