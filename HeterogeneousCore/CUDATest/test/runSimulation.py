@@ -3,6 +3,7 @@
 import re
 import sys
 import json
+import time
 import signal
 import argparse
 import subprocess
@@ -20,6 +21,9 @@ nev_per_stream = 85*nev_quantum
 times = 1
 events_re = re.compile("TrigReport Events total = (?P<events>\d+) passed")
 time_re = re.compile("event loop Real/event = (?P<time>\d+.\d+)")
+
+def printMessage(*args):
+    print(time.strftime("%y-%m-%d %H:%M:%S"), *args)
 
 def seconds(m):
     return ( float(m.group("hour"))*60 + float(m.group("min")) )*60 + float(m.group("sec"))
@@ -43,7 +47,7 @@ def throughput(output):
         raise Exception("Did not find time/event")
     thr = 1./time
     
-    print("Processed %d events in %f seconds, throuhgput %s ev/s" % (nevents, time*nevents, thr))
+    printMessage("Processed %d events in %f seconds, throuhgput %s ev/s" % (nevents, time*nevents, thr))
     return thr
 
 def partition_cores(cores, nth):
@@ -99,7 +103,7 @@ def main(opts):
 
     nthreads = range(opts.minThreads,maxThreads+1)
     if len(opts.numThreads) > 0:
-        nthreads = [x in opts.numThreads if x >= opts.minThreads and x <= opts.maxThreads]
+        nthreads = [x for x in opts.numThreads if x >= opts.minThreads and x <= maxThreads]
     n_streams_threads = [(i, i) for i in nthreads]
 
     data = dict(
@@ -120,21 +124,21 @@ def main(opts):
                 msg = "Background CMSSW pid %d" % cmsswBackground.pid
                 if opts.taskset:
                     msg += ", running on cores %s" % ",".join(cores_bkg)
-                print(msg)
+                printMessage(msg)
 
             try:
                 msg = "Number of streams %d threads %d events %d" % (nstr, nth, nev)
                 if opts.taskset:
                     msg += ", running on cores %s" % ",".join(cores_main)
-                print(msg)
+                printMessage(msg)
                 for i in range(times):
                     thrs.append(run(nev, nstr, cores_main, opts, opts.output+"_log_nstr%d_nth%d_n%d.txt"%(nstr, nth, i)))
             finally:
                 if cmsswBackground is not None:
-                    print("Run complete, terminating background CMSSW")
+                    printMessage("Run complete, terminating background CMSSW")
                     cmsswBackground.send_signal(signal.SIGUSR2)
 
-        print("Number of streams %d threads %d, average throughput %f" % (nstr, nth, (sum(thrs)/len(thrs))))
+        printMessage("Number of streams %d threads %d, average throughput %f" % (nstr, nth, (sum(thrs)/len(thrs))))
         print()
         results.append(dict(
             threads=nth,
