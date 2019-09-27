@@ -97,7 +97,10 @@ def main(opts):
     if opts.maxThreads > 0:
         maxThreads = min(maxThreads, opts.maxThreads)
 
-    n_streams_threads = [(i, i) for i in range(opts.minThreads,maxThreads+1)]
+    nthreads = range(opts.minThreads,maxThreads+1)
+    if len(opts.numThreads) > 0:
+        nthreads = [x in opts.numThreads if x >= opts.minThreads and x <= opts.maxThreads]
+    n_streams_threads = [(i, i) for i in nthreads]
 
     data = dict(
         config=opts.config,
@@ -160,10 +163,14 @@ if __name__ == "__main__":
                         help="Minimum number of threads to use in the scan (default: 1)")
     parser.add_argument("--maxThreads", type=int, default=-1,
                         help="Maximum number of threads to use in the scan (default: -1 for the number of cores)")
+    parser.add_argument("--numThreads", type=str, default="",
+                        help="Comma separated list of numbers threads to use in the scan (default: empty for all)")
     opts = parser.parse_args()
     if opts.minThreads <= 0:
         parser.error("minThreads must be > 0, got %d" % opts.minThreads)
     if opts.maxThreads <= 0 and opts.maxThreads != -1:
         parser.error("maxThreads must be > 0 or -1, got %d" % opts.maxThreads)
+    if opts.numThreads != "":
+        opts.numThreads = [int(x) for x in opts.numThreads.split(",")]
 
     main(opts)
