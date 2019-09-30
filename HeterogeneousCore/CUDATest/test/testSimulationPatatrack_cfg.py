@@ -174,4 +174,4 @@ elif options.variant == 4:
 #process.maxEvents.input = 10
 
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1
-#process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
+process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')

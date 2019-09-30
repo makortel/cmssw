@@ -2,6 +2,7 @@
 
 import sys
 import json
+import statistics
 
 class Op:
     def __init__(self, name):
@@ -25,16 +26,26 @@ class Op:
         return "%s %f %s (%d)" % (self._name, avg, unit, self._count)
 
 def analyseModule(data):
-    ops = []
-    for op in data[0]:
-        ops.append(Op(op["name"]))
+    for op in data:
+        isTime = op["name"] in ["cpu", "kernel"]
+        values = op["time"] if isTime else op["bytes"]
+        unit = "us" if isTime else "bytes"
 
-    for event in data:
-        for i, op in enumerate(event):
-            ops[i].add(op)
+        avg = statistics.mean(values)
+        if isTime:
+            avg = avg/1000.
+        stddev = ""
+        if len(values) > 1:
+            s = statistics.stdev(values)
+            if isTime:
+                s = s/1000.
+            stddev = " sigma %.2f" % s
 
-    for op in ops:
-        print(" "+str(op))
+        metadata = ""
+        if "function" in op:
+            metadata = " "+op["function"]
+
+        print(" %s %.2f%s %s (%d)%s" % (op["name"], avg, stddev, unit, len(values), metadata))
 
 def main(fname):
     data = None
