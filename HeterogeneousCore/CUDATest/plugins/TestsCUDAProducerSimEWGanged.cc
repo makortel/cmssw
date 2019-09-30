@@ -5,31 +5,26 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/ReusableObjectHolder.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 
-#include "SimOperations.h"
+#include "SimOperationsService.h"
 
 namespace {
   class Ganger {
   public:
-    Ganger(const edm::ParameterSet& iConfig):
-      gangSize_{iConfig.getParameter<unsigned int>("gangSize")} {
+    Ganger(const edm::ParameterSet& iConfig) {
+      edm::Service<SimOperationsService> sos;
+      gangSize_ = sos->gangSize();
+      const auto gangNum = sos->numberOfGangs();
 
-      if(gangSize_ == 0) {
-        throw cms::Exception("Configuration") << "gangSize must be larger than 0";
-      }
-
-      const auto configPath = iConfig.getParameter<edm::FileInPath>("config").fullPath();
-      const auto calibPath = iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath();
-      const auto nodePath = "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire";
-      const auto gangNum = iConfig.getParameter<unsigned int>("gangNumber");
-      const auto gangKernelFactor = iConfig.getParameter<double>("gangKernelFactor");
+      const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
       for(unsigned int i=0; i<gangNum; ++i) {
-        auto tmp = std::make_unique<cudatest::SimOperations>(configPath, calibPath, nodePath, gangSize_, gangKernelFactor);
+        auto tmp = std::make_unique<SimOperationsService::AcquireGPUProcessor>(sos->acquireGPUProcessor(moduleLabel));
         events_ = tmp->events();
-        acquireOps_.add(std::move(tmp));
+        acquireOpsGPU_.add(std::move(tmp));
       }
 
       reserve();
@@ -46,7 +41,7 @@ namespace {
         workIndices_.push_back(eventIndex % events());
         workHolders_.emplace_back(std::move(holder));
         workInputs_.emplace_back(std::move(inputData));
-        LogDebug("Foo") << "Enqueued work for event " << eventIndex << ", queue size is " << workIndices_.size() << " last index " << workIndices_.back() << ", has info for events " << events();
+        LogTrace("Foo") << "Enqueued work for event " << eventIndex << ", queue size is " << workIndices_.size() << " last index " << workIndices_.back() << ", has info for events " << events();
         if(workIndices_.size() == gangSize_) {
           std::swap(workIndices_, indicesToLaunch);
           std::swap(workHolders_, holdersToLaunch);
@@ -55,7 +50,7 @@ namespace {
         }
       }
       if(not indicesToLaunch.empty()) {
-        LogDebug("Foo").log([&](auto& l) {
+        LogTrace("Foo").log([&](auto& l) {
             l << "Launching work for indices ";
             for(auto i: indicesToLaunch) {
               l << i << " ";
@@ -68,17 +63,17 @@ namespace {
             ctx.get(*input);
           }
         }
-        auto optsPtr = acquireOps_.tryToGet();
-        if(not optsPtr) {
+        auto opsPtr = acquireOpsGPU_.tryToGet();
+        if(not opsPtr) {
           throw cms::Exception("LogicError") << "Tried to get acquire operations in Ganger::enqueue, but got none. Are gangSize and gangNum compatible with numberOfStreams?";
         }
 
-        optsPtr->operateGPU(indicesToLaunch, &ctx.stream());
+        opsPtr->process(indicesToLaunch, ctx.stream());
         ctx.replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task(tbb::task::allocate_root(),
                                                                                             [holders=std::move(holdersToLaunch),
-                                                                                             optsPtr=std::move(optsPtr)](std::exception_ptr const* excptr) mutable {
+                                                                                             opsPtr=std::move(opsPtr)](std::exception_ptr const* excptr) mutable {
                                                                                               LogTrace("Foo") << "Joint callback task to reset shared_ptr and release contained WaitingTaskWithArenaHolders";
-                                                                                              optsPtr.reset();
+                                                                                              opsPtr.reset();
                                                                                               for(auto& h: holders) {
                                                                                                 if(excptr) {
                                                                                                   h.doneWaiting(*excptr);
@@ -102,10 +97,10 @@ namespace {
     mutable std::vector<std::vector<const CUDAProduct<int>*>> workInputs_;
 
     // one for each gang (i.e. N(streams) / gangSize)
-    mutable edm::ReusableObjectHolder<cudatest::SimOperations> acquireOps_;
+    mutable edm::ReusableObjectHolder<SimOperationsService::AcquireGPUProcessor> acquireOpsGPU_;
 
     size_t events_ = 0;
-    const unsigned int gangSize_;
+    unsigned int gangSize_ = 0;
   };
 }
 
@@ -131,29 +126,30 @@ private:
   edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
   CUDAContextState ctxState_;
 
-  cudatest::SimOperations acquireOpsCPU_;
-  cudatest::SimOperations produceOps_;
+  SimOperationsService::AcquireCPUProcessor acquireOpsCPU_;
+  SimOperationsService::ProduceGPUProcessor produceOpsGPU_;
+  SimOperationsService::ProduceCPUProcessor produceOpsCPU_;
 };
 
-TestCUDAProducerSimEWGanged::TestCUDAProducerSimEWGanged(const edm::ParameterSet& iConfig, const Ganger* ganger):
-  acquireOpsCPU_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
-                 iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
-                 "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire",
-                 1, 1.0,
-                 true},
-  produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
-              iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
-              "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
-{
+TestCUDAProducerSimEWGanged::TestCUDAProducerSimEWGanged(const edm::ParameterSet& iConfig, const Ganger* ganger) {
+  const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
+  edm::Service<SimOperationsService> sos;
+  acquireOpsCPU_ = sos->acquireCPUProcessor(moduleLabel);
+  produceOpsCPU_ = sos->produceCPUProcessor(moduleLabel);
+  produceOpsGPU_ = sos->produceGPUProcessor(moduleLabel);
+
   const auto acquireEvents = ganger->events();
   if(acquireEvents == 0) {
-    throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
+    throw cms::Exception("Configuration") << "Got 0 events for GPU ops, which makes this module useless";
   }
-  if(acquireEvents != acquireOpsCPU_.events()) {
+  if(acquireEvents != acquireOpsCPU_.events() and acquireOpsCPU_.events() > 0) {
     throw cms::Exception("LogicError") << "Got " << acquireEvents << " from GPU acquire ops, but " << acquireOpsCPU_.events() << " from CPU ops";
   }
-  if(acquireEvents != produceOps_.events() and produceOps_.events() > 0) {
-    throw cms::Exception("Configuration") << "Got " << acquireEvents << " events for acquire and " << produceOps_.events() << " for produce";
+  if(acquireEvents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
+    throw cms::Exception("Configuration") << "Got " << acquireEvents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
+  }
+  if(acquireEvents != produceOpsGPU_.events() and produceOpsGPU_.events() > 0) {
+    throw cms::Exception("Configuration") << "Got " << acquireEvents << " events for acquire and " << produceOpsGPU_.events() << " for produce CPU";
   }
 
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
@@ -177,12 +173,6 @@ void TestCUDAProducerSimEWGanged::fillDescriptions(edm::ConfigurationDescription
   desc.add<std::vector<edm::InputTag>>("cudaSrcs", std::vector<edm::InputTag>{});
   desc.add<bool>("produce", false);
   desc.add<bool>("produceCUDA", false);
-  desc.add<unsigned int>("gangSize", 1);
-  desc.add<unsigned int>("gangNumber", 1);
-  desc.add<double>("gangKernelFactor", 1.0);
-
-  desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
-  desc.add<edm::FileInPath>("cudaCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CUDA calibration");
 
   //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);
@@ -206,15 +196,20 @@ void TestCUDAProducerSimEWGanged::acquire(const edm::Event& iEvent, const edm::E
   auto ctx = cudaProducts.empty() ? CUDAScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
     CUDAScopedContextAcquire(*cudaProducts[0], h, ctxState_);
 
-  acquireOpsCPU_.operate(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()}, nullptr);
+  if(acquireOpsCPU_.events() > 0) {
+    acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()});
+  }
   globalCache()->enqueue(iEvent.id().event(), std::move(cudaProducts), std::move(h), ctx);
 }
 
 void TestCUDAProducerSimEWGanged::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   CUDAScopedContextProduce ctx{ctxState_};
 
-  if(produceOps_.events() > 0) {
-    produceOps_.operate(std::vector<size_t>{iEvent.id().event() % produceOps_.events()}, &ctx.stream());
+  if(produceOpsCPU_.events() > 0) {
+    produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
+  }
+  if(produceOpsGPU_.events() > 0) {
+    produceOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsGPU_.events()}, ctx.stream());
   }
 
   if(not dstToken_.isUninitialized()) {

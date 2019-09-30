@@ -4,8 +4,9 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "SimOperations.h"
+#include "SimOperationsService.h"
 
 class TestCUDAProducerSimCPU: public edm::stream::EDProducer<> {
 public:
@@ -19,15 +20,13 @@ private:
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
   edm::EDPutTokenT<int> dstToken_;
 
-  cudatest::SimOperations produceOps_;
+  SimOperationsService::ProduceCPUProcessor produceOps_;
 };
 
-TestCUDAProducerSimCPU::TestCUDAProducerSimCPU(const edm::ParameterSet& iConfig):
-  produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
-              "",
-              "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce",
-              1, 1.0, true}
-{
+TestCUDAProducerSimCPU::TestCUDAProducerSimCPU(const edm::ParameterSet& iConfig) {
+  edm::Service<SimOperationsService> sos;
+  produceOps_ = sos->produceCPUProcessor(iConfig.getParameter<std::string>("@module_label"));
+
   if(produceOps_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
   }
@@ -46,8 +45,6 @@ void TestCUDAProducerSimCPU::fillDescriptions(edm::ConfigurationDescriptions& de
   desc.add<std::vector<edm::InputTag>>("srcs", std::vector<edm::InputTag>{});
   desc.add<bool>("produce", false);
 
-  desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
-
   //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);
 }
@@ -58,7 +55,7 @@ void TestCUDAProducerSimCPU::produce(edm::Event& iEvent, const edm::EventSetup& 
     iEvent.get(t);
   }
 
-  produceOps_.operate(std::vector<size_t>{iEvent.id().event() % produceOps_.events()}, nullptr);
+  produceOps_.process(std::vector<size_t>{iEvent.id().event() % produceOps_.events()});
 
   if(not dstToken_.isUninitialized()) {
     iEvent.emplace(dstToken_, 42);

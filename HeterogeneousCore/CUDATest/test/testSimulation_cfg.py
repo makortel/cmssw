@@ -35,22 +35,23 @@ process.options = cms.untracked.PSet(
 #process.overhead = cms.EDProducer("TestCUDAProducerOverheadEW", lockMutex=cms.bool(True))
 #process.p_overhead = cms.Path(process.overhead)
 
+process.load("HeterogeneousCore.CUDATest.SimOperationsService_cfi")
+process.SimOperationsService.config = "HeterogeneousCore/CUDATest/test/testSimulation.json"
+process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json"
+process.SimOperationsService.gangNumber = process.options.numberOfStreams.value()
+if process.SimOperationsService.gangNumber.value() == 0:
+    process.SimOperationsService.gangNumber = process.options.numberOfThreads.value()
+if process.SimOperationsService.gangNumber.value() % process.SimOperationsService.gangSize.value() != 0:
+    raise Exception("Number of streams %d is not divisible with the gang size %d" % (process.SimOperationsService.gangNumber.value(), process.SimOperationsService.gangSize.value()))
+process.SimOperationsService.gangNumber = process.SimOperationsService.gangNumber.value()/process.SimOperationsService.gangSize.value()
+
+
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged
 #from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
 template = testCUDAProducerSimEW.clone()
-template = testCUDAProducerSimEWGanged.clone(
-    gangSize = 1
-)
-template.gangNumber = process.options.numberOfStreams.value()
-if template.gangNumber.value() == 0:
-    template.gangNumber = process.options.numberOfThreads.value()
-if template.gangNumber.value() % template.gangSize.value() != 0:
-    raise Exception("Number of streams %d is not divisible with the gang size %d" % (template.gangNumber.value(), template.gangSize.value()))
-template.gangNumber = template.gangNumber.value()/template.gangSize.value()
+#template = testCUDAProducerSimEWGanged.clone()
 process.transfer = template.clone(
-    config = "HeterogeneousCore/CUDATest/test/testSimulation.json",
-    cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json",
     produce = True
 )
 
@@ -92,8 +93,8 @@ if factor > 1:
 
 process.maxEvents.input = 16
 process.options.numberOfStreams = 4
-process.transfer.gangSize = 2
-process.transfer.gangNumber = 2
+#process.SimOperationsService.gangSize = 2
+#process.SimOperationsService.gangNumber = 2
 #process.Tracer = cms.Service("Tracer")
 #process.out.verbosity = 1
 #process.options.numberOfThreads = 8

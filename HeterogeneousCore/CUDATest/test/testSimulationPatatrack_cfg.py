@@ -51,23 +51,24 @@ process.options = cms.untracked.PSet(
 #process.MessageLogger.cerr.FwkReport.reportEvery = 100
 # END
 
+process.load("HeterogeneousCore.CUDATest.SimOperationsService_cfi")
+process.SimOperationsService.config = "config.json"
+process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json"
+
+if options.variant == 2:
+    process.SimOperationsService.config = "config_transfer.json"
+elif options.variant == 3:
+    process.SimOperationsService.config = "config_transfer_convert.json"
+elif options.variant == 4:
+    process.SimOperationsService.config = "config_cpu.json"
+
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
 from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU as _testCUDAProducerSimCPU
-custom = dict(
-    config = "config.json",
-    cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json",
-)
-if options.variant == 2:
-    custom["config"] = "config_transfer.json"
-elif options.variant == 3:
-    custom["config"] = "config_transfer_convert.json"
-elif options.variant == 4:
-    custom["config"] = "config_cpu.json"
 
-testCUDAProducerSimEW = _testCUDAProducerSimEW.clone(**custom)
-testCUDAProducerSim = _testCUDAProducerSim.clone(**custom)
-testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone(config=custom["config"])
+testCUDAProducerSimEW = _testCUDAProducerSimEW.clone()
+testCUDAProducerSim = _testCUDAProducerSim.clone()
+testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone()
 
 # Module declarations
 if options.variant in [1,2,3]:

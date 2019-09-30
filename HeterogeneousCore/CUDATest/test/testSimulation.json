@@ -3,10 +3,10 @@
   "moduleDefinitions": {
     "transfer": {
       "acquire": [
-        [{"name": "memcpyHtoD", "bytes": 32768},
-         {"name": "kernel", "time": 400000},
-         {"name": "memcpyDtoH", "bytes": 32768}
-        ]],
+        {"name": "memcpyHtoD", "bytes": [32768]},
+         {"name": "kernel", "time": [400000]},
+         {"name": "memcpyDtoH", "bytes": [32768]}
+        ],
       "produce": []
     }
   }

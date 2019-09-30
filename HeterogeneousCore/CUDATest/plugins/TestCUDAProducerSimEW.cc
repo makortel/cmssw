@@ -4,11 +4,12 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 
-#include "SimOperations.h"
+#include "SimOperationsService.h"
 
 class TestCUDAProducerSimEW: public edm::stream::EDProducer<edm::ExternalWork> {
 public:
@@ -26,23 +27,30 @@ private:
   edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
   CUDAContextState ctxState_;
 
-  cudatest::SimOperations acquireOps_;
-  cudatest::SimOperations produceOps_;
+  SimOperationsService::AcquireCPUProcessor acquireOpsCPU_;
+  SimOperationsService::AcquireGPUProcessor acquireOpsGPU_;
+  SimOperationsService::ProduceCPUProcessor produceOpsCPU_;
+  SimOperationsService::ProduceGPUProcessor produceOpsGPU_;
 };
 
-TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig):
-  acquireOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
-              iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
-              "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".acquire"},
-  produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
-              iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
-              "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
-{
-  if(acquireOps_.events() == 0) {
+TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig) {
+  const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
+  edm::Service<SimOperationsService> sos;
+  acquireOpsCPU_ = sos->acquireCPUProcessor(moduleLabel);
+  acquireOpsGPU_ = sos->acquireGPUProcessor(moduleLabel);
+  produceOpsCPU_ = sos->produceCPUProcessor(moduleLabel);
+  produceOpsGPU_ = sos->produceGPUProcessor(moduleLabel);
+
+  if(acquireOpsCPU_.events() == 0 && acquireOpsGPU_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
   }
-  if(acquireOps_.events() != produceOps_.events() and produceOps_.events() > 0) {
-    throw cms::Exception("Configuration") << "Got " << acquireOps_.events() << " events for acquire and " << produceOps_.events() << " for produce";
+  const auto nevents = std::max(acquireOpsCPU_.events(), acquireOpsGPU_.events());
+
+  if(nevents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
+    throw cms::Exception("Configuration") << "Got " << nevents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
+  }
+  if(nevents != produceOpsGPU_.events() and produceOpsGPU_.events() > 0) {
+    throw cms::Exception("Configuration") << "Got " << nevents << " events for acquire and " << produceOpsGPU_.events() << " for produce GPU";
   }
 
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
@@ -67,9 +75,6 @@ void TestCUDAProducerSimEW::fillDescriptions(edm::ConfigurationDescriptions& des
   desc.add<bool>("produce", false);
   desc.add<bool>("produceCUDA", false);
 
-  desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
-  desc.add<edm::FileInPath>("cudaCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CUDA calibration");
-
   //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);
 }
@@ -92,14 +97,22 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
     ctx.get(*ptr);
   }
 
-  acquireOps_.operate(std::vector<size_t>{iEvent.id().event() % acquireOps_.events()}, &ctx.stream());
+  if(acquireOpsCPU_.events() > 0) {
+    acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()});
+  }
+  if(acquireOpsGPU_.events() > 0) {
+    acquireOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsGPU_.events()}, ctx.stream());
+  }
 }
 
 void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   CUDAScopedContextProduce ctx{ctxState_};
 
-  if(produceOps_.events() > 0) {
-    produceOps_.operate(std::vector<size_t>{iEvent.id().event() % produceOps_.events()}, &ctx.stream());
+  if(produceOpsCPU_.events() > 0) {
+    produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
+  }
+  if(produceOpsGPU_.events() > 0) {
+    produceOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsGPU_.events()}, ctx.stream());
   }
 
   if(not dstToken_.isUninitialized()) {

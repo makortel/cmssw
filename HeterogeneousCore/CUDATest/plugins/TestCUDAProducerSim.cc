@@ -4,11 +4,12 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 
-#include "SimOperations.h"
+#include "SimOperationsService.h"
 
 class TestCUDAProducerSim: public edm::stream::EDProducer<> {
 public:
@@ -24,15 +25,18 @@ private:
   edm::EDPutTokenT<int> dstToken_;
   edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
 
-  cudatest::SimOperations produceOps_;
+  SimOperationsService::ProduceCPUProcessor produceOpsCPU_;
+  SimOperationsService::ProduceGPUProcessor produceOpsGPU_;
 };
 
-TestCUDAProducerSim::TestCUDAProducerSim(const edm::ParameterSet& iConfig):
-  produceOps_{iConfig.getParameter<edm::FileInPath>("config").fullPath(),
-              iConfig.getParameter<edm::FileInPath>("cudaCalibration").fullPath(),
-              "moduleDefinitions."+iConfig.getParameter<std::string>("@module_label")+".produce"}
-{
-  if(produceOps_.events() == 0) {
+TestCUDAProducerSim::TestCUDAProducerSim(const edm::ParameterSet& iConfig) {
+  const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
+  edm::Service<SimOperationsService> sos;
+
+  produceOpsCPU_ = sos->produceCPUProcessor(moduleLabel);
+  produceOpsGPU_ = sos->produceGPUProcessor(moduleLabel);
+
+  if(produceOpsCPU_.events() == 0 and produceOpsGPU_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
   }
 
@@ -58,9 +62,6 @@ void TestCUDAProducerSim::fillDescriptions(edm::ConfigurationDescriptions& descr
   desc.add<bool>("produce", false);
   desc.add<bool>("produceCUDA", false);
 
-  desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
-  desc.add<edm::FileInPath>("cudaCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CUDA calibration");
-
   //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);
 }
@@ -83,7 +84,12 @@ void TestCUDAProducerSim::produce(edm::Event& iEvent, const edm::EventSetup& iSe
     ctx.get(*ptr);
   }
 
-  produceOps_.operate(std::vector<size_t>{iEvent.id().event() % produceOps_.events()}, &ctx.stream());
+  if(produceOpsCPU_.events() > 0) {
+    produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
+  }
+  if(produceOpsGPU_.events() > 0) {
+    produceOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsGPU_.events()}, ctx.stream());
+  }
 
   if(not dstToken_.isUninitialized()) {
     iEvent.emplace(dstToken_, 42);
