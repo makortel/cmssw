@@ -17,6 +17,16 @@ options.register('numberOfStreams',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Number of streams.")
+options.register('gangSize',
+                 -1,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Size of a gang. -1 to disable ganging")
+options.register('gangKernelFactor',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.float,
+                 "Kernel time factor. Should be between 0 and 1.")
 options.parseArguments()
 
 process = cms.Process("Test")
@@ -50,6 +60,17 @@ custom = dict(
     config = "config_ew.json",
     cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json",
 )
+if options.gangSize > 0:
+    gangNumber = options.numberOfStreams / options.gangSize
+    if options.numberOfStreams % options.gangSize != 0:
+        raise Exception("numberOfStreams (%d) is not divisible by gang size (%d)" % (options.numberOfStreams, options.gangSize))
+
+    from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged as _testCUDAProducerSimEWGanged
+    _testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone(
+        gangSize = options.gangSize,
+        gangNumber = gangNumber,
+        gangKernelFactor = options.gangKernelFactor
+    )
 testCUDAProducerSimEW = _testCUDAProducerSimEW.clone(**custom)
 testCUDAProducerSim = _testCUDAProducerSimEW.clone(**custom)
 testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone(config=custom["config"])

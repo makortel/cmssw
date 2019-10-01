@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import re
 import sys
 import json
@@ -16,7 +17,9 @@ background_time = 60*60
 # felk40: 1700 ev/s on 8 threads, 
 nev_quantum = 4000
 #nev_per_stream = 300*nev_quantum
-nev_per_stream = 85*nev_quantum
+nblocks_per_stream = {
+    1: 85
+}
 
 times = 1
 events_re = re.compile("TrigReport Events total = (?P<events>\d+) passed")
@@ -61,14 +64,23 @@ def run(nev, nstr, cores_main, opts, logfilename):
     with open(logfilename, "w") as logfile:
         taskset = []
         nvprof = []
-        cmsRun = ["cmsRun", opts.config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth]
+        cmsRun = ["cmsRun", opts.config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth] + opts.args
         if opts.taskset:
             taskset = ["taskset", "-c", ",".join(cores_main)]
         if opts.nvprof:
             nvprof = ["nvprof", "-o", logfilename.replace("_log_", "_prof_").replace(".txt", ".nvvp")]
 
+        logfile.write(" ".join(taskset+nvprof+cmsRun))
+        logfile.write("\n----\n")
         cmssw = subprocess.Popen(taskset+nvprof+cmsRun, stdout=logfile, stderr=subprocess.STDOUT, universal_newlines=True)
-        cmssw.communicate()
+        try:
+            cmssw.wait()
+        except KeyboardInterrupt:
+            try:
+                cmssw.terminate()
+            except OSError:
+                pass
+            cmssw.wait()
         if cmssw.returncode != 0:
             raise Exception("Got return code %d, see output in the log file %s" % (cmssw.returncode, logfilename))
     with open(logfilename) as logfile:
@@ -90,8 +102,6 @@ def launchBackground(opts, cores_bkg, logfile):
     return cmssw
 
 def main(opts):
-    results = []
-
     cores = list(range(0, multiprocessing.cpu_count()))
     if opts.taskset:
         cores = cores_felk40
@@ -106,10 +116,23 @@ def main(opts):
         nthreads = [x for x in opts.numThreads if x >= opts.minThreads and x <= maxThreads]
     n_streams_threads = [(i, i) for i in nthreads]
 
+    eventBlocksPerStream = opts.eventBlocksPerStream
+    if eventBlocksPerStream is None:
+        eventBlocksPerStream = nblocks_per_stream.get(opts.variant, None)
+        if eventBlocksPerStream is None:
+            raise Exception("No default number of event blocks for variant %d, and --eventBlocksPerStream was not given" % opts.variant)
+    nev_per_stream = eventBlocksPerStream * nev_quantum
+
     data = dict(
         config=opts.config,
+        args=" ".join(opts.args),
         results=[]
     )
+    outputJson = opts.output+".json"
+
+    if not opts.overwrite and os.path.exists(outputJson):
+        with open(outputJson) as inp:
+            data = json.load(inp)
 
     for nstr, nth in n_streams_threads:
         if nstr == 0:
@@ -135,20 +158,28 @@ def main(opts):
                     thrs.append(run(nev, nstr, cores_main, opts, opts.output+"_log_nstr%d_nth%d_n%d.txt"%(nstr, nth, i)))
             finally:
                 if cmsswBackground is not None:
-                    printMessage("Run complete, terminating background CMSSW")
+                    printMessage("Run complete, terminating background CMSSW, waiting for 10 seconds")
                     cmsswBackground.send_signal(signal.SIGUSR2)
+                    try:
+                        cmsswBackground.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        try:
+                            printMessage("Terminating background CMSSW nicely timed out, terminating in the hard way")
+                            cmsswBackground.terminate()
+                        except OSError:
+                            pass
+                        cmsswBackground.wait()
 
         printMessage("Number of streams %d threads %d, average throughput %f" % (nstr, nth, (sum(thrs)/len(thrs))))
         print()
-        results.append(dict(
+        data["results"].append(dict(
             threads=nth,
             streams=nstr,
             events=nev,
             throughput=sum(thrs)/len(thrs)
         ))
         # Save results after each test
-        data["results"] = results
-        with open(opts.output+".json", "w") as out:
+        with open(outputJson, "w") as out:
             json.dump(data, out, indent=2)
 
 if __name__ == "__main__":
@@ -156,7 +187,9 @@ if __name__ == "__main__":
     parser.add_argument("config", type=str,
                         help="CMSSW configuration file to run")
     parser.add_argument("-o", "--output", type=str, default="result",
-                        help="Prefix of output JSON and log files (default: 'result')")
+                        help="Prefix of output JSON and log files. If the output JSON file exists, it will be updated (see also --overwrite) (default: 'result')")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="Overwrite the output JSON instead of updating it")
     parser.add_argument("--nvprof", action="store_true",
                         help="Run the main program through nvprof")
     parser.add_argument("--taskset", action="store_true",
@@ -169,6 +202,13 @@ if __name__ == "__main__":
                         help="Maximum number of threads to use in the scan (default: -1 for the number of cores)")
     parser.add_argument("--numThreads", type=str, default="",
                         help="Comma separated list of numbers threads to use in the scan (default: empty for all)")
+    parser.add_argument("--variant", type=int, default=1,
+                        help="Application variant, can be 1, 2, or 3 (default: 1)")
+    parser.add_argument("--eventBlocksPerStream", type=int, default=None,
+                        help="Number of event blocks (4k events) to be used per EDM stream (default: 85 for variant 1)")
+
+    parser.add_argument("args", nargs=argparse.REMAINDER)
+
     opts = parser.parse_args()
     if opts.minThreads <= 0:
         parser.error("minThreads must be > 0, got %d" % opts.minThreads)
@@ -176,5 +216,8 @@ if __name__ == "__main__":
         parser.error("maxThreads must be > 0 or -1, got %d" % opts.maxThreads)
     if opts.numThreads != "":
         opts.numThreads = [int(x) for x in opts.numThreads.split(",")]
+    if opts.variant not in [1,2,3]:
+        parser.error("Invalid variant %d" % opts.variant)
+    #opts.args.append("variant=%d"%opts.variant)
 
     main(opts)
