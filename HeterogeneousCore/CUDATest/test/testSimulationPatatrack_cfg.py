@@ -24,8 +24,8 @@ options.register('variant',
                  "Application variant (default 1)")
 options.parseArguments()
 
-if options.variant not in [1,2,3]:
-    raise Exception("Incorrect variant value %d, can be 1,2,3" % options.variant)
+if options.variant not in [1,2,3,4]:
+    raise Exception("Incorrect variant value %d, can be 1,2,3,4" % options.variant)
 
 process = cms.Process("Test")
 
@@ -62,86 +62,110 @@ if options.variant == 2:
     custom["config"] = "config_transfer.json"
 elif options.variant == 3:
     custom["config"] = "config_transfer_convert.json"
+elif options.variant == 4:
+    custom["config"] = "config_cpu.json"
 
 testCUDAProducerSimEW = _testCUDAProducerSimEW.clone(**custom)
 testCUDAProducerSim = _testCUDAProducerSim.clone(**custom)
 testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone(config=custom["config"])
 
 # Module declarations
-process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
-process.offlineBeamSpotCUDA = testCUDAProducerSim.clone(
-    srcs = ["offlineBeamSpot"],
-    produceCUDA=True,
-)
+if options.variant in [1,2,3]:
+    process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
+    process.offlineBeamSpotCUDA = testCUDAProducerSim.clone(
+        srcs = ["offlineBeamSpot"],
+        produceCUDA=True,
+    )
 
-process.siPixelClustersCUDAPreSplitting = testCUDAProducerSimEW.clone(produceCUDA=True)
-process.siPixelRecHitsCUDAPreSplitting = testCUDAProducerSim.clone(
-    cudaSrcs = ["offlineBeamSpotCUDA", "siPixelClustersCUDAPreSplitting"],
-    produceCUDA=True
-)
-process.caHitNtupletCUDA = testCUDAProducerSim.clone(
-    cudaSrcs = ["siPixelRecHitsCUDAPreSplitting"],
-    produceCUDA=True
-)
-process.pixelVertexCUDA = testCUDAProducerSim.clone(
-    cudaSrcs = ["caHitNtupletCUDA"],
-    produceCUDA=True
-)
-
-process.p = cms.Path(process.offlineBeamSpot+process.offlineBeamSpotCUDA+process.siPixelClustersCUDAPreSplitting+process.siPixelRecHitsCUDAPreSplitting+process.caHitNtupletCUDA+process.pixelVertexCUDA)
-
-if options.variant in [2,3]:
-    process.pixelTrackSoA = testCUDAProducerSimEW.clone(
+    process.siPixelClustersCUDAPreSplitting = testCUDAProducerSimEW.clone(produceCUDA=True)
+    process.siPixelRecHitsCUDAPreSplitting = testCUDAProducerSim.clone(
+        cudaSrcs = ["offlineBeamSpotCUDA", "siPixelClustersCUDAPreSplitting"],
+        produceCUDA=True
+    )
+    process.caHitNtupletCUDA = testCUDAProducerSim.clone(
+        cudaSrcs = ["siPixelRecHitsCUDAPreSplitting"],
+        produceCUDA=True
+    )
+    process.pixelVertexCUDA = testCUDAProducerSim.clone(
         cudaSrcs = ["caHitNtupletCUDA"],
-        produce=True
+        produceCUDA=True
     )
-    process.pixelVertexSoA = testCUDAProducerSimEW.clone(
-        cudaSrcs = ["pixelVertexCUDA"],
-        produce=True
-    )
-    process.p += (process.pixelTrackSoA+process.pixelVertexSoA)
 
-    if options.variant == 3:
-        process.siPixelDigisSoA = testCUDAProducerSimEW.clone(
-            cudaSrcs = ["siPixelClustersCUDAPreSplitting"],
+    process.p = cms.Path(process.offlineBeamSpot+process.offlineBeamSpotCUDA+process.siPixelClustersCUDAPreSplitting+process.siPixelRecHitsCUDAPreSplitting+process.caHitNtupletCUDA+process.pixelVertexCUDA)
+
+    if options.variant in [2,3]:
+        process.pixelTrackSoA = testCUDAProducerSimEW.clone(
+            cudaSrcs = ["caHitNtupletCUDA"],
             produce=True
         )
-        process.siPixelDigisClustersPreSplitting = testCUDAProducerSimCPU.clone(
-            srcs = ["siPixelDigisSoA"],
-            produce = True
-        )
-        process.siPixelRecHitsLegacyPreSplitting = testCUDAProducerSimEW.clone(
-            cudaSrcs = ["siPixelRecHitsCUDAPreSplitting"],
-            srcs = ["siPixelDigisClustersPreSplitting"],
+        process.pixelVertexSoA = testCUDAProducerSimEW.clone(
+            cudaSrcs = ["pixelVertexCUDA"],
             produce=True
         )
-        process.pixelTracks = testCUDAProducerSimCPU.clone(
-            srcs = ["pixelTrackSoA", "siPixelRecHitsLegacyPreSplitting"],
-            produce = True
-        )
-        process.pixelVertices = testCUDAProducerSimCPU.clone(
-            srcs = ["pixelTracks", "pixelVertexSoA"],
-            produce = True
-        )
-        process.t = cms.Task(
-            process.offlineBeamSpot,
-            process.offlineBeamSpotCUDA,
-            process.siPixelClustersCUDAPreSplitting,
-            process.siPixelRecHitsCUDAPreSplitting,
-            process.caHitNtupletCUDA,
-            process.pixelVertexCUDA,
-            process.pixelTrackSoA,
-            process.pixelVertexSoA
-        )
-        process.p = cms.Path(process.t)
-        process.out = cms.OutputModule("AsciiOutputModule",
-            outputCommands = cms.untracked.vstring(
-                "keep *_pixelTracks_*_*",
-                "keep *_pixelVertices_*_*",
-            ),
-            verbosity = cms.untracked.uint32(0),
-        )
-        process.outPath = cms.EndPath(process.out)
+        process.p += (process.pixelTrackSoA+process.pixelVertexSoA)
+
+        if options.variant == 3:
+            process.siPixelDigisSoA = testCUDAProducerSimEW.clone(
+                cudaSrcs = ["siPixelClustersCUDAPreSplitting"],
+                produce=True
+            )
+            process.siPixelDigisClustersPreSplitting = testCUDAProducerSimCPU.clone(
+                srcs = ["siPixelDigisSoA"],
+                produce = True
+            )
+            process.siPixelRecHitsLegacyPreSplitting = testCUDAProducerSimEW.clone(
+                cudaSrcs = ["siPixelRecHitsCUDAPreSplitting"],
+                srcs = ["siPixelDigisClustersPreSplitting"],
+                produce=True
+            )
+            process.pixelTracks = testCUDAProducerSimCPU.clone(
+                srcs = ["pixelTrackSoA", "siPixelRecHitsLegacyPreSplitting"],
+                produce = True
+            )
+            process.pixelVertices = testCUDAProducerSimCPU.clone(
+                srcs = ["pixelTracks", "pixelVertexSoA"],
+                produce = True
+            )
+            process.t = cms.Task(
+                process.offlineBeamSpot,
+                process.offlineBeamSpotCUDA,
+                process.siPixelClustersCUDAPreSplitting,
+                process.siPixelRecHitsCUDAPreSplitting,
+                process.caHitNtupletCUDA,
+                process.pixelVertexCUDA,
+                process.pixelTrackSoA,
+                process.pixelVertexSoA
+            )
+            process.p = cms.Path(process.t)
+            process.out = cms.OutputModule("AsciiOutputModule",
+                outputCommands = cms.untracked.vstring(
+                    "keep *_pixelTracks_*_*",
+                    "keep *_pixelVertices_*_*",
+                ),
+                verbosity = cms.untracked.uint32(0),
+            )
+            process.outPath = cms.EndPath(process.out)
+
+elif options.variant == 4:
+    process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
+    process.siPixelDigis = testCUDAProducerSimCPU.clone(produce=True)
+    process.siPixelClustersPreSplitting = testCUDAProducerSimCPU.clone(
+        srcs = ["siPixelDigis"],
+        produce=True
+    )
+    process.siPixelRecHitHostSoA = testCUDAProducerSimCPU.clone(
+        srcs = ["offlineBeamSpot", "siPixelClustersPreSplitting"],
+        produce=True
+    )
+    process.pixelTrackSoA = testCUDAProducerSimCPU.clone(
+        srcs = ["siPixelRecHitHostSoA"],
+        produce=True
+    )
+    process.pixelVertexSoA = testCUDAProducerSimCPU.clone(
+        srcs = ["pixelTrackSoA"],
+        produce=True
+    )
+    process.p = cms.Path(process.offlineBeamSpot+process.siPixelDigis+process.siPixelClustersPreSplitting+process.siPixelRecHitHostSoA+process.pixelTrackSoA+process.pixelVertexSoA)
 
 #process.t = cms.Task(process.offlineBeamSpot, process.offlineBeamSpotCUDA, process.siPixelClustersCUDAPreSplitting, process.siPixelRecHitsCUDAPreSplitting, process.caHitNtupletCUDA, process.pixelVertexCUDA)
 #process.p = cms.Path(process.t)
