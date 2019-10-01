@@ -22,10 +22,29 @@ options.register('variant',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Application variant (default 1)")
+options.register('gpuExternalWork',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "All GPU modules are ExternalWorks (default 0)")
+options.register('gangSize',
+                 -1,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Size of a gang. -1 to disable ganging. Value > 0 0 implies gpuExternalWork=1")
+options.register('gangKernelFactor',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.float,
+                 "Kernel time factor. Should be between 0 and 1.")
 options.parseArguments()
 
 if options.variant not in [1,2,3,4]:
     raise Exception("Incorrect variant value %d, can be 1,2,3,4" % options.variant)
+if options.gpuExternalWork not in [0, 1]:
+    raise Exception("gpuExternalWork should be 0 or 1, got %d" % options.gpuExternalWork)
+if options.gangSize > 0:
+    options.gpuExternalWork = 1
 
 process = cms.Process("Test")
 
@@ -57,18 +76,36 @@ process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/
 
 if options.variant == 2:
     process.SimOperationsService.config = "config_transfer.json"
+    process.SimOperationsService.config = "test.json"
 elif options.variant == 3:
     process.SimOperationsService.config = "config_transfer_convert.json"
 elif options.variant == 4:
     process.SimOperationsService.config = "config_cpu.json"
 
-from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
-from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
-from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU as _testCUDAProducerSimCPU
+if options.gpuExternalWork == 1:
+    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_ew.json")
+if options.gangSize > 0:
+    gangNumber = options.numberOfStreams / options.gangSize
+    if options.numberOfStreams % options.gangSize != 0:
+        raise Exception("numberOfStreams (%d) is not divisible by gang size (%d)" % (options.numberOfStreams, options.gangSize))
+    process.SimOperationsService.gangSize = options.gangSize,
+    process.SimOperationsService.gangNumber = gangNumber,
+    process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
 
-testCUDAProducerSimEW = _testCUDAProducerSimEW.clone()
-testCUDAProducerSim = _testCUDAProducerSim.clone()
+from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU as _testCUDAProducerSimCPU
+from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged as _testCUDAProducerSimEWGanged
+
 testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone()
+testCUDAProducerSim = _testCUDAProducerSim.clone()
+testCUDAProducerSimEW = _testCUDAProducerSimEW.clone()
+if options.gpuExternalWork == 1:
+    testCUDAProducerSim = _testCUDAProducerSimEW.clone()
+if options.gangSize > 0:
+    testCUDAProducerSim = _testCUDAProducerSimEWGanged.clone()
+    testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone()
+
 
 # Module declarations
 if options.variant in [1,2,3]:
