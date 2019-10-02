@@ -4,27 +4,6 @@ import sys
 import json
 import statistics
 
-class Op:
-    def __init__(self, name):
-        self._name = name
-        self._total = 0
-        self._count = 0
-        self._isTime = name in ["cpu", "kernel"]
-
-    def add(self, d):
-        if self._isTime:
-            self._total += d["time"] / 1000.
-        else:
-            if not "bytes" in d:
-                print(d)
-            self._total += d["bytes"]
-        self._count += 1
-
-    def __str__(self):
-        avg = float(self._total) / self._count
-        unit = "us" if self._isTime else "bytes"
-        return "%s %f %s (%d)" % (self._name, avg, unit, self._count)
-
 def analyseModule(data):
     for op in data:
         isTime = op["name"] in ["cpu", "kernel"]
