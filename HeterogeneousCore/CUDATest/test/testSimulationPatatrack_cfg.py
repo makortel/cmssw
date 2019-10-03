@@ -76,7 +76,6 @@ process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/
 
 if options.variant == 2:
     process.SimOperationsService.config = "config_transfer.json"
-    process.SimOperationsService.config = "test.json"
 elif options.variant == 3:
     process.SimOperationsService.config = "config_transfer_convert.json"
 elif options.variant == 4:
@@ -172,7 +171,12 @@ if options.variant in [1,2,3]:
                 process.caHitNtupletCUDA,
                 process.pixelVertexCUDA,
                 process.pixelTrackSoA,
-                process.pixelVertexSoA
+                process.pixelVertexSoA,
+                process.siPixelDigisSoA,
+                process.siPixelDigisClustersPreSplitting,
+                process.siPixelRecHitsLegacyPreSplitting,
+                process.pixelTracks,
+                process.pixelVertices,
             )
             process.p = cms.Path(process.t)
             process.out = cms.OutputModule("AsciiOutputModule",

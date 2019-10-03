@@ -2,9 +2,7 @@
   "moduleDeclarations": [],
   "moduleDefinitions": {
     "crunch": {
-      "produce": [
-          [{"name": "cpu", "time": 1000000000}]
-      ]
+      "produce": [{"name": "cpu", "time": [1000000000]}]
     }
   }
 }
