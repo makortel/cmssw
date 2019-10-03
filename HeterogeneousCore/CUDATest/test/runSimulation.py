@@ -13,12 +13,15 @@ import multiprocessing
 # felk40
 cores_felk40 = [0, 1, 2, 3]
 
-background_time = 60*60
+background_time = 4*60*60
 # felk40: 1700 ev/s on 8 threads, 
 nev_quantum = 4000
 #nev_per_stream = 300*nev_quantum
 nblocks_per_stream = {
-    1: 85
+    1: 85,
+    2: 45,
+    3: 7,
+    4: 4,
 }
 
 times = 1
@@ -72,6 +75,7 @@ def run(nev, nstr, cores_main, opts, logfilename):
 
         logfile.write(" ".join(taskset+nvprof+cmsRun))
         logfile.write("\n----\n")
+        logfile.flush()
         cmssw = subprocess.Popen(taskset+nvprof+cmsRun, stdout=logfile, stderr=subprocess.STDOUT, universal_newlines=True)
         try:
             cmssw.wait()
@@ -115,6 +119,8 @@ def main(opts):
     if len(opts.numThreads) > 0:
         nthreads = [x for x in opts.numThreads if x >= opts.minThreads and x <= maxThreads]
     n_streams_threads = [(i, i) for i in nthreads]
+    if len(opts.numStreams) > 0:
+        n_streams_threads = [(s, t) for t in nthreads for s in opts.numStreams]
 
     eventBlocksPerStream = opts.eventBlocksPerStream
     if eventBlocksPerStream is None:
@@ -201,7 +207,9 @@ if __name__ == "__main__":
     parser.add_argument("--maxThreads", type=int, default=-1,
                         help="Maximum number of threads to use in the scan (default: -1 for the number of cores)")
     parser.add_argument("--numThreads", type=str, default="",
-                        help="Comma separated list of numbers threads to use in the scan (default: empty for all)")
+                        help="Comma separated list of numbers of threads to use in the scan (default: empty for all)")
+    parser.add_argument("--numStreams", type=str, default="",
+                        help="Comma separated list of numbers of streams to use in the scan (default: empty for always the same as the number of threads). If both number of threads and number of streams have more than 1 element, a 2D scan is done with all the combinations")
     parser.add_argument("--variant", type=int, default=1,
                         help="Application variant, can be 1, 2, or 3 (default: 1)")
     parser.add_argument("--eventBlocksPerStream", type=int, default=None,
@@ -216,8 +224,10 @@ if __name__ == "__main__":
         parser.error("maxThreads must be > 0 or -1, got %d" % opts.maxThreads)
     if opts.numThreads != "":
         opts.numThreads = [int(x) for x in opts.numThreads.split(",")]
-    if opts.variant not in [1,2,3]:
+    if opts.numStreams != "":
+        opts.numStreams = [int(x) for x in opts.numStreams.split(",")]
+    if opts.variant not in [1,2,3,4]:
         parser.error("Invalid variant %d" % opts.variant)
-    #opts.args.append("variant=%d"%opts.variant)
+    opts.args.append("variant=%d"%opts.variant)
 
     main(opts)
