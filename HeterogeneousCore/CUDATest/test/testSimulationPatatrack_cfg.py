@@ -27,6 +27,16 @@ options.register('gpuExternalWork',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "All GPU modules are ExternalWorks (default 0)")
+options.register('mean',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Use configuration with mean operation times (default 0)")
+options.register('collapse',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Use configuration with operations collapsed within a module (default 0)")
 options.register('gangSize',
                  -1,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -43,6 +53,10 @@ if options.variant not in [1,2,3,4]:
     raise Exception("Incorrect variant value %d, can be 1,2,3,4" % options.variant)
 if options.gpuExternalWork not in [0, 1]:
     raise Exception("gpuExternalWork should be 0 or 1, got %d" % options.gpuExternalWork)
+if options.mean not in [0, 1]:
+    raise Exception("mean should be 0 or 1, got %d" % options.mean)
+if options.collapse not in [0, 1]:
+    raise Exception("mean should be 0 or 1, got %d" % options.collapse)
 if options.gangSize > 0:
     options.gpuExternalWork = 1
 
@@ -82,7 +96,11 @@ elif options.variant == 4:
     process.SimOperationsService.config = "config_cpu.json"
 
 if options.gpuExternalWork == 1:
-    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_ew.json")
+    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_externalWork.json")
+elif options.mean == 1:
+    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_mean.json")
+elif options.collapse == 1:
+    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_collapse.json")
 if options.gangSize > 0:
     gangNumber = options.numberOfStreams / options.gangSize
     if options.numberOfStreams % options.gangSize != 0:
