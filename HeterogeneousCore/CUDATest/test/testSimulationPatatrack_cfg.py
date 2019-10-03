@@ -86,6 +86,7 @@ process.options = cms.untracked.PSet(
 
 process.load("HeterogeneousCore.CUDATest.SimOperationsService_cfi")
 process.SimOperationsService.config = "config.json"
+process.SimOperationsService.cpuCalibration = "HeterogeneousCore/CUDATest/test/cpuCalibration.json"
 process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json"
 
 if options.variant == 2:

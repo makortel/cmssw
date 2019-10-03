@@ -17,6 +17,7 @@ namespace edm {
 }  // namespace edm
 
 namespace cudatest {
+  class TimeCruncher;
   class GPUTimeCruncher;
 
   class OperationState;
@@ -142,6 +143,7 @@ private:
   const unsigned int gangSize_;
   const unsigned int gangNum_;
 
+  std::unique_ptr<cudatest::TimeCruncher> cpuCruncher_;
   std::unique_ptr<cudatest::GPUTimeCruncher> gpuCruncher_;
 
   std::vector<std::pair<std::string, OpVectorCPU>> acquireOpsCPU_;

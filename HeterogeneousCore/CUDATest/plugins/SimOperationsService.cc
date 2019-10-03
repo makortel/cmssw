@@ -91,11 +91,17 @@ namespace {
 namespace cudatest {
   class OperationCPU final: public OperationTime {
   public:
-    explicit OperationCPU(const boost::property_tree::ptree& conf): OperationTime(conf) {}
+    explicit OperationCPU(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher):
+      OperationTime(conf),
+      cruncher_(cruncher)
+    {}
 
     void operate(const std::vector<size_t>& indices) const {
-      cudatest::getTimeCruncher().crunch_for(totalTime(indices));
-    };
+      cruncher_->crunch_for(totalTime(indices));
+    }
+
+  private:
+    const TimeCruncher* cruncher_;
   };
 }
 
@@ -208,6 +214,20 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
     throw cms::Exception("Configuration") << "gangSize must be larger than 0";
   }
 
+  {
+    boost::property_tree::ptree calib_root_node;
+    boost::property_tree::read_json(iConfig.getParameter<edm::FileInPath>("cpuCalibration").fullPath(), calib_root_node);
+    std::vector<unsigned int> iters;
+    std::vector<double> times;
+    for(const auto& elem: calib_root_node.get_child("niters")) {
+      iters.push_back(elem.second.get<unsigned int>(""));
+    }
+    for(const auto& elem: calib_root_node.get_child("timesInMicroSeconds")) {
+      times.push_back(elem.second.get<double>(""));
+    }
+    cpuCruncher_ = std::make_unique<cudatest::TimeCruncher>(iters, times);
+  }
+
   edm::Service<CUDAService> cs;
   if(cs.isAvailable() and cs->enabled()) {
     boost::property_tree::ptree calib_root_node;
@@ -238,7 +258,7 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
       for(const auto& op: modfunc.second.get_child("")) {
         auto opname = op.second.get<std::string>("name");
         if(opname == "cpu") {
-          opsCPU.emplace_back(std::make_unique<cudatest::OperationCPU>(op.second));
+          opsCPU.emplace_back(std::make_unique<cudatest::OperationCPU>(op.second, cpuCruncher_.get()));
         }
         else if(opname == "kernel") {
           opsGPU.emplace_back(std::make_unique<OperationKernel>(op.second, gpuCruncher_.get(), gangKernelFactor));
@@ -307,6 +327,7 @@ void SimOperationsService::fillDescriptions(edm::ConfigurationDescriptions& desc
   desc.add<double>("gangKernelFactor", 1.0);
 
   desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
+  desc.add<edm::FileInPath>("cpuCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CPU calibration");
   desc.add<edm::FileInPath>("cudaCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CUDA calibration");
 
   descriptions.addWithDefaultLabel(desc);

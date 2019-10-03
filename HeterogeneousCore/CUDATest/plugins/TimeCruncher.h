@@ -77,6 +77,21 @@ namespace cudatest {
       }
     }
 
+    TimeCruncher(const std::vector<unsigned int>& iters, const std::vector<double>& times) {
+      if(iters.size() != times.size()) {
+        throw cms::Exception("Configuration") << "CPU Calibration: got " << iters.size() << " iterations and " << times.size() << " times";
+      }
+      if(iters.empty()) {
+        throw cms::Exception("Configuration") << "CPU Calibration: iterations is empty";
+      }
+      if(times.empty()) {
+        throw cms::Exception("Configuration") << "CPU Calibration: times is empty";
+      }
+
+      niters_vect_ = iters;
+      times_vect_ = times;
+    }
+
     void crunch_for(const std::chrono::nanoseconds& crunchtime) const {
       const unsigned int niters = getNCaliIters( crunchtime );
       auto start_cali = tbb::tick_count::now();
