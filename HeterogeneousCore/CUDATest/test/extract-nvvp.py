@@ -308,24 +308,21 @@ def main(opts):
 
     # Find memcpy's
     memcpy = []
-    for r in conn.execute("SELECT copyKind, srcKind, dstKind, bytes, CUPTI_ACTIVITY_KIND_MEMCPY.start, CUPTI_ACTIVITY_KIND_MEMCPY.end, CUPTI_ACTIVITY_KIND_MEMCPY.correlationId, CUPTI_ACTIVITY_KIND_RUNTIME.start, CUPTI_ACTIVITY_KIND_RUNTIME.end, CUPTI_ACTIVITY_KIND_RUNTIME.threadId FROM CUPTI_ACTIVITY_KIND_MEMCPY INNER JOIN CUPTI_ACTIVITY_KIND_RUNTIME on CUPTI_ACTIVITY_KIND_RUNTIME.correlationId = CUPTI_ACTIVITY_KIND_MEMCPY.correlationId"):
+    for r in conn.execute("SELECT copyKind, srcKind, dstKind, bytes, CUPTI_ACTIVITY_KIND_MEMCPY.start, CUPTI_ACTIVITY_KIND_MEMCPY.end, CUPTI_ACTIVITY_KIND_MEMCPY.correlationId, CUPTI_ACTIVITY_KIND_RUNTIME.start, CUPTI_ACTIVITY_KIND_RUNTIME.end, CUPTI_ACTIVITY_KIND_RUNTIME.threadId FROM CUPTI_ACTIVITY_KIND_MEMCPY INNER JOIN CUPTI_ACTIVITY_KIND_RUNTIME on CUPTI_ACTIVITY_KIND_RUNTIME.correlationId = CUPTI_ACTIVITY_KIND_MEMCPY.correlationId ORDER BY CUPTI_ACTIVITY_KIND_RUNTIME.start"):
         memcpy.append(Memcpy(*r))
-    memcpy.sort(key = lambda x: x._apiStart)
 
     # Find memset's
     memset = []
-    for r in conn.execute("SELECT bytes, CUPTI_ACTIVITY_KIND_MEMSET.start, CUPTI_ACTIVITY_KIND_MEMSET.end, CUPTI_ACTIVITY_KIND_MEMSET.correlationId, CUPTI_ACTIVITY_KIND_RUNTIME.start, CUPTI_ACTIVITY_KIND_RUNTIME.end, CUPTI_ACTIVITY_KIND_RUNTIME.threadId FROM CUPTI_ACTIVITY_KIND_MEMSET INNER JOIN CUPTI_ACTIVITY_KIND_RUNTIME on CUPTI_ACTIVITY_KIND_RUNTIME.correlationId = CUPTI_ACTIVITY_KIND_MEMSET.correlationId WHERE CUPTI_ACTIVITY_KIND_MEMSET.memoryKind = 3"):
+    for r in conn.execute("SELECT bytes, CUPTI_ACTIVITY_KIND_MEMSET.start, CUPTI_ACTIVITY_KIND_MEMSET.end, CUPTI_ACTIVITY_KIND_MEMSET.correlationId, CUPTI_ACTIVITY_KIND_RUNTIME.start, CUPTI_ACTIVITY_KIND_RUNTIME.end, CUPTI_ACTIVITY_KIND_RUNTIME.threadId FROM CUPTI_ACTIVITY_KIND_MEMSET INNER JOIN CUPTI_ACTIVITY_KIND_RUNTIME on CUPTI_ACTIVITY_KIND_RUNTIME.correlationId = CUPTI_ACTIVITY_KIND_MEMSET.correlationId WHERE CUPTI_ACTIVITY_KIND_MEMSET.memoryKind = 3 ORDER BY CUPTI_ACTIVITY_KIND_RUNTIME.start"):
         memset.append(Memset(*r))
-    memset.sort(key = lambda x: x._apiStart)
 
     # Correlation ID can be used to JOIN with API calls in CUPTI_ACTIVITY_KIND_RUNTIME
     # cbid value are from /usr/local/cuda-10.1/extras/CUPTI/include/cupti_runtime_cbid.h
 
     # Find kernels
     kernels = []
-    for r in conn.execute("SELECT CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.start, CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.end, name, CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.correlationId, CUPTI_ACTIVITY_KIND_RUNTIME.start, CUPTI_ACTIVITY_KIND_RUNTIME.end, CUPTI_ACTIVITY_KIND_RUNTIME.threadId FROM CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL INNER JOIN CUPTI_ACTIVITY_KIND_RUNTIME on CUPTI_ACTIVITY_KIND_RUNTIME.correlationId = CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.correlationId"):
+    for r in conn.execute("SELECT CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.start, CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.end, name, CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.correlationId, CUPTI_ACTIVITY_KIND_RUNTIME.start, CUPTI_ACTIVITY_KIND_RUNTIME.end, CUPTI_ACTIVITY_KIND_RUNTIME.threadId FROM CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL INNER JOIN CUPTI_ACTIVITY_KIND_RUNTIME on CUPTI_ACTIVITY_KIND_RUNTIME.correlationId = CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL.correlationId ORDER BY CUPTI_ACTIVITY_KIND_RUNTIME.start"):
         kernels.append(Kernel(r[0], r[1], strings[r[2]], r[3], r[4], r[5], r[6]))
-    kernels.sort(key = lambda x: x._apiStart)
 
     maxMod = opts.maxModules
     maxEv = opts.maxEvents
@@ -347,14 +344,19 @@ def main(opts):
         ops_time = 0
         # match operations to markers by thread id and time stamp
         for opslist in [memcpy, memset, kernels]:
+            ops_tmp = []
             for c in opslist:
                 if c.threadId() != m.threadId():
                     continue
                 if c._apiStart >= m._start and c._apiStop <= m._stop:
-                    ops.append(c)
+                    ops_tmp.append(c)
                     ops_time += c.apiDuration()
                 if c._apiStop > m._stop:
                     break
+            # remove gathered ops, can not be assigned to another marker
+            for o in ops_tmp:
+                opslist.remove(o)
+            ops.extend(ops_tmp)
         ops.sort(key = lambda x: x._apiStart)
 
         cpuTime = m.duration()-ops_time

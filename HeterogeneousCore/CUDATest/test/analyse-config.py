@@ -30,8 +30,11 @@ def main(fname):
     data = None
     with open(fname) as f:
         data = json.load(f)
-    
-    for label, module in data["moduleDefinitions"].items():
+
+    modules = data["moduleDefinitions"]
+    labels = sorted(modules.keys())
+    for label in labels:
+        module = modules[label]
         if "acquire" in module:
             print(label+"::acquire()")
             analyseModule(module["acquire"])
