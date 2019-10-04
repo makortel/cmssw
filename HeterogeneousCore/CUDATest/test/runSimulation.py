@@ -11,7 +11,11 @@ import subprocess
 import multiprocessing
 
 # felk40
-cores_felk40 = [0, 1, 2, 3]
+cores_felk40 = [1, 2, 3, 0]
+
+# online
+# core 0 as the last as it usually has the OS
+cores_online = list(range(1,32)) + [0]
 
 background_time = 4*60*60
 # felk40: 1700 ev/s on 8 threads, 
