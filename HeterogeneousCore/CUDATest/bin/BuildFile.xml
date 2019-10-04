@@ -3,4 +3,5 @@
 </bin>
 
 <bin file="cpuCalibration.cc">
+  <use name="tbb"/>
 </bin>

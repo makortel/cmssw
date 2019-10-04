@@ -39,6 +39,7 @@ process.options = cms.untracked.PSet(
 from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU
 process.load("HeterogeneousCore.CUDATest.SimOperationsService_cfi")
 process.SimOperationsService.config = "HeterogeneousCore/CUDATest/test/cpucruncher.json"
+process.SimOperationsService.cpuCalibration = "HeterogeneousCore/CUDATest/test/cpuCalibration.json"
 process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json"
 
 process.crunch = testCUDAProducerSimCPU.clone()
