@@ -6,25 +6,33 @@ import statistics
 
 def analyseModule(data):
     for op in data:
-        isTime = op["name"] in ["cpu", "kernel"]
-        values = op["time"] if isTime else op["bytes"]
-        unit = "us" if isTime else "bytes"
+        values = op["values"]
+        unit = op["unit"]
 
         avg = statistics.mean(values)
-        if isTime:
-            avg = avg/1000.
+        if unit == "ns":
+            avg = avg*1e-3
+            unit = "us"
         stddev = ""
         if len(values) > 1:
             s = statistics.stdev(values)
-            if isTime:
-                s = s/1000.
+            if unit == "us":
+                s = s*1e-3
             stddev = " sigma %.2f" % s
+
+        apiTime= ""
+        if "apiTime" in op:
+            times = op["apiTime"]
+            apiTime = " in API %.2f" % (statistics.mean(times)*1e-3)
+            if len(times) > 1:
+                apiTime += " sigma %.2f" % (statistics.stdev(times)*1e-3)
+            apiTime += " us"
 
         metadata = ""
         if "function" in op:
             metadata = " "+op["function"]
 
-        print(" %s %.2f%s %s (%d)%s" % (op["name"], avg, stddev, unit, len(values), metadata))
+        print(" %s %.2f%s %s%s (%d)%s" % (op["name"], avg, stddev, unit, apiTime, len(values), metadata))
 
 def main(fname):
     data = None

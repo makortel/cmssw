@@ -7,14 +7,11 @@ import operator
 import itertools
 import statistics
 
-def valueField(op):
-    isTime = op["name"] in ["cpu", "kernel"]
-    return "time" if isTime else "bytes"
-
 def functionMean(data):
     for op in data:
-        vname = valueField(op)
-        op[vname] = [int(statistics.mean(op[vname]))]
+        op["values"] = [int(statistics.mean(op["values"]))]
+        if "apiTime" in op:
+            op["apiTime"] = [int(statistics.mean(op["apiTime"]))]
     return data
 
 def functionCollapse(data):
@@ -27,8 +24,9 @@ def functionCollapse(data):
             if len(oldop) != 1:
                 raise Exception("LogicError")
             oldop = oldop[0]
-            vname = valueField(op)
-            oldop[vname] = list(map(operator.add, oldop[vname], op[vname]))
+            oldop["values"] = list(map(operator.add, oldop["values"], op["values"]))
+            if "apiTime" in oldop:
+                oldop["apiTime"] = list(map(operator.add, oldop["apiTime"], op["apiTime"]))
             if "function" in oldop:
                 oldop["function"] = "(collapsed)"
     return ops

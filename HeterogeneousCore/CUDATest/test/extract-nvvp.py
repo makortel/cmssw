@@ -57,7 +57,7 @@ class Memcpy:
         return "memcpy %s %d bytes" % (self._copyKind, self._bytes)
 
     def toOp(self):
-        return Op("memcpy"+self._copyKind, self._bytes)
+        return Op("memcpy"+self._copyKind, self._bytes, unit="bytes", apiTime=self.apiDuration())
     
     def duration(self):
         return self._stop - self._start
@@ -84,7 +84,7 @@ class Memset:
         return "memset %d bytes" % (self._bytes)
 
     def toOp(self):
-        return Op("memset", self._bytes)
+        return Op("memset", self._bytes, unit="bytes", apiTime=self.apiDuration())
     
     def duration(self):
         return self._stop - self._start
@@ -112,7 +112,7 @@ class Kernel:
         return "kernel %f us %s" % (self.duration()/1000., self._shortName)
 
     def toOp(self):
-        return Op("kernel", self.duration(), self._shortName)
+        return Op("kernel", self.duration(), unit="ns", apiTime=self.apiDuration(), func=self._shortName)
         
     def duration(self):
         return self._stop - self._start
@@ -124,16 +124,20 @@ class Kernel:
         return self._threadId
 
 class Op:
-    def __init__(self, name, value, func=None):
+    def __init__(self, name, value, unit, apiTime=None, func=None):
         self._name = name
         self._values = [value]
         self._func = func
+        self._apiTime = [apiTime] if apiTime is not None else None
+        self._unit = unit
 
     def isSame(self, op):
         return self._name == op._name and self._func == op._func
 
     def add(self, op):
         self._values.extend(op._values)
+        if self._apiTime is not None:
+            self._apiTime.extend(op._apiTime)
 
     def nevents(self):
         return len(self._values)
@@ -144,13 +148,16 @@ class Op:
         return "%s(%s) %d" % (self._name, self._func, self._values[0])
 
     def toDict(self):
-        if "memcpy" in self._name or "memset" in self._name:
-            return dict(name = self._name, bytes = self._values)
-        else:
-            ret = dict(name = self._name, time = self._values)
-            if self._func is not None:
-                ret["function"] = self._func
-            return ret
+        ret = dict(
+            name = self._name,
+            values = self._values,
+            unit = self._unit
+        )
+        if self._apiTime is not None:
+            ret["apiTime"] = self._apiTime
+        if self._func is not None:
+            ret["function"] = self._func
+        return ret
    
 class Module:
     def __init__(self, name):
@@ -366,10 +373,10 @@ def main(opts):
         #print(m.name())
         try:
             if "acquire" in m.name():
-                mods[m.name().split(" ")[0]].addAcquires([Op("cpu", cpuTime)] +
+                mods[m.name().split(" ")[0]].addAcquires([Op("cpu", cpuTime, unit="ns")] +
                                                          [x.toOp() for x in ops])
             else:
-                mods[m.name()].addProduces([Op("cpu", cpuTime)] +
+                mods[m.name()].addProduces([Op("cpu", cpuTime, unit="ns")] +
                                            [x.toOp() for x in ops])
         except:
             print("Event %d" % iEv)

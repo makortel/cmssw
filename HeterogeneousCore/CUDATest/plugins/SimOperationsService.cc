@@ -62,7 +62,10 @@ namespace {
     explicit OperationTime(const boost::property_tree::ptree& conf, const double gangFactor = 1.0):
       gangFactor_{gangFactor}
     {
-      for(auto elem: conf.get_child("time")) {
+      if(auto unit = conf.get<std::string>("unit"); unit != "ns") {
+        throw cms::Exception("Configuration") << "OperationTime expected 'ns', got '" << unit << "'";
+      }
+      for(auto elem: conf.get_child("values")) {
         time_.emplace_back(elem.second.get<unsigned long long>(""));
       }
     }
@@ -124,7 +127,10 @@ namespace {
   class OperationBytes: public cudatest::OperationBase {
   public:
     explicit OperationBytes(const boost::property_tree::ptree& conf) {
-      for(auto elem: conf.get_child("bytes")) {
+      if(auto unit = conf.get<std::string>("unit"); unit != "bytes") {
+        throw cms::Exception("Configuration") << "OperationBytes expected 'bytes', got '" << unit << "'";
+      }
+      for(auto elem: conf.get_child("values")) {
         bytes_.emplace_back(elem.second.get<unsigned int>(""));
       }
     }
