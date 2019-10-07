@@ -127,18 +127,23 @@ namespace {
   std::mutex g_fakeCudaMutex;
   class OperationFake final: public OperationTime {
   public:
-    explicit OperationFake(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher):
+    explicit OperationFake(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher, bool useLocks):
       OperationTime(conf),
-      cruncher_(cruncher)
+      cruncher_(cruncher),
+      useLocks_(useLocks)
     {}
 
     void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const override {
-      std::lock_guard lock{g_fakeCudaMutex};
+      std::unique_lock lock{g_fakeCudaMutex, std::defer_lock};
+      if(useLocks_) {
+        lock.lock();
+      }
       cruncher_->crunch_for(totalTime(indices));
     }
 
   private:
     const cudatest::TimeCruncher* cruncher_;
+    const bool useLocks_;
   };
 
   class OperationBytes: public cudatest::OperationBase {
@@ -272,6 +277,7 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
 
   // TODO: make gangNum per-module configurable again?
   const auto gangKernelFactor = iConfig.getParameter<double>("gangKernelFactor");
+  const auto fakeUseLocks = iConfig.getParameter<bool>("fakeUseLocks");
 
   for(const auto& module: root_node.get_child("moduleDefinitions")) {
     const auto& moduleName = module.first;
@@ -296,7 +302,7 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
           opsGPU.emplace_back(std::make_unique<OperationMemset>(op.second));
         }
         else if(opname == "fake") {
-          opsGPU.emplace_back(std::make_unique<OperationFake>(op.second, cpuCruncher_.get()));
+          opsGPU.emplace_back(std::make_unique<OperationFake>(op.second, cpuCruncher_.get(), fakeUseLocks));
         }
         else {
           throw cms::Exception("Configuration") << "Unsupported operation " << opname;
@@ -351,6 +357,7 @@ void SimOperationsService::fillDescriptions(edm::ConfigurationDescriptions& desc
   desc.add<unsigned int>("gangSize", 1);
   desc.add<unsigned int>("gangNumber", 1);
   desc.add<double>("gangKernelFactor", 1.0);
+  desc.add<bool>("fakeUseLocks", true);
 
   desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
   desc.add<edm::FileInPath>("cpuCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CPU calibration");
