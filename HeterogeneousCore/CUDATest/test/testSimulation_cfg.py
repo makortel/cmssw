@@ -49,7 +49,7 @@ process.SimOperationsService.gangNumber = process.SimOperationsService.gangNumbe
 
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged
-#from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
 template = testCUDAProducerSimEW.clone()
 #template = testCUDAProducerSimEWGanged.clone()
 process.transfer = template.clone(
@@ -93,7 +93,7 @@ if factor > 1:
         process.out.outputCommands.append("keep *_cpu2c%d_*_*" % i)
 
 process.maxEvents.input = 16
-process.options.numberOfStreams = 4
+#process.options.numberOfStreams = 4
 #process.SimOperationsService.gangSize = 2
 #process.SimOperationsService.gangNumber = 2
 #process.Tracer = cms.Service("Tracer")

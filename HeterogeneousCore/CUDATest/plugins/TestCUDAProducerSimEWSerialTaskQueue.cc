@@ -5,110 +5,85 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Concurrency/interface/SerialTaskQueue.h"
-
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
+#include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
 
-#include "TimeCruncher.h"
-#include "TestCUDAProducerSimEWGPUKernel.h"
+#include "SimOperationsService.h"
 
 #include <atomic>
-#include <random>
 
 namespace {
   edm::SerialTaskQueue taskQueue;
-
-  template <typename F>
-  auto make_lambda_with_holder(F&& f, edm::WaitingTaskWithArenaHolder h) {
-    return [f,h]() mutable {
-      try {
-        f(h);
-      } catch(...) {
-        h.doneWaiting(std::current_exception());
-      }
-    };
-  }
 }
 
 class TestCUDAProducerSimEWSerialTaskQueue: public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit TestCUDAProducerSimEWSerialTaskQueue(const edm::ParameterSet& iConfig);
-  ~TestCUDAProducerSimEWSerialTaskQueue() override;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
-private:  
+private:
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
-  const edm::EDPutTokenT<int> dstToken_;
-  const size_t numberOfElements_;
-  const int kernels_;
-  const int kernelLoops_;
-  const bool useCachingAllocator_;
-  const bool transferDevice_;
-  const bool transferHost_;
-  const std::chrono::microseconds crunchForMicroSeconds_;
-
-  std::atomic<bool> queueingFinished_;
+  std::vector<edm::EDGetTokenT<CUDAProduct<int>>> cudaSrcTokens_;
+  edm::EDPutTokenT<int> dstToken_;
+  edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
   CUDAContextState ctxState_;
+  std::atomic<bool> queueingFinished_ = true;
 
-  float *data_d_ = nullptr;
-  cudautils::host::noncached::unique_ptr<float[]> data_h_;
+  SimOperationsService::AcquireCPUProcessor acquireOpsCPU_;
+  SimOperationsService::AcquireGPUProcessor acquireOpsGPU_;
+  SimOperationsService::ProduceCPUProcessor produceOpsCPU_;
+  SimOperationsService::ProduceGPUProcessor produceOpsGPU_;
 };
 
-TestCUDAProducerSimEWSerialTaskQueue::TestCUDAProducerSimEWSerialTaskQueue(const edm::ParameterSet& iConfig):
-  dstToken_{produces<int>()},
-  numberOfElements_{iConfig.getParameter<unsigned int>("numberOfElements")},
-  kernels_{iConfig.getParameter<int>("kernels")},
-  kernelLoops_{iConfig.getParameter<int>("kernelLoops")},
-  useCachingAllocator_{iConfig.getParameter<bool>("useCachingAllocator")},
-  transferDevice_{iConfig.getParameter<bool>("transferDevice")},
-  transferHost_{iConfig.getParameter<bool>("transferHost")},
-  crunchForMicroSeconds_{static_cast<long unsigned int>(iConfig.getParameter<double>("crunchForSeconds")*1e6)}
-{
-  edm::Service<CUDAService> cs;
-  if(cs->enabled()) {
-    data_h_ = cudautils::make_host_noncached_unique<float[]>(numberOfElements_ /*, cudaHostAllocWriteCombined*/);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dis(1e-5, 100.);
-    for(size_t i=0; i<numberOfElements_; ++i) {
-      data_h_[i] = dis(gen);
-    }
+TestCUDAProducerSimEWSerialTaskQueue::TestCUDAProducerSimEWSerialTaskQueue(const edm::ParameterSet& iConfig) {
+  const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
+  edm::Service<SimOperationsService> sos;
+  acquireOpsCPU_ = sos->acquireCPUProcessor(moduleLabel);
+  acquireOpsGPU_ = sos->acquireGPUProcessor(moduleLabel);
+  produceOpsCPU_ = sos->produceCPUProcessor(moduleLabel);
+  produceOpsGPU_ = sos->produceGPUProcessor(moduleLabel);
 
-    if(not useCachingAllocator_) {
-      cuda::throw_if_error(cudaMalloc(&data_d_, numberOfElements_*sizeof(float)));
-    }
+  if(acquireOpsCPU_.events() == 0 && acquireOpsGPU_.events() == 0) {
+    throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
+  }
+  const auto nevents = std::max(acquireOpsCPU_.events(), acquireOpsGPU_.events());
+
+  if(nevents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
+    throw cms::Exception("Configuration") << "Got " << nevents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
+  }
+  if(nevents != produceOpsGPU_.events() and produceOpsGPU_.events() > 0) {
+    throw cms::Exception("Configuration") << "Got " << nevents << " events for acquire and " << produceOpsGPU_.events() << " for produce GPU";
   }
 
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
-  cudatest::getTimeCruncher();
-}
+  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
+    cudaSrcTokens_.emplace_back(consumes<CUDAProduct<int>>(src));
+  }
 
-TestCUDAProducerSimEWSerialTaskQueue::~TestCUDAProducerSimEWSerialTaskQueue() {
-  if(not useCachingAllocator_) {
-    cuda::throw_if_error(cudaFree(data_d_));
+  if(iConfig.getParameter<bool>("produce")) {
+    dstToken_ = produces<int>();
+  }
+  if(iConfig.getParameter<bool>("produceCUDA")) {
+    cudaDstToken_ = produces<CUDAProduct<int>>();
   }
 }
+
 void TestCUDAProducerSimEWSerialTaskQueue::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<std::vector<edm::InputTag>> ("srcs", std::vector<edm::InputTag>{});
-  desc.add<unsigned int>("numberOfElements", 1);
-  desc.add<bool>("useCachingAllocator", true);
-  desc.add<bool>("transferDevice", false);
-  desc.add<int>("kernels", 1);
-  desc.add<int>("kernelLoops", -1);
-  desc.add<bool>("transferHost", false);
-  desc.add<double>("crunchForSeconds", 0);
+  desc.add<std::vector<edm::InputTag>>("srcs", std::vector<edm::InputTag>{});
+  desc.add<std::vector<edm::InputTag>>("cudaSrcs", std::vector<edm::InputTag>{});
+  desc.add<bool>("produce", false);
+  desc.add<bool>("produceCUDA", false);
+
+  //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);
 }
 
@@ -118,37 +93,33 @@ void TestCUDAProducerSimEWSerialTaskQueue::acquire(const edm::Event& iEvent, con
     iEvent.get(t);
   }
 
-  if(crunchForMicroSeconds_.count() > 0) {
-    cudatest::getTimeCruncher().crunch_for(crunchForMicroSeconds_);
-  }
+  std::vector<const CUDAProduct<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
+      return &iEvent.get(tok);
+    });
 
+  // This is now a bit stupid, but I need the ctxState_ to be fully set before calling taskQueue::push()
   {
-    // This is now a bit stupid, but I need the ctxState_ to be fully set before calling taskQueue::push()
-    CUDAScopedContextAcquire ctx{iEvent.streamID(), h, ctxState_};
-  }
-  queueingFinished_.store(false);
-  taskQueue.push(make_lambda_with_holder([this](edm::WaitingTaskWithArenaHolder h){
-    CUDAScopedContextTask ctx{&ctxState_, std::move(h)};
-    float *data_d = data_d_;
-    cudautils::device::unique_ptr<float[]> data_d_own;
+    auto ctx = cudaProducts.empty() ? CUDAScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
+      CUDAScopedContextAcquire(*cudaProducts[0], h, ctxState_);
 
-    if(useCachingAllocator_) {
-      data_d_own = cudautils::make_device_unique<float[]>(numberOfElements_, ctx.stream());
-      data_d = data_d_own.get();
+    for(const auto ptr: cudaProducts) {
+      ctx.get(*ptr);
     }
-    if(transferDevice_) {
-      cuda::memory::async::copy(data_d, data_h_.get(), numberOfElements_*sizeof(float), ctx.stream().id());
-      if(kernelLoops_ > 0) {
-        for(int i=0; i<kernels_; ++i) {
-          TestCUDAProducerSimEWGPUKernel::kernel(data_d, numberOfElements_, kernelLoops_, ctx.stream());
-        }
-      }
-      if(transferHost_) {
-        cuda::memory::async::copy(data_h_.get(), data_d, numberOfElements_*sizeof(float), ctx.stream().id());
-      }
-    }
-    queueingFinished_.store(true);
-  }, std::move(h)));
+  }
+
+  if(acquireOpsCPU_.events() > 0) {
+    acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()});
+  }
+  if(acquireOpsGPU_.events() > 0) {
+    queueingFinished_.store(false);
+    taskQueue.push(edm::make_lambda_with_holder(std::move(h), [this,
+                                                               eventId=iEvent.id()](edm::WaitingTaskWithArenaHolder h) {
+                                                  CUDAScopedContextTask ctx{&ctxState_, std::move(h)};
+                                                  acquireOpsGPU_.process(std::vector<size_t>{eventId.event() % acquireOpsGPU_.events()}, ctx.stream());
+                                                  queueingFinished_.store(true);
+                                                }));
+  }
 }
 
 void TestCUDAProducerSimEWSerialTaskQueue::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -156,7 +127,19 @@ void TestCUDAProducerSimEWSerialTaskQueue::produce(edm::Event& iEvent, const edm
   if(not queueingFinished_.load()) {
     throw cms::Exception("Assert") << "Work was not yet fully queued in acquire!";
   }
-  iEvent.emplace(dstToken_, 42);
+  if(produceOpsCPU_.events() > 0) {
+    produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
+  }
+  if(produceOpsGPU_.events() > 0) {
+    produceOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsGPU_.events()}, ctx.stream());
+  }
+
+  if(not dstToken_.isUninitialized()) {
+    iEvent.emplace(dstToken_, 42);
+  }
+  if(not cudaDstToken_.isUninitialized()) {
+    ctx.emplace(iEvent, cudaDstToken_, 42);
+  }
 }
 
 DEFINE_FWK_MODULE(TestCUDAProducerSimEWSerialTaskQueue);
