@@ -43,6 +43,14 @@ def functionDropMemcpy(data):
 def functionDropMemset(data):
     return [op for op in data if not "memset" in op["name"]]
 
+def functionFakeCUDA(data):
+    for op in data:
+        if op["name"] == "kernel" or "memcpy" in op["name"] or "memset" in op["name"]:
+            op["name"] = "fake"
+            op["values"] = op["apiTime"]
+            op["unit"] = "ns"
+    return data
+
 def transformModulePerFunction(label, module, func):
     if "acquire" in module:
         module["acquire"] = func(module["acquire"])
@@ -74,6 +82,8 @@ def main(opts):
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionDropMemcpy))
     if opts.dropMemset:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionDropMemset))
+    if opts.fakeCUDA:
+        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionFakeCUDA))
     if opts.collapse:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionCollapse))
 
@@ -109,6 +119,8 @@ if __name__ == "__main__":
                         help="Drop all memcopies")
     parser.add_argument("--dropMemset", action="store_true",
                         help="Drop all memsets")
+    parser.add_argument("--fakeCUDA", action="store_true",
+                        help="Fake CUDA operations by burning CPU for the duration of API call")
 
     opts = parser.parse_args()
 

@@ -124,6 +124,23 @@ namespace {
     const cudatest::GPUTimeCruncher* gpuCruncher_;
   };
 
+  std::mutex g_fakeCudaMutex;
+  class OperationFake final: public OperationTime {
+  public:
+    explicit OperationFake(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher):
+      OperationTime(conf),
+      cruncher_(cruncher)
+    {}
+
+    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const override {
+      std::lock_guard lock{g_fakeCudaMutex};
+      cruncher_->crunch_for(totalTime(indices));
+    }
+
+  private:
+    const cudatest::TimeCruncher* cruncher_;
+  };
+
   class OperationBytes: public cudatest::OperationBase {
   public:
     explicit OperationBytes(const boost::property_tree::ptree& conf) {
@@ -277,6 +294,9 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
         }
         else if(opname == "memset") {
           opsGPU.emplace_back(std::make_unique<OperationMemset>(op.second));
+        }
+        else if(opname == "fake") {
+          opsGPU.emplace_back(std::make_unique<OperationFake>(op.second, cpuCruncher_.get()));
         }
         else {
           throw cms::Exception("Configuration") << "Unsupported operation " << opname;

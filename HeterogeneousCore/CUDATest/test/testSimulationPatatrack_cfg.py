@@ -105,6 +105,8 @@ elif options.variant == 4:
 elif options.variant == 5:
     process.SimOperationsService.config = "config_cpu_convert.json"
 
+process.SimOperationsService.config = "test3.json"
+
 if options.gpuExternalWork == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_externalWork.json")
 elif options.mean == 1:
