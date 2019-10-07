@@ -11,11 +11,11 @@ import subprocess
 import multiprocessing
 
 # felk40
-cores_felk40 = [1, 2, 3, 0]
+cores_felk40 = [0, 1, 2, 3]
 
 # online
 # core 0 as the last as it usually has the OS
-cores_online = list(range(1,32)) + [0]
+cores_online = list(range(0,32))
 
 background_time = 4*60*60
 # felk40: 1700 ev/s on 8 threads, 
@@ -110,10 +110,12 @@ def launchBackground(opts, cores_bkg, logfile):
     return cmssw
 
 def main(opts):
-    cores = list(range(0, multiprocessing.cpu_count()))
-    if opts.taskset:
-        cores = cores_felk40
+    #cores = cores_felk40
+    cores = cores_online # force one thread per physical core, ignore HT
+    if opts.useHT:
+        cores = list(range(0, multiprocessing.cpu_count()))
     cores = [str(x) for x in cores]
+    #cores = cores[:48]
 
     maxThreads = len(cores)
     if opts.maxThreads > 0:
@@ -203,7 +205,9 @@ if __name__ == "__main__":
     parser.add_argument("--nvprof", action="store_true",
                         help="Run the main program through nvprof")
     parser.add_argument("--taskset", action="store_true",
-                        help="USe taskset to explicitly set the cores where to run on")
+                        help="Use taskset to explicitly set the cores where to run on")
+    parser.add_argument("--useHT", action="store_true",
+                        help="Use all logical cores instead. Default is to use physical cores only, i.e. ignore the HT logical core")
     parser.add_argument("--no-background", dest="background", action="store_false",
                         help="Disable background process occupying the other cores")
     parser.add_argument("--minThreads", type=int, default=1,

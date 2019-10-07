@@ -37,6 +37,11 @@ options.register('collapse',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Use configuration with operations collapsed within a module (default 0)")
+options.register('kernelsInCPUNoMem',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Use configuration with kernels ran in CPU and without memory operations (default 0)")
 options.register('gangSize',
                  -1,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -49,14 +54,16 @@ options.register('gangKernelFactor',
                  "Kernel time factor. Should be between 0 and 1.")
 options.parseArguments()
 
-if options.variant not in [1,2,3,4]:
-    raise Exception("Incorrect variant value %d, can be 1,2,3,4" % options.variant)
+if options.variant not in [1,2,3,4,5]:
+    raise Exception("Incorrect variant value %d, can be 1,2,3,4,5" % options.variant)
 if options.gpuExternalWork not in [0, 1]:
     raise Exception("gpuExternalWork should be 0 or 1, got %d" % options.gpuExternalWork)
 if options.mean not in [0, 1]:
     raise Exception("mean should be 0 or 1, got %d" % options.mean)
 if options.collapse not in [0, 1]:
-    raise Exception("mean should be 0 or 1, got %d" % options.collapse)
+    raise Exception("collapse should be 0 or 1, got %d" % options.collapse)
+if options.kernelsInCPUNoMem not in [0, 1]:
+    raise Exception("kernelsInCPUNoMem should be 0 or 1, got %d" % options.collapse)
 if options.gangSize > 0:
     options.gpuExternalWork = 1
 
@@ -95,13 +102,17 @@ elif options.variant == 3:
     process.SimOperationsService.config = "config_transfer_convert.json"
 elif options.variant == 4:
     process.SimOperationsService.config = "config_cpu.json"
+elif options.variant == 5:
+    process.SimOperationsService.config = "config_cpu_convert.json"
 
 if options.gpuExternalWork == 1:
-    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_externalWork.json")
+    process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_externalWork.json")
 elif options.mean == 1:
-    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_mean.json")
+    process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_mean.json")
 elif options.collapse == 1:
-    process.SimOperationsService.config = process.SimOperationsService.config.replace(".json", "_collapse.json")
+    process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_collapse.json")
+elif options.kernelsInCPUNoMem == 1:
+    process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_kernelsInCPU_noMem.json")
 if options.gangSize > 0:
     gangNumber = options.numberOfStreams / options.gangSize
     if options.numberOfStreams % options.gangSize != 0:
@@ -207,7 +218,7 @@ if options.variant in [1,2,3]:
             )
             process.outPath = cms.EndPath(process.out)
 
-elif options.variant == 4:
+elif options.variant in [4,5]:
     process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
     process.siPixelDigis = testCUDAProducerSimCPU.clone(produce=True)
     process.siPixelClustersPreSplitting = testCUDAProducerSimCPU.clone(
@@ -227,6 +238,9 @@ elif options.variant == 4:
         produce=True
     )
     process.p = cms.Path(process.offlineBeamSpot+process.siPixelDigis+process.siPixelClustersPreSplitting+process.siPixelRecHitHostSoA+process.pixelTrackSoA+process.pixelVertexSoA)
+
+    if options.variant == 5:
+        raise Exception("Variant 5 not implemented yet")
 
 #process.t = cms.Task(process.offlineBeamSpot, process.offlineBeamSpotCUDA, process.siPixelClustersCUDAPreSplitting, process.siPixelRecHitsCUDAPreSplitting, process.caHitNtupletCUDA, process.pixelVertexCUDA)
 #process.p = cms.Path(process.t)
