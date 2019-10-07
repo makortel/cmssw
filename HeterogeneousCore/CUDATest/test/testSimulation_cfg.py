@@ -50,6 +50,7 @@ process.SimOperationsService.gangNumber = process.SimOperationsService.gangNumbe
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as testCUDAProducerSimEW
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWLimitedTaskQueue_cfi import testCUDAProducerSimEWLimitedTaskQueue as testCUDAProducerSimEW
 template = testCUDAProducerSimEW.clone()
 #template = testCUDAProducerSimEWGanged.clone()
 process.transfer = template.clone(
