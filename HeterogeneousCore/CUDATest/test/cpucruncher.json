@@ -2,7 +2,7 @@
   "moduleDeclarations": [],
   "moduleDefinitions": {
     "crunch": {
-      "produce": [{"name": "cpu", "time": [1000000000]}]
+      "produce": [{"name": "cpu", "values": [1000000000], "unit": "ns"}]
     }
   }
 }

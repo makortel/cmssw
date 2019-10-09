@@ -58,7 +58,7 @@ def throughput(output):
     thr = 1./time
     
     printMessage("Processed %d events in %f seconds, throuhgput %s ev/s" % (nevents, time*nevents, thr))
-    return thr
+    return (thr, time*nevents)
 
 def partition_cores(cores, nth):
     if nth >= len(cores):
@@ -146,10 +146,15 @@ def main(opts):
         with open(outputJson) as inp:
             data = json.load(inp)
 
+    stop = False
+    keep_nev = None
+
     for nstr, nth in n_streams_threads:
         if nstr == 0:
             nstr = nth
         nev = nev_per_stream*nstr
+        if keep_nev is not None:
+            nev = keep_nev
         (cores_main, cores_bkg) = partition_cores(cores, nth)
 
         thrs = []
@@ -167,7 +172,13 @@ def main(opts):
                     msg += ", running on cores %s" % ",".join(cores_main)
                 printMessage(msg)
                 for i in range(times):
-                    thrs.append(run(nev, nstr, cores_main, opts, opts.output+"_log_nstr%d_nth%d_n%d.txt"%(nstr, nth, i)))
+                    (th, wtime) = run(nev, nstr, cores_main, opts, opts.output+"_log_nstr%d_nth%d_n%d.txt"%(nstr, nth, i))
+                    thrs.append(th)
+                    if opts.stopIncreasingEventBlocksAfterWallTime > 0 and wtime > opts.stopIncreasingEventBlocksAfterWallTime:
+                        keep_nev = nev
+                    if opts.stopAfterWallTime > 0 and wtime > opts.stopAfterWallTime:
+                        stop = True
+                        break
             finally:
                 if cmsswBackground is not None:
                     printMessage("Run complete, terminating background CMSSW, waiting for 10 seconds")
@@ -193,6 +204,8 @@ def main(opts):
         # Save results after each test
         with open(outputJson, "w") as out:
             json.dump(data, out, indent=2)
+        if stop:
+            print("Reached max wall time of %d s, stopping scan" % opts.stopAfterWallTime)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calibrate vector addition loop timing for CUDA simulation")
@@ -222,6 +235,10 @@ if __name__ == "__main__":
                         help="Application variant, can be 1, 2, or 3 (default: 1)")
     parser.add_argument("--eventBlocksPerStream", type=int, default=None,
                         help="Number of event blocks (4k events) to be used per EDM stream (default: 85 for variant 1)")
+    parser.add_argument("--stopIncreasingEventBlocksAfterWallTime", type=int, default=-1,
+                        help="Stop increasing number of event blocks after the wall time of the job reaches this many seconds (default: -1 for no limit)")
+    parser.add_argument("--stopAfterWallTime", type=int, default=-1,
+                         help="Stop running after the wall time of the job reaches this many in seconds (default: -1 for no limit)")
 
     parser.add_argument("args", nargs=argparse.REMAINDER)
 

@@ -42,6 +42,16 @@ options.register('kernelsInCPUNoMem',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Use configuration with kernels ran in CPU and without memory operations (default 0)")
+options.register('fakeCUDA',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Use configuration with CUDA operations faked in CPU (default 0)")
+options.register('fakeCUDANoLock',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Use configuration with CUDA operations faked in CPU without locks (default 0)")
 options.register('gangSize',
                  -1,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -52,6 +62,17 @@ options.register('gangKernelFactor',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.float,
                  "Kernel time factor. Should be between 0 and 1.")
+options.register('serialTaskQueue',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Use SerialTaskQueue. Value 1 implies gpuExternalWork=1.")
+options.register('limitedTaskQueue',
+                 -1,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Limit in LimitedTaskQueue. Value <= 0 means disabled. Value > 0 implies gpuExternalWork=1")
+
 options.parseArguments()
 
 if options.variant not in [1,2,3,4,5]:
@@ -63,9 +84,15 @@ if options.mean not in [0, 1]:
 if options.collapse not in [0, 1]:
     raise Exception("collapse should be 0 or 1, got %d" % options.collapse)
 if options.kernelsInCPUNoMem not in [0, 1]:
-    raise Exception("kernelsInCPUNoMem should be 0 or 1, got %d" % options.collapse)
-if options.gangSize > 0:
-    options.gpuExternalWork = 1
+    raise Exception("kernelsInCPUNoMem should be 0 or 1, got %d" % options.kernelsInCPUNoMem)
+if options.fakeCUDA not in [0, 1]:
+    raise Exception("fakeCUDA should be 0 or 1, got %d" % options.fakeCUDA)
+if options.fakeCUDANoLock not in [0, 1]:
+    raise Exception("fakeCUDANoLock should be 0 or 1, got %d" % options.fakeCUDANoLock)
+if options.serialTaskQueue not in [0, 1]:
+    raise Exception("serialTaskQueue should be 0 or 1, got %d" % options.serialTaskQueue)
+if options.gangSize > 0 or options.serialTaskQueue == 1 or options.limitedTaskQueue > 0:
+    options.gpuExternalWork=1
 
 process = cms.Process("Test")
 
@@ -113,6 +140,10 @@ elif options.collapse == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_collapse.json")
 elif options.kernelsInCPUNoMem == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_kernelsInCPU_noMem.json")
+elif options.fakeCUDA == 1 or options.fakeCUDANoLock == 1:
+    process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_fakeCUDA.json")
+    if options.fakeCUDANoLock == 1:
+        process.SimOperationsService.fakeUseLocks = False
 if options.gangSize > 0:
     gangNumber = options.numberOfStreams / options.gangSize
     if options.numberOfStreams % options.gangSize != 0:
@@ -125,6 +156,8 @@ from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProduc
 from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged as _testCUDAProducerSimEWGanged
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as _testCUDAProducerSimEWSerialTaskQueue
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWLimitedTaskQueue_cfi import testCUDAProducerSimEWLimitedTaskQueue as _testCUDAProducerSimEWLimitedTaskQueue
 
 testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone()
 testCUDAProducerSim = _testCUDAProducerSim.clone()
@@ -134,7 +167,12 @@ if options.gpuExternalWork == 1:
 if options.gangSize > 0:
     testCUDAProducerSim = _testCUDAProducerSimEWGanged.clone()
     testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone()
-
+elif options.serialTaskQueue == 1:
+    testCUDAProducerSim = _testCUDAProducerSimEWSerialTaskQueue.clone()
+    testCUDAProducerSimEW = _testCUDAProducerSimEWSerialTaskQueue.clone()
+elif options.limitedTaskQueue > 0:
+    testCUDAProducerSim = _testCUDAProducerSimEWLimitedTaskQueue.clone(limit=options.limitedTaskQueue)
+    testCUDAProducerSimEW = _testCUDAProducerSimEWLimitedTaskQueue.clone(limit=options.limitedTaskQueue)
 
 # Module declarations
 if options.variant in [1,2,3]:
@@ -249,4 +287,6 @@ elif options.variant in [4,5]:
 #process.maxEvents.input = 10
 
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1
-process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
+#process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
+
+#print process.dumpPython()
