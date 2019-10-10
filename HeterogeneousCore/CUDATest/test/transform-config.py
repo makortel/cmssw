@@ -14,6 +14,12 @@ def functionMean(data):
             op["apiTime"] = [int(statistics.mean(op["apiTime"]))]
     return data
 
+def functionMultiplyKernel(data, factor):
+    for op in data:
+        if op["name"] == "kernel":
+            op["values"] = [int(x*factor) for x in op["values"]]
+    return data
+
 def functionCollapse(data):
     ops = []
     for op in data:
@@ -76,6 +82,8 @@ def main(opts):
         transformModules.append(transformModuleExternalWork)
     if opts.mean:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionMean))
+    if opts.multiplyKernel is not None:
+        transformModules.append(lambda l, m: transformModulePerFunction(l, m, lambda d: functionMultiplyKernel(d, opts.multiplyKernel)))
     if opts.kernelsToCPU:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionKernelsToCPU))
     if opts.dropMemcpy:
@@ -121,6 +129,8 @@ if __name__ == "__main__":
                         help="Drop all memsets")
     parser.add_argument("--fakeCUDA", action="store_true",
                         help="Fake CUDA operations by burning CPU for the duration of API call")
+    parser.add_argument("--multiplyKernel", type=float, default=None,
+                        help="Multiply all kernel lengths with this value (default: None)")
 
     opts = parser.parse_args()
 
