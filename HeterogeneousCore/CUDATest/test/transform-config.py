@@ -62,15 +62,16 @@ def transformModulePerFunction(label, module, func):
         module["acquire"] = func(module["acquire"])
     module["produce"] = func(module["produce"])
 
-def transformModuleExternalWork(label, module):
+def transformModuleExternalWork(label, module, alsoCPU=False):
     if "acquire" in module:
         # Already ExternalWork
         return
-    hasGPUops = False
-    for op in module["produce"]:
-        if op["name"] != "cpu":
-            hasGPUops = True
-            break
+    hasGPUops = alsoCPU
+    if not hasGPUops:
+        for op in module["produce"]:
+            if op["name"] != "cpu":
+                hasGPUops = True
+                break
     if hasGPUops:
         print("Made %s ExternalWork" % label)
         module["acquire"] = module["produce"]
@@ -80,6 +81,8 @@ def main(opts):
     transformModules = []
     if opts.externalWork:
         transformModules.append(transformModuleExternalWork)
+    if opts.externalWorkAll:
+        transformModules.append(lambda l, m: transformModuleExternalWork(l, m, alsoCPU=True))
     if opts.mean:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionMean))
     if opts.multiplyKernel is not None:
@@ -119,6 +122,8 @@ if __name__ == "__main__":
                         help="Replace each operation event-by-event values with the mean")
     parser.add_argument("--externalWork", action="store_true",
                         help="Make all GPU modules ExteralWork")
+    parser.add_argument("--externalWorkAll", action="store_true",
+                        help="Make all modules ExteralWork")
     parser.add_argument("--collapse", action="store_true",
                         help="Collapse all same-kind-of operations to one per module function")
     parser.add_argument("--kernelsToCPU", action="store_true",

@@ -82,7 +82,11 @@ options.register('configPostfix',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.string,
                  "Generic postfix for configuration JSON file")
-
+options.register('singleModule',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Merge all modules into a single module (default 0)")
 options.parseArguments()
 
 if options.variant not in [1,2,3,4,5]:
@@ -103,6 +107,8 @@ if options.serialTaskQueue not in [0, 1]:
     raise Exception("serialTaskQueue should be 0 or 1, got %d" % options.serialTaskQueue)
 if options.gangSize > 0 and options.numberOfGangs > 0:
     raise Exception("One  of 'gangSize' and 'numberOfGangs' can be enabled, now both are")
+if options.singleModule not in [0, 1]:
+    raise Exception("singleModule should be 0 or 1, got %d" % options.singleModule)
 if options.gangSize > 0 or options.numberOfGangs > 0 or options.serialTaskQueue == 1 or options.limitedTaskQueue > 0:
     options.gpuExternalWork=1
 
@@ -146,11 +152,13 @@ elif options.variant == 5:
 
 if options.gpuExternalWork == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_externalWork.json")
-elif options.mean == 1:
+elif options.singleModule == 1:
+    process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_externalWorkAll.json")
+if options.mean == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_mean.json")
-elif options.collapse == 1:
+if options.collapse == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_collapse.json")
-elif options.kernelsInCPUNoMem == 1:
+if options.kernelsInCPUNoMem == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_kernelsInCPU_noMem.json")
 elif options.fakeCUDA == 1 or options.fakeCUDANoLock == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_fakeCUDA.json")
@@ -174,12 +182,15 @@ elif options.numberOfGangs > 0:
     process.SimOperationsService.gangNumber = options.numberOfGangs
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
 
+print process.SimOperationsService.dumpPython()
+
 from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU as _testCUDAProducerSimCPU
 from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged as _testCUDAProducerSimEWGanged
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as _testCUDAProducerSimEWSerialTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWLimitedTaskQueue_cfi import testCUDAProducerSimEWLimitedTaskQueue as _testCUDAProducerSimEWLimitedTaskQueue
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSingle_cfi import testCUDAProducerSimEWSingle as _testCUDAProducerSimEWSingle
 
 testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone()
 testCUDAProducerSim = _testCUDAProducerSim.clone()
@@ -197,6 +208,8 @@ elif options.limitedTaskQueue > 0:
     testCUDAProducerSimEW = _testCUDAProducerSimEWLimitedTaskQueue.clone(limit=options.limitedTaskQueue)
 
 # Module declarations
+if options.singleModule:
+    process.theModule = _testCUDAProducerSimEWSingle.clone()
 if options.variant in [1,2,3]:
     process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
     process.offlineBeamSpotCUDA = testCUDAProducerSim.clone(
@@ -218,7 +231,24 @@ if options.variant in [1,2,3]:
         produceCUDA=True
     )
 
-    process.p = cms.Path(process.offlineBeamSpot+process.offlineBeamSpotCUDA+process.siPixelClustersCUDAPreSplitting+process.siPixelRecHitsCUDAPreSplitting+process.caHitNtupletCUDA+process.pixelVertexCUDA)
+    process.p = cms.Path(
+        process.offlineBeamSpot + 
+        process.offlineBeamSpotCUDA + 
+        process.siPixelClustersCUDAPreSplitting + 
+        process.siPixelRecHitsCUDAPreSplitting + 
+        process.caHitNtupletCUDA + 
+        process.pixelVertexCUDA
+    )
+    if options.singleModule:
+        process.theModule.modules.extend([
+            "offlineBeamSpot",
+            "offlineBeamSpotCUDA",
+            "siPixelClustersCUDAPreSplitting",
+            "siPixelRecHitsCUDAPreSplitting",
+            "caHitNtupletCUDA",
+            "pixelVertexCUDA"
+        ])
+        process.p = cms.Path(process.theModule)
 
     if options.variant in [2,3]:
         process.pixelTrackSoA = testCUDAProducerSimEW.clone(
@@ -230,6 +260,12 @@ if options.variant in [1,2,3]:
             produce=True
         )
         process.p += (process.pixelTrackSoA+process.pixelVertexSoA)
+        if options.singleModule:
+            process.theModule.modules.extend([
+                "pixelTrackSoA",
+                "pixelVertexSoA"
+            ])
+            process.p = cms.Path(process.theModule)
 
         if options.variant == 3:
             process.siPixelDigisSoA = testCUDAProducerSimEW.clone(
@@ -277,6 +313,16 @@ if options.variant in [1,2,3]:
                 verbosity = cms.untracked.uint32(0),
             )
             process.outPath = cms.EndPath(process.out)
+            if options.singleModule:
+                process.theModule.modules.extend([
+                    "siPixelDigisSoA",
+                    "siPixelDigisClustersPreSplitting",
+                    "siPixelRecHitsLegacyPreSplitting",
+                    "pixelTracks",
+                    "pixelVertices",
+                ])
+                process.p = cms.Path(process.theModule)
+                del process.outPath
 
 elif options.variant in [4,5]:
     process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
@@ -297,7 +343,24 @@ elif options.variant in [4,5]:
         srcs = ["pixelTrackSoA"],
         produce=True
     )
-    process.p = cms.Path(process.offlineBeamSpot+process.siPixelDigis+process.siPixelClustersPreSplitting+process.siPixelRecHitHostSoA+process.pixelTrackSoA+process.pixelVertexSoA)
+    process.p = cms.Path(
+        process.offlineBeamSpot + 
+        process.siPixelDigis + 
+        process.siPixelClustersPreSplitting +
+        process.siPixelRecHitHostSoA + 
+        process.pixelTrackSoA + 
+        process.pixelVertexSoA
+    )
+    if options.singleModule:
+        process.theModule.modules.extend([
+            "offlineBeamSpot",
+            "siPixelDigis",
+            "siPixelClustersPreSplitting",
+            "siPixelRecHitHostSoA",
+            "pixelTrackSoA",
+            "pixelVertexSoA"
+        ])
+        process.p = cms.Path(process.theModule)
 
     if options.variant == 5:
         process.pixelTracks = testCUDAProducerSimCPU.clone(

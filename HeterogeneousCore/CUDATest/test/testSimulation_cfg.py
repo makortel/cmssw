@@ -56,12 +56,15 @@ template = testCUDAProducerSimEW.clone()
 process.transfer = template.clone(
     produce = True
 )
+#from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSingle_cfi import testCUDAProducerSimEWSingle
+#process.transfer = testCUDAProducerSimEWSingle.clone(modules=["transfer"])
 
 process.p = cms.Path(process.transfer)
 
 from HeterogeneousCore.CUDATest.testCUDAProducerCPUCrunch_cfi import testCUDAProducerCPUCrunch
 process.cpu1 = testCUDAProducerCPUCrunch.clone()
 process.cpu2 = testCUDAProducerCPUCrunch.clone(srcs=["cpu1", "transfer"])
+#process.cpu2 = testCUDAProducerCPUCrunch.clone(srcs=["cpu1"])
 
 process.cpu1.crunchForSeconds = 100e-6
 process.cpu2.crunchForSeconds = 200e-6
