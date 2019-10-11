@@ -56,7 +56,12 @@ options.register('gangSize',
                  -1,
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
-                 "Size of a gang. -1 to disable ganging. Value > 0 0 implies gpuExternalWork=1")
+                 "Size of a gang, number of gangs is calculated automatically. -1 to not enable ganging. Conflicts with 'numberOfGangs'. Value > 0 0 implies gpuExternalWork=1")
+options.register('numberOfGangs',
+                 -1,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Number of gangs, size of a gang is calculated automatically. -1 to not enagle ganging. Conflicts with 'gangSize'. Value > 0 0 implies gpuExternalWork=1")
 options.register('gangKernelFactor',
                  0,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -91,7 +96,9 @@ if options.fakeCUDANoLock not in [0, 1]:
     raise Exception("fakeCUDANoLock should be 0 or 1, got %d" % options.fakeCUDANoLock)
 if options.serialTaskQueue not in [0, 1]:
     raise Exception("serialTaskQueue should be 0 or 1, got %d" % options.serialTaskQueue)
-if options.gangSize > 0 or options.serialTaskQueue == 1 or options.limitedTaskQueue > 0:
+if options .gangSize > 0 or options.numberOfGangs > 0:
+    raise Exception("One one of 'gangSize' and 'numberOfGangs' can be enabled, now both are")
+if options.gangSize > 0 or options.numberOfGangs > 0 or options.serialTaskQueue == 1 or options.limitedTaskQueue > 0:
     options.gpuExternalWork=1
 
 process = cms.Process("Test")
@@ -150,6 +157,13 @@ if options.gangSize > 0:
         raise Exception("numberOfStreams (%d) is not divisible by gang size (%d)" % (options.numberOfStreams, options.gangSize))
     process.SimOperationsService.gangSize = options.gangSize,
     process.SimOperationsService.gangNumber = gangNumber,
+    process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
+elif options.numberOfGangs > 0:
+    gangSize = options.numberOfStreams / options.numberOfGangs
+    if options.numberOfStreams % options.numberOfGangs != 0:
+        raise Exception("numberOfStreams (%d) is not divisible by number of gangs (%d)" % (options.numberOfStreams, options.numberOfGangs))
+    process.SimOperationsService.gangSize = gangSize,
+    process.SimOperationsService.gangNumber = options.numberOfGangs
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
 
 from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU as _testCUDAProducerSimCPU
@@ -278,7 +292,32 @@ elif options.variant in [4,5]:
     process.p = cms.Path(process.offlineBeamSpot+process.siPixelDigis+process.siPixelClustersPreSplitting+process.siPixelRecHitHostSoA+process.pixelTrackSoA+process.pixelVertexSoA)
 
     if options.variant == 5:
-        raise Exception("Variant 5 not implemented yet")
+        process.pixelTracks = testCUDAProducerSimCPU.clone(
+            srcs = ["offlineBeamSpot", "siPixelRecHitHostSoA", "pixelTrackSoA"],
+            produce=True
+        )
+        process.pixelVertices = testCUDAProducerSimCPU.clone(
+            srcs = ["offlineBeamSpot", "pixelTracks", "pixelVertexSoA"],
+            produce=True
+        )
+        process.t = cms.Task(process.offlineBeamSpot,
+                             process.siPixelDigis,
+                             process.siPixelClustersPreSplitting,
+                             process.siPixelRecHitHostSoA,
+                             process.pixelTrackSoA,
+                             process.pixelVertexSoA,
+                             process.pixelTracks,
+                             process.pixelVertices
+        )
+        process.p = cms.Path(process.t)
+        process.out = cms.OutputModule("AsciiOutputModule",
+            outputCommands = cms.untracked.vstring(
+                "keep *_pixelTracks_*_*",
+                "keep *_pixelVertices_*_*",
+            ),
+            verbosity = cms.untracked.uint32(0),
+        )
+        process.outPath = cms.EndPath(process.out)
 
 #process.t = cms.Task(process.offlineBeamSpot, process.offlineBeamSpotCUDA, process.siPixelClustersCUDAPreSplitting, process.siPixelRecHitsCUDAPreSplitting, process.caHitNtupletCUDA, process.pixelVertexCUDA)
 #process.p = cms.Path(process.t)

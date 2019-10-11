@@ -11,11 +11,13 @@ import subprocess
 import multiprocessing
 
 # felk40
-cores_felk40 = [0, 1, 2, 3]
+cores_felk40 = [1, 2, 3, 0]
 
 # online
 # core 0 as the last as it usually has the OS
-cores_online = list(range(0,32))
+cores_online = list(range(16,32)) + list(range(1,16)) + [0]
+cores_online_ht = cores_online + list(range(48,64)) + list(range(32,48))
+
 
 background_time = 4*60*60
 # felk40: 1700 ev/s on 8 threads, 
@@ -26,6 +28,7 @@ nblocks_per_stream = {
     2: 45,
     3: 7,
     4: 4,
+    5: 2,
 }
 
 times = 1
@@ -64,7 +67,7 @@ def partition_cores(cores, nth):
     if nth >= len(cores):
         return (cores, [])
 
-    return (cores[1:nth+1], [cores[0]] + cores[nth+1:])
+    return (cores[0:nth], cores[nth:])
 
 def run(nev, nstr, cores_main, opts, logfilename):
     nth = len(cores_main)
@@ -113,7 +116,8 @@ def main(opts):
     #cores = cores_felk40
     cores = cores_online # force one thread per physical core, ignore HT
     if opts.useHT:
-        cores = list(range(0, multiprocessing.cpu_count()))
+        #cores = list(range(0, multiprocessing.cpu_count()))
+        cores = cores_online_ht
     cores = [str(x) for x in cores]
     #cores = cores[:48]
 
@@ -142,9 +146,13 @@ def main(opts):
     )
     outputJson = opts.output+".json"
 
+    alreadyExists = set()
     if not opts.overwrite and os.path.exists(outputJson):
         with open(outputJson) as inp:
             data = json.load(inp)
+    if not opts.append:
+        for res in data["results"]:
+            alreadyExists.add( (res["streams"], res["threads"]) )
 
     stop = False
     keep_nev = None
@@ -152,6 +160,9 @@ def main(opts):
     for nstr, nth in n_streams_threads:
         if nstr == 0:
             nstr = nth
+        if (nstr, nth) in alreadyExists:
+            continue
+
         nev = nev_per_stream*nstr
         if keep_nev is not None:
             nev = keep_nev
@@ -215,6 +226,8 @@ if __name__ == "__main__":
                         help="Prefix of output JSON and log files. If the output JSON file exists, it will be updated (see also --overwrite) (default: 'result')")
     parser.add_argument("--overwrite", action="store_true",
                         help="Overwrite the output JSON instead of updating it")
+    parser.add_argument("--append", action="store_true",
+                        help="Append new (stream, threads) results insteads of ignoring already existing point")
     parser.add_argument("--nvprof", action="store_true",
                         help="Run the main program through nvprof")
     parser.add_argument("--taskset", action="store_true",
@@ -232,7 +245,7 @@ if __name__ == "__main__":
     parser.add_argument("--numStreams", type=str, default="",
                         help="Comma separated list of numbers of streams to use in the scan (default: empty for always the same as the number of threads). If both number of threads and number of streams have more than 1 element, a 2D scan is done with all the combinations")
     parser.add_argument("--variant", type=int, default=1,
-                        help="Application variant, can be 1, 2, or 3 (default: 1)")
+                        help="Application variant, can be one of 1,2,3,4,5 (default: 1)")
     parser.add_argument("--eventBlocksPerStream", type=int, default=None,
                         help="Number of event blocks (4k events) to be used per EDM stream (default: 85 for variant 1)")
     parser.add_argument("--stopIncreasingEventBlocksAfterWallTime", type=int, default=-1,
@@ -251,7 +264,7 @@ if __name__ == "__main__":
         opts.numThreads = [int(x) for x in opts.numThreads.split(",")]
     if opts.numStreams != "":
         opts.numStreams = [int(x) for x in opts.numStreams.split(",")]
-    if opts.variant not in [1,2,3,4]:
+    if opts.variant not in [1,2,3,4,5]:
         parser.error("Invalid variant %d" % opts.variant)
     opts.args.append("variant=%d"%opts.variant)
 
