@@ -77,6 +77,11 @@ options.register('limitedTaskQueue',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Limit in LimitedTaskQueue. Value <= 0 means disabled. Value > 0 implies gpuExternalWork=1")
+options.register('configPostfix',
+                 "",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "Generic postfix for configuration JSON file")
 
 options.parseArguments()
 
@@ -96,8 +101,8 @@ if options.fakeCUDANoLock not in [0, 1]:
     raise Exception("fakeCUDANoLock should be 0 or 1, got %d" % options.fakeCUDANoLock)
 if options.serialTaskQueue not in [0, 1]:
     raise Exception("serialTaskQueue should be 0 or 1, got %d" % options.serialTaskQueue)
-if options .gangSize > 0 or options.numberOfGangs > 0:
-    raise Exception("One one of 'gangSize' and 'numberOfGangs' can be enabled, now both are")
+if options.gangSize > 0 and options.numberOfGangs > 0:
+    raise Exception("One  of 'gangSize' and 'numberOfGangs' can be enabled, now both are")
 if options.gangSize > 0 or options.numberOfGangs > 0 or options.serialTaskQueue == 1 or options.limitedTaskQueue > 0:
     options.gpuExternalWork=1
 
@@ -151,18 +156,21 @@ elif options.fakeCUDA == 1 or options.fakeCUDANoLock == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_fakeCUDA.json")
     if options.fakeCUDANoLock == 1:
         process.SimOperationsService.fakeUseLocks = False
+if len(options.configPostfix) > 0:
+    process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_%s.json"%options.configPostfix)
+
 if options.gangSize > 0:
     gangNumber = options.numberOfStreams / options.gangSize
     if options.numberOfStreams % options.gangSize != 0:
         raise Exception("numberOfStreams (%d) is not divisible by gang size (%d)" % (options.numberOfStreams, options.gangSize))
-    process.SimOperationsService.gangSize = options.gangSize,
-    process.SimOperationsService.gangNumber = gangNumber,
+    process.SimOperationsService.gangSize = options.gangSize
+    process.SimOperationsService.gangNumber = gangNumber
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
 elif options.numberOfGangs > 0:
     gangSize = options.numberOfStreams / options.numberOfGangs
     if options.numberOfStreams % options.numberOfGangs != 0:
         raise Exception("numberOfStreams (%d) is not divisible by number of gangs (%d)" % (options.numberOfStreams, options.numberOfGangs))
-    process.SimOperationsService.gangSize = gangSize,
+    process.SimOperationsService.gangSize = gangSize
     process.SimOperationsService.gangNumber = options.numberOfGangs
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
 
