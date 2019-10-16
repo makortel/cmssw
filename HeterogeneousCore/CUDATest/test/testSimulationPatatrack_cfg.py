@@ -182,7 +182,7 @@ elif options.numberOfGangs > 0:
     process.SimOperationsService.gangNumber = options.numberOfGangs
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
 
-print process.SimOperationsService.dumpPython()
+print(process.SimOperationsService.dumpPython())
 
 from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProducerSimCPU as _testCUDAProducerSimCPU
 from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
@@ -197,7 +197,7 @@ testCUDAProducerSim = _testCUDAProducerSim.clone()
 testCUDAProducerSimEW = _testCUDAProducerSimEW.clone()
 if options.gpuExternalWork == 1:
     testCUDAProducerSim = _testCUDAProducerSimEW.clone()
-if options.gangSize > 0:
+if options.gangSize > 0 or options.numberOfGangs > 0:
     testCUDAProducerSim = _testCUDAProducerSimEWGanged.clone()
     testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone()
 elif options.serialTaskQueue == 1:

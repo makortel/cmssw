@@ -217,6 +217,7 @@ def main(opts):
             json.dump(data, out, indent=2)
         if stop:
             print("Reached max wall time of %d s, stopping scan" % opts.stopAfterWallTime)
+            break
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calibrate vector addition loop timing for CUDA simulation")
