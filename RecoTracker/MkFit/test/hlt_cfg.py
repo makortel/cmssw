@@ -8799,8 +8799,40 @@ if options.hltOnDemand == 0:
 
 process.MessageLogger.cerr.FwkReport.limit = 1000000
 
+doTrackingNtuple = True
 if options.timing == 0:
     process.load("RecoTracker.MkFit.hlt_validation_cff")
+    if doTrackingNtuple:
+        from Validation.RecoTrack.customiseTrackingNtuple import customiseTrackingNtuple
+        process.reconstruction_step = cms.Path()
+        process.prevalidation_step = cms.Path()
+        process.validation_step = cms.EndPath()
+        del process.validation
+        del process.DQMOutput
+        del process.dqmOutput
+        process = customiseTrackingNtuple(process)
+
+        process.seedTrackshltIter0PFLowPixelSeedsFromPixelTracks = process.seedTracksinitialStepSeeds.clone(
+            src = "hltIter0PFLowPixelSeedsFromPixelTracks",
+            beamSpot = "hltOnlineBeamSpot",
+            TTRHBuilder = "hltESPTTRHBWithTrackAngle",
+        )
+        process.prevalidation_step.insert(0, (process.hltTracksValidationTruth+process.seedTrackshltIter0PFLowPixelSeedsFromPixelTracks))
+
+        process.trackingNtuple.tracks = "hltIter0PFlowCtfWithMaterialTracks"
+        process.trackingNtuple.seedTracks = ["seedTrackshltIter0PFLowPixelSeedsFromPixelTracks"]
+        process.trackingNtuple.trackCandidates = ["hltIter0PFlowCkfTrackCandidates"]
+        process.trackingNtuple.clusterTPMap = "hltTPClusterProducer"
+        #process.trackingNtuple.simHitTP = ""
+        process.trackingNtuple.trackAssociator = "hltTrackAssociatorByHits"
+        process.trackingNtuple.beamSpot = "hltOnlineBeamSpot"
+        process.trackingNtuple.pixelRecHits = "hltSiPixelRecHits"
+        process.trackingNtuple.stripRphiRecHits = "hltSiStripRecHits:rphiRecHit"
+        process.trackingNtuple.stripStereoRecHits = "hltSiStripRecHits:stereoRecHit"
+        process.trackingNtuple.stripMatchedRecHits = "hltSiStripRecHits:matchedRecHit"
+        process.trackingNtuple.vertices = "hltPixelVertices"
+        process.trackingNtuple.TTRHBuilder = "hltESPTTRHBWithTrackAngle"
+        process.trackingNtuple.parametersDefiner = "hltLhcParametersDefinerForTP"
 
 if options.mkfit != 0:
     import RecoTracker.MkFit.mkFitInputConverter_cfi as mkFitInputConverter_cfi
@@ -8816,6 +8848,8 @@ if options.mkfit != 0:
         StripCPE = "hltESPStripCPEfromTrackAngle:hltESPStripCPEfromTrackAngle",
         doMatching = False,
     )
+    if doTrackingNtuple:
+        process.hltSiStripRecHits.doMatching = True
 
     process.hltIter0PFlowCkfTrackCandidatesMkFitInput = mkFitInputConverter_cfi.mkFitInputConverter.clone(
         pixelRecHits = "hltSiPixelRecHits",
@@ -8827,6 +8861,7 @@ if options.mkfit != 0:
     )
     process.hltIter0PFlowCkfTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
         hitsSeeds = "hltIter0PFlowCkfTrackCandidatesMkFitInput",
+        seedCleaning = "none", # disable for pixel triplet seeds
     )
     process.hltIter0PFlowCkfTrackCandidates = mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
         seeds = "hltIter0PFLowPixelSeedsFromPixelTracks",
@@ -8840,3 +8875,4 @@ if options.mkfit != 0:
     process.HLTDoLocalStripSequence += process.hltSiStripRecHits
     process.HLTIterativeTrackingIteration0.replace(process.hltIter0PFlowCkfTrackCandidates,
                                                    process.hltIter0PFlowCkfTrackCandidatesMkFitInput+process.hltIter0PFlowCkfTrackCandidatesMkFit+process.hltIter0PFlowCkfTrackCandidates)
+

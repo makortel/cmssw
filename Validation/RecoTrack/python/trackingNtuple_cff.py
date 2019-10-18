@@ -1,12 +1,12 @@
 import FWCore.ParameterSet.Config as cms
 
-from RecoLocalTracker.Configuration.RecoLocalTracker_cff import *
+#from RecoLocalTracker.Configuration.RecoLocalTracker_cff import *
 from SimGeneral.TrackingAnalysis.simHitTPAssociation_cfi import *
 from SimTracker.TrackerHitAssociation.tpClusterProducer_cfi import *
 from SimTracker.TrackAssociatorProducers.quickTrackAssociatorByHits_cfi import *
-from RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff import *
-from RecoLocalTracker.SiPixelRecHits.PixelCPEGeneric_cfi import *
-from RecoLocalTracker.Phase2TrackerRecHits.Phase2TrackerRecHits_cfi import *
+#from RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff import *
+#from RecoLocalTracker.SiPixelRecHits.PixelCPEGeneric_cfi import *
+#from RecoLocalTracker.Phase2TrackerRecHits.Phase2TrackerRecHits_cfi import *
 from Geometry.TrackerNumberingBuilder.trackerTopology_cfi import *
 
 from Validation.RecoTrack.trackingNtuple_cfi import *
@@ -20,8 +20,8 @@ _includeHits = True
 _includeSeeds = True
 #_includeSeeds = False
 
-_includeMVA = True
-#_includeMVA = False
+#_includeMVA = True
+_includeMVA = False
 
 _includeTrackingParticles = True
 #_includeTrackingParticles = False
@@ -85,23 +85,23 @@ trackingPhase2PU140.toModify(trackingNtuple, trackCandidates=map(_seedProdToTrac
 
 trackingNtupleTask = cms.Task()
 # reproduce hits because they're not stored in RECO
-if _includeHits:
-    trackingNtupleTask.add(siPixelRecHits, siStripMatchedRecHits)
-    _phase2_trackingNtupleTask = trackingNtupleTask.copy()
-    _phase2_trackingNtupleTask.remove(siStripMatchedRecHits)
-    _phase2_trackingNtupleTask.add(siPhase2RecHits)
-    trackingPhase2PU140.toReplaceWith(trackingNtupleTask, _phase2_trackingNtupleTask)
+#if _includeHits:
+#    trackingNtupleTask.add(siPixelRecHits, siStripMatchedRecHits)
+#    _phase2_trackingNtupleTask = trackingNtupleTask.copy()
+#    _phase2_trackingNtupleTask.remove(siStripMatchedRecHits)
+#    _phase2_trackingNtupleTask.add(siPhase2RecHits)
+#    trackingPhase2PU140.toReplaceWith(trackingNtupleTask, _phase2_trackingNtupleTask)
 
-if _includeSeeds:
-    trackingNtupleTask.add(trackingNtupleSeedSelectors)
-
+#if _includeSeeds:
+#    trackingNtupleTask.add(trackingNtupleSeedSelectors)
+#
 trackingNtupleTask.add(
-    # sim information
+#    # sim information
     trackingParticlesIntime,
     simHitTPAssocProducer,
-    tpClusterProducer,
-    quickTrackAssociatorByHits,
-    trackingParticleNumberOfLayersProducer
+#    tpClusterProducer,
+#    quickTrackAssociatorByHits,
+#    trackingParticleNumberOfLayersProducer
 )
 # ntuplizer
 trackingNtupleSequence = cms.Sequence(trackingNtuple, trackingNtupleTask)
