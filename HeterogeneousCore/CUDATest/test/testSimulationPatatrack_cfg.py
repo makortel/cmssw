@@ -87,6 +87,11 @@ options.register('singleModule',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Merge all modules into a single module (default 0)")
+options.register('blocking',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Replace ExternalWork with blocking wait (default 0)")
 options.parseArguments()
 
 if options.variant not in [1,2,3,4,5]:
@@ -109,6 +114,8 @@ if options.gangSize > 0 and options.numberOfGangs > 0:
     raise Exception("One  of 'gangSize' and 'numberOfGangs' can be enabled, now both are")
 if options.singleModule not in [0, 1]:
     raise Exception("singleModule should be 0 or 1, got %d" % options.singleModule)
+if options.blocking not in [0, 1]:
+    raise Exception("blocking should be 0 or 1, got %d" % options.blocking)
 if options.gangSize > 0 or options.numberOfGangs > 0 or options.serialTaskQueue == 1 or options.limitedTaskQueue > 0:
     options.gpuExternalWork=1
 
@@ -191,12 +198,15 @@ from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAP
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as _testCUDAProducerSimEWSerialTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWLimitedTaskQueue_cfi import testCUDAProducerSimEWLimitedTaskQueue as _testCUDAProducerSimEWLimitedTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSingle_cfi import testCUDAProducerSimEWSingle as _testCUDAProducerSimEWSingle
+from HeterogeneousCore.CUDATest.testCUDAProducerSimBlocking_cfi import testCUDAProducerSimBlocking as _testCUDAProducerSimBlocking
 
 testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone()
 testCUDAProducerSim = _testCUDAProducerSim.clone()
 testCUDAProducerSimEW = _testCUDAProducerSimEW.clone()
 if options.gpuExternalWork == 1:
     testCUDAProducerSim = _testCUDAProducerSimEW.clone()
+if options.blocking == 1:
+    testCUDAProducerSimEW = _testCUDAProducerSimBlocking
 if options.gangSize > 0 or options.numberOfGangs > 0:
     testCUDAProducerSim = _testCUDAProducerSimEWGanged.clone()
     testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone()
