@@ -8833,6 +8833,20 @@ if options.timing == 0:
         process.trackingNtuple.vertices = "hltPixelVertices"
         process.trackingNtuple.TTRHBuilder = "hltESPTTRHBWithTrackAngle"
         process.trackingNtuple.parametersDefiner = "hltLhcParametersDefinerForTP"
+        process.trackingNtuple.saveSimHitsP3 = True
+        process.trackingNtuple.addSeedCartesianCov = True
+
+        if options.mkfit == 0:
+            import RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi as SiStripRecHitConverter_cfi
+            process.hltSiStripRecHits = SiStripRecHitConverter_cfi.siStripMatchedRecHits.clone(
+                ClusterProducer = "hltSiStripRawToClustersFacility",
+                StripCPE = "hltESPStripCPEfromTrackAngle:hltESPStripCPEfromTrackAngle",
+                doMatching = False,
+            )
+            if doTrackingNtuple:
+                process.hltSiStripRecHits.doMatching = True
+            process.prevalidation_step.insert(0, process.hltSiStripRecHits)
+        process.schedule = cms.Schedule(process.HLTriggerFirstPath, process.MC_ReducedIterativeTracking_v12, process.prevalidation_step, process.HLTriggerFinalPath )
 
 if options.mkfit != 0:
     import RecoTracker.MkFit.mkFitInputConverter_cfi as mkFitInputConverter_cfi
@@ -8876,3 +8890,7 @@ if options.mkfit != 0:
     process.HLTIterativeTrackingIteration0.replace(process.hltIter0PFlowCkfTrackCandidates,
                                                    process.hltIter0PFlowCkfTrackCandidatesMkFitInput+process.hltIter0PFlowCkfTrackCandidatesMkFit+process.hltIter0PFlowCkfTrackCandidates)
 
+#process.Tracer = cms.Service("Tracer")
+#print process.schedule_()
+#print process.Schedule
+#print process.dumpPython()
