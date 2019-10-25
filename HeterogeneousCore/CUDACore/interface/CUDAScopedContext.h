@@ -27,7 +27,6 @@ namespace impl {
     // mutable access is needed even if the CUDAScopedContext itself
     // would be const. Therefore it is ok to return a non-const
     // pointer from a const method here.
-    cudaStream_t stream() { return stream_->id(); }
     cudaStream_t stream() const { return stream_->id(); }
     const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
 
