@@ -15,7 +15,7 @@ int main() {
   cudaStream_t stream;
   cudaCheck(cudaStreamCreate(&stream));
 
-  // innert scope to deallocate memory before destroyn the stream
+  // inner scope to deallocate memory before destroying the stream
   {
     auto nHits = 200;
     TrackingRecHit2DCUDA tkhit(nHits, nullptr, nullptr, stream);
