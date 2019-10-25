@@ -107,13 +107,22 @@ def main(opts):
     if opts.collapse:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionCollapse))
 
-    if len(transformModules) == 0:
+    if len(transformModules) == 0 and opts.merge is None:
         raise Exception("No transform operation were given")
 
     data = None
     with open(opts.file) as f:
         data = json.load(f)
-    
+
+    if opts.merge is not None:
+        with open(opts.merge) as f:
+            data2 = json.load(f)
+        data["moduleDeclarations"].extend(data2["moduleDeclarations"])
+        for label, module in data2["moduleDefinitions"].items():
+            if label in data["moduleDefinitions"]:
+                raise Exception("Module %s already found from input file, unable to merge" % label)
+            data["moduleDefinitions"][label] = module
+
     for label, module in data["moduleDefinitions"].items():
         for func in transformModules:
             func(label, module)
@@ -127,6 +136,8 @@ if __name__ == "__main__":
                         help="Input JSON file")
     parser.add_argument("-o", "--output", type=str,
                         help="Output file")
+    parser.add_argument("--merge", type=str, default=None,
+                        help="Merge this file with the input file to output")
     parser.add_argument("--mean", action="store_true",
                         help="Replace each operation event-by-event values with the mean")
     parser.add_argument("--externalWork", action="store_true",

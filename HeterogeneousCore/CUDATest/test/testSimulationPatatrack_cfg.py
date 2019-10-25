@@ -94,7 +94,7 @@ options.register('blocking',
                  "Replace ExternalWork with blocking wait (default 0)")
 options.parseArguments()
 
-if options.variant not in [1,2,3,4,5]:
+if options.variant not in [1,2,3,4,5,6,7]:
     raise Exception("Incorrect variant value %d, can be 1,2,3,4,5" % options.variant)
 if options.gpuExternalWork not in [0, 1]:
     raise Exception("gpuExternalWork should be 0 or 1, got %d" % options.gpuExternalWork)
@@ -156,6 +156,8 @@ elif options.variant == 4:
     process.SimOperationsService.config = "config_cpu.json"
 elif options.variant == 5:
     process.SimOperationsService.config = "config_cpu_convert.json"
+elif options.variant in [6,7]:
+    process.SimOperationsService.config = "config_transfer_convert_mock.json"
 
 if options.gpuExternalWork == 1:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_externalWork.json")
@@ -220,7 +222,7 @@ elif options.limitedTaskQueue > 0:
 # Module declarations
 if options.singleModule:
     process.theModule = _testCUDAProducerSimEWSingle.clone()
-if options.variant in [1,2,3]:
+if options.variant in [1,2,3,6,7]:
     process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)
     process.offlineBeamSpotCUDA = testCUDAProducerSim.clone(
         srcs = ["offlineBeamSpot"],
@@ -260,7 +262,7 @@ if options.variant in [1,2,3]:
         ])
         process.p = cms.Path(process.theModule)
 
-    if options.variant in [2,3]:
+    if options.variant in [2,3,6,7]:
         process.pixelTrackSoA = testCUDAProducerSimEW.clone(
             cudaSrcs = ["caHitNtupletCUDA"],
             produce=True
@@ -277,7 +279,7 @@ if options.variant in [1,2,3]:
             ])
             process.p = cms.Path(process.theModule)
 
-        if options.variant == 3:
+        if options.variant in [3,6,7]:
             process.siPixelDigisSoA = testCUDAProducerSimEW.clone(
                 cudaSrcs = ["siPixelClustersCUDAPreSplitting"],
                 produce=True
@@ -333,6 +335,17 @@ if options.variant in [1,2,3]:
                 ])
                 process.p = cms.Path(process.theModule)
                 del process.outPath
+
+            if options.variant in [6,7]:
+                process.mockIndependent = testCUDAProducerSimCPU.clone(
+                    produce = True
+                )
+                process.t.add(process.mockIndependent)
+                process.out.outputCommands.append("keep *_mockIndependent_*_*")
+                if options.singleModule:
+                    process.theModule.modules.append("mockIndependent")
+                if options.variant == 7:
+                    process.mockIndependent.srcs = ["pixelTracks", "pixelVertices"]
 
 elif options.variant in [4,5]:
     process.offlineBeamSpot = testCUDAProducerSimCPU.clone(produce=True)

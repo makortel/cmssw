@@ -29,6 +29,8 @@ nblocks_per_stream = {
     3: 7,
     4: 4,
     5: 2,
+    6: 5,
+    7: 5,
 }
 
 times = 1
@@ -265,7 +267,7 @@ if __name__ == "__main__":
         opts.numThreads = [int(x) for x in opts.numThreads.split(",")]
     if opts.numStreams != "":
         opts.numStreams = [int(x) for x in opts.numStreams.split(",")]
-    if opts.variant not in [1,2,3,4,5]:
+    if opts.variant not in [1,2,3,4,5,6,7]:
         parser.error("Invalid variant %d" % opts.variant)
     opts.args.append("variant=%d"%opts.variant)
 
