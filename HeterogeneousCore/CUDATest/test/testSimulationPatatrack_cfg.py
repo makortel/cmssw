@@ -154,6 +154,7 @@ process.load("HeterogeneousCore.CUDATest.SimOperationsService_cfi")
 process.SimOperationsService.config = "config.json"
 process.SimOperationsService.cpuCalibration = "HeterogeneousCore/CUDATest/test/cpuCalibration.json"
 process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json"
+process.SimOperationsService.maxEvents = maxEvents
 
 if options.variant == 2:
     process.SimOperationsService.config = "config_transfer.json"

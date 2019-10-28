@@ -128,6 +128,7 @@ public:
 
   unsigned int gangSize() const { return gangSize_; }
   unsigned int numberOfGangs() const { return gangNum_; }
+  int maxEvents() { return maxEvents_; }
 
   AcquireCPUProcessor acquireCPUProcessor(const std::string& moduleLabel) const;
   AcquireGPUProcessor acquireGPUProcessor(const std::string& moduleLabel) const;
@@ -142,6 +143,7 @@ private:
 
   const unsigned int gangSize_;
   const unsigned int gangNum_;
+  const int maxEvents_;
 
   std::unique_ptr<cudatest::TimeCruncher> cpuCruncher_;
   std::unique_ptr<cudatest::GPUTimeCruncher> gpuCruncher_;

@@ -236,7 +236,8 @@ namespace {
 
 SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry):
   gangSize_{iConfig.getParameter<unsigned int>("gangSize")},
-  gangNum_{iConfig.getParameter<unsigned int>("gangNumber")}
+  gangNum_{iConfig.getParameter<unsigned int>("gangNumber")},
+  maxEvents_{iConfig.getParameter<int>("maxEvents")}
 {
   if(gangSize_ == 0) {
     throw cms::Exception("Configuration") << "gangSize must be larger than 0";
@@ -358,6 +359,7 @@ void SimOperationsService::fillDescriptions(edm::ConfigurationDescriptions& desc
   desc.add<unsigned int>("gangNumber", 1);
   desc.add<double>("gangKernelFactor", 1.0);
   desc.add<bool>("fakeUseLocks", true);
+  desc.add<int>("maxEvents", -1);
 
   desc.add<edm::FileInPath>("config", edm::FileInPath())->setComment("Path to a JSON configuration file of the simulation");
   desc.add<edm::FileInPath>("cpuCalibration", edm::FileInPath())->setComment("Path to a JSON file for the CPU calibration");
