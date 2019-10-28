@@ -92,6 +92,11 @@ options.register('blocking',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Replace ExternalWork with blocking wait (default 0)")
+options.register('stallMonitor',
+                 "",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "StallMonitor log file (default \"\" to disable)")
 options.parseArguments()
 
 if options.variant not in [1,2,3,4,5,6,7]:
@@ -123,6 +128,8 @@ process = cms.Process("Test")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
+if options.stallMonitor != "":
+    process.add_(cms.Service("StallMonitor", fileName = cms.untracked.string(options.stallMonitor)))
 
 process.source = cms.Source("EmptySource")
 
@@ -180,6 +187,8 @@ if options.gangSize > 0:
     gangNumber = options.numberOfStreams / options.gangSize
     if options.numberOfStreams % options.gangSize != 0:
         raise Exception("numberOfStreams (%d) is not divisible by gang size (%d)" % (options.numberOfStreams, options.gangSize))
+    if options.maxEvents % options.gangSize != 0:
+        raise Exception("maxEvents (%d) is not divisible by gang size (%d)" % (options.maxEvents, options.gangSize))
     process.SimOperationsService.gangSize = options.gangSize
     process.SimOperationsService.gangNumber = gangNumber
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
@@ -187,6 +196,8 @@ elif options.numberOfGangs > 0:
     gangSize = options.numberOfStreams / options.numberOfGangs
     if options.numberOfStreams % options.numberOfGangs != 0:
         raise Exception("numberOfStreams (%d) is not divisible by number of gangs (%d)" % (options.numberOfStreams, options.numberOfGangs))
+    if options.maxEvents % gangSize != 0:
+        raise Exception("maxEvents (%d) is not divisible by gang size (%d)" % (options.maxEvents, gangSize))
     process.SimOperationsService.gangSize = gangSize
     process.SimOperationsService.gangNumber = options.numberOfGangs
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
