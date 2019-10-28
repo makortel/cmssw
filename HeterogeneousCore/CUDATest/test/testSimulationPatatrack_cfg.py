@@ -67,6 +67,11 @@ options.register('gangKernelFactor',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.float,
                  "Kernel time factor. Should be between 0 and 1.")
+options.register('gangStrategy',
+                 "",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "Ganging strategy. Default (empty) means to deduce gangSize from numberOfGangs (or vice versa) and numberOfStreams")
 options.register('serialTaskQueue',
                  0,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -113,6 +118,11 @@ if options.fakeCUDA not in [0, 1]:
     raise Exception("fakeCUDA should be 0 or 1, got %d" % options.fakeCUDA)
 if options.fakeCUDANoLock not in [0, 1]:
     raise Exception("fakeCUDANoLock should be 0 or 1, got %d" % options.fakeCUDANoLock)
+if options.gangStrategy == "limitedTaskQueue":
+    if options.limitedTaskQueue < 1:
+        raise Exception("Gang strategy 'limitedTaskQueue' requires the option limitedTaskQueue with value >= 1")
+elif options.gangStrategy != "":
+    raise Exception("Invalid gang strategy '%s'" % options.gangStrategy)
 if options.serialTaskQueue not in [0, 1]:
     raise Exception("serialTaskQueue should be 0 or 1, got %d" % options.serialTaskQueue)
 if options.gangSize > 0 and options.numberOfGangs > 0:
@@ -154,7 +164,7 @@ process.load("HeterogeneousCore.CUDATest.SimOperationsService_cfi")
 process.SimOperationsService.config = "config.json"
 process.SimOperationsService.cpuCalibration = "HeterogeneousCore/CUDATest/test/cpuCalibration.json"
 process.SimOperationsService.cudaCalibration = "HeterogeneousCore/CUDATest/test/cudaCalibration.json"
-process.SimOperationsService.maxEvents = maxEvents
+process.SimOperationsService.maxEvents = options.maxEvents
 
 if options.variant == 2:
     process.SimOperationsService.config = "config_transfer.json"
@@ -184,23 +194,30 @@ elif options.fakeCUDA == 1 or options.fakeCUDANoLock == 1:
 if len(options.configPostfix) > 0:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_%s.json"%options.configPostfix)
 
-if options.gangSize > 0:
-    gangNumber = options.numberOfStreams / options.gangSize
-    if options.numberOfStreams % options.gangSize != 0:
-        raise Exception("numberOfStreams (%d) is not divisible by gang size (%d)" % (options.numberOfStreams, options.gangSize))
-    if options.maxEvents % options.gangSize != 0:
-        raise Exception("maxEvents (%d) is not divisible by gang size (%d)" % (options.maxEvents, options.gangSize))
-    process.SimOperationsService.gangSize = options.gangSize
-    process.SimOperationsService.gangNumber = gangNumber
-    process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
-elif options.numberOfGangs > 0:
-    gangSize = options.numberOfStreams / options.numberOfGangs
-    if options.numberOfStreams % options.numberOfGangs != 0:
-        raise Exception("numberOfStreams (%d) is not divisible by number of gangs (%d)" % (options.numberOfStreams, options.numberOfGangs))
-    if options.maxEvents % gangSize != 0:
-        raise Exception("maxEvents (%d) is not divisible by gang size (%d)" % (options.maxEvents, gangSize))
-    process.SimOperationsService.gangSize = gangSize
-    process.SimOperationsService.gangNumber = options.numberOfGangs
+if options.gangStrategy == "":
+    if options.gangSize > 0:
+        gangNumber = options.numberOfStreams / options.gangSize
+        if options.numberOfStreams % options.gangSize != 0:
+            raise Exception("numberOfStreams (%d) is not divisible by gang size (%d)" % (options.numberOfStreams, options.gangSize))
+        if options.maxEvents % options.gangSize != 0:
+            raise Exception("maxEvents (%d) is not divisible by gang size (%d)" % (options.maxEvents, options.gangSize))
+        process.SimOperationsService.gangSize = options.gangSize
+        process.SimOperationsService.gangNumber = gangNumber
+        process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
+    elif options.numberOfGangs > 0:
+        gangSize = options.numberOfStreams / options.numberOfGangs
+        if options.numberOfStreams % options.numberOfGangs != 0:
+            raise Exception("numberOfStreams (%d) is not divisible by number of gangs (%d)" % (options.numberOfStreams, options.numberOfGangs))
+        if options.maxEvents % gangSize != 0:
+            raise Exception("maxEvents (%d) is not divisible by gang size (%d)" % (options.maxEvents, gangSize))
+        process.SimOperationsService.gangSize = gangSize
+        process.SimOperationsService.gangNumber = options.numberOfGangs
+        process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
+elif options.gangStrategy == "limitedTaskQueue":
+    # Maximum size of a gang
+    process.SimOperationsService.gangSize = options.numberOfStreams
+    # Maximum number of gangs
+    process.SimOperationsService.gangNumber = options.numberOfStreams
     process.SimOperationsService.gangKernelFactor = options.gangKernelFactor
 
 print(process.SimOperationsService.dumpPython())
@@ -209,6 +226,7 @@ from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProduc
 from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged as _testCUDAProducerSimEWGanged
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGangedLimitedTaskQueue_cfi import testCUDAProducerSimEWGangedLimitedTaskQueue as _testCUDAProducerSimEWGangedLimitedTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as _testCUDAProducerSimEWSerialTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWLimitedTaskQueue_cfi import testCUDAProducerSimEWLimitedTaskQueue as _testCUDAProducerSimEWLimitedTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSingle_cfi import testCUDAProducerSimEWSingle as _testCUDAProducerSimEWSingle
@@ -221,9 +239,13 @@ if options.gpuExternalWork == 1:
     testCUDAProducerSim = _testCUDAProducerSimEW.clone()
 if options.blocking == 1:
     testCUDAProducerSimEW = _testCUDAProducerSimBlocking
-if options.gangSize > 0 or options.numberOfGangs > 0:
-    testCUDAProducerSim = _testCUDAProducerSimEWGanged.clone()
-    testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone()
+elif options.gangSize > 0 or options.numberOfGangs > 0 or options.gangStrategy != "":
+    if options.gangStrategy == "limitedTaskQueue":
+        testCUDAProducerSim = _testCUDAProducerSimEWGangedLimitedTaskQueue.clone(limit=options.limitedTaskQueue)
+        testCUDAProducerSimEW = _testCUDAProducerSimEWGangedLimitedTaskQueue.clone(limit=options.limitedTaskQueue)
+    else:
+        testCUDAProducerSim = _testCUDAProducerSimEWGanged.clone()
+        testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone()
 elif options.serialTaskQueue == 1:
     testCUDAProducerSim = _testCUDAProducerSimEWSerialTaskQueue.clone()
     testCUDAProducerSimEW = _testCUDAProducerSimEWSerialTaskQueue.clone()
@@ -433,5 +455,6 @@ elif options.variant in [4,5]:
 
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1
 #process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
+#process.Tracer = cms.Service("Tracer")
 
 #print process.dumpPython()
