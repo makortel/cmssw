@@ -12,9 +12,12 @@
 
 #include "SimOperationsService.h"
 
+#include <fstream>
+
 namespace {
   std::once_flag taskQueueFlag;
   std::unique_ptr<edm::LimitedTaskQueue> taskQueue;
+  std::mutex histoMutex;
 
   unsigned int pow2(unsigned int exp) {
     return 1<<exp;
@@ -35,7 +38,10 @@ namespace {
 
   class Ganger {
   public:
-    Ganger(const edm::ParameterSet& iConfig) {
+    Ganger(const edm::ParameterSet& iConfig):
+      histoOutput_{iConfig.getParameter<std::string>("histoOutput")},
+      modLabel_{iConfig.getParameter<std::string>("@module_label")}
+    {
       edm::Service<SimOperationsService> sos;
       maxGangSize_ = sos->gangSize();
       maxEvents_ = sos->maxEvents();
@@ -56,6 +62,10 @@ namespace {
           events_ = tmp->events();
           acquireOpsGPU_[bits].add(std::move(tmp));
         }
+      }
+      histoGangSize_.resize(maxGangSize_);
+      for(auto& bin: histoGangSize_) {
+        bin = std::make_unique<std::atomic<unsigned long long> >();
       }
 
       reserve();
@@ -110,6 +120,7 @@ namespace {
                                      return;
                                    }
                                    try {
+                                     ++(*(histoGangSize_[indicesToLaunch.size()-1]));
                                      const auto ind = bit_length(indicesToLaunch.size()-1);
                                      LogTrace("foo") << "Gang size " << indicesToLaunch.size() << " getting work from index " << ind;
                                      auto opsPtr = acquireOpsGPU_.at(ind).tryToGet();
@@ -152,6 +163,20 @@ namespace {
       }
     }
 
+    void saveHisto() const {
+      if(histoOutput_.empty()) {
+        return;
+      }
+
+      std::lock_guard<std::mutex> guard{histoMutex};
+      std::ofstream out{histoOutput_.c_str(), std::ios_base::out | std::ios_base::app};
+      out << modLabel_;
+      for(const auto& bin: histoGangSize_) {
+        out << " " << *bin;
+      }
+      out << std::endl;
+    }
+
   private:
     void reserve() const {
       workIndices_.reserve(maxGangSize_);
@@ -172,6 +197,11 @@ namespace {
     size_t events_ = 0;
     int maxEvents_ = 0;
     unsigned int maxGangSize_ = 0;
+
+    // gather information
+    mutable std::vector<std::unique_ptr<std::atomic<unsigned long long> > > histoGangSize_;
+    const std::string histoOutput_;
+    const std::string modLabel_;
   };
 }
 
@@ -188,7 +218,9 @@ public:
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
-  static void globalEndJob(const Ganger* ganger) {}
+  static void globalEndJob(const Ganger* ganger) {
+    ganger->saveHisto();
+  }
 private:
   
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
@@ -249,6 +281,7 @@ void TestCUDAProducerSimEWGangedLimitedTaskQueue::fillDescriptions(edm::Configur
   desc.add<bool>("produce", false);
   desc.add<bool>("produceCUDA", false);
   desc.add<unsigned int>("limit", 1);
+  desc.add<std::string>("histoOutput", "")->setComment("If empty, output disabled");
 
   //desc.add<bool>("useCachingAllocator", true);
   descriptions.addWithDefaultLabel(desc);

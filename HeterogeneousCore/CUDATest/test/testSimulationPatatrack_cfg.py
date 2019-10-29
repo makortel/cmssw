@@ -102,6 +102,11 @@ options.register('stallMonitor',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.string,
                  "StallMonitor log file (default \"\" to disable)")
+options.register('histoFileName',
+                 "",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "Path to file to store histogram data (default \"\" to disable)")
 options.parseArguments()
 
 if options.variant not in [1,2,3,4,5,6,7]:
@@ -241,8 +246,14 @@ if options.blocking == 1:
     testCUDAProducerSimEW = _testCUDAProducerSimBlocking
 elif options.gangSize > 0 or options.numberOfGangs > 0 or options.gangStrategy != "":
     if options.gangStrategy == "limitedTaskQueue":
-        testCUDAProducerSim = _testCUDAProducerSimEWGangedLimitedTaskQueue.clone(limit=options.limitedTaskQueue)
-        testCUDAProducerSimEW = _testCUDAProducerSimEWGangedLimitedTaskQueue.clone(limit=options.limitedTaskQueue)
+        testCUDAProducerSim = _testCUDAProducerSimEWGangedLimitedTaskQueue.clone(
+            limit=options.limitedTaskQueue,
+            histoOutput=options.histoFileName,
+        )
+        testCUDAProducerSimEW = _testCUDAProducerSimEWGangedLimitedTaskQueue.clone(
+            limit=options.limitedTaskQueue,
+            histoOutput=options.histoFileName,
+        )
     else:
         testCUDAProducerSim = _testCUDAProducerSimEWGanged.clone()
         testCUDAProducerSimEW = _testCUDAProducerSimEWGanged.clone()
@@ -456,5 +467,6 @@ elif options.variant in [4,5]:
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1
 #process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
 #process.Tracer = cms.Service("Tracer")
+#process.options.wantSummary = False
 
 #print process.dumpPython()

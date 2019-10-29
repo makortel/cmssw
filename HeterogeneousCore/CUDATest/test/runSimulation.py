@@ -77,6 +77,8 @@ def run(nev, nstr, cores_main, opts, logfilename):
         taskset = []
         nvprof = []
         cmsRun = ["cmsRun", opts.config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth] + opts.args
+        if opts.histoFileName is not None:
+            cmsRun.append("histoFileName="+opts.histoFileName.replace(".", "_nstr%d_nth%d."%(nstr, nth)))
         if opts.taskset:
             taskset = ["taskset", "-c", ",".join(cores_main)]
         if opts.nvprof:
@@ -254,7 +256,9 @@ if __name__ == "__main__":
     parser.add_argument("--stopIncreasingEventBlocksAfterWallTime", type=int, default=-1,
                         help="Stop increasing number of event blocks after the wall time of the job reaches this many seconds (default: -1 for no limit)")
     parser.add_argument("--stopAfterWallTime", type=int, default=-1,
-                         help="Stop running after the wall time of the job reaches this many in seconds (default: -1 for no limit)")
+                        help="Stop running after the wall time of the job reaches this many in seconds (default: -1 for no limit)")
+    parser.add_argument("--histoFileName", type=str, default=None,
+                        help="Pass the string to histoFileName argument with numbers of streams and threads appended")
 
     parser.add_argument("args", nargs=argparse.REMAINDER)
 
