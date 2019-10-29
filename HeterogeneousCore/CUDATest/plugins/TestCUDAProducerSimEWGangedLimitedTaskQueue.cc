@@ -16,6 +16,23 @@ namespace {
   std::once_flag taskQueueFlag;
   std::unique_ptr<edm::LimitedTaskQueue> taskQueue;
 
+  unsigned int pow2(unsigned int exp) {
+    return 1<<exp;
+  }
+
+  unsigned int ilog2(unsigned int val) {
+    unsigned int ret = 0;
+    while(val >>= 1) ++ret;
+    return ret;
+  }
+
+  unsigned int bit_length(unsigned int val) {
+    if(val == 0) {
+      return 0;
+    }
+    return ilog2(val)+1;
+  }
+
   class Ganger {
   public:
     Ganger(const edm::ParameterSet& iConfig) {
@@ -25,13 +42,20 @@ namespace {
       if(maxEvents_ < 1) {
         throw cms::Exception("Configuration") << "This module needs SimOperationsService.maxEvents to be set, now it was " << maxEvents_;
       }
-      const auto gangNum = sos->numberOfGangs();
+      const auto maxGangNum = sos->numberOfGangs();
 
       const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
-      for(unsigned int i=0; i<gangNum; ++i) {
-        auto tmp = std::make_unique<SimOperationsService::AcquireGPUProcessor>(sos->acquireGPUProcessor(moduleLabel));
-        events_ = tmp->events();
-        acquireOpsGPU_.add(std::move(tmp));
+      acquireOpsGPU_.resize(maxGangNum);
+
+      for(unsigned int bits=0, end=bit_length(maxGangSize_)+1; bits<end; ++bits) {
+        const unsigned int gangSize = pow2(bits);
+        const unsigned int gangNum = bits > 0 ? maxGangNum/(pow2(bits-1)+1) :  maxGangNum;
+        LogTrace("foo") << "Index " << bits << " gang size " << gangSize << " max number of gangs " << gangNum;
+        for(unsigned int i=0; i<gangNum; ++i) {
+          auto tmp = std::make_unique<SimOperationsService::AcquireGPUProcessor>(sos->acquireGPUProcessor(moduleLabel, gangSize));
+          events_ = tmp->events();
+          acquireOpsGPU_[bits].add(std::move(tmp));
+        }
       }
 
       reserve();
@@ -86,9 +110,11 @@ namespace {
                                      return;
                                    }
                                    try {
-                                     auto opsPtr = acquireOpsGPU_.tryToGet();
+                                     const auto ind = bit_length(indicesToLaunch.size()-1);
+                                     LogTrace("foo") << "Gang size " << indicesToLaunch.size() << " getting work from index " << ind;
+                                     auto opsPtr = acquireOpsGPU_.at(ind).tryToGet();
                                      if(not opsPtr) {
-                                       throw cms::Exception("LogicError") << "Tried to get acquire operations in Ganger::enqueue, but got none. Has gangNum been set to numberOfStreams?";
+                                       throw cms::Exception("LogicError") << "Tried to get acquire operations in Ganger::enqueue, but got none. Likely there is an internal logic error";
                                      }
 
                                      CUDAScopedContextTask ctx{ctxState,
@@ -139,8 +165,8 @@ namespace {
     mutable std::vector<edm::WaitingTaskWithArenaHolder> workHolders_;
     mutable std::vector<std::vector<const CUDAProduct<int>*>> workInputs_;
 
-    // one for each gang (i.e. N(streams) / gangSize)
-    mutable edm::ReusableObjectHolder<SimOperationsService::AcquireGPUProcessor> acquireOpsGPU_;
+    // vector has one entry per possible gang size, ReusableObjectHolder entries for the possible number of members of that gang size
+    mutable std::vector<edm::ReusableObjectHolder<SimOperationsService::AcquireGPUProcessor>> acquireOpsGPU_;
 
     mutable int processedEvents_ = 0; // protected by the mutex
     size_t events_ = 0;

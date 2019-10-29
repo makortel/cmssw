@@ -193,7 +193,7 @@ namespace {
       const auto bytes = totalBytes(indices);
 
       auto data_d = cudautils::make_device_unique<char[]>(bytes, stream);
-      LogTrace("foo") << "MemcpyToDevice " << i << " from 0x" << static_cast<const void*>(state.data_h_src[i]) << " to " << static_cast<const void*>(data_d.get()) << " " << bytes << " bytes";
+      LogTrace("foo") << "MemcpyToDevice " << i << " from " << static_cast<const void*>(state.data_h_src[i]) << " to " << static_cast<const void*>(data_d.get()) << " " << bytes << " bytes";
       cuda::memory::async::copy(data_d.get(), state.data_h_src[i], bytes, stream.id());
       state.data_d_dst.emplace_back(std::move(data_d));
     }
@@ -211,7 +211,7 @@ namespace {
       const auto bytes = totalBytes(indices);
 
       auto data_h = cudautils::make_host_unique<char[]>(bytes, stream);
-      LogTrace("foo") << "MemcpyToHost " << i << " from 0x" << static_cast<const void*>(state.data_d_src[i]) << " to " << static_cast<const void*>(data_h.get()) << " " << bytes << " bytes";
+      LogTrace("foo") << "MemcpyToHost " << i << " from " << static_cast<const void*>(state.data_d_src[i]) << " to " << static_cast<const void*>(data_h.get()) << " " << bytes << " bytes";
       cuda::memory::async::copy(data_h.get(), state.data_d_src[i], bytes, stream.id());
       state.data_h_dst.emplace_back(std::move(data_h));
     }
@@ -478,9 +478,12 @@ SimOperationsService::AcquireCPUProcessor SimOperationsService::acquireCPUProces
   return AcquireCPUProcessor(std::get<0>(ie), this, std::get<1>(ie));
 }
 SimOperationsService::AcquireGPUProcessor SimOperationsService::acquireGPUProcessor(const std::string& moduleLabel) const {
+  return acquireGPUProcessor(moduleLabel, gangSize_);
+}
+SimOperationsService::AcquireGPUProcessor SimOperationsService::acquireGPUProcessor(const std::string& moduleLabel, int gangSize) const {
   const auto ie = indexEvents(acquireOpsGPU_, moduleLabel);
   if(std::get<0>(ie) >= 0) {
-    return AcquireGPUProcessor(std::get<0>(ie), this, GPUData(acquireOpsGPU_.at(std::get<0>(ie)).second, gangSize_), std::get<1>(ie));
+    return AcquireGPUProcessor(std::get<0>(ie), this, GPUData(acquireOpsGPU_.at(std::get<0>(ie)).second, gangSize), std::get<1>(ie));
   }
   return AcquireGPUProcessor();
 }

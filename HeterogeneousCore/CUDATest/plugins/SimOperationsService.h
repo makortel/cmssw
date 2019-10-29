@@ -132,6 +132,7 @@ public:
 
   AcquireCPUProcessor acquireCPUProcessor(const std::string& moduleLabel) const;
   AcquireGPUProcessor acquireGPUProcessor(const std::string& moduleLabel) const;
+  AcquireGPUProcessor acquireGPUProcessor(const std::string& moduleLabel, int gangSize) const; // override the gang size, if you know what you're doing
   ProduceCPUProcessor produceCPUProcessor(const std::string& moduleLabel) const;
   ProduceGPUProcessor produceGPUProcessor(const std::string& moduleLabel) const;
 
