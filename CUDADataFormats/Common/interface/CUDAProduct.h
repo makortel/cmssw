@@ -12,7 +12,7 @@ namespace edm {
   class Wrapper;
 }
 namespace impl {
-  class CUDAScopedContextGetterBase;
+  class CUDAScopedContextBase;
 }
 
 /**
@@ -40,7 +40,7 @@ public:
   CUDAProduct& operator=(CUDAProduct&&) = default;
 
 private:
-  friend class impl::CUDAScopedContextGetterBase;
+  friend class impl::CUDAScopedContextBase;
   friend class CUDAScopedContextProduce;
   friend class edm::Wrapper<CUDAProduct<T>>;
 

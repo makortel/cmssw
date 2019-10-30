@@ -27,6 +27,12 @@ namespace impl {
     const cuda::stream_t<>& stream() const { return *stream_; }
     const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
 
+    template <typename T>
+    const T& get(const CUDAProduct<T>& data) {
+      synchronizeStreams(data.device(), data.stream(), data.isAvailable(), data.event());
+      return data.data_;
+    }
+
   protected:
     explicit CUDAScopedContextBase(edm::StreamID streamID);
 
@@ -37,6 +43,11 @@ namespace impl {
     std::shared_ptr<cuda::stream_t<>>& streamPtr() { return stream_; }
 
   private:
+    void synchronizeStreams(int dataDevice,
+                            const cuda::stream_t<>& dataStream,
+                            bool available,
+                            const cuda::event_t* dataEvent);
+
     int currentDevice_;
     cuda::device::current::scoped_override_t<> setDeviceForThisScope_;
     std::shared_ptr<cuda::stream_t<>> stream_;
@@ -44,11 +55,7 @@ namespace impl {
 
   class CUDAScopedContextGetterBase : public CUDAScopedContextBase {
   public:
-    template <typename T>
-    const T& get(const CUDAProduct<T>& data) {
-      synchronizeStreams(data.device(), data.stream(), data.isAvailable(), data.event());
-      return data.data_;
-    }
+    using CUDAScopedContextBase::get;
 
     template <typename T>
     const T& get(const edm::Event& iEvent, edm::EDGetTokenT<CUDAProduct<T>> token) {
@@ -58,11 +65,6 @@ namespace impl {
   protected:
     template <typename... Args>
     CUDAScopedContextGetterBase(Args&&... args) : CUDAScopedContextBase(std::forward<Args>(args)...) {}
-
-    void synchronizeStreams(int dataDevice,
-                            const cuda::stream_t<>& dataStream,
-                            bool available,
-                            const cuda::event_t* dataEvent);
   };
 
   class CUDAScopedContextHolderHelper {

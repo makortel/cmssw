@@ -92,11 +92,6 @@ namespace {
       }
 
       if(queueTask) {
-        // need to synchronize the input data only wrt. the CUDA stream the work will be executed in
-        for(auto* input: inputData) {
-          ctx.get(*input);
-        }
-
         auto queueTaskHolder = edm::WaitingTaskWithArenaHolder{
           edm::make_waiting_task(tbb::task::allocate_root(),
                                  [this, ctxState](std::exception_ptr const* excptr) mutable {
@@ -143,6 +138,13 @@ namespace {
                                                                   }
                                                                 })}};
               
+                                     // need to synchronize the input data only wrt. the CUDA stream the work will be executed in
+                                     for(auto& inputsForEvent: inputsToLaunch) {
+                                       for(auto* input: inputsForEvent) {
+                                         ctx.get(*input);
+                                       }
+                                     }
+
                                      LogTrace("Foo").log([&](auto& l) {
                                          l << "Launching work for indices ";
                                          for(auto i: indicesToLaunch) {

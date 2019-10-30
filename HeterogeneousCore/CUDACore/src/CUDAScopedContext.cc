@@ -28,10 +28,10 @@ namespace impl {
 
   ////////////////////
 
-  void CUDAScopedContextGetterBase::synchronizeStreams(int dataDevice,
-                                                       const cuda::stream_t<>& dataStream,
-                                                       bool available,
-                                                       const cuda::event_t* dataEvent) {
+  void CUDAScopedContextBase::synchronizeStreams(int dataDevice,
+                                                 const cuda::stream_t<>& dataStream,
+                                                 bool available,
+                                                 const cuda::event_t* dataEvent) {
     if (dataDevice != device()) {
       // Eventually replace with prefetch to current device (assuming unified memory works)
       // If we won't go to unified memory, need to figure out something else...
