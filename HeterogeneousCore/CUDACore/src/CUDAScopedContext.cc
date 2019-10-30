@@ -53,7 +53,8 @@ namespace impl {
   }
 
   void CUDAScopedContextHolderHelper::enqueueCallback(int device, cuda::stream_t<>& stream) {
-    stream.enqueue.callback(
+    if(hasHolder_) {
+      stream.enqueue.callback(
         [device, waitingTaskHolder = waitingTaskHolder_](cuda::stream::id_t streamId, cuda::status_t status) mutable {
           if (cuda::is_success(status)) {
             LogTrace("CUDAScopedContext")
@@ -71,6 +72,7 @@ namespace impl {
             }
           }
         });
+    }
   }
 }  // namespace impl
 

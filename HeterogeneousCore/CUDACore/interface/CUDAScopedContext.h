@@ -69,6 +69,7 @@ namespace impl {
 
   class CUDAScopedContextHolderHelper {
   public:
+    CUDAScopedContextHolderHelper(): hasHolder_{false} {}
     CUDAScopedContextHolderHelper(edm::WaitingTaskWithArenaHolder waitingTaskHolder)
         : waitingTaskHolder_{std::move(waitingTaskHolder)} {}
 
@@ -77,12 +78,14 @@ namespace impl {
 
     void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
       waitingTaskHolder_ = std::move(waitingTaskHolder);
+      hasHolder_ = true;
     }
 
     void enqueueCallback(int device, cuda::stream_t<>& stream);
 
   private:
     edm::WaitingTaskWithArenaHolder waitingTaskHolder_;
+    bool hasHolder_ = true;
   };
 }  // namespace impl
 
@@ -114,6 +117,14 @@ public:
                                     edm::WaitingTaskWithArenaHolder waitingTaskHolder,
                                     CUDAContextState& state)
       : CUDAScopedContextGetterBase(data), holderHelper_{std::move(waitingTaskHolder)}, contextState_{&state} {}
+
+  // I'm really unsure if these two overloads should be allowed in the end...
+  explicit CUDAScopedContextAcquire(edm::StreamID streamID,
+                                    CUDAContextState& state)
+      : CUDAScopedContextGetterBase(streamID), contextState_{&state} {}
+  explicit CUDAScopedContextAcquire(const CUDAProductBase& data,
+                                    CUDAContextState& state)
+      : CUDAScopedContextGetterBase(data), contextState_{&state} {}
 
   ~CUDAScopedContextAcquire();
 
