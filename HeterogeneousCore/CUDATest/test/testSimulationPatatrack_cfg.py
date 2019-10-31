@@ -126,7 +126,7 @@ if options.fakeCUDANoLock not in [0, 1]:
 if options.gangStrategy in ["limitedTaskQueue", "limitedTaskQueueV2", "limitedTaskQueueV3", "limitedTaskQueueV4"]:
     if options.limitedTaskQueue < 1:
         raise Exception("Gang strategy 'limitedTaskQueue' requires the option limitedTaskQueue with value >= 1")
-elif options.gangStrategy != "":
+elif options.gangStrategy not in ["", "V2"]:
     raise Exception("Invalid gang strategy '%s'" % options.gangStrategy)
 if options.serialTaskQueue not in [0, 1]:
     raise Exception("serialTaskQueue should be 0 or 1, got %d" % options.serialTaskQueue)
@@ -199,7 +199,7 @@ elif options.fakeCUDA == 1 or options.fakeCUDANoLock == 1:
 if len(options.configPostfix) > 0:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_%s.json"%options.configPostfix)
 
-if options.gangStrategy == "":
+if options.gangStrategy in ["", "V2"]:
     if options.gangSize > 0:
         gangNumber = options.numberOfStreams / options.gangSize
         if options.numberOfStreams % options.gangSize != 0:
@@ -231,6 +231,7 @@ from HeterogeneousCore.CUDATest.testCUDAProducerSimCPU_cfi import testCUDAProduc
 from HeterogeneousCore.CUDATest.testCUDAProducerSim_cfi import testCUDAProducerSim as _testCUDAProducerSim
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEW_cfi import testCUDAProducerSimEW as _testCUDAProducerSimEW
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGanged_cfi import testCUDAProducerSimEWGanged as _testCUDAProducerSimEWGanged
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGangedV2_cfi import testCUDAProducerSimEWGangedV2 as _testCUDAProducerSimEWGangedV2
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGangedLimitedTaskQueue_cfi import testCUDAProducerSimEWGangedLimitedTaskQueue as _testCUDAProducerSimEWGangedLimitedTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGangedLimitedTaskQueueV2_cfi import testCUDAProducerSimEWGangedLimitedTaskQueueV2 as _testCUDAProducerSimEWGangedLimitedTaskQueueV2
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGangedLimitedTaskQueueV3_cfi import testCUDAProducerSimEWGangedLimitedTaskQueueV3 as _testCUDAProducerSimEWGangedLimitedTaskQueueV3
@@ -249,6 +250,8 @@ if options.blocking == 1:
     testCUDAProducerSimEW = _testCUDAProducerSimBlocking
 elif options.gangSize > 0 or options.numberOfGangs > 0 or options.gangStrategy != "":
     _gangModule = _testCUDAProducerSimEWGanged.clone()
+    if options.gangStrategy == "V2":
+        _gangModule = _testCUDAProducerSimEWGangedV2.clone()
     if options.gangStrategy == "limitedTaskQueue":
         _gangModule = _testCUDAProducerSimEWGangedLimitedTaskQueue.clone(
             limit=options.limitedTaskQueue,
