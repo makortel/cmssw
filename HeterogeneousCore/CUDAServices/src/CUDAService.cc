@@ -296,6 +296,12 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
   }
   log << "\n";
 
+  // Make sure the caching allocators are constructed before declaring successful construction
+    if constexpr (cudautils::allocator::useCaching) {
+      cudautils::allocator::getCachingDeviceAllocator();
+      cudautils::allocator::getCachingHostAllocator();
+    }
+
   log << "CUDAService fully initialized";
   enabled_ = true;
 
