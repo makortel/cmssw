@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from FWCore.ParameterSet.VarParsing import VarParsing
 
 nEvtLumi = 4
 nEvtRun = 2*nEvtLumi
@@ -6,12 +7,21 @@ nRuns = 64
 nStreams = 4
 nEvt = nRuns*nEvtRun
 
+options = VarParsing()
+options.register('numberOfConcurrentLuminosityBlocks',
+                 1,
+                 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.int,
+                 "Number of concurrent luminosity blocks (default 1)")
+options.parseArguments()
+
 process = cms.Process("TESTSTREAMMODULES")
 
 import FWCore.Framework.test.cmsExceptionsFatalOption_cff
 process.options = cms.untracked.PSet(
     numberOfStreams = cms.untracked.uint32(nStreams),
-    numberOfThreads = cms.untracked.uint32(nStreams)
+    numberOfThreads = cms.untracked.uint32(nStreams),
+    numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(options.numberOfConcurrentLuminosityBlocks)
 )
 
 

@@ -20,6 +20,12 @@ grep "one::SharedResourcesAnalyzer TriggerResults" log_test_one_modules > /dev/n
 (cmsRun $F4 ) >& log_test_limited_modules || die "Failure using $F4" $?
 grep "limited::StreamIntAnalyzer TriggerResults" log_test_limited_modules > /dev/null || die "grep failed to find 'limited::StreamIntAnalyzer TriggerResults'" $?
 
+echo "Test with 2 concurrent LuminosityBlocks"
+cmsRun $F1 numberOfConcurrentLuminosityBlocks=2 2>&1 /dev/null || die "Failure using $F1 numberOfConcurrentLuminosityBlocks=2"
+cmsRun $F2 numberOfConcurrentLuminosityBlocks=2 2>&1 /dev/null || die "Failure using $F2 numberOfConcurrentLuminosityBlocks=2"
+cmsRun $F3 numberOfConcurrentLuminosityBlocks=2 2>&1 /dev/null || die "Failure using $F3 numberOfConcurrentLuminosityBlocks=2"
+cmsRun $F4 numberOfConcurrentLuminosityBlocks=2 2>&1 /dev/null || die "Failure using $F4 numberOfConcurrentLuminosityBlocks=2"
+
 #the last few lines of the output are the printout from the
 # ConcurrentModuleTimer service detailing how much time was
 # spent in 2,3 or 4 modules running simultaneously.
