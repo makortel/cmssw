@@ -9,11 +9,13 @@
 
 SiPixelDigiErrorsCUDA::SiPixelDigiErrorsCUDA(size_t maxFedWords, PixelFormatterErrors errors, cuda::stream_t<>& stream)
     : formatterErrors_h(std::move(errors)) {
-  error_d = cudautils::make_device_unique<GPU::SimpleVector<PixelErrorCompact>>(stream);
-  data_d = cudautils::make_device_unique<PixelErrorCompact[]>(maxFedWords, stream);
+  error_d = cudautils::make_device_unique<GPU::SimpleVector<PixelErrorCompact>>();
+  data_d = cudautils::make_device_unique<PixelErrorCompact[]>(maxFedWords);
 
   cudautils::memsetAsync(data_d, 0x00, maxFedWords, stream);
 
+  // device-side ownership to guarantee that the host memory is alive
+  // until the copy finishes
   error_h = cudautils::make_host_unique<GPU::SimpleVector<PixelErrorCompact>>(stream);
   GPU::make_SimpleVector(error_h.get(), maxFedWords, data_d.get());
   assert(error_h->empty());
