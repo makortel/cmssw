@@ -47,6 +47,16 @@ namespace cudautils {
   }    // namespace device
 
   template <typename T>
+  typename device::impl::make_device_unique_selector<T>::non_array make_device_unique() {
+    static_assert(std::is_trivially_constructible<T>::value,
+                  "Allocating with non-trivial constructor on the device memory is not supported");
+    int dev = cuda::device::current::get().id();
+    void *mem = cudautils::allocate_device(dev, sizeof(T));
+    return typename device::impl::make_device_unique_selector<T>::non_array{reinterpret_cast<T *>(mem),
+                                                                            device::impl::DeviceDeleter{dev}};
+  }
+
+  template <typename T>
   typename device::impl::make_device_unique_selector<T>::non_array make_device_unique(cuda::stream_t<> &stream) {
     static_assert(std::is_trivially_constructible<T>::value,
                   "Allocating with non-trivial constructor on the device memory is not supported");
@@ -68,10 +78,29 @@ namespace cudautils {
                                                                                   device::impl::DeviceDeleter{dev}};
   }
 
+  template <typename T>
+  typename device::impl::make_device_unique_selector<T>::unbounded_array make_device_unique(size_t n) {
+    using element_type = typename std::remove_extent<T>::type;
+    static_assert(std::is_trivially_constructible<element_type>::value,
+                  "Allocating with non-trivial constructor on the device memory is not supported");
+    int dev = cuda::device::current::get().id();
+    void *mem = cudautils::allocate_device(dev, n * sizeof(element_type));
+    return typename device::impl::make_device_unique_selector<T>::unbounded_array{reinterpret_cast<element_type *>(mem),
+                                                                                  device::impl::DeviceDeleter{dev}};
+  }
+
   template <typename T, typename... Args>
   typename device::impl::make_device_unique_selector<T>::bounded_array make_device_unique(Args &&...) = delete;
 
   // No check for the trivial constructor, make it clear in the interface
+  template <typename T>
+  typename device::impl::make_device_unique_selector<T>::non_array make_device_unique_uninitialized() {
+    int dev = cuda::device::current::get().id();
+    void *mem = cudautils::allocate_device(dev, sizeof(T));
+    return typename device::impl::make_device_unique_selector<T>::non_array{reinterpret_cast<T *>(mem),
+                                                                            device::impl::DeviceDeleter{dev}};
+  }
+
   template <typename T>
   typename device::impl::make_device_unique_selector<T>::non_array make_device_unique_uninitialized(
       cuda::stream_t<> &stream) {
@@ -79,6 +108,16 @@ namespace cudautils {
     void *mem = cudautils::allocate_device(dev, sizeof(T), stream);
     return typename device::impl::make_device_unique_selector<T>::non_array{reinterpret_cast<T *>(mem),
                                                                             device::impl::DeviceDeleter{dev}};
+  }
+
+  template <typename T>
+  typename device::impl::make_device_unique_selector<T>::unbounded_array make_device_unique_uninitialized(
+      size_t n) {
+    using element_type = typename std::remove_extent<T>::type;
+    int dev = cuda::device::current::get().id();
+    void *mem = cudautils::allocate_device(dev, n * sizeof(element_type));
+    return typename device::impl::make_device_unique_selector<T>::unbounded_array{reinterpret_cast<element_type *>(mem),
+                                                                                  device::impl::DeviceDeleter{dev}};
   }
 
   template <typename T>
