@@ -549,7 +549,7 @@ namespace pixelgpudetails {
     }
     clusters_d = SiPixelClustersCUDA(gpuClustering::MaxNumModules, stream);
 
-    nModules_Clusters_h = cudautils::make_host_unique<uint32_t[]>(2, stream);
+    nModules_Clusters_h = cudautils::make_host_unique<uint32_t[]>(2);
 
     if (wordCounter)  // protect in case of empty event....
     {
