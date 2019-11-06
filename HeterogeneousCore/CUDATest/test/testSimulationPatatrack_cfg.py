@@ -22,6 +22,11 @@ options.register('variant',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Application variant (default 1)")
+options.register('simple',
+                 "",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "Simple application variant (no default)")
 options.register('gpuExternalWork',
                  0,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -109,7 +114,7 @@ options.register('histoFileName',
                  "Path to file to store histogram data (default \"\" to disable)")
 options.parseArguments()
 
-if options.variant not in [1,2,3,4,5,6,7]:
+if options.variant not in [0,1,2,3,4,5,6,7]:
     raise Exception("Incorrect variant value %d, can be 1,2,3,4,5" % options.variant)
 if options.gpuExternalWork not in [0, 1]:
     raise Exception("gpuExternalWork should be 0 or 1, got %d" % options.gpuExternalWork)
@@ -198,6 +203,9 @@ elif options.fakeCUDA == 1 or options.fakeCUDANoLock == 1:
         process.SimOperationsService.fakeUseLocks = False
 if len(options.configPostfix) > 0:
     process.SimOperationsService.config = process.SimOperationsService.config.value().replace(".json", "_%s.json"%options.configPostfix)
+
+if options.variant == 0:
+    process.SimOperationsService.config = "HeterogeneousCore/CUDATest/test/simpleSimulation.json"
 
 if options.gangStrategy in ["", "V2"]:
     if options.gangSize > 0:
@@ -474,6 +482,56 @@ elif options.variant in [4,5]:
             verbosity = cms.untracked.uint32(0),
         )
         process.outPath = cms.EndPath(process.out)
+elif options.variant == 0:
+    sv = options.simple
+    def finalize(*modnames):
+        process.t = cms.Task(*[getattr(process, m) for m in modnames])
+        process.p = cms.Path(process.t)
+        process.out = cms.OutputModule("AsciiOutputModule",
+            outputCommands = cms.untracked.vstring(["keep *_%s_*_*" % m for m in modnames]),
+            verbosity = cms.untracked.uint32(0),
+        )
+        process.outPath = cms.EndPath(process.out)
+
+    if sv == "cpu1s":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True)
+        finalize("cpu1s1")
+    elif sv == "cpu1s_cpu1s_par":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True)
+        process.cpu1s2 = testCUDAProducerSimCPU.clone(produce=True)
+        finalize("cpu1s1", "cpu1s2")
+    elif sv == "gpu1s_cpu1s_par":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True)
+        process.gpu1s1 = testCUDAProducerSimEW.clone(produce=True)
+        finalize("cpu1s1", "gpu1s1")
+    elif sv == "gpu1s_cpu2s_par":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True)
+        process.gpu2s1 = testCUDAProducerSimEW.clone(produce=True)
+        finalize("cpu1s1", "gpu2s1")
+    elif sv == "gpu500ms_cpu1s_par":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True)
+        process.gpu500ms1 = testCUDAProducerSimEW.clone(produce=True)
+        finalize("cpu1s1", "gpu500ms1")
+    elif sv == "cpu1s_cpu1s_seq":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True, srcs=["cpu1s2"])
+        process.cpu1s2 = testCUDAProducerSimCPU.clone(produce=True)
+        finalize("cpu1s1", "cpu1s2")
+    elif sv == "gpu1s_cpu1s_seq":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True, srcs=["gpu1s1"])
+        process.gpu1s1 = testCUDAProducerSimEW.clone(produce=True)
+        finalize("cpu1s1", "gpu1s1")
+    elif sv == "gpu2s_cpu1s_seq":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True, srcs=["gpu2s1"])
+        process.gpu2s1 = testCUDAProducerSimEW.clone(produce=True)
+        finalize("cpu1s1", "gpu2s1")
+    elif sv == "gpu500ms_cpu1s_seq":
+        process.cpu1s1 = testCUDAProducerSimCPU.clone(produce=True, srcs=["gpu500ms1"])
+        process.gpu500ms1 = testCUDAProducerSimEW.clone(produce=True)
+        finalize("cpu1s1", "gpu500ms1")
+    else:
+        raise Exception("Invalid value for simple '%s'" % sv)
+else:
+    raise Exception("Unknown variant %d" % options.variant)
 
 #process.t = cms.Task(process.offlineBeamSpot, process.offlineBeamSpotCUDA, process.siPixelClustersCUDAPreSplitting, process.siPixelRecHitsCUDAPreSplitting, process.caHitNtupletCUDA, process.pixelVertexCUDA)
 #process.p = cms.Path(process.t)

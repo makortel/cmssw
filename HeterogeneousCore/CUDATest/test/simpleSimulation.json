@@ -1,0 +1,73 @@
+{
+  "moduleDeclarations": [],
+  "moduleDefinitions": {
+    "cpu1s1": {
+      "produce": [
+        {"name": "cpu", "values": [1000000000], "unit": "ns"}
+      ]
+    },
+    "cpu1s2": {
+      "produce": [
+        {"name": "cpu", "values": [1000000000], "unit": "ns"}
+      ]
+    },
+    "gpu1s1": {
+      "acquire": [
+         {"name": "kernel", "values": [1000000000], "unit": "ns"}
+      ],
+      "produce": []
+    },
+    "gpu1s2": {
+      "acquire": [
+         {"name": "kernel", "values": [1000000000], "unit": "ns"}
+      ],
+      "produce": []
+    },
+    "gpu2s1": {
+      "acquire": [
+         {"name": "kernel", "values": [2000000000], "unit": "ns"}
+      ],
+      "produce": []
+    },
+    "gpu2s2": {
+      "acquire": [
+         {"name": "kernel", "values": [2000000000], "unit": "ns"}
+      ],
+      "produce": []
+    },
+    "gpu500ms1": {
+      "acquire": [
+         {"name": "kernel", "values": [500000000], "unit": "ns"}
+      ],
+      "produce": []
+    },
+    "gpu500ms2": {
+      "acquire": [
+         {"name": "kernel", "values": [500000000], "unit": "ns"}
+      ],
+      "produce": []
+    },
+    "cpu1ms1": {
+      "produce": [
+        {"name": "cpu", "values": [1000000], "unit": "ns"}
+      ]
+    },
+    "cpu1ms2": {
+      "produce": [
+        {"name": "cpu", "values": [1000000], "unit": "ns"}
+      ]
+    },
+    "gpu1ms1": {
+      "acquire": [
+         {"name": "kernel", "values": [1000000], "unit": "ns"}
+      ],
+      "produce": []
+    },
+    "gpu1ms2": {
+      "acquire": [
+         {"name": "kernel", "values": [1000000], "unit": "ns"}
+      ],
+      "produce": []
+    }
+  }
+}
