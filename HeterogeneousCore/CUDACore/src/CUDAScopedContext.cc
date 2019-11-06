@@ -52,7 +52,7 @@ namespace impl {
     }
   }
 
-  CUDAScopedContextBase::CUDAScopedContextBase(int device, std::shared_ptr<cuda::stream_t<>> stream)
+  CUDAScopedContextBase::CUDAScopedContextBase(int device, cudautils::SharedStreamPtr stream)
       : currentDevice_(device), setDeviceForThisScope_(device), stream_(std::move(stream)) {}
 
   ////////////////////

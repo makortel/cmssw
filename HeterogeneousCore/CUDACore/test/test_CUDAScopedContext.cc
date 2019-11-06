@@ -9,6 +9,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/exitSansCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 
 #include "test_CUDAScopedContextKernels.h"
 
@@ -21,10 +22,7 @@ namespace cudatest {
       if (createEvent) {
         event = std::make_unique<cuda::event_t>(device.create_event());
       }
-      return CUDAScopedContextProduce(dev,
-                                      std::make_unique<cuda::stream_t<>>(device.create_stream(
-                                          cuda::stream::implicitly_synchronizes_with_default_stream)),
-                                      std::move(event));
+      return CUDAScopedContextProduce(dev, cudautils::getCUDAStreamCache().getCUDAStream(), std::move(event));
     }
   };
 }  // namespace cudatest

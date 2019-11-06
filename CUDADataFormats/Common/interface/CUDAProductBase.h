@@ -6,6 +6,8 @@
 
 #include <cuda/api_wrappers.h>
 
+#include "HeterogeneousCore/CUDAUtilities/interface/SharedStreamPtr.h"
+
 namespace impl {
   class CUDAScopedContextBase;
 }
@@ -43,7 +45,7 @@ public:
   // mutable access is needed even if the CUDAScopedContext itself
   // would be const. Therefore it is ok to return a non-const
   // pointer from a const method here.
-  cudaStream_t stream() const { return stream_->id(); }
+  cudaStream_t stream() const { return stream_.get(); }
 
   // cudaEvent_t is a pointer to a thread-safe object, for which a
   // mutable access is needed even if the CUDAScopedContext itself
@@ -52,7 +54,7 @@ public:
   cudaEvent_t event() const { return event_ ? event_->id() : nullptr; }
 
 protected:
-  explicit CUDAProductBase(int device, std::shared_ptr<cuda::stream_t<>> stream)
+  explicit CUDAProductBase(int device, cudautils::SharedStreamPtr stream)
       : stream_{std::move(stream)}, device_{device} {}
 
 private:
@@ -61,7 +63,7 @@ private:
 
   // The following functions are intended to be used only from CUDAScopedContext
   void setEvent(std::shared_ptr<cuda::event_t> event) { event_ = std::move(event); }
-  const std::shared_ptr<cuda::stream_t<>>& streamPtr() const { return stream_; }
+  const cudautils::SharedStreamPtr& streamPtr() const { return stream_; }
 
   bool mayReuseStream() const {
     bool expected = true;
@@ -71,9 +73,9 @@ private:
     return changed;
   }
 
-  // The cuda::stream_t is really shared among edm::Event products, so
+  // The cudaStream_t is really shared among edm::Event products, so
   // using shared_ptr also here
-  std::shared_ptr<cuda::stream_t<>> stream_;  //!
+  cudautils::SharedStreamPtr stream_;  //!
   // shared_ptr because of caching in CUDAEventCache
   std::shared_ptr<cuda::event_t> event_;  //!
 
