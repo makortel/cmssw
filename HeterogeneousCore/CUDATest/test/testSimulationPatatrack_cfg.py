@@ -1,6 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 import FWCore.ParameterSet.VarParsing as VarParsing
 
+import six
+
 options = VarParsing.VarParsing()
 options.register('maxEvents',
                  1,
@@ -27,6 +29,11 @@ options.register('simple',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.string,
                  "Simple application variant (no default)")
+options.register('generic',
+                 "",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "Generic application variant (no default)")
 options.register('gpuExternalWork',
                  0,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -114,7 +121,7 @@ options.register('histoFileName',
                  "Path to file to store histogram data (default \"\" to disable)")
 options.parseArguments()
 
-if options.variant not in [0,1,2,3,4,5,6,7]:
+if options.variant not in [0,1,2,3,4,5,6,7,99]:
     raise Exception("Incorrect variant value %d, can be 1,2,3,4,5" % options.variant)
 if options.gpuExternalWork not in [0, 1]:
     raise Exception("gpuExternalWork should be 0 or 1, got %d" % options.gpuExternalWork)
@@ -206,6 +213,8 @@ if len(options.configPostfix) > 0:
 
 if options.variant == 0:
     process.SimOperationsService.config = "HeterogeneousCore/CUDATest/test/simpleSimulation.json"
+elif options.variant == 99:
+    process.SimOperationsService.config = options.generic
 
 if options.gangStrategy in ["", "V2"]:
     if options.gangSize > 0:
@@ -478,6 +487,37 @@ elif options.variant in [4,5]:
             outputCommands = cms.untracked.vstring(
                 "keep *_pixelTracks_*_*",
                 "keep *_pixelVertices_*_*",
+            ),
+            verbosity = cms.untracked.uint32(0),
+        )
+        process.outPath = cms.EndPath(process.out)
+elif options.variant == 99:
+    import json
+    with open(options.generic) as f:
+        config = json.load(f)
+    for modName, modType in six.iteritems(config["moduleDeclarations"]):
+        setattr(process, modName, {
+            "SimCPU": _testCUDAProducerSimCPU,
+            "Sim": _testCUDAProducerSim,
+            "SimEW": _testCUDAProducerSimEW
+            }[modType].clone(produce=True))
+    for modName, inputs in six.iteritems(config["moduleConsumes"]):
+        if modName == "_out":
+            continue
+        getattr(process, modName).srcs = [str(x) for x in inputs]
+    if False:
+        process.s = cms.Sequence()
+        for modName in config["moduleSequence"]:
+            process.s += getattr(process, modName)
+        process.p = cms.Path(process.s)
+    else:
+        process.t = cms.Task()
+        for modName in config["moduleSequence"]:
+            process.t.add(getattr(process, modName))
+        process.p = cms.Path(process.t)
+        process.out = cms.OutputModule("AsciiOutputModule",
+            outputCommands = cms.untracked.vstring(
+                ["keep *_%s_*_*" % str(x) for x in config["moduleConsumes"]["_out"]]
             ),
             verbosity = cms.untracked.uint32(0),
         )

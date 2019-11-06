@@ -1,0 +1,3078 @@
+{
+  "moduleSequence": [
+    "AllExecutedEventsAlg",
+    "MakeInputDataHeaderESDAlg",
+    "InDetTRTRIOMakerAlg",
+    "LArCollisionTimeAlg",
+    "EDnpfIsoForwardAlg",
+    "MuonStandaloneDetailedTrackTruthMakerAlg",
+    "TRTStandaloneTracksTruthCollectionSelectorAlg",
+    "RpcRdoToRpcPrepDataAlg",
+    "MuonSpectrometerTracksSelectorAlg",
+    "MuonSegmentMakerNCBAlg",
+    "InDetTRTTrackSegmentsFinderAlg",
+    "InDetTrackClusterAssValidationAlg",
+    "CscThresholdClusterBuilderAlg",
+    "FinalizeMuonClustersAlg",
+    "SiSPSeededTracksTruthCollectionSelectorAlg",
+    "jetalgAlg",
+    "MuonTruthDecorationAlg",
+    "TrackRecordFilterMuonExitLayerAlg",
+    "InDetCopyAlg",
+    "ExtrapolatedMuonTracksTruthAlg",
+    "ResolvedTRTSeededTracksDetailedTruthMakerAlg",
+    "ExtrapolatedMuonTracksSelectorAlg",
+    "EDpfIsoCentralAlg",
+    "InDetSCTClusterizationAlg",
+    "DetailedTrackTruthMakerAlg",
+    "ResolvedForwardTracksDetailedTruthMakerAlg",
+    "TileLookForMuAlg",
+    "JetTrackAlgforDiTausAlg",
+    "InDetTRTSeededTrackFinderAlg",
+    "InDetSegmentPRDAssociationAlg",
+    "EDnpfIsoCentralAlg",
+    "JobInfoAlg",
+    "RawInfoSummaryForTagWriterAlg",
+    "InDetAmbiguitySolverForwardTracksAlg",
+    "CaloCellMakerAlg",
+    "LAr711NocorrClusterMakerAlg",
+    "InDetForwardTrackParticlesAlg",
+    "LArAffectedRegionAlg",
+    "MuonTCLinksAlg",
+    "MuonSpectrometerTracksTruthAlg",
+    "egammaFinalizeClustersAlg",
+    "InDetCaloClusterROISelectorAlg",
+    "InDetTRTExtensionAlg",
+    "TrackRecordFilterAlg",
+    "egLockerAlg",
+    "InDetSiSpTrackFinderForwardTracksAlg",
+    "MuonStandaloneTrackParticleCnvAlg",
+    "ExtendedTracksPixelPrdAssociationDetailedTruthMakerAlg",
+    "InDetSiSpTrackFinderAlg",
+    "InDetVxLinkSetterAlg",
+    "InDetPriVxFinderAlg",
+    "MuonSegmentCnvAlg",
+    "IsolationBuilderAlg",
+    "MuonPRDMultiTruthMakerAlg",
+    "InDetBCMZeroSuppressionAlg",
+    "TRTStandaloneTracksDetailedTruthMakerAlg",
+    "CombinedMuonTracksSelectorAlg",
+    "InDetLowBetaTrkAlgorithmAlg",
+    "MuonCombinedDetailedTrackTruthMakerAlg",
+    "TauProcessorPi0EflowToolsAlg",
+    "McAodBuilderAlg",
+    "MuonSegmentCnvAlgNCBAlg",
+    "InDetPRDAssociationPixelPrdAssociationAlg",
+    "BackgroundWordFillerAlg",
+    "egammaTruthAssociationAlg",
+    "TauRecVariablesProcessorAlg",
+    "eflowObjectBuilderEMAlg",
+    "InDetPRDAssociationForwardTracksAlg",
+    "MuonCombinedInDetCandidateAlg",
+    "MBTSTimeDiffEventInfoAlg",
+    "InDetCosmicsEventPhaseAlg",
+    "InDetTrackParticlesAlg",
+    "InitializeMuonCaloEnergyAlg",
+    "SiSpSeededForwardTracksDetailedTruthMakerAlg",
+    "MdtRdoToMdtPrepDataAlg",
+    "SiSPSeededPixelTracksTruthCollectionSelectorAlg",
+    "InDetTrackCollectionMergerpixAlg",
+    "ResolvedPixelPrdAssociationTracksDetailedTruthMakerAlg",
+    "InDetTRTSeededAmbiguitySolverAlg",
+    "MuonSegmentTagAlg",
+    "ExtendedTracksTruthCollectionSelectorAlg",
+    "TRTSeededTracksDetailedTruthMakerAlg",
+    "JetTrackAlgforTausAlg",
+    "InDetSiSpTrackFinderPixelPrdAssociationAlg",
+    "MuonSegmentTruthAssociationAlg",
+    "CaloTopoClusterAlg",
+    "CaloCluster2xAODAlg",
+    "SiSpSeededForwardTracksTruthCollectionSelectorAlg",
+    "CreateLumiBlockCollectionFromFileAlg",
+    "InDetTrackCollectionMergerAlg",
+    "METMakerAlgAntiKt4EMPFlowAlg",
+    "InDetRecStatisticsAlg",
+    "eflowOverlapRemovalEMAlg",
+    "TauCoreBuilderAlg",
+    "SiSPSeededPixelTracksDetailedTruthMakerAlg",
+    "xAODMakerEventInfoCnvAlg",
+    "GlobalEventTagBuilderAlg",
+    "LUCIDDigitRawDataCnvAlg",
+    "CaloClusterCellLinksUpdaterAlg",
+    "CaloCellMakerFromClusterAlg",
+    "InDetAmbiguitySolverAlg",
+    "InDetSiTrackerSpacePointFinderAlg",
+    "CombinedMuonTracksTruthAlg",
+    "METMakerAlgAntiKt4LCTopoAlg",
+    "ExtendedTracksPixelPrdAssociationTruthCollectionSelectorAlg",
+    "METReconstructionAlg",
+    "egammaAlg",
+    "CombinedInDetTracksDetailedTruthMakerAlg",
+    "InDetExtensionProcessorAlg",
+    "MuonSegmentMakerAlg",
+    "ResolvedForwardTracksTruthCollectionSelectorAlg",
+    "StreamESDAlg",
+    "EDtpIsoCentralAlg",
+    "eflowVertextInformationSetterEMAlg",
+    "StreamAODAlg",
+    "StauCreatorAlg",
+    "EmTowerBldrAlg",
+    "ExtendedTracksDetailedTruthMakerAlg",
+    "eflowCaloObjectBuilderEMAlg",
+    "CombinedInDetTracksTruthCollectionSelectorAlg",
+    "InDetSegmentDriftCircleAssValidationAlg",
+    "InDetExtensionProcessorPixelPrdAssociationAlg",
+    "EventCounterAlg",
+    "MuonCombinedMuonCandidateAlg",
+    "InDetTRTPRDMultiTruthMakerAlg",
+    "METMakerAlgAntiKt4EMTopoAlg",
+    "TgcRdoToTgcPrepDataAlg",
+    "BcmCollisionTimeAlg",
+    "eflowEMCaloObjectBuilderAlg",
+    "ResolvedTracksDetailedTruthMakerAlg",
+    "InDetPixelPrdAssociationTrackParticlesAlg",
+    "MuGirlStauAlg",
+    "egammaTrackSlimmerAlg",
+    "InDetPixelClusterizationAlg",
+    "PixelPrdAssociationTracksTruthCollectionSelectorAlg",
+    "egammaForwardAlg",
+    "GENAOD2xAODAlg",
+    "DiTauBuilderAlg",
+    "METAssociationAlg",
+    "EDpfIsoForwardAlg",
+    "ResolvedPixelPrdAssociationTracksTruthCollectionSelectorAlg",
+    "ResolvedTracksTruthCollectionSelectorAlg",
+    "ResolvedTRTSeededTracksTruthCollectionSelectorAlg",
+    "TauPi0SubtractedClusterMakerAlg",
+    "CscRdoToCscPrepDataAlg",
+    "LArNoisyROAlg",
+    "EDtpIsoForwardAlg",
+    "InDetAmbiguitySolverPixelPrdAssociationAlg",
+    "BeamBackgroundFillerAlg",
+    "InDetTRTonlyPRDAssociationAlg",
+    "PixelPrdAssociationTracksDetailedTruthMakerAlg",
+    "MSVertexRecoAlg",
+    "TrackParticleCellAssociationAlg",
+    "TRTSeededTracksTruthCollectionSelectorAlg",
+    "TrackTruthCollectionSelectorAlg",
+    "InitializeMuonClustersAlg",
+    "InDetPRDMultiTruthMakerSiAlg",
+    "MuonCaloTagAlg",
+    "FrameworkAlg",
+    "InDetTRTExtensionPixelPrdAssociationAlg",
+    "LArClusterMakerAlg",
+    "MuPatTrackBuilderAlg",
+    "CaloClusterTopoEM430GetterAlg",
+    "MuonTruthAssociationAlg",
+    "SiSPSeededTracksDetailedTruthMakerAlg",
+    "MuonCombinedAlg",
+    "MuonCreatorAlg",
+    "InDetTRTStandaloneTrackFinderAlg",
+    "MuonInsideOutRecoAlg"
+  ],
+  "moduleConsumes": {
+    "AllExecutedEventsAlg": [
+      "xAODMakerEventInfoCnvAlg"
+    ],
+    "MakeInputDataHeaderESDAlg": [
+      "StreamESDAlg",
+      "FrameworkAlg"
+    ],
+    "InDetTRTRIOMakerAlg": [
+      "xAODMakerEventInfoCnvAlg"
+    ],
+    "LArCollisionTimeAlg": [
+      "CaloCellMakerAlg"
+    ],
+    "EDnpfIsoForwardAlg": [
+      "EDnpfIsoCentralAlg"
+    ],
+    "MuonStandaloneDetailedTrackTruthMakerAlg": [
+      "MuonPRDMultiTruthMakerAlg",
+      "MuPatTrackBuilderAlg",
+      "FrameworkAlg"
+    ],
+    "TRTStandaloneTracksTruthCollectionSelectorAlg": [
+      "TRTStandaloneTracksDetailedTruthMakerAlg"
+    ],
+    "RpcRdoToRpcPrepDataAlg": [
+      "FrameworkAlg"
+    ],
+    "MuonSpectrometerTracksSelectorAlg": [
+      "MuonStandaloneDetailedTrackTruthMakerAlg"
+    ],
+    "MuonSegmentMakerNCBAlg": [
+      "CscThresholdClusterBuilderAlg",
+      "CscRdoToCscPrepDataAlg"
+    ],
+    "InDetTRTTrackSegmentsFinderAlg": [],
+    "InDetTrackClusterAssValidationAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "InDetAmbiguitySolverAlg",
+      "InDetSiSpTrackFinderAlg",
+      "InDetAmbiguitySolverForwardTracksAlg",
+      "InDetTRTSeededAmbiguitySolverAlg",
+      "InDetSiTrackerSpacePointFinderAlg",
+      "InDetTRTStandaloneTrackFinderAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetExtensionProcessorAlg",
+      "InDetTRTSeededTrackFinderAlg",
+      "InDetExtensionProcessorPixelPrdAssociationAlg",
+      "InDetSiSpTrackFinderForwardTracksAlg",
+      "InDetAmbiguitySolverPixelPrdAssociationAlg",
+      "InDetSiSpTrackFinderPixelPrdAssociationAlg",
+      "FrameworkAlg"
+    ],
+    "CscThresholdClusterBuilderAlg": [
+      "CscRdoToCscPrepDataAlg"
+    ],
+    "FinalizeMuonClustersAlg": [
+      "InitializeMuonClustersAlg",
+      "FrameworkAlg"
+    ],
+    "SiSPSeededTracksTruthCollectionSelectorAlg": [
+      "SiSPSeededTracksDetailedTruthMakerAlg"
+    ],
+    "jetalgAlg": [
+      "EDtpIsoCentralAlg",
+      "MuonCreatorAlg",
+      "InDetPriVxFinderAlg",
+      "EDpfIsoCentralAlg",
+      "CaloTopoClusterAlg",
+      "xAODMakerEventInfoCnvAlg",
+      "GENAOD2xAODAlg",
+      "InDetTrackParticlesAlg",
+      "FrameworkAlg",
+      "MuonSegmentCnvAlg"
+    ],
+    "MuonTruthDecorationAlg": [
+      "MuonPRDMultiTruthMakerAlg",
+      "GENAOD2xAODAlg",
+      "FrameworkAlg"
+    ],
+    "TrackRecordFilterMuonExitLayerAlg": [
+      "FrameworkAlg"
+    ],
+    "InDetCopyAlg": [
+      "InDetTrackCollectionMergerAlg"
+    ],
+    "ExtrapolatedMuonTracksTruthAlg": [
+      "MuonCreatorAlg",
+      "GENAOD2xAODAlg",
+      "ExtrapolatedMuonTracksSelectorAlg"
+    ],
+    "ResolvedTRTSeededTracksDetailedTruthMakerAlg": [
+      "InDetTRTSeededAmbiguitySolverAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg"
+    ],
+    "ExtrapolatedMuonTracksSelectorAlg": [
+      "MuonCombinedDetailedTrackTruthMakerAlg"
+    ],
+    "EDpfIsoCentralAlg": [
+      "InDetPriVxFinderAlg",
+      "eflowObjectBuilderEMAlg",
+      "EDtpIsoCentralAlg"
+    ],
+    "InDetSCTClusterizationAlg": [],
+    "DetailedTrackTruthMakerAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "FrameworkAlg"
+    ],
+    "ResolvedForwardTracksDetailedTruthMakerAlg": [
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetAmbiguitySolverForwardTracksAlg",
+      "FrameworkAlg"
+    ],
+    "TileLookForMuAlg": [
+      "CaloCellMakerAlg"
+    ],
+    "JetTrackAlgforDiTausAlg": [
+      "InDetPriVxFinderAlg",
+      "InDetTrackParticlesAlg"
+    ],
+    "InDetTRTSeededTrackFinderAlg": [
+      "InDetSiTrackerSpacePointFinderAlg",
+      "InDetTRTRIOMakerAlg"
+    ],
+    "InDetSegmentPRDAssociationAlg": [
+      "InDetPixelClusterizationAlg",
+      "InDetExtensionProcessorAlg"
+    ],
+    "EDnpfIsoCentralAlg": [
+      "InDetPriVxFinderAlg",
+      "eflowObjectBuilderEMAlg",
+      "EDtpIsoCentralAlg"
+    ],
+    "JobInfoAlg": [],
+    "RawInfoSummaryForTagWriterAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "InDetCosmicsEventPhaseAlg",
+      "InDetSiTrackerSpacePointFinderAlg",
+      "CaloCellMakerAlg",
+      "LArCollisionTimeAlg",
+      "MBTSTimeDiffEventInfoAlg",
+      "CaloTopoClusterAlg",
+      "InDetTRTRIOMakerAlg",
+      "FrameworkAlg"
+    ],
+    "InDetAmbiguitySolverForwardTracksAlg": [
+      "InDetCaloClusterROISelectorAlg",
+      "InDetPixelClusterizationAlg",
+      "FrameworkAlg",
+      "InDetSiSpTrackFinderForwardTracksAlg"
+    ],
+    "CaloCellMakerAlg": [
+      "xAODMakerEventInfoCnvAlg",
+      "FrameworkAlg"
+    ],
+    "LAr711NocorrClusterMakerAlg": [
+      "FrameworkAlg",
+      "LArClusterMakerAlg"
+    ],
+    "InDetForwardTrackParticlesAlg": [
+      "GENAOD2xAODAlg",
+      "InDetAmbiguitySolverForwardTracksAlg",
+      "ResolvedForwardTracksTruthCollectionSelectorAlg"
+    ],
+    "LArAffectedRegionAlg": [],
+    "MuonTCLinksAlg": [
+      "InitializeMuonClustersAlg",
+      "CaloTopoClusterAlg"
+    ],
+    "MuonSpectrometerTracksTruthAlg": [
+      "MuonSpectrometerTracksSelectorAlg",
+      "MuonStandaloneTrackParticleCnvAlg",
+      "GENAOD2xAODAlg"
+    ],
+    "egammaFinalizeClustersAlg": [
+      "egammaForwardAlg",
+      "FrameworkAlg",
+      "egammaAlg"
+    ],
+    "InDetCaloClusterROISelectorAlg": [
+      "CaloCellMakerAlg",
+      "LArClusterMakerAlg"
+    ],
+    "InDetTRTExtensionAlg": [
+      "xAODMakerEventInfoCnvAlg",
+      "InDetAmbiguitySolverAlg",
+      "InDetTRTRIOMakerAlg"
+    ],
+    "TrackRecordFilterAlg": [
+      "FrameworkAlg"
+    ],
+    "egLockerAlg": [],
+    "InDetSiSpTrackFinderForwardTracksAlg": [],
+    "MuonStandaloneTrackParticleCnvAlg": [
+      "MuPatTrackBuilderAlg"
+    ],
+    "ExtendedTracksPixelPrdAssociationDetailedTruthMakerAlg": [
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "InDetExtensionProcessorPixelPrdAssociationAlg"
+    ],
+    "InDetSiSpTrackFinderAlg": [],
+    "InDetVxLinkSetterAlg": [
+      "InDetPriVxFinderAlg",
+      "InDetTrackParticlesAlg"
+    ],
+    "InDetPriVxFinderAlg": [
+      "xAODMakerEventInfoCnvAlg",
+      "InDetTrackParticlesAlg",
+      "FrameworkAlg"
+    ],
+    "MuonSegmentCnvAlg": [
+      "MuonSegmentMakerAlg"
+    ],
+    "IsolationBuilderAlg": [
+      "EDtpIsoForwardAlg",
+      "EDtpIsoCentralAlg",
+      "MuonCreatorAlg",
+      "InDetPriVxFinderAlg",
+      "eflowObjectBuilderEMAlg",
+      "CaloCellMakerAlg",
+      "MuonCombinedAlg",
+      "egammaAlg",
+      "EDnpfIsoForwardAlg",
+      "CaloTopoClusterAlg",
+      "EDnpfIsoCentralAlg"
+    ],
+    "MuonPRDMultiTruthMakerAlg": [
+      "TgcRdoToTgcPrepDataAlg",
+      "MdtRdoToMdtPrepDataAlg",
+      "RpcRdoToRpcPrepDataAlg",
+      "CscThresholdClusterBuilderAlg",
+      "FrameworkAlg"
+    ],
+    "InDetBCMZeroSuppressionAlg": [
+      "FrameworkAlg"
+    ],
+    "TRTStandaloneTracksDetailedTruthMakerAlg": [
+      "InDetTRTStandaloneTrackFinderAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg"
+    ],
+    "CombinedMuonTracksSelectorAlg": [
+      "MuonCombinedDetailedTrackTruthMakerAlg"
+    ],
+    "InDetLowBetaTrkAlgorithmAlg": [
+      "FrameworkAlg"
+    ],
+    "MuonCombinedDetailedTrackTruthMakerAlg": [
+      "MuonPRDMultiTruthMakerAlg",
+      "MuonCreatorAlg",
+      "FrameworkAlg"
+    ],
+    "TauProcessorPi0EflowToolsAlg": [
+      "TauCoreBuilderAlg",
+      "FrameworkAlg"
+    ],
+    "McAodBuilderAlg": [
+      "FrameworkAlg"
+    ],
+    "MuonSegmentCnvAlgNCBAlg": [
+      "MuonSegmentMakerNCBAlg"
+    ],
+    "InDetPRDAssociationPixelPrdAssociationAlg": [
+      "InDetAmbiguitySolverForwardTracksAlg",
+      "InDetTRTSeededAmbiguitySolverAlg",
+      "InDetTRTStandaloneTrackFinderAlg",
+      "InDetPixelClusterizationAlg",
+      "InDetExtensionProcessorAlg"
+    ],
+    "BackgroundWordFillerAlg": [
+      "BcmCollisionTimeAlg",
+      "BeamBackgroundFillerAlg",
+      "CaloCellMakerAlg",
+      "RawInfoSummaryForTagWriterAlg",
+      "LArCollisionTimeAlg",
+      "xAODMakerEventInfoCnvAlg",
+      "FrameworkAlg"
+    ],
+    "egammaTruthAssociationAlg": [
+      "GENAOD2xAODAlg",
+      "egammaForwardAlg",
+      "egammaAlg"
+    ],
+    "TauRecVariablesProcessorAlg": [
+      "TauCoreBuilderAlg",
+      "InDetPriVxFinderAlg",
+      "egammaAlg",
+      "xAODMakerEventInfoCnvAlg",
+      "InDetTrackParticlesAlg"
+    ],
+    "eflowObjectBuilderEMAlg": [
+      "InDetPriVxFinderAlg",
+      "InDetTrackParticlesAlg",
+      "eflowEMCaloObjectBuilderAlg"
+    ],
+    "InDetPRDAssociationForwardTracksAlg": [
+      "InDetTRTSeededAmbiguitySolverAlg",
+      "InDetTRTStandaloneTrackFinderAlg",
+      "InDetPixelClusterizationAlg",
+      "InDetExtensionProcessorAlg"
+    ],
+    "MuonCombinedInDetCandidateAlg": [
+      "InDetTrackParticlesAlg",
+      "InDetForwardTrackParticlesAlg"
+    ],
+    "MBTSTimeDiffEventInfoAlg": [
+      "xAODMakerEventInfoCnvAlg",
+      "CaloCellMakerAlg"
+    ],
+    "InDetCosmicsEventPhaseAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "FrameworkAlg"
+    ],
+    "InDetTrackParticlesAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "TrackTruthCollectionSelectorAlg",
+      "GENAOD2xAODAlg"
+    ],
+    "InitializeMuonCaloEnergyAlg": [],
+    "SiSpSeededForwardTracksDetailedTruthMakerAlg": [
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "FrameworkAlg",
+      "InDetSiSpTrackFinderForwardTracksAlg"
+    ],
+    "MdtRdoToMdtPrepDataAlg": [
+      "FrameworkAlg"
+    ],
+    "SiSPSeededPixelTracksTruthCollectionSelectorAlg": [
+      "SiSPSeededPixelTracksDetailedTruthMakerAlg"
+    ],
+    "InDetTrackCollectionMergerpixAlg": [
+      "InDetPixelClusterizationAlg",
+      "InDetExtensionProcessorPixelPrdAssociationAlg"
+    ],
+    "ResolvedPixelPrdAssociationTracksDetailedTruthMakerAlg": [
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "InDetAmbiguitySolverPixelPrdAssociationAlg"
+    ],
+    "InDetTRTSeededAmbiguitySolverAlg": [
+      "InDetPixelClusterizationAlg",
+      "InDetTRTSeededTrackFinderAlg"
+    ],
+    "MuonSegmentTagAlg": [
+      "MuonCombinedInDetCandidateAlg",
+      "MuonCombinedAlg",
+      "MuonSegmentCnvAlg"
+    ],
+    "ExtendedTracksTruthCollectionSelectorAlg": [
+      "ExtendedTracksDetailedTruthMakerAlg"
+    ],
+    "TRTSeededTracksDetailedTruthMakerAlg": [
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "InDetTRTSeededTrackFinderAlg"
+    ],
+    "JetTrackAlgforTausAlg": [
+      "InDetPriVxFinderAlg",
+      "InDetTrackParticlesAlg"
+    ],
+    "InDetSiSpTrackFinderPixelPrdAssociationAlg": [],
+    "MuonSegmentTruthAssociationAlg": [
+      "MuonTruthDecorationAlg",
+      "TrackRecordFilterAlg",
+      "FrameworkAlg",
+      "MuonSegmentCnvAlg"
+    ],
+    "CaloTopoClusterAlg": [
+      "CaloCellMakerAlg",
+      "FrameworkAlg"
+    ],
+    "CaloCluster2xAODAlg": [],
+    "SiSpSeededForwardTracksTruthCollectionSelectorAlg": [
+      "SiSpSeededForwardTracksDetailedTruthMakerAlg"
+    ],
+    "CreateLumiBlockCollectionFromFileAlg": [
+      "FrameworkAlg"
+    ],
+    "InDetTrackCollectionMergerAlg": [
+      "InDetTRTSeededAmbiguitySolverAlg",
+      "InDetTRTStandaloneTrackFinderAlg",
+      "InDetPixelClusterizationAlg",
+      "InDetExtensionProcessorAlg",
+      "xAODMakerEventInfoCnvAlg",
+      "InDetTRTRIOMakerAlg",
+      "FrameworkAlg"
+    ],
+    "METMakerAlgAntiKt4EMPFlowAlg": [
+      "TauCoreBuilderAlg",
+      "MuonCreatorAlg",
+      "egammaAlg",
+      "jetalgAlg",
+      "METAssociationAlg"
+    ],
+    "InDetRecStatisticsAlg": [
+      "InDetAmbiguitySolverAlg",
+      "InDetExtensionProcessorPixelPrdAssociationAlg",
+      "CombinedInDetTracksTruthCollectionSelectorAlg",
+      "TRTSeededTracksTruthCollectionSelectorAlg",
+      "InDetSiSpTrackFinderForwardTracksAlg",
+      "ResolvedTracksTruthCollectionSelectorAlg",
+      "SiSPSeededPixelTracksTruthCollectionSelectorAlg",
+      "InDetSiSpTrackFinderAlg",
+      "InDetAmbiguitySolverForwardTracksAlg",
+      "InDetTRTSeededAmbiguitySolverAlg",
+      "InDetTRTStandaloneTrackFinderAlg",
+      "ExtendedTracksTruthCollectionSelectorAlg",
+      "ResolvedPixelPrdAssociationTracksTruthCollectionSelectorAlg",
+      "InDetAmbiguitySolverPixelPrdAssociationAlg",
+      "TRTStandaloneTracksTruthCollectionSelectorAlg",
+      "ResolvedTRTSeededTracksTruthCollectionSelectorAlg",
+      "InDetExtensionProcessorAlg",
+      "InDetTRTSeededTrackFinderAlg",
+      "FrameworkAlg",
+      "InDetTrackCollectionMergerAlg",
+      "ExtendedTracksPixelPrdAssociationTruthCollectionSelectorAlg",
+      "SiSpSeededForwardTracksTruthCollectionSelectorAlg",
+      "InDetSiSpTrackFinderPixelPrdAssociationAlg",
+      "SiSPSeededTracksTruthCollectionSelectorAlg",
+      "ResolvedForwardTracksTruthCollectionSelectorAlg"
+    ],
+    "eflowOverlapRemovalEMAlg": [
+      "eflowEMCaloObjectBuilderAlg",
+      "eflowObjectBuilderEMAlg",
+      "FrameworkAlg",
+      "egammaAlg"
+    ],
+    "TauCoreBuilderAlg": [
+      "InDetPriVxFinderAlg",
+      "JetTrackAlgforTausAlg",
+      "jetalgAlg",
+      "InDetTrackParticlesAlg",
+      "FrameworkAlg"
+    ],
+    "SiSPSeededPixelTracksDetailedTruthMakerAlg": [
+      "InDetSiSpTrackFinderPixelPrdAssociationAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg"
+    ],
+    "xAODMakerEventInfoCnvAlg": [
+      "FrameworkAlg"
+    ],
+    "GlobalEventTagBuilderAlg": [
+      "xAODMakerEventInfoCnvAlg",
+      "FrameworkAlg"
+    ],
+    "LUCIDDigitRawDataCnvAlg": [
+      "FrameworkAlg"
+    ],
+    "CaloClusterCellLinksUpdaterAlg": [
+      "LAr711NocorrClusterMakerAlg",
+      "CaloCellMakerFromClusterAlg",
+      "egammaAlg",
+      "InitializeMuonClustersAlg",
+      "TrackParticleCellAssociationAlg"
+    ],
+    "CaloCellMakerFromClusterAlg": [
+      "LAr711NocorrClusterMakerAlg",
+      "CaloCellMakerAlg",
+      "egammaAlg",
+      "InitializeMuonClustersAlg",
+      "TrackParticleCellAssociationAlg"
+    ],
+    "InDetAmbiguitySolverAlg": [
+      "InDetCaloClusterROISelectorAlg",
+      "InDetPixelClusterizationAlg",
+      "InDetSiSpTrackFinderAlg",
+      "FrameworkAlg"
+    ],
+    "InDetSiTrackerSpacePointFinderAlg": [],
+    "CombinedMuonTracksTruthAlg": [
+      "MuonCreatorAlg",
+      "CombinedMuonTracksSelectorAlg",
+      "GENAOD2xAODAlg"
+    ],
+    "METMakerAlgAntiKt4LCTopoAlg": [
+      "TauCoreBuilderAlg",
+      "MuonCreatorAlg",
+      "egammaAlg",
+      "jetalgAlg",
+      "METAssociationAlg"
+    ],
+    "ExtendedTracksPixelPrdAssociationTruthCollectionSelectorAlg": [
+      "ExtendedTracksPixelPrdAssociationDetailedTruthMakerAlg"
+    ],
+    "METReconstructionAlg": [
+      "MuonCreatorAlg",
+      "InDetPriVxFinderAlg",
+      "CaloCellMakerAlg",
+      "egammaAlg",
+      "CaloTopoClusterAlg",
+      "GENAOD2xAODAlg",
+      "InDetTrackParticlesAlg"
+    ],
+    "egammaAlg": [
+      "CaloTopoClusterAlg",
+      "InDetTrackParticlesAlg",
+      "FrameworkAlg",
+      "LArClusterMakerAlg"
+    ],
+    "CombinedInDetTracksDetailedTruthMakerAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "FrameworkAlg"
+    ],
+    "InDetExtensionProcessorAlg": [
+      "InDetAmbiguitySolverAlg",
+      "InDetCaloClusterROISelectorAlg",
+      "FrameworkAlg",
+      "InDetTRTExtensionAlg"
+    ],
+    "MuonSegmentMakerAlg": [
+      "MuonPRDMultiTruthMakerAlg",
+      "TgcRdoToTgcPrepDataAlg",
+      "CscRdoToCscPrepDataAlg",
+      "MdtRdoToMdtPrepDataAlg",
+      "RpcRdoToRpcPrepDataAlg",
+      "CscThresholdClusterBuilderAlg",
+      "FrameworkAlg"
+    ],
+    "ResolvedForwardTracksTruthCollectionSelectorAlg": [
+      "ResolvedForwardTracksDetailedTruthMakerAlg"
+    ],
+    "StreamESDAlg": [
+      "TgcRdoToTgcPrepDataAlg",
+      "InDetPixelClusterizationAlg",
+      "GlobalEventTagBuilderAlg",
+      "MdtRdoToMdtPrepDataAlg",
+      "InDetSCTClusterizationAlg",
+      "CscThresholdClusterBuilderAlg",
+      "InDetTRTRIOMakerAlg",
+      "FrameworkAlg"
+    ],
+    "EDtpIsoCentralAlg": [
+      "CaloTopoClusterAlg"
+    ],
+    "eflowVertextInformationSetterEMAlg": [
+      "eflowObjectBuilderEMAlg"
+    ],
+    "StreamAODAlg": [
+      "MuonSegmentCnvAlgNCBAlg",
+      "MuonTruthDecorationAlg",
+      "EDtpIsoForwardAlg",
+      "EDtpIsoCentralAlg",
+      "eflowObjectBuilderEMAlg",
+      "CaloCellMakerFromClusterAlg",
+      "egammaAlg",
+      "EDnpfIsoForwardAlg",
+      "EDnpfIsoCentralAlg",
+      "TauRecVariablesProcessorAlg",
+      "METReconstructionAlg",
+      "GENAOD2xAODAlg",
+      "egammaForwardAlg",
+      "InDetForwardTrackParticlesAlg",
+      "DiTauBuilderAlg",
+      "CaloCellMakerAlg",
+      "METMakerAlgAntiKt4EMTopoAlg",
+      "MSVertexRecoAlg",
+      "METMakerAlgAntiKt4EMPFlowAlg",
+      "jetalgAlg",
+      "EDpfIsoCentralAlg",
+      "InDetTrackParticlesAlg",
+      "MuonSegmentCnvAlg",
+      "InDetPixelPrdAssociationTrackParticlesAlg",
+      "MuonCreatorAlg",
+      "InDetPriVxFinderAlg",
+      "GlobalEventTagBuilderAlg",
+      "FinalizeMuonClustersAlg",
+      "CaloTopoClusterAlg",
+      "METMakerAlgAntiKt4LCTopoAlg",
+      "egammaTruthAssociationAlg",
+      "METAssociationAlg",
+      "InitializeMuonCaloEnergyAlg",
+      "EDpfIsoForwardAlg",
+      "FrameworkAlg",
+      "TauCoreBuilderAlg",
+      "StreamESDAlg",
+      "LArNoisyROAlg",
+      "MuonStandaloneTrackParticleCnvAlg",
+      "egammaFinalizeClustersAlg",
+      "RawInfoSummaryForTagWriterAlg",
+      "InitializeMuonClustersAlg",
+      "TauProcessorPi0EflowToolsAlg",
+      "StauCreatorAlg",
+      "TileLookForMuAlg",
+      "TrackParticleCellAssociationAlg"
+    ],
+    "StauCreatorAlg": [
+      "MuonCombinedMuonCandidateAlg",
+      "InitializeMuonClustersAlg",
+      "MuonCombinedInDetCandidateAlg"
+    ],
+    "EmTowerBldrAlg": [
+      "CaloCellMakerAlg",
+      "FrameworkAlg"
+    ],
+    "ExtendedTracksDetailedTruthMakerAlg": [
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetExtensionProcessorAlg",
+      "FrameworkAlg"
+    ],
+    "eflowCaloObjectBuilderEMAlg": [
+      "eflowEMCaloObjectBuilderAlg"
+    ],
+    "CombinedInDetTracksTruthCollectionSelectorAlg": [
+      "CombinedInDetTracksDetailedTruthMakerAlg"
+    ],
+    "InDetSegmentDriftCircleAssValidationAlg": [
+      "InDetTRTRIOMakerAlg",
+      "InDetTRTTrackSegmentsFinderAlg",
+      "InDetTRTPRDMultiTruthMakerAlg"
+    ],
+    "InDetExtensionProcessorPixelPrdAssociationAlg": [
+      "InDetTRTExtensionPixelPrdAssociationAlg",
+      "InDetAmbiguitySolverPixelPrdAssociationAlg"
+    ],
+    "EventCounterAlg": [],
+    "MuonCombinedMuonCandidateAlg": [
+      "xAODMakerEventInfoCnvAlg",
+      "MuonStandaloneTrackParticleCnvAlg"
+    ],
+    "InDetTRTPRDMultiTruthMakerAlg": [
+      "InDetTRTRIOMakerAlg",
+      "FrameworkAlg"
+    ],
+    "METMakerAlgAntiKt4EMTopoAlg": [
+      "TauCoreBuilderAlg",
+      "MuonCreatorAlg",
+      "egammaAlg",
+      "jetalgAlg",
+      "METAssociationAlg"
+    ],
+    "TgcRdoToTgcPrepDataAlg": [
+      "FrameworkAlg"
+    ],
+    "BcmCollisionTimeAlg": [
+      "FrameworkAlg"
+    ],
+    "eflowEMCaloObjectBuilderAlg": [
+      "MuonCreatorAlg",
+      "InDetTrackParticlesAlg",
+      "CaloTopoClusterAlg",
+      "egammaAlg"
+    ],
+    "ResolvedTracksDetailedTruthMakerAlg": [
+      "InDetAmbiguitySolverAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "FrameworkAlg"
+    ],
+    "InDetPixelPrdAssociationTrackParticlesAlg": [
+      "GENAOD2xAODAlg",
+      "InDetTrackCollectionMergerpixAlg",
+      "PixelPrdAssociationTracksTruthCollectionSelectorAlg"
+    ],
+    "MuGirlStauAlg": [
+      "MuonCombinedInDetCandidateAlg",
+      "MuonInsideOutRecoAlg"
+    ],
+    "egammaTrackSlimmerAlg": [
+      "egammaAlg"
+    ],
+    "InDetPixelClusterizationAlg": [
+      "FrameworkAlg"
+    ],
+    "PixelPrdAssociationTracksTruthCollectionSelectorAlg": [
+      "PixelPrdAssociationTracksDetailedTruthMakerAlg"
+    ],
+    "egammaForwardAlg": [
+      "CaloTopoClusterAlg"
+    ],
+    "GENAOD2xAODAlg": [
+      "McAodBuilderAlg",
+      "FrameworkAlg"
+    ],
+    "DiTauBuilderAlg": [
+      "jetalgAlg"
+    ],
+    "METAssociationAlg": [
+      "TauCoreBuilderAlg",
+      "MuonCreatorAlg",
+      "InDetPriVxFinderAlg",
+      "eflowObjectBuilderEMAlg",
+      "egammaAlg",
+      "jetalgAlg",
+      "CaloTopoClusterAlg",
+      "InDetTrackParticlesAlg",
+      "FrameworkAlg"
+    ],
+    "EDpfIsoForwardAlg": [
+      "EDpfIsoCentralAlg"
+    ],
+    "ResolvedPixelPrdAssociationTracksTruthCollectionSelectorAlg": [
+      "ResolvedPixelPrdAssociationTracksDetailedTruthMakerAlg"
+    ],
+    "ResolvedTracksTruthCollectionSelectorAlg": [
+      "ResolvedTracksDetailedTruthMakerAlg"
+    ],
+    "ResolvedTRTSeededTracksTruthCollectionSelectorAlg": [
+      "ResolvedTRTSeededTracksDetailedTruthMakerAlg"
+    ],
+    "TauPi0SubtractedClusterMakerAlg": [
+      "TauCoreBuilderAlg",
+      "FrameworkAlg"
+    ],
+    "CscRdoToCscPrepDataAlg": [
+      "FrameworkAlg"
+    ],
+    "LArNoisyROAlg": [
+      "CaloCellMakerAlg"
+    ],
+    "EDtpIsoForwardAlg": [
+      "EDtpIsoCentralAlg"
+    ],
+    "InDetAmbiguitySolverPixelPrdAssociationAlg": [
+      "InDetPixelClusterizationAlg",
+      "InDetSiSpTrackFinderPixelPrdAssociationAlg"
+    ],
+    "BeamBackgroundFillerAlg": [
+      "MuonSegmentMakerAlg",
+      "jetalgAlg",
+      "MuonSegmentMakerNCBAlg",
+      "CaloTopoClusterAlg"
+    ],
+    "InDetTRTonlyPRDAssociationAlg": [
+      "InDetTRTSeededAmbiguitySolverAlg",
+      "InDetPixelClusterizationAlg",
+      "InDetExtensionProcessorAlg"
+    ],
+    "PixelPrdAssociationTracksDetailedTruthMakerAlg": [
+      "InDetTrackCollectionMergerpixAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetTRTPRDMultiTruthMakerAlg"
+    ],
+    "MSVertexRecoAlg": [
+      "MdtRdoToMdtPrepDataAlg"
+    ],
+    "TrackParticleCellAssociationAlg": [
+      "InDetTrackParticlesAlg",
+      "FrameworkAlg"
+    ],
+    "TRTSeededTracksTruthCollectionSelectorAlg": [
+      "TRTSeededTracksDetailedTruthMakerAlg"
+    ],
+    "TrackTruthCollectionSelectorAlg": [
+      "DetailedTrackTruthMakerAlg"
+    ],
+    "InitializeMuonClustersAlg": [
+      "FrameworkAlg"
+    ],
+    "InDetPRDMultiTruthMakerSiAlg": [
+      "FrameworkAlg"
+    ],
+    "MuonCaloTagAlg": [
+      "MuonCombinedInDetCandidateAlg",
+      "InDetPriVxFinderAlg",
+      "CaloCellMakerAlg",
+      "MuonCombinedAlg",
+      "InDetTrackParticlesAlg"
+    ],
+    "FrameworkAlg": [],
+    "InDetTRTExtensionPixelPrdAssociationAlg": [
+      "InDetAmbiguitySolverPixelPrdAssociationAlg",
+      "InDetTRTRIOMakerAlg"
+    ],
+    "LArClusterMakerAlg": [
+      "EmTowerBldrAlg",
+      "CaloCellMakerAlg",
+      "FrameworkAlg"
+    ],
+    "MuPatTrackBuilderAlg": [
+      "TgcRdoToTgcPrepDataAlg",
+      "MdtRdoToMdtPrepDataAlg",
+      "MuonSegmentMakerAlg"
+    ],
+    "CaloClusterTopoEM430GetterAlg": [
+      "CaloCellMakerAlg",
+      "FrameworkAlg"
+    ],
+    "MuonTruthAssociationAlg": [
+      "MuonCreatorAlg",
+      "MuonTruthDecorationAlg"
+    ],
+    "SiSPSeededTracksDetailedTruthMakerAlg": [
+      "InDetTRTPRDMultiTruthMakerAlg",
+      "InDetPRDMultiTruthMakerSiAlg",
+      "InDetSiSpTrackFinderAlg",
+      "FrameworkAlg"
+    ],
+    "MuonCombinedAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "MuonCombinedInDetCandidateAlg",
+      "TgcRdoToTgcPrepDataAlg",
+      "CscRdoToCscPrepDataAlg",
+      "MdtRdoToMdtPrepDataAlg",
+      "CaloCellMakerAlg",
+      "MuonCombinedMuonCandidateAlg",
+      "RpcRdoToRpcPrepDataAlg",
+      "CscThresholdClusterBuilderAlg",
+      "FrameworkAlg"
+    ],
+    "MuonCreatorAlg": [
+      "InDetTrackCollectionMergerAlg",
+      "MuonCombinedInDetCandidateAlg",
+      "MdtRdoToMdtPrepDataAlg",
+      "CaloCellMakerAlg",
+      "MuonCombinedAlg",
+      "MuonCombinedMuonCandidateAlg",
+      "InitializeMuonClustersAlg",
+      "xAODMakerEventInfoCnvAlg",
+      "MuonSegmentCnvAlg"
+    ],
+    "InDetTRTStandaloneTrackFinderAlg": [],
+    "MuonInsideOutRecoAlg": [
+      "TgcRdoToTgcPrepDataAlg",
+      "MuonCombinedInDetCandidateAlg",
+      "MdtRdoToMdtPrepDataAlg",
+      "MuonCombinedAlg",
+      "RpcRdoToRpcPrepDataAlg",
+      "CscThresholdClusterBuilderAlg"
+    ],
+    "_out": [
+      "InDetBCMZeroSuppressionAlg",
+      "egammaTrackSlimmerAlg",
+      "MuonTCLinksAlg",
+      "InDetSegmentPRDAssociationAlg",
+      "CaloClusterTopoEM430GetterAlg",
+      "TrackRecordFilterMuonExitLayerAlg",
+      "MuGirlStauAlg",
+      "MuonTruthAssociationAlg",
+      "eflowVertextInformationSetterEMAlg",
+      "InDetTrackClusterAssValidationAlg",
+      "CombinedMuonTracksTruthAlg",
+      "MuonCaloTagAlg",
+      "JetTrackAlgforDiTausAlg",
+      "ExtrapolatedMuonTracksTruthAlg",
+      "egLockerAlg",
+      "IsolationBuilderAlg",
+      "AllExecutedEventsAlg",
+      "MuonSegmentTagAlg",
+      "InDetCopyAlg",
+      "CaloCluster2xAODAlg",
+      "InDetPRDAssociationPixelPrdAssociationAlg",
+      "InDetLowBetaTrkAlgorithmAlg",
+      "MuonSegmentTruthAssociationAlg",
+      "eflowOverlapRemovalEMAlg",
+      "TauPi0SubtractedClusterMakerAlg",
+      "MakeInputDataHeaderESDAlg",
+      "LArAffectedRegionAlg",
+      "InDetSegmentDriftCircleAssValidationAlg",
+      "EventCounterAlg",
+      "BackgroundWordFillerAlg",
+      "InDetPRDAssociationForwardTracksAlg",
+      "InDetTRTonlyPRDAssociationAlg",
+      "LUCIDDigitRawDataCnvAlg",
+      "JobInfoAlg",
+      "eflowCaloObjectBuilderEMAlg",
+      "CreateLumiBlockCollectionFromFileAlg",
+      "CaloClusterCellLinksUpdaterAlg",
+      "InDetRecStatisticsAlg",
+      "MuonSpectrometerTracksTruthAlg",
+      "StreamAODAlg",
+      "InDetVxLinkSetterAlg"
+    ]
+  },
+  "moduleDeclarations": {
+    "AllExecutedEventsAlg": "SimCPU",
+    "MakeInputDataHeaderESDAlg": "SimCPU",
+    "InDetTRTRIOMakerAlg": "SimCPU",
+    "LArCollisionTimeAlg": "SimCPU",
+    "EDnpfIsoForwardAlg": "SimCPU",
+    "MuonStandaloneDetailedTrackTruthMakerAlg": "SimCPU",
+    "TRTStandaloneTracksTruthCollectionSelectorAlg": "SimCPU",
+    "RpcRdoToRpcPrepDataAlg": "SimCPU",
+    "MuonSpectrometerTracksSelectorAlg": "SimCPU",
+    "MuonSegmentMakerNCBAlg": "SimCPU",
+    "InDetTRTTrackSegmentsFinderAlg": "SimCPU",
+    "InDetTrackClusterAssValidationAlg": "SimCPU",
+    "CscThresholdClusterBuilderAlg": "SimCPU",
+    "FinalizeMuonClustersAlg": "SimCPU",
+    "SiSPSeededTracksTruthCollectionSelectorAlg": "SimCPU",
+    "jetalgAlg": "SimCPU",
+    "MuonTruthDecorationAlg": "SimCPU",
+    "TrackRecordFilterMuonExitLayerAlg": "SimCPU",
+    "InDetCopyAlg": "SimCPU",
+    "ExtrapolatedMuonTracksTruthAlg": "SimCPU",
+    "ResolvedTRTSeededTracksDetailedTruthMakerAlg": "SimCPU",
+    "ExtrapolatedMuonTracksSelectorAlg": "SimCPU",
+    "EDpfIsoCentralAlg": "SimCPU",
+    "InDetSCTClusterizationAlg": "SimCPU",
+    "DetailedTrackTruthMakerAlg": "SimCPU",
+    "ResolvedForwardTracksDetailedTruthMakerAlg": "SimCPU",
+    "TileLookForMuAlg": "SimCPU",
+    "JetTrackAlgforDiTausAlg": "SimCPU",
+    "InDetTRTSeededTrackFinderAlg": "SimCPU",
+    "InDetSegmentPRDAssociationAlg": "SimCPU",
+    "EDnpfIsoCentralAlg": "SimCPU",
+    "JobInfoAlg": "SimCPU",
+    "RawInfoSummaryForTagWriterAlg": "SimCPU",
+    "InDetAmbiguitySolverForwardTracksAlg": "SimCPU",
+    "CaloCellMakerAlg": "SimCPU",
+    "LAr711NocorrClusterMakerAlg": "SimCPU",
+    "InDetForwardTrackParticlesAlg": "SimCPU",
+    "LArAffectedRegionAlg": "SimCPU",
+    "MuonTCLinksAlg": "SimCPU",
+    "MuonSpectrometerTracksTruthAlg": "SimCPU",
+    "egammaFinalizeClustersAlg": "SimCPU",
+    "InDetCaloClusterROISelectorAlg": "SimCPU",
+    "InDetTRTExtensionAlg": "SimCPU",
+    "TrackRecordFilterAlg": "SimCPU",
+    "egLockerAlg": "SimCPU",
+    "InDetSiSpTrackFinderForwardTracksAlg": "SimCPU",
+    "MuonStandaloneTrackParticleCnvAlg": "SimCPU",
+    "ExtendedTracksPixelPrdAssociationDetailedTruthMakerAlg": "SimCPU",
+    "InDetSiSpTrackFinderAlg": "SimCPU",
+    "InDetVxLinkSetterAlg": "SimCPU",
+    "InDetPriVxFinderAlg": "SimCPU",
+    "MuonSegmentCnvAlg": "SimCPU",
+    "IsolationBuilderAlg": "SimCPU",
+    "MuonPRDMultiTruthMakerAlg": "SimCPU",
+    "InDetBCMZeroSuppressionAlg": "SimCPU",
+    "TRTStandaloneTracksDetailedTruthMakerAlg": "SimCPU",
+    "CombinedMuonTracksSelectorAlg": "SimCPU",
+    "InDetLowBetaTrkAlgorithmAlg": "SimCPU",
+    "MuonCombinedDetailedTrackTruthMakerAlg": "SimCPU",
+    "TauProcessorPi0EflowToolsAlg": "SimCPU",
+    "McAodBuilderAlg": "SimCPU",
+    "MuonSegmentCnvAlgNCBAlg": "SimCPU",
+    "InDetPRDAssociationPixelPrdAssociationAlg": "SimCPU",
+    "BackgroundWordFillerAlg": "SimCPU",
+    "egammaTruthAssociationAlg": "SimCPU",
+    "TauRecVariablesProcessorAlg": "SimCPU",
+    "eflowObjectBuilderEMAlg": "SimCPU",
+    "InDetPRDAssociationForwardTracksAlg": "SimCPU",
+    "MuonCombinedInDetCandidateAlg": "SimCPU",
+    "MBTSTimeDiffEventInfoAlg": "SimCPU",
+    "InDetCosmicsEventPhaseAlg": "SimCPU",
+    "InDetTrackParticlesAlg": "SimCPU",
+    "InitializeMuonCaloEnergyAlg": "SimCPU",
+    "SiSpSeededForwardTracksDetailedTruthMakerAlg": "SimCPU",
+    "MdtRdoToMdtPrepDataAlg": "SimCPU",
+    "SiSPSeededPixelTracksTruthCollectionSelectorAlg": "SimCPU",
+    "InDetTrackCollectionMergerpixAlg": "SimCPU",
+    "ResolvedPixelPrdAssociationTracksDetailedTruthMakerAlg": "SimCPU",
+    "InDetTRTSeededAmbiguitySolverAlg": "SimCPU",
+    "MuonSegmentTagAlg": "SimCPU",
+    "ExtendedTracksTruthCollectionSelectorAlg": "SimCPU",
+    "TRTSeededTracksDetailedTruthMakerAlg": "SimCPU",
+    "JetTrackAlgforTausAlg": "SimCPU",
+    "InDetSiSpTrackFinderPixelPrdAssociationAlg": "SimCPU",
+    "MuonSegmentTruthAssociationAlg": "SimCPU",
+    "CaloTopoClusterAlg": "SimCPU",
+    "CaloCluster2xAODAlg": "SimCPU",
+    "SiSpSeededForwardTracksTruthCollectionSelectorAlg": "SimCPU",
+    "CreateLumiBlockCollectionFromFileAlg": "SimCPU",
+    "InDetTrackCollectionMergerAlg": "SimCPU",
+    "METMakerAlgAntiKt4EMPFlowAlg": "SimCPU",
+    "InDetRecStatisticsAlg": "SimCPU",
+    "eflowOverlapRemovalEMAlg": "SimCPU",
+    "TauCoreBuilderAlg": "SimCPU",
+    "SiSPSeededPixelTracksDetailedTruthMakerAlg": "SimCPU",
+    "xAODMakerEventInfoCnvAlg": "SimCPU",
+    "GlobalEventTagBuilderAlg": "SimCPU",
+    "LUCIDDigitRawDataCnvAlg": "SimCPU",
+    "CaloClusterCellLinksUpdaterAlg": "SimCPU",
+    "CaloCellMakerFromClusterAlg": "SimCPU",
+    "InDetAmbiguitySolverAlg": "SimCPU",
+    "InDetSiTrackerSpacePointFinderAlg": "SimCPU",
+    "CombinedMuonTracksTruthAlg": "SimCPU",
+    "METMakerAlgAntiKt4LCTopoAlg": "SimCPU",
+    "ExtendedTracksPixelPrdAssociationTruthCollectionSelectorAlg": "SimCPU",
+    "METReconstructionAlg": "SimCPU",
+    "egammaAlg": "SimCPU",
+    "CombinedInDetTracksDetailedTruthMakerAlg": "SimCPU",
+    "InDetExtensionProcessorAlg": "SimCPU",
+    "MuonSegmentMakerAlg": "SimCPU",
+    "ResolvedForwardTracksTruthCollectionSelectorAlg": "SimCPU",
+    "StreamESDAlg": "SimCPU",
+    "EDtpIsoCentralAlg": "SimCPU",
+    "eflowVertextInformationSetterEMAlg": "SimCPU",
+    "StreamAODAlg": "SimCPU",
+    "StauCreatorAlg": "SimCPU",
+    "EmTowerBldrAlg": "SimCPU",
+    "ExtendedTracksDetailedTruthMakerAlg": "SimCPU",
+    "eflowCaloObjectBuilderEMAlg": "SimCPU",
+    "CombinedInDetTracksTruthCollectionSelectorAlg": "SimCPU",
+    "InDetSegmentDriftCircleAssValidationAlg": "SimCPU",
+    "InDetExtensionProcessorPixelPrdAssociationAlg": "SimCPU",
+    "EventCounterAlg": "SimCPU",
+    "MuonCombinedMuonCandidateAlg": "SimCPU",
+    "InDetTRTPRDMultiTruthMakerAlg": "SimCPU",
+    "METMakerAlgAntiKt4EMTopoAlg": "SimCPU",
+    "TgcRdoToTgcPrepDataAlg": "SimCPU",
+    "BcmCollisionTimeAlg": "SimCPU",
+    "eflowEMCaloObjectBuilderAlg": "SimCPU",
+    "ResolvedTracksDetailedTruthMakerAlg": "SimCPU",
+    "InDetPixelPrdAssociationTrackParticlesAlg": "SimCPU",
+    "MuGirlStauAlg": "SimCPU",
+    "egammaTrackSlimmerAlg": "SimCPU",
+    "InDetPixelClusterizationAlg": "SimCPU",
+    "PixelPrdAssociationTracksTruthCollectionSelectorAlg": "SimCPU",
+    "egammaForwardAlg": "SimCPU",
+    "GENAOD2xAODAlg": "SimCPU",
+    "DiTauBuilderAlg": "SimCPU",
+    "METAssociationAlg": "SimCPU",
+    "EDpfIsoForwardAlg": "SimCPU",
+    "ResolvedPixelPrdAssociationTracksTruthCollectionSelectorAlg": "SimCPU",
+    "ResolvedTracksTruthCollectionSelectorAlg": "SimCPU",
+    "ResolvedTRTSeededTracksTruthCollectionSelectorAlg": "SimCPU",
+    "TauPi0SubtractedClusterMakerAlg": "SimCPU",
+    "CscRdoToCscPrepDataAlg": "SimCPU",
+    "LArNoisyROAlg": "SimCPU",
+    "EDtpIsoForwardAlg": "SimCPU",
+    "InDetAmbiguitySolverPixelPrdAssociationAlg": "SimCPU",
+    "BeamBackgroundFillerAlg": "SimCPU",
+    "InDetTRTonlyPRDAssociationAlg": "SimCPU",
+    "PixelPrdAssociationTracksDetailedTruthMakerAlg": "SimCPU",
+    "MSVertexRecoAlg": "SimCPU",
+    "TrackParticleCellAssociationAlg": "SimCPU",
+    "TRTSeededTracksTruthCollectionSelectorAlg": "SimCPU",
+    "TrackTruthCollectionSelectorAlg": "SimCPU",
+    "InitializeMuonClustersAlg": "SimCPU",
+    "InDetPRDMultiTruthMakerSiAlg": "SimCPU",
+    "MuonCaloTagAlg": "SimCPU",
+    "FrameworkAlg": "SimCPU",
+    "InDetTRTExtensionPixelPrdAssociationAlg": "SimCPU",
+    "LArClusterMakerAlg": "SimCPU",
+    "MuPatTrackBuilderAlg": "SimCPU",
+    "CaloClusterTopoEM430GetterAlg": "SimCPU",
+    "MuonTruthAssociationAlg": "SimCPU",
+    "SiSPSeededTracksDetailedTruthMakerAlg": "SimCPU",
+    "MuonCombinedAlg": "SimCPU",
+    "MuonCreatorAlg": "SimCPU",
+    "InDetTRTStandaloneTrackFinderAlg": "SimCPU",
+    "MuonInsideOutRecoAlg": "SimCPU"
+  },
+  "moduleDefinitions": {
+    "AllExecutedEventsAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MakeInputDataHeaderESDAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTRIOMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            164000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "LArCollisionTimeAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EDnpfIsoForwardAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonStandaloneDetailedTrackTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TRTStandaloneTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "RpcRdoToRpcPrepDataAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSpectrometerTracksSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSegmentMakerNCBAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTTrackSegmentsFinderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTrackClusterAssValidationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            36700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CscThresholdClusterBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1669999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "FinalizeMuonClustersAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "SiSPSeededTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "jetalgAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            761000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonTruthDecorationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            3670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TrackRecordFilterMuonExitLayerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetCopyAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ExtrapolatedMuonTracksTruthAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedTRTSeededTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1669999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ExtrapolatedMuonTracksSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EDpfIsoCentralAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            11000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetSCTClusterizationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            50700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "DetailedTrackTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            15000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedForwardTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            3000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TileLookForMuAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "JetTrackAlgforDiTausAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTSeededTrackFinderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            6000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetSegmentPRDAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            7000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EDnpfIsoCentralAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "JobInfoAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "RawInfoSummaryForTagWriterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            5000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetAmbiguitySolverForwardTracksAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            49300000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CaloCellMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            176000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "LAr711NocorrClusterMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            666000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetForwardTrackParticlesAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "LArAffectedRegionAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonTCLinksAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSpectrometerTracksTruthAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "egammaFinalizeClustersAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetCaloClusterROISelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTExtensionAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            137000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TrackRecordFilterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            11699999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "egLockerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetSiSpTrackFinderForwardTracksAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            48000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonStandaloneTrackParticleCnvAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ExtendedTracksPixelPrdAssociationDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetSiSpTrackFinderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1260000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetVxLinkSetterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            666000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetPriVxFinderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            31700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSegmentCnvAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "IsolationBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            8330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonPRDMultiTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            4000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetBCMZeroSuppressionAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            11000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TRTStandaloneTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CombinedMuonTracksSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetLowBetaTrkAlgorithmAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonCombinedDetailedTrackTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TauProcessorPi0EflowToolsAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "McAodBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            39000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSegmentCnvAlgNCBAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetPRDAssociationPixelPrdAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            7000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "BackgroundWordFillerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "egammaTruthAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TauRecVariablesProcessorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            9330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "eflowObjectBuilderEMAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            70700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetPRDAssociationForwardTracksAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            6330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonCombinedInDetCandidateAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MBTSTimeDiffEventInfoAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetCosmicsEventPhaseAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            6330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTrackParticlesAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            29000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InitializeMuonCaloEnergyAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "SiSpSeededForwardTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MdtRdoToMdtPrepDataAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            5670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "SiSPSeededPixelTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTrackCollectionMergerpixAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedPixelPrdAssociationTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTSeededAmbiguitySolverAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSegmentTagAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            74299999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ExtendedTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TRTSeededTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            3000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "JetTrackAlgforTausAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetSiSpTrackFinderPixelPrdAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            88000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSegmentTruthAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CaloTopoClusterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            83300000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CaloCluster2xAODAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "SiSpSeededForwardTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CreateLumiBlockCollectionFromFileAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTrackCollectionMergerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            68000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "METMakerAlgAntiKt4EMPFlowAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            666000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetRecStatisticsAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            32000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "eflowOverlapRemovalEMAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TauCoreBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            79000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "SiSPSeededPixelTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "xAODMakerEventInfoCnvAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            8000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "GlobalEventTagBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "LUCIDDigitRawDataCnvAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CaloClusterCellLinksUpdaterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CaloCellMakerFromClusterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            3000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetAmbiguitySolverAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1070000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetSiTrackerSpacePointFinderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            45300000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CombinedMuonTracksTruthAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "METMakerAlgAntiKt4LCTopoAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ExtendedTracksPixelPrdAssociationTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "METReconstructionAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            19000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "egammaAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            3670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CombinedInDetTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            15699999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetExtensionProcessorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            783000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonSegmentMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            32700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedForwardTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "StreamESDAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2140000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EDtpIsoCentralAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1669999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "eflowVertextInformationSetterEMAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "StreamAODAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            118000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "StauCreatorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EmTowerBldrAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            8330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ExtendedTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            12700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "eflowCaloObjectBuilderEMAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            15699999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CombinedInDetTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetSegmentDriftCircleAssValidationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            10700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetExtensionProcessorPixelPrdAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EventCounterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonCombinedMuonCandidateAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            19300000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTPRDMultiTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            28700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "METMakerAlgAntiKt4EMTopoAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            3000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TgcRdoToTgcPrepDataAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            6670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "BcmCollisionTimeAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "eflowEMCaloObjectBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            154000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            6670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetPixelPrdAssociationTrackParticlesAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            666000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuGirlStauAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            52700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "egammaTrackSlimmerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetPixelClusterizationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            404000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "PixelPrdAssociationTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "egammaForwardAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "GENAOD2xAODAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            16000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "DiTauBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            666000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "METAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            14000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EDpfIsoForwardAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedPixelPrdAssociationTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "ResolvedTRTSeededTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TauPi0SubtractedClusterMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CscRdoToCscPrepDataAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            326000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "LArNoisyROAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "EDtpIsoForwardAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            667000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetAmbiguitySolverPixelPrdAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            4330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "BeamBackgroundFillerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTonlyPRDAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            6330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "PixelPrdAssociationTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MSVertexRecoAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            4000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TrackParticleCellAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            2330000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TRTSeededTracksTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "TrackTruthCollectionSelectorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InitializeMuonClustersAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetPRDMultiTruthMakerSiAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            29000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonCaloTagAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            6670000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "FrameworkAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTExtensionPixelPrdAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "LArClusterMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1669999
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuPatTrackBuilderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            33700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "CaloClusterTopoEM430GetterAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonTruthAssociationAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            333000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "SiSPSeededTracksDetailedTruthMakerAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            16700000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonCombinedAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            1020000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonCreatorAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            13000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "InDetTRTStandaloneTrackFinderAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            0
+          ],
+          "unit": "ns"
+        }
+      ]
+    },
+    "MuonInsideOutRecoAlg": {
+      "produce": [
+        {
+          "name": "cpu",
+          "values": [
+            173000000
+          ],
+          "unit": "ns"
+        }
+      ]
+    }
+  }
+}
