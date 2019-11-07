@@ -34,6 +34,11 @@ options.register('generic',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.string,
                  "Generic application variant (no default)")
+options.register('genericOrdered',
+                 0,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.int,
+                 "Should the generic DAG be run in order (1) or unordered (0, default)")
 options.register('gpuExternalWork',
                  0,
                  VarParsing.VarParsing.multiplicity.singleton,
@@ -123,6 +128,8 @@ options.parseArguments()
 
 if options.variant not in [0,1,2,3,4,5,6,7,99]:
     raise Exception("Incorrect variant value %d, can be 1,2,3,4,5" % options.variant)
+if options.genericOrdered not in [0, 1]:
+    raise Exception("genericOrdered should be 0 or 1, got %d" % options.genericOrdered)
 if options.gpuExternalWork not in [0, 1]:
     raise Exception("gpuExternalWork should be 0 or 1, got %d" % options.gpuExternalWork)
 if options.mean not in [0, 1]:
@@ -505,7 +512,7 @@ elif options.variant == 99:
         if modName == "_out":
             continue
         getattr(process, modName).srcs = [str(x) for x in inputs]
-    if False:
+    if options.genericOrdered == 1:
         process.s = cms.Sequence()
         for modName in config["moduleSequence"]:
             process.s += getattr(process, modName)
