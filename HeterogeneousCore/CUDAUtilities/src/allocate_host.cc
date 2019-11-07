@@ -12,6 +12,20 @@ namespace {
 }
 
 namespace cudautils {
+  void *allocate_host(size_t nbytes) {
+    void *ptr = nullptr;
+    if constexpr (cudautils::allocator::useCaching) {
+      if (UNLIKELY(nbytes > maxAllocationSize)) {
+        throw std::runtime_error("Tried to allocate " + std::to_string(nbytes) +
+                                 " bytes, but the allocator maximum is " + std::to_string(maxAllocationSize));
+      }
+      cuda::throw_if_error(cudautils::allocator::getCachingHostAllocator().HostAllocate(&ptr, nbytes, false));
+    } else {
+      cuda::throw_if_error(cudaMallocHost(&ptr, nbytes));
+    }
+    return ptr;
+  }
+
   void *allocate_host(size_t nbytes, cuda::stream_t<> &stream) {
     void *ptr = nullptr;
     if constexpr (cudautils::allocator::useCaching) {
@@ -19,7 +33,7 @@ namespace cudautils {
         throw std::runtime_error("Tried to allocate " + std::to_string(nbytes) +
                                  " bytes, but the allocator maximum is " + std::to_string(maxAllocationSize));
       }
-      cuda::throw_if_error(cudautils::allocator::getCachingHostAllocator().HostAllocate(&ptr, nbytes, stream.id()));
+      cuda::throw_if_error(cudautils::allocator::getCachingHostAllocator().HostAllocate(&ptr, nbytes, true, stream.id()));
     } else {
       cuda::throw_if_error(cudaMallocHost(&ptr, nbytes));
     }

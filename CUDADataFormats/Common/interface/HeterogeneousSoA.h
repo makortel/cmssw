@@ -55,29 +55,19 @@ namespace cudaCompat {
     template <typename T>
     using unique_ptr = cudautils::device::unique_ptr<T>;
 
-    template <typename T>
-    static auto make_unique(cuda::stream_t<> &stream) {
-      return cudautils::make_device_unique<T>(stream);
+    template <typename T, typename... Args>
+    static auto make_unique(Args&&... args) {
+      return cudautils::make_device_unique<T>(std::forward<Args>(args)...); 
     }
 
-    template <typename T>
-    static auto make_unique(size_t size, cuda::stream_t<> &stream) {
-      return cudautils::make_device_unique<T>(size, stream);
+    template <typename T, typename... Args>
+    static auto make_host_unique(Args&&... args) {
+      return cudautils::make_host_unique<T>(std::forward<Args>(args)...);
     }
 
-    template <typename T>
-    static auto make_host_unique(cuda::stream_t<> &stream) {
-      return cudautils::make_host_unique<T>(stream);
-    }
-
-    template <typename T>
-    static auto make_device_unique(cuda::stream_t<> &stream) {
-      return cudautils::make_device_unique<T>(stream);
-    }
-
-    template <typename T>
-    static auto make_device_unique(size_t size, cuda::stream_t<> &stream) {
-      return cudautils::make_device_unique<T>(size, stream);
+    template <typename T, typename... Args>
+    static auto make_device_unique(Args&&... args) {
+      return cudautils::make_device_unique<T>(std::forward<Args>(args)...);
     }
   };
 
@@ -85,24 +75,19 @@ namespace cudaCompat {
     template <typename T>
     using unique_ptr = cudautils::host::unique_ptr<T>;
 
-    template <typename T>
-    static auto make_unique(cuda::stream_t<> &stream) {
-      return cudautils::make_host_unique<T>(stream);
+    template <typename T, typename... Args>
+    static auto make_unique(Args&&... args) {
+      return cudautils::make_host_unique<T>(std::forward<Args>(args)...);
     }
 
-    template <typename T>
-    static auto make_host_unique(cuda::stream_t<> &stream) {
-      return cudautils::make_host_unique<T>(stream);
+    template <typename T, typename... Args>
+    static auto make_host_unique(Args&&... args) {
+      return cudautils::make_host_unique<T>(std::forward<Args>(args)...);
     }
 
-    template <typename T>
-    static auto make_device_unique(cuda::stream_t<> &stream) {
-      return cudautils::make_device_unique<T>(stream);
-    }
-
-    template <typename T>
-    static auto make_device_unique(size_t size, cuda::stream_t<> &stream) {
-      return cudautils::make_device_unique<T>(size, stream);
+    template <typename T, typename... Args>
+    static auto make_device_unique(Args&&... args) {
+      return cudautils::make_device_unique<T>(std::forward<Args>(args)...);
     }
   };
 
@@ -111,25 +96,45 @@ namespace cudaCompat {
     using unique_ptr = std::unique_ptr<T>;
 
     template <typename T>
+    static auto make_unique() {
+      return std::make_unique<T>();
+    }
+    template <typename T>
     static auto make_unique(cuda::stream_t<> &) {
       return std::make_unique<T>();
     }
 
+    template <typename T>
+    static auto make_unique(size_t size) {
+      return std::make_unique<T>(size);
+    }
     template <typename T>
     static auto make_unique(size_t size, cuda::stream_t<> &) {
       return std::make_unique<T>(size);
     }
 
     template <typename T>
+    static auto make_host_unique() {
+      return std::make_unique<T>();
+    }
+    template <typename T>
     static auto make_host_unique(cuda::stream_t<> &) {
       return std::make_unique<T>();
     }
 
     template <typename T>
+    static auto make_device_unique() {
+      return std::make_unique<T>();
+    }
+    template <typename T>
     static auto make_device_unique(cuda::stream_t<> &) {
       return std::make_unique<T>();
     }
 
+    template <typename T>
+    static auto make_device_unique(size_t size) {
+      return std::make_unique<T>(size);
+    }
     template <typename T>
     static auto make_device_unique(size_t size, cuda::stream_t<> &) {
       return std::make_unique<T>(size);
@@ -145,13 +150,12 @@ public:
   template <typename V>
   using unique_ptr = typename Traits::template unique_ptr<V>;
 
-  HeterogeneousSoAImpl() = default;  // make root happy
+  HeterogeneousSoAImpl();
   ~HeterogeneousSoAImpl() = default;
   HeterogeneousSoAImpl(HeterogeneousSoAImpl &&) = default;
   HeterogeneousSoAImpl &operator=(HeterogeneousSoAImpl &&) = default;
 
   explicit HeterogeneousSoAImpl(unique_ptr<T> &&p) : m_ptr(std::move(p)) {}
-  explicit HeterogeneousSoAImpl(cuda::stream_t<> &stream);
 
   T const *get() const { return m_ptr.get(); }
 
@@ -164,8 +168,8 @@ private:
 };
 
 template <typename T, typename Traits>
-HeterogeneousSoAImpl<T, Traits>::HeterogeneousSoAImpl(cuda::stream_t<> &stream) {
-  m_ptr = Traits::template make_unique<T>(stream);
+HeterogeneousSoAImpl<T, Traits>::HeterogeneousSoAImpl() {
+  m_ptr = Traits::template make_unique<T>();
 }
 
 // in reality valid only for GPU version...

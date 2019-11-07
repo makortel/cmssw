@@ -12,6 +12,22 @@ namespace {
 }
 
 namespace cudautils {
+  void *allocate_device(int dev, size_t nbytes) {
+    void *ptr = nullptr;
+    if constexpr (cudautils::allocator::useCaching) {
+      if (UNLIKELY(nbytes > maxAllocationSize)) {
+        throw std::runtime_error("Tried to allocate " + std::to_string(nbytes) +
+                                 " bytes, but the allocator maximum is " + std::to_string(maxAllocationSize));
+      }
+      cuda::throw_if_error(
+          cudautils::allocator::getCachingDeviceAllocator().DeviceAllocate(dev, &ptr, nbytes, false));
+    } else {
+      cuda::device::current::scoped_override_t<> setDeviceForThisScope(dev);
+      cuda::throw_if_error(cudaMalloc(&ptr, nbytes));
+    }
+    return ptr;
+  }
+
   void *allocate_device(int dev, size_t nbytes, cuda::stream_t<> &stream) {
     void *ptr = nullptr;
     if constexpr (cudautils::allocator::useCaching) {
@@ -20,7 +36,7 @@ namespace cudautils {
                                  " bytes, but the allocator maximum is " + std::to_string(maxAllocationSize));
       }
       cuda::throw_if_error(
-          cudautils::allocator::getCachingDeviceAllocator().DeviceAllocate(dev, &ptr, nbytes, stream.id()));
+                           cudautils::allocator::getCachingDeviceAllocator().DeviceAllocate(dev, &ptr, nbytes, true, stream.id()));
     } else {
       cuda::device::current::scoped_override_t<> setDeviceForThisScope(dev);
       cuda::throw_if_error(cudaMalloc(&ptr, nbytes));
