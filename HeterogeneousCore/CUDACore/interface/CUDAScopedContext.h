@@ -9,6 +9,7 @@
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextState.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/SharedStreamPtr.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/SharedEventPtr.h"
 
 #include <cuda/api_wrappers.h>
 
@@ -177,12 +178,12 @@ private:
   friend class cudatest::TestCUDAScopedContext;
 
   // This construcor is only meant for testing
-  explicit CUDAScopedContextProduce(int device, cudautils::SharedStreamPtr stream, std::unique_ptr<cuda::event_t> event)
+  explicit CUDAScopedContextProduce(int device, cudautils::SharedStreamPtr stream, cudautils::SharedEventPtr event)
       : CUDAScopedContextGetterBase(device, std::move(stream)), event_{std::move(event)} {}
 
   void createEventIfStreamBusy();
 
-  std::shared_ptr<cuda::event_t> event_;
+  cudautils::SharedEventPtr event_;
 };
 
 /**

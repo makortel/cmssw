@@ -106,7 +106,7 @@ void CUDAScopedContextAcquire::throwNoState() {
 
 CUDAScopedContextProduce::~CUDAScopedContextProduce() {
   if (event_) {
-    event_->record(stream());
+    cudaCheck(cudaEventRecord(event_.get(), stream()));
   }
 }
 
