@@ -40,6 +40,10 @@ private:
 
   cudautils::SharedStreamPtr releaseStreamPtr() {
     throwIfNoStream();
+    // This function needs to effectively reset stream_ (i.e. stream_
+    // must be empty after this function). This behavior ensures that
+    // the SharedStreamPtr is not hold for inadvertedly long (i.e. to
+    // the next event), and is checked at run time.
     return std::move(stream_);
   }
 
