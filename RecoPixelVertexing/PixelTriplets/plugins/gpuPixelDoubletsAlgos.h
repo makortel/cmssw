@@ -190,35 +190,84 @@ namespace gpuPixelDoubletsAlgos {
         auto const* __restrict__ p = hist.begin(kk + hoff);
         auto const* __restrict__ e = hist.end(kk + hoff);
         p += first;
-        for (; p < e; p += stride) {
-          auto oi = __ldg(p);
-          assert(oi >= offsets[outer]);
-          assert(oi < offsets[outer + 1]);
-          auto mo = hh.detectorIndex(oi);
-          if (mo > 2000)
-            continue;  //    invalid
-          auto mop = hh.iphi(oi);
-          if (std::min(std::abs(int16_t(mop - mep)), std::abs(int16_t(mep - mop))) > iphicut)
-            continue;
-          if (doPhiCut) {
-            if (doClusterCut && zsizeCut(oi))
-              continue;
-            if (z0cutoff(oi) || ptcut(oi, mop))
-              continue;
-          }
-          auto ind = atomicAdd(nCells, 1);
-          if (ind >= maxNumOfDoublets) {
-            atomicSub(nCells, 1);
-            break;
-          }  // move to SimpleVector??
-          // int layerPairId, int doubletId, int innerHitId, int outerHitId)
-          cells[ind].init(*cellNeighbors, *cellTracks, hh, pairLayerId, ind, i, oi);
-          isOuterHitOfCell[oi].push_back(ind);
+        switch (doPhiCut)
+        {
+        case (1):
+           switch (doClusterCut)
+           {
+           case(1):
+              for (; p < e; p += stride) {
+                 auto oi = __ldg(p);
+                 assert(oi >= offsets[outer]);
+                 assert(oi < offsets[outer + 1]);
+      
+                 auto mop = hh.iphi(oi);
+                 auto mo = hh.detectorIndex(oi);
+                 if (   mo <= 2000
+                     && std::min(std::abs(int16_t(mop - mep)), std::abs(int16_t(mep - mop))) <= iphicut
+                     && !zsizeCut(oi)
+                     && !z0cutoff(oi)
+                     && !ptcut(oi, mop) ) {   /* curvature */
+                    auto ind = atomicAdd(nCells, 1);
+                    if (ind >= maxNumOfDoublets) {
+                       atomicSub(nCells, 1);
+                       break;
+                     }  // move to SimpleVector??
+                    cells[ind].init(*cellNeighbors, *cellTracks, hh, pairLayerId, ind, i, oi);
+                    isOuterHitOfCell[oi].push_back(ind);
 #ifdef GPU_DEBUG
-          if (isOuterHitOfCell[oi].full())
-            ++tooMany;
-          ++tot;
+                    if (isOuterHitOfCell[oi].full())
+                      ++tooMany;
+                    ++tot;
 #endif
+                 }
+              }
+              break;
+           case(0):
+              for (; p < e; p += stride) {
+                 auto oi = __ldg(p);
+                 assert(oi >= offsets[outer]);
+                 assert(oi < offsets[outer + 1]);
+      
+                 auto mop = hh.iphi(oi);
+                 auto mo = hh.detectorIndex(oi);
+                 if (   mo <= 2000
+                     && std::min(std::abs(int16_t(mop - mep)), std::abs(int16_t(mep - mop))) <= iphicut
+                     && !z0cutoff(oi)
+                     && !ptcut(oi, mop) ) {   /* curvature */
+                    auto ind = atomicAdd(nCells, 1);
+                    cells[ind].init(*cellNeighbors, *cellTracks, hh, pairLayerId, ind, i, oi);
+                    isOuterHitOfCell[oi].push_back(ind);
+#ifdef GPU_DEBUG
+                    if (isOuterHitOfCell[oi].full())
+                      ++tooMany;
+                    ++tot;
+#endif
+                 }
+              }
+           break;
+           }
+        case(0):
+           for (; p < e; p += stride) {
+              auto oi = __ldg(p);
+              assert(oi >= offsets[outer]);
+              assert(oi < offsets[outer + 1]);
+
+              auto mop = hh.iphi(oi);
+              auto mo = hh.detectorIndex(oi);
+              if (   mo <= 2000
+                  && std::min(std::abs(int16_t(mop - mep)), std::abs(int16_t(mep - mop))) <= iphicut) {  
+                 auto ind = atomicAdd(nCells, 1);
+                 cells[ind].init(*cellNeighbors, *cellTracks, hh, pairLayerId, ind, i, oi);
+                 isOuterHitOfCell[oi].push_back(ind);
+#ifdef GPU_DEBUG
+                 if (isOuterHitOfCell[oi].full())
+                    ++tooMany;
+                 ++tot;
+#endif
+              }
+           }
+           break;
         }
       }
 #ifdef GPU_DEBUG
