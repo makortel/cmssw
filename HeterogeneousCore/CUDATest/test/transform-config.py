@@ -50,6 +50,12 @@ def functionKernelsToCPU(data):
             op["name"] = "cpu"
     return data
 
+def functionCPUToKernel(data):
+    for op in data:
+        if op["name"] == "cpu":
+            op["name"] = "kernel"
+    return data
+
 def functionDropMemcpy(data):
     return [op for op in data if not "memcpy" in op["name"]]
 
@@ -64,32 +70,44 @@ def functionFakeCUDA(data):
             op["unit"] = "ns"
     return data
 
-def transformModulePerFunction(label, module, func):
-    if "acquire" in module:
-        module["acquire"] = func(module["acquire"])
-    module["produce"] = func(module["produce"])
+def filterAll(label, module):
+    return True
 
-def transformModuleExternalWork(label, module, alsoCPU=False):
+def filterByGPU(label, module):
+    for op in module["produce"]:
+        if op["name"] != "cpu":
+            return True
+    return False
+
+def filterByName(label, module, labels):
+    return label in labels
+
+def transformModulePerFunction(label, module, func, filterFunc=filterAll):
+    if filterFunc(label, module):
+        if "acquire" in module:
+            module["acquire"] = func(module["acquire"])
+        module["produce"] = func(module["produce"])
+
+def transformModuleExternalWork(label, module, filterFunc):
     if "acquire" in module:
         # Already ExternalWork
         return
-    hasGPUops = alsoCPU
-    if not hasGPUops:
-        for op in module["produce"]:
-            if op["name"] != "cpu":
-                hasGPUops = True
-                break
-    if hasGPUops:
+    if filterFunc(label, module):
         print("Made %s ExternalWork" % label)
         module["acquire"] = module["produce"]
         module["produce"] = []
 
 def main(opts):
     transformModules = []
-    if opts.externalWork:
-        transformModules.append(transformModuleExternalWork)
-    if opts.externalWorkAll:
-        transformModules.append(lambda l, m: transformModuleExternalWork(l, m, alsoCPU=True))
+    if len(opts.externalWork) > 0:
+        ffunc = None
+        if opts.externalWork[0] == "_gpu":
+            ffunc = filterByGPU
+        elif opts.externalWork[0] == "_all":
+            ffunc = filterAll
+        else:
+            ffunc = lambda l,m: filterByName(l, m, opts.externalWork)
+        transformModules.append(lambda l, m: transformModuleExternalWork(l, m, ffunc))
     if opts.mean:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionMean))
     if opts.multiplyKernel is not None:
@@ -98,6 +116,9 @@ def main(opts):
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, lambda d: functionMultiplyCopy(d, opts.multiplyCopy)))
     if opts.kernelsToCPU:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionKernelsToCPU))
+    if len(opts.cpuToKernel) > 0:
+        ffunc = lambda l,m: filterByName(l, m, opts.cpuToKernel)
+        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionCPUToKernel, ffunc))
     if opts.dropMemcpy:
         transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionDropMemcpy))
     if opts.dropMemset:
@@ -140,14 +161,14 @@ if __name__ == "__main__":
                         help="Merge this file with the input file to output")
     parser.add_argument("--mean", action="store_true",
                         help="Replace each operation event-by-event values with the mean")
-    parser.add_argument("--externalWork", action="store_true",
-                        help="Make all GPU modules ExteralWork")
-    parser.add_argument("--externalWorkAll", action="store_true",
-                        help="Make all modules ExteralWork")
+    parser.add_argument("--externalWork", type=str, default=None,
+                        help="Comma-separated list of modules who are changed to ExternalWork. Special values: _gpu for all GPU modules, and _all for all modules.")
     parser.add_argument("--collapse", action="store_true",
                         help="Collapse all same-kind-of operations to one per module function")
     parser.add_argument("--kernelsToCPU", action="store_true",
                         help="Change all GPU kernels to CPU work with the same timing")
+    parser.add_argument("--cpuToKernel", type=str, default=None,
+                        help="Comma-separated list of modules whose CPU time is changed to kernel")
     parser.add_argument("--dropMemcpy", action="store_true",
                         help="Drop all memcopies")
     parser.add_argument("--dropMemset", action="store_true",
@@ -160,5 +181,20 @@ if __name__ == "__main__":
                         help="Multiply all memcpy lengths with this value (default: None)")
 
     opts = parser.parse_args()
+
+    if opts.externalWork is not None:
+        opts.externalWork = opts.externalWork.split(",")
+        if "_gpu" in opts.externalWork:
+            if len(opts.externalWork) != 1:
+                parser.error("Got _gpu for --externalWork, but also other items")
+        if "_all" in opts.externalWork:
+            if len(opts.externalWork) != 1:
+                parser.error("Got _all for --externalWork, but also other items")
+    else:
+        opts.externalWork = []
+    if opts.cpuToKernel is not None:
+        opts.cpuToKernel = opts.cpuToKernel.split(",")
+    else:
+        opts.cpuToKernel = []
 
     main(opts)
