@@ -10,8 +10,26 @@
 #include <type_traits>
 
 #ifdef __CUDACC__
-#include <cub/cub.cuh>
+//#include <cub/cub.cuh>
+//#include "notcub.h"
+#include "notcub_devicescan.h"
+
+/*
+#ifdef __CUDA_ARCH__
+
+#ifndef CUB_RUNTIME_ENABLED
+#warning "CUB_RUNTIME_ENABLED not defined"
+#elif (CUB_PTX_ARCH > 0)
+#warning "CUB_RUNTIME_ENABLED defined, CUB_PTX_ARCH > 0"
+#else
+#warning "CUB_RUNTIME_ENABLED defined, CUB_PTX_ARCH == 0"
 #endif
+
+#endif
+*/
+
+#endif
+
 
 #include "HeterogeneousCore/CUDAUtilities/interface/AtomicPairCounter.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
@@ -85,7 +103,7 @@ namespace cudautils {
     uint32_t *off = (uint32_t *)((char *)(h) + offsetof(Histo, off));
     size_t wss = Histo::wsSize();
     assert(wss > 0);
-    CubDebugExit(cub::DeviceScan::InclusiveSum(ws, wss, off, off, Histo::totbins(), stream));
+    cudaCheck(notcub::DeviceScan::InclusiveSum(ws, wss, off, off, Histo::totbins(), stream));
 #else
     h->finalize();
 #endif
@@ -192,7 +210,7 @@ public:
     uint32_t *v = nullptr;
     void *d_temp_storage = nullptr;
     size_t temp_storage_bytes = 0;
-    cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, v, v, totbins());
+    notcub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, v, v, totbins());
     return temp_storage_bytes;
 #else
     return 0;
