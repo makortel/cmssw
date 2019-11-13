@@ -136,12 +136,12 @@ def main(opts):
     if len(opts.numStreams) > 0:
         n_streams_threads = [(s, t) for t in nthreads for s in opts.numStreams]
 
-    eventBlocksPerStream = opts.eventBlocksPerStream
-    if eventBlocksPerStream is None:
+    nev_per_stream = opts.eventsPerStream
+    if nev_per_stream is None:
         eventBlocksPerStream = nblocks_per_stream.get(opts.variant, None)
         if eventBlocksPerStream is None:
-            raise Exception("No default number of event blocks for variant %d, and --eventBlocksPerStream was not given" % opts.variant)
-    nev_per_stream = eventBlocksPerStream * nev_quantum
+            raise Exception("No default number of event blocks for variant %d, and --eventsPerStream was not given" % opts.variant)
+        nev_per_stream = eventBlocksPerStream * nev_quantum
 
     data = dict(
         config=opts.config,
@@ -251,8 +251,8 @@ if __name__ == "__main__":
                         help="Comma separated list of numbers of streams to use in the scan (default: empty for always the same as the number of threads). If both number of threads and number of streams have more than 1 element, a 2D scan is done with all the combinations")
     parser.add_argument("--variant", type=int, default=1,
                         help="Application variant, can be one of 1,2,3,4,5 (default: 1)")
-    parser.add_argument("--eventBlocksPerStream", type=int, default=None,
-                        help="Number of event blocks (4k events) to be used per EDM stream (default: 85 for variant 1)")
+    parser.add_argument("--eventsPerStream", type=int, default=None,
+                        help="Number of events to be used per EDM stream (default: 85*4kev for variant 1)")
     parser.add_argument("--stopIncreasingEventBlocksAfterWallTime", type=int, default=-1,
                         help="Stop increasing number of event blocks after the wall time of the job reaches this many seconds (default: -1 for no limit)")
     parser.add_argument("--stopAfterWallTime", type=int, default=-1,
@@ -271,7 +271,7 @@ if __name__ == "__main__":
         opts.numThreads = [int(x) for x in opts.numThreads.split(",")]
     if opts.numStreams != "":
         opts.numStreams = [int(x) for x in opts.numStreams.split(",")]
-    if opts.variant not in [1,2,3,4,5,6,7]:
+    if opts.variant not in [0,1,2,3,4,5,6,7,99]:
         parser.error("Invalid variant %d" % opts.variant)
     opts.args.append("variant=%d"%opts.variant)
 
