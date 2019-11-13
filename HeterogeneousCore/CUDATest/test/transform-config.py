@@ -82,23 +82,28 @@ def filterByGPU(label, module):
 def filterByName(label, module, labels):
     return label in labels
 
-def transformModulePerFunction(label, module, func, filterFunc=filterAll):
+def transformModulePerFunction(label, module, declarations, func, filterFunc=filterAll):
     if filterFunc(label, module):
         if "acquire" in module:
             module["acquire"] = func(module["acquire"])
         module["produce"] = func(module["produce"])
 
-def transformModuleExternalWork(label, module, filterFunc):
+def transformModuleExternalWork(label, module, declarations, filterFunc):
     if "acquire" in module:
         # Already ExternalWork
         return
     if filterFunc(label, module):
         print("Made %s ExternalWork" % label)
+        declarations[label] = "SimEW"
         module["acquire"] = module["produce"]
         module["produce"] = []
 
 def main(opts):
     transformModules = []
+
+    def appendTransform(tfFunc, *args):
+        transformModules.append(lambda l, m, d: tfFunc(l, m, d, *args))
+
     if len(opts.externalWork) > 0:
         ffunc = None
         if opts.externalWork[0] == "_gpu":
@@ -107,26 +112,26 @@ def main(opts):
             ffunc = filterAll
         else:
             ffunc = lambda l,m: filterByName(l, m, opts.externalWork)
-        transformModules.append(lambda l, m: transformModuleExternalWork(l, m, ffunc))
+        appendTransform(transformModuleExternalWork, ffunc)
     if opts.mean:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionMean))
+        appendTransform(transformModulePerFunction, functionMean)
     if opts.multiplyKernel is not None:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, lambda d: functionMultiplyKernel(d, opts.multiplyKernel)))
+        appendTransform(transformModulePerFunction, lambda da: functionMultiplyKernel(da, opts.multiplyKernel))
     if opts.multiplyCopy is not None:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, lambda d: functionMultiplyCopy(d, opts.multiplyCopy)))
+        appendTransform(transformModulePerFunction, lambda da: functionMultiplyCopy(da, opts.multiplyCopy))
     if opts.kernelsToCPU:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionKernelsToCPU))
+        appendTransform(transformModulePerFunction, functionKernelsToCPU)
     if len(opts.cpuToKernel) > 0:
         ffunc = lambda l,m: filterByName(l, m, opts.cpuToKernel)
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionCPUToKernel, ffunc))
+        appendTransform(transformModulePerFunction, functionCPUToKernel, ffunc)
     if opts.dropMemcpy:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionDropMemcpy))
+        appendTransform(transformModulePerFunction, functionDropMemcpy)
     if opts.dropMemset:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionDropMemset))
+        appendTransform(transformModulePerFunction, functionDropMemset)
     if opts.fakeCUDA:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionFakeCUDA))
+        appendTransform(transformModulePerFunction, functionFakeCUDA)
     if opts.collapse:
-        transformModules.append(lambda l, m: transformModulePerFunction(l, m, functionCollapse))
+        appendTransform(transformModulePerFunction, functionCollapse)
 
     if len(transformModules) == 0 and opts.merge is None:
         raise Exception("No transform operation were given")
@@ -144,9 +149,11 @@ def main(opts):
                 raise Exception("Module %s already found from input file, unable to merge" % label)
             data["moduleDefinitions"][label] = module
 
+    declarations = data.get("moduleDeclarations", {})
+
     for label, module in data["moduleDefinitions"].items():
         for func in transformModules:
-            func(label, module)
+            func(label, module, declarations)
 
     with open(opts.output, "w") as f:
         json.dump(data, f, indent=2)
