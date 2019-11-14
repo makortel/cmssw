@@ -48,7 +48,7 @@ namespace cudatest {
 
   unsigned int GPUTimeCruncher::getLoops(const std::chrono::nanoseconds& time) const {
     const double runtime = time.count()/1000.;
-    bool found;
+    bool found = false;
     size_t smaller_i = 0;
     for(size_t i=1; i<times_.size(); ++i) {
       if(times_[i] > runtime) {
@@ -69,7 +69,7 @@ namespace cudatest {
     const double q = y0 - m*x0;
     const unsigned int loops = m*runtime + 1;
     LogDebug("foo") << "x0: " << x0 << " x1: " << x1 << " y0: " << y0 << " y1: " << y1 << "  m: " << m << " q: " << q
-                    << "  loops: " << loops;
+                    << "  loops: " << loops << " asked for " << runtime << " ms";
     return loops;
 
   }
