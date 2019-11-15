@@ -15,12 +15,11 @@ namespace {
 
   __global__ void kernel_looping(float *a, size_t size, size_t loops) {
     unsigned int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    
+
+    a[idx] = 0.f;
+
     for(size_t iloop=0; iloop<loops; ++iloop) {
-      size_t ind = iloop*gridDim.x+idx;
-      if(ind < size) {
-        a[ind] = a[ind] + 4.0f;
-      }
+      a[idx] = (a[idx] + 4.0f) * 0.5f - 1.0f;
     }
   }
 }
@@ -74,10 +73,13 @@ int main(int argc, char **argv) {
     kernel_looping<<<1, kernel_elements, 0, stream>>>(data_d, kernel_elements, iters.back());
   }
 
+  cudaCheck(cudaStreamSynchronize(stream));
+
   // Then repeat all 4 times
   for(size_t i=0; i<4; ++i) {
     for(int n: iters) {
       kernel_looping<<<1, kernel_elements, 0, stream>>>(data_d, kernel_elements, n);
+      //cudaCheck(cudaStreamSynchronize(stream));
     }
   }
 

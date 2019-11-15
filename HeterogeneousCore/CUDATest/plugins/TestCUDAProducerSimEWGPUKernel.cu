@@ -3,12 +3,11 @@
 namespace {
   __global__ void kernel_looping(float *a, size_t size, size_t loops) {
     unsigned int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    
+
+    a[idx] = 0.f;
+
     for(size_t iloop=0; iloop<loops; ++iloop) {
-      size_t ind = iloop*gridDim.x+idx;
-      if(ind < size) {
-        a[ind] = a[ind] + 4.0f;
-      }
+      a[idx] = (a[idx] + 4.0f) * 0.5f - 1.0f;
     }
   }
 }

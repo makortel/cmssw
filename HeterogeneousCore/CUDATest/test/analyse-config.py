@@ -79,8 +79,8 @@ def printFunction(label, name, functionTimes, totalTime):
     ti = functionTimes[label+"_"+name]
     print("%s::%s, cpu %.2f us (%.1f %%) api %.2f us (%.1f %%) kernel %.2f us (%.1f %%)" % (label, name,
                                                                                       ti.cpu(), ti.cpu()/totalTime.cpu()*100,
-                                                                                      ti.api(), ti.api()/totalTime.api()*100,
-                                                                                      ti.kernel(), ti.kernel()/totalTime.kernel()*100
+                                                                                      ti.api(), ti.api()/totalTime.api()*100 if totalTime.api() > 0 else 0,
+                                                                                      ti.kernel(), ti.kernel()/totalTime.kernel()*100 if totalTime.kernel() > 0 else 0
                                                                                   ))
 
 def main(fname):

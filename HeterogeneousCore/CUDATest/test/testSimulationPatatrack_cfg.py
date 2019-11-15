@@ -504,9 +504,9 @@ elif options.variant == 99:
         config = json.load(f)
     for modName, modType in six.iteritems(config["moduleDeclarations"]):
         setattr(process, modName, {
-            "SimCPU": _testCUDAProducerSimCPU,
-            "Sim": _testCUDAProducerSim,
-            "SimEW": _testCUDAProducerSimEW
+            "SimCPU": testCUDAProducerSimCPU,
+            "Sim": testCUDAProducerSim,
+            "SimEW": testCUDAProducerSimEW
             }[modType].clone(produce=True))
     for modName, inputs in six.iteritems(config["moduleConsumes"]):
         if modName == "_out":
@@ -587,7 +587,7 @@ else:
 #process.maxEvents.input = 10
 
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1
-#process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
+process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
 #process.Tracer = cms.Service("Tracer")
 #process.options.wantSummary = False
 

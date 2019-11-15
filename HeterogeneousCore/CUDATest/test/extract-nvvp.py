@@ -263,7 +263,7 @@ def main(opts):
     for x in ["raw2digi_step", "reconstruction_step", "TriggerResults", "outPath", "out", "TVreco", "Raw2Hit", "toSoA"]:
         try:
             modules.remove(x)
-        except ValueError: pass
+        except KeyError: pass
 
     #print("\n".join(modules))
     

@@ -69,7 +69,7 @@ namespace cudatest {
     const double q = y0 - m*x0;
     const unsigned int loops = m*runtime + 1;
     LogDebug("foo") << "x0: " << x0 << " x1: " << x1 << " y0: " << y0 << " y1: " << y1 << "  m: " << m << " q: " << q
-                    << "  loops: " << loops << " asked for " << runtime << " ms";
+                    << "  loops: " << loops << " asked for " << runtime << " us";
     return loops;
 
   }
