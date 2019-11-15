@@ -103,6 +103,9 @@ def main(fname):
         totalTime.add(ti)
         functionTimes[label+"_produce"] = ti
 
+    print("Total CPU time %.2f us, API time %.2f us, kernel time %.2f us" % (totalTime.cpu(), totalTime.api(), totalTime.kernel()))
+    print()
+
     for label in labels:
         module = modules[label]
         if "acquire" in module:
