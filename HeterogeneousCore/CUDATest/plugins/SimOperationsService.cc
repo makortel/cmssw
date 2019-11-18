@@ -92,7 +92,7 @@ namespace {
 }
 
 namespace cudatest {
-  class OperationCPU final: public OperationTime {
+  class OperationCPU: public OperationTime {
   public:
     explicit OperationCPU(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher):
       OperationTime(conf),
@@ -103,12 +103,29 @@ namespace cudatest {
       cruncher_->crunch_for(totalTime(indices));
     }
 
+    virtual void operate(const std::vector<size_t>& indices, const SleepFunction& sleep) const {
+      operate(indices);
+    }
+
   private:
     const TimeCruncher* cruncher_;
   };
 }
 
 namespace {
+  class OperationSleep final: public cudatest::OperationCPU {
+  public:
+    explicit OperationSleep(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher):
+      OperationCPU(conf, cruncher)
+    {}
+
+    using OperationCPU::operate;
+
+    void operate(const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const override {
+      sleep(totalTime(indices));
+    }
+  };
+
   class OperationKernel final: public OperationTime {
   public:
     explicit OperationKernel(const boost::property_tree::ptree& conf, const cudatest::GPUTimeCruncher* cruncher, const double gangKernelFactor):
@@ -289,6 +306,9 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
         auto opname = op.second.get<std::string>("name");
         if(opname == "cpu") {
           opsCPU.emplace_back(std::make_unique<cudatest::OperationCPU>(op.second, cpuCruncher_.get()));
+        }
+        else if(opname == "sleep") {
+          opsCPU.emplace_back(std::make_unique<OperationSleep>(op.second, cpuCruncher_.get()));
         }
         else if(opname == "kernel") {
           opsGPU.emplace_back(std::make_unique<OperationKernel>(op.second, gpuCruncher_.get(), gangKernelFactor));
@@ -502,6 +522,11 @@ SimOperationsService::ProduceGPUProcessor SimOperationsService::produceGPUProces
 void SimOperationsService::acquireCPU(int modIndex, const std::vector<size_t>& indices) const {
   for(const auto& op: acquireOpsCPU_.at(modIndex).second) {
     op->operate(indices);
+  }
+}
+void SimOperationsService::acquireCPU(int modIndex, const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const {
+  for(const auto& op: acquireOpsCPU_.at(modIndex).second) {
+    op->operate(indices, sleep);
   }
 }
 void SimOperationsService::acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const {

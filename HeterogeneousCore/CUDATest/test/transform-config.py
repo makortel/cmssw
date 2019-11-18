@@ -56,6 +56,12 @@ def functionCPUToKernel(data):
             op["name"] = "kernel"
     return data
 
+def functionCPUToSleep(data):
+    for op in data:
+        if op["name"] == "cpu":
+            op["name"] = "sleep"
+    return data
+
 def functionDropMemcpy(data):
     return [op for op in data if not "memcpy" in op["name"]]
 
@@ -98,6 +104,14 @@ def transformModuleExternalWork(label, module, declarations, filterFunc):
         module["acquire"] = module["produce"]
         module["produce"] = []
 
+def transformModuleExternalWorkToSleep(label, module, declarations, filterFunc):
+    if filterFunc(label, module):
+        if not "acquire" in module:
+            raise Exception("Expected module %s to be ExternalWork, but it is not" % label)
+        print("Made %s ExternalWork sleeping" % label)
+        declarations[label] = "SimEWSleeping"
+    
+
 def main(opts):
     transformModules = []
 
@@ -124,6 +138,10 @@ def main(opts):
     if len(opts.cpuToKernel) > 0:
         ffunc = lambda l,m: filterByName(l, m, opts.cpuToKernel)
         appendTransform(transformModulePerFunction, functionCPUToKernel, ffunc)
+    if len(opts.cpuToSleep) > 0:
+        ffunc = lambda l,m: filterByName(l, m, opts.cpuToSleep)
+        appendTransform(transformModuleExternalWorkToSleep, ffunc)
+        appendTransform(transformModulePerFunction, functionCPUToSleep, ffunc)
     if opts.dropMemcpy:
         appendTransform(transformModulePerFunction, functionDropMemcpy)
     if opts.dropMemset:
@@ -176,6 +194,8 @@ if __name__ == "__main__":
                         help="Change all GPU kernels to CPU work with the same timing")
     parser.add_argument("--cpuToKernel", type=str, default=None,
                         help="Comma-separated list of modules whose CPU time is changed to kernel")
+    parser.add_argument("--cpuToSleep", type=str, default=None,
+                        help="Comma-separated list of modules whose CPU time is changed to sleep.")
     parser.add_argument("--dropMemcpy", action="store_true",
                         help="Drop all memcopies")
     parser.add_argument("--dropMemset", action="store_true",
@@ -203,5 +223,9 @@ if __name__ == "__main__":
         opts.cpuToKernel = opts.cpuToKernel.split(",")
     else:
         opts.cpuToKernel = []
+    if opts.cpuToSleep is not None:
+        opts.cpuToSleep = opts.cpuToSleep.split(",")
+    else:
+        opts.cpuToSleep = []
 
     main(opts)

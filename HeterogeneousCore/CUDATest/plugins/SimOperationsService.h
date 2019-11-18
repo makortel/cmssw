@@ -3,6 +3,8 @@
 
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
 
+#include <chrono>
+#include <functional>
 #include <unordered_map>
 #include <vector>
 
@@ -23,6 +25,8 @@ namespace cudatest {
   class OperationState;
   class OperationBase;
   class OperationCPU;
+
+  using SleepFunction = std::function<void(std::chrono::nanoseconds)>;
 }
 
 
@@ -62,6 +66,11 @@ public:
     void process(const std::vector<size_t>& indices) const {
       if(index_ >= 0) {
         sos_->acquireCPU(index_, indices);
+      }
+    }
+    void process(const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const {
+      if(index_ >= 0) {
+        sos_->acquireCPU(index_, indices, sleep);
       }
     }
   private:
@@ -137,7 +146,9 @@ public:
   ProduceGPUProcessor produceGPUProcessor(const std::string& moduleLabel) const;
 
 private:
+
   void acquireCPU(int modIndex, const std::vector<size_t>& indices) const;
+  void acquireCPU(int modIndex, const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const;
   void acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const;
   void produceCPU(int modIndex, const std::vector<size_t>& indices) const;
   void produceGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const;

@@ -37,7 +37,7 @@ def gatherModule(data):
     t = ModuleTime()
     for op in data:
         avg = statistics.mean(op["values"])
-        if op["name"] == "cpu":
+        if op["name"] in ["cpu", "sleep"]:
             t.addCPU(avg*1e-3)
         if op["name"] == "kernel":
             t.addKernel(avg*1e-3)

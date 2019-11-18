@@ -263,6 +263,7 @@ from HeterogeneousCore.CUDATest.testCUDAProducerSimEWGangedLimitedTaskQueueV4_cf
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSerialTaskQueue_cfi import testCUDAProducerSimEWSerialTaskQueue as _testCUDAProducerSimEWSerialTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWLimitedTaskQueue_cfi import testCUDAProducerSimEWLimitedTaskQueue as _testCUDAProducerSimEWLimitedTaskQueue
 from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSingle_cfi import testCUDAProducerSimEWSingle as _testCUDAProducerSimEWSingle
+from HeterogeneousCore.CUDATest.testCUDAProducerSimEWSleeping_cfi import testCUDAProducerSimEWSleeping as _testCUDAProducerSimEWSleeping
 from HeterogeneousCore.CUDATest.testCUDAProducerSimBlocking_cfi import testCUDAProducerSimBlocking as _testCUDAProducerSimBlocking
 
 testCUDAProducerSimCPU = _testCUDAProducerSimCPU.clone()
@@ -506,7 +507,8 @@ elif options.variant == 99:
         setattr(process, modName, {
             "SimCPU": testCUDAProducerSimCPU,
             "Sim": testCUDAProducerSim,
-            "SimEW": testCUDAProducerSimEW
+            "SimEW": testCUDAProducerSimEW,
+            "SimEWSleeping": _testCUDAProducerSimEWSleeping,
             }[modType].clone(produce=True))
     for modName, inputs in six.iteritems(config["moduleConsumes"]):
         if modName == "_out":
