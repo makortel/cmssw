@@ -87,13 +87,13 @@ def main(opts):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert files from ATLAS simulation")
-    parser.add_argument("-o", "--output", type=str,
+    parser.add_argument("-o", "--output", type=str, required=True,
                         help="Output file")
-    parser.add_argument("-t", "--time", type=str,
+    parser.add_argument("-t", "--time", type=str, required=True,
                         help="Timing input file")
-    parser.add_argument("-c", "--cflow", type=str,
+    parser.add_argument("-c", "--cflow", type=str, required=True,
                         help="Control flow graph")
-    parser.add_argument("-d", "--dflow", type=str,
+    parser.add_argument("-d", "--dflow", type=str, required=True,
                         help="Data flow graph")
 
     opts = parser.parse_args()

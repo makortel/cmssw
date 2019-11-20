@@ -180,7 +180,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Transform config JSON file")
     parser.add_argument("file", type=str,
                         help="Input JSON file")
-    parser.add_argument("-o", "--output", type=str,
+    parser.add_argument("-o", "--output", type=str, required=True,
                         help="Output file")
     parser.add_argument("--merge", type=str, default=None,
                         help="Merge this file with the input file to output")
