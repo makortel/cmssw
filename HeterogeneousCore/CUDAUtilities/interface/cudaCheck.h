@@ -20,83 +20,60 @@ namespace {
     return out;
   }
 
-
   [[noreturn]] inline void abortOnCudaError(const char* file, int line, const char* cmd, const char* error, const char* message) {
     auto out = formatCudaError(file, line, cmd, error, message);
     throw std::runtime_error(out.str());
   }
 
-  const char* cudaErrorName(CUresult result) {
-    const char *error;
-    cuGetErrorName(result, &error);
-    return error;
-  }
-
-  const char *cudaErrorString(CUresult result) {
-    const char* message;
-    cuGetErrorString(result, &message);
-    return message;
-  }
-
-  const char*cudaErrorName(cudaError_t result) {
-    return cudaGetErrorName(result);
-  }
-
-  const char*cudaErrorString(cudaError_t result) {
-    return cudaGetErrorString(result);
-  }
-}  // namespace
-
-template <typename RESULT>
-inline bool cudaCheck_(const char* file, int line, const char* cmd, RESULT result) {
-  if (__builtin_expect(result == CUDA_SUCCESS, true))
-    return true;
-
-  const char* error = cudaErrorName(result);
-  const char* message = cudaErrorString(result);
-  abortOnCudaError(file, line, cmd, error, message);
-  return false;
-}
-
-#define cudaCheck(ARG) (cudaCheck_(__FILE__, __LINE__, #ARG, (ARG)))
-
-
-namespace {
-
   template <typename T>
-  [[noreturn]] inline void abortOnCudaErrorVerbose(
-      const char* file, int line, const char* cmd, const char* error, const char* message, T const& description) {
+  [[noreturn]] inline void abortOnCudaError(const char* file, int line, const char* cmd, const char* error, const char* message, T const& description) {
     auto out = formatCudaError(file, line, cmd, error, message);
     out << description << "\n";
     throw std::runtime_error(out.str());
   }
 
+  inline const char* cudaErrorName(CUresult result) {
+    const char *error;
+    cuGetErrorName(result, &error);
+    return error;
+  }
+
+  inline const char *cudaErrorString(CUresult result) {
+    const char* message;
+    cuGetErrorString(result, &message);
+    return message;
+  }
+
+  inline bool cudaIsSuccess(CUresult result) {
+    return result == CUDA_SUCCESS;
+  }
+
+  inline const char*cudaErrorName(cudaError_t result) {
+    return cudaGetErrorName(result);
+  }
+
+  inline const char*cudaErrorString(cudaError_t result) {
+    return cudaGetErrorString(result);
+  }
+
+  inline bool cudaIsSuccess(cudaError_t result) {
+    return result == cudaSuccess;
+  }
 }  // namespace
 
-template <typename T>
-inline bool cudaCheckVerbose_(const char* file, int line, const char* cmd, CUresult result, T const& description) {
-  if (__builtin_expect(result == CUDA_SUCCESS, true))
+template <typename RESULT, typename... Args>
+inline bool cudaCheck_(const char* file, int line, const char* cmd, RESULT result, Args&&... args) {
+  if (__builtin_expect(cudaIsSuccess(result), true))
     return true;
 
-  const char* error;
-  const char* message;
-  cuGetErrorName(result, &error);
-  cuGetErrorString(result, &message);
-  abortOnCudaErrorVerbose(file, line, cmd, error, message, description);
+  const char* error = cudaErrorName(result);
+  const char* message = cudaErrorString(result);
+  abortOnCudaError(file, line, cmd, error, message, std::forward<Args>(args)...);
   return false;
 }
 
-template <typename T>
-inline bool cudaCheckVerbose_(const char* file, int line, const char* cmd, cudaError_t result, T const& description) {
-  if (__builtin_expect(result == cudaSuccess, true))
-    return true;
+#define cudaCheck(ARG) (cudaCheck_(__FILE__, __LINE__, #ARG, (ARG)))
 
-  const char* error = cudaGetErrorName(result);
-  const char* message = cudaGetErrorString(result);
-  abortOnCudaErrorVerbose(file, line, cmd, error, message, description);
-  return false;
-}
-
-#define cudaCheckVerbose(ARG, DESC) (cudaCheckVerbose_(__FILE__, __LINE__, #ARG, (ARG), DESC))
+#define cudaCheckVerbose(ARG, DESC) (cudaCheck_(__FILE__, __LINE__, #ARG, (ARG), DESC))
 
 #endif  // HeterogeneousCore_CUDAUtilities_cudaCheck_h
