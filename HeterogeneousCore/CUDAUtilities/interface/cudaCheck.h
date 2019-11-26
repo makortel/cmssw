@@ -11,14 +11,18 @@
 #include <cuda_runtime.h>
 
 namespace {
-
-  [[noreturn]] inline void abortOnCudaError(
-      const char* file, int line, const char* cmd, const char* error, const char* message) {
+  inline std::ostringstream formatCudaError(const char* file, int line, const char* cmd, const char* error, const char* message) {
     std::ostringstream out;
     out << "\n";
     out << file << ", line " << line << ":\n";
     out << "cudaCheck(" << cmd << ");\n";
     out << error << ": " << message << "\n";
+    return out;
+  }
+
+
+  [[noreturn]] inline void abortOnCudaError(const char* file, int line, const char* cmd, const char* error, const char* message) {
+    auto out = formatCudaError(file, line, cmd, error, message);
     throw std::runtime_error(out.str());
   }
 
@@ -54,11 +58,7 @@ namespace {
   template <typename T>
   [[noreturn]] inline void abortOnCudaErrorVerbose(
       const char* file, int line, const char* cmd, const char* error, const char* message, T const& description) {
-    std::ostringstream out;
-    out << "\n";
-    out << file << ", line " << line << ":\n";
-    out << "cudaCheck(" << cmd << ");\n";
-    out << error << ": " << message << "\n";
+    auto out = formatCudaError(file, line, cmd, error, message);
     out << description << "\n";
     throw std::runtime_error(out.str());
   }
