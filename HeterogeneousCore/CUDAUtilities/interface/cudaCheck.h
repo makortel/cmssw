@@ -26,26 +26,34 @@ namespace {
     throw std::runtime_error(out.str());
   }
 
+  const char* cudaErrorName(CUresult result) {
+    const char *error;
+    cuGetErrorName(result, &error);
+    return error;
+  }
+
+  const char *cudaErrorString(CUresult result) {
+    const char* message;
+    cuGetErrorString(result, &message);
+    return message;
+  }
+
+  const char*cudaErrorName(cudaError_t result) {
+    return cudaGetErrorName(result);
+  }
+
+  const char*cudaErrorString(cudaError_t result) {
+    return cudaGetErrorString(result);
+  }
 }  // namespace
 
-inline bool cudaCheck_(const char* file, int line, const char* cmd, CUresult result) {
+template <typename RESULT>
+inline bool cudaCheck_(const char* file, int line, const char* cmd, RESULT result) {
   if (__builtin_expect(result == CUDA_SUCCESS, true))
     return true;
 
-  const char* error;
-  const char* message;
-  cuGetErrorName(result, &error);
-  cuGetErrorString(result, &message);
-  abortOnCudaError(file, line, cmd, error, message);
-  return false;
-}
-
-inline bool cudaCheck_(const char* file, int line, const char* cmd, cudaError_t result) {
-  if (__builtin_expect(result == cudaSuccess, true))
-    return true;
-
-  const char* error = cudaGetErrorName(result);
-  const char* message = cudaGetErrorString(result);
+  const char* error = cudaErrorName(result);
+  const char* message = cudaErrorString(result);
   abortOnCudaError(file, line, cmd, error, message);
   return false;
 }
