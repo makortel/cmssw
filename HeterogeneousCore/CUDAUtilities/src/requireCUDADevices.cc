@@ -22,7 +22,7 @@ bool hasCUDADevices() {
 }
 
 void requireCUDADevices() {
-  if(not hasCUDADevices()) {
+  if (not hasCUDADevices()) {
     exit(EXIT_SUCCESS);
   }
 }
