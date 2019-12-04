@@ -31,7 +31,7 @@ namespace impl {
     const cudautils::SharedStreamPtr& streamPtr() const { return stream_; }
 
   protected:
-    // The constructors set the current device device, but the device
+    // The constructors set the current device, but the device
     // is not set back to the previous value at the destructor. This
     // should be sufficient (and tiny bit faster) as all CUDA API
     // functions relying on the current device should be called from
