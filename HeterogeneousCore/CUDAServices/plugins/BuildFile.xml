@@ -1,3 +1,6 @@
+<ifarchitecture name="_ppc64le_">
+  <flags SKIP_FILES="*"/>
+</ifarchitecture>
 <use name="cuda"/>
 <use name="DataFormats/Common"/>
 <use name="DataFormats/Provenance"/>
