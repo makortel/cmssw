@@ -1,7 +1,5 @@
-<ifarchitecture name="_ppc64le_">
-  <flags SKIP_FILES="*"/>
-</ifarchitecture>
-
+<iftool name="cuda-gcc-support">
 <use name="DataFormats/Common"/>
 <use name="HeterogeneousCore/CUDACore"/>
 <use name="rootcore"/>
+</iftool>
