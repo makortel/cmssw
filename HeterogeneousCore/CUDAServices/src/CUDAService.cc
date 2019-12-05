@@ -119,7 +119,7 @@ namespace {
 }  // namespace
 
 /// Constructor
-CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry& iRegistry) {
+CUDAService::CUDAService(edm::ParameterSet const& config) {
   bool configEnabled = config.getUntrackedParameter<bool>("enabled");
   if (not configEnabled) {
     edm::LogInfo("CUDAService") << "CUDAService disabled by configuration";
@@ -167,7 +167,9 @@ CUDAService::CUDAService(edm::ParameterSet const& config, edm::ActivityRegistry&
         "exclusive (single process)",  // cudaComputeModeExclusiveProcess
         "unknown"};
     log << "  compute mode:" << std::right << std::setw(27)
-        << computeModeDescription[std::min(properties.computeMode, (int)std::size(computeModeDescription) - 1)] << '\n';
+        << computeModeDescription[std::min(properties.computeMode,
+                                           static_cast<int>(std::size(computeModeDescription)) - 1)]
+        << '\n';
 
     // TODO if a device is in exclusive use, skip it and remove it from the list, instead of failing with abort()
     cudaCheck(cudaSetDevice(i));
