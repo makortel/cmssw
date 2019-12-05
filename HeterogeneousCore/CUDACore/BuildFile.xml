@@ -1,7 +1,4 @@
-<ifarchitecture name="_ppc64le_">
-  <flags SKIP_FILES="*"/>
-</ifarchitecture>
-
+<iftool name="cuda-gcc-support">
 <use name="FWCore/Concurrency"/>
 <use name="FWCore/Framework"/>
 <use name="FWCore/ServiceRegistry"/>
@@ -14,3 +11,4 @@
 <export>
     <lib name="1"/>
 </export>
+</iftool>
