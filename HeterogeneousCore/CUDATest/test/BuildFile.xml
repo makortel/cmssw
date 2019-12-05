@@ -1,3 +1,4 @@
+<iftool name="cuda-gcc-support">
 <bin file="test*.cc" name="testHeterogeneousCoreCUDATest">
   <use name="FWCore/TestProcessor"/>
   <use name="HeterogeneousCore/CUDACore"/>
@@ -8,3 +9,4 @@
   <flags TEST_RUNNER_ARGS=" /bin/bash HeterogeneousCore/CUDATest/test runtests.sh"/>
   <use name="FWCore/Utilities"/>
 </bin>
+</iftool>
