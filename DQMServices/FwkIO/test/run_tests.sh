@@ -86,6 +86,18 @@ pushd ${LOCAL_TMP_DIR}
   checkFile=check_guid_file1.py
   echo ${checkFile} ------------------------------------------------------------
   python ${LOCAL_TEST_DIR}/${checkFile} || die "python ${checkFile}" $?
+  GUID_NAME=$(edmFjrDump --guid dqm_file1_jobreport.xml).root
+  cp dqm_file1.root ${GUID_NAME}
+  testConfig=read_guid_cfg.py
+  echo ${testConfig} dqm_file1.root ------------------------------------------------------------
+  cmsRun -j dqm_read_guid_jobreport.xml ${LOCAL_TEST_DIR}/${testConfig} dqm_file1.root && die "cmsRun ${testConfig} dqm_file1.root" 1
+  GUID_EXIT_CODE=$(edmFjrDump --exitCode dqm_read_guid_jobreport.xml)
+  if [ "x${GUID_EXIT_CODE}" != "x8034" ]; then
+      echo "Inconsistent GUID test reported exit code ${GUID_EXIT_CODE} which is different from the expected 8034"
+      exit 1
+  fi
+  echo ${testConfig} ${GUID_NAME} ------------------------------------------------------------
+  cmsRun ${LOCAL_TEST_DIR}/${testConfig} ${GUID_NAME} || die "cmsRun ${testConfig} ${GUID_NAME}" $?
 
   testConfig=create_file2_cfg.py
   rm -f dqm_file2.root

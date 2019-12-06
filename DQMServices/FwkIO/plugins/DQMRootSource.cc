@@ -34,6 +34,7 @@
 //#include "FWCore/Utilities/interface/GlobalIdentifier.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/ExceptionPropagate.h"
+#include "FWCore/Utilities/interface/stemFromPath.h"
 
 #include "FWCore/Framework/interface/RunPrincipal.h"
 #include "FWCore/Framework/interface/LuminosityBlockPrincipal.h"
@@ -389,6 +390,7 @@ private:
   unsigned int m_lastSeenLumi2;
   unsigned int m_filterOnRun;
   bool m_skipBadFiles;
+  bool m_enforceGUIDInFileName;
   std::vector<edm::LuminosityBlockRange> m_lumisToProcess;
   std::vector<edm::RunNumber_t> m_runsToProcess;
 
@@ -414,12 +416,15 @@ void DQMRootSource::fillDescriptions(edm::ConfigurationDescriptions& description
   edm::ParameterSetDescription desc;
   desc.addUntracked<std::vector<std::string> >("fileNames")->setComment("Names of files to be processed.");
   desc.addUntracked<unsigned int>("filterOnRun", 0)->setComment("Just limit the process to the selected run.");
-  desc.addUntracked<bool>("skipBadFiles", false)->setComment("Skip the file if it is not valid");
+  desc.addUntracked<bool>("skipBadFiles", false)->setComment("Skip the file if it is not valid");  
   desc.addUntracked<std::string>("overrideCatalog", std::string())
       ->setComment("An alternate file catalog to use instead of the standard site one.");
   std::vector<edm::LuminosityBlockRange> defaultLumis;
   desc.addUntracked<std::vector<edm::LuminosityBlockRange> >("lumisToProcess", defaultLumis)
       ->setComment("Skip any lumi inside the specified run:lumi range.");
+  desc.addUntracked<bool>("enforceGUIDInFileName", false)->setComment(
+                                                                      "True:  file name part is required to be equal to the GUID of the file\n"
+                                                                      "False: file name can be anything");
 
   descriptions.addDefault(desc);
 }
@@ -441,6 +446,7 @@ DQMRootSource::DQMRootSource(edm::ParameterSet const& iPSet, const edm::InputSou
       m_lastSeenLumi2(0),
       m_filterOnRun(iPSet.getUntrackedParameter<unsigned int>("filterOnRun", 0)),
       m_skipBadFiles(iPSet.getUntrackedParameter<bool>("skipBadFiles", false)),
+      m_enforceGUIDInFileName(iPSet.getUntrackedParameter<bool>("enforceGUIDInFileName")),
       m_lumisToProcess(iPSet.getUntrackedParameter<std::vector<edm::LuminosityBlockRange> >(
           "lumisToProcess", std::vector<edm::LuminosityBlockRange>())),
       m_justOpenedFileSoNeedToGenerateRunTransition(false),
@@ -631,9 +637,19 @@ std::unique_ptr<edm::FileBlock> DQMRootSource::readFile_() {
          skipIt(m_runlumiToRange[*m_presentIndexItr].m_run, m_runlumiToRange[*m_presentIndexItr].m_lumi))
     ++m_presentIndexItr;
 
-  edm::Service<edm::JobReport> jr;
   std::string guid{m_file->GetUUID().AsString()};
   std::transform(guid.begin(), guid.end(), guid.begin(), (int (*)(int))std::toupper);
+  if(m_enforceGUIDInFileName) {
+    auto guidFromName = edm::stemFromPath(m_presentlyOpenFileName);
+      if (guidFromName != guid) {
+        throw edm::Exception(edm::errors::FileNameInconsistentWithGUID)
+            << "GUID " << guidFromName << " extracted from file name " << m_presentlyOpenFileName
+            << " is inconsistent with the GUID read from the file " << guid;
+      }
+
+  }
+
+  edm::Service<edm::JobReport> jr;
   m_jrToken = jr->inputFileOpened(m_presentlyOpenFileName,
                                   m_catalog.logicalFileNames()[m_fileIndex - 1],
                                   std::string(),
