@@ -2,6 +2,7 @@
 #define HeterogeneousCore_CUDACore_src_getCachingHostAllocator
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Utilities/interface/thread_safety_macros.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "CachingHostAllocator.h"
 
@@ -33,12 +34,13 @@ namespace cudautils {
         log << "  maximum amount of cached memory: " << (minCachedBytes() >> 20) << " MB\n";
       });
 
-      static notcub::CachingHostAllocator allocator{binGrowth,
-                                                    minBin,
-                                                    maxBin,
-                                                    minCachedBytes(),
-                                                    false,  // do not skip cleanup
-                                                    debug};
+      // the public interface is thread safe
+      CMS_THREAD_SAFE static notcub::CachingHostAllocator allocator{binGrowth,
+                                                                    minBin,
+                                                                    maxBin,
+                                                                    minCachedBytes(),
+                                                                    false,  // do not skip cleanup
+                                                                    debug};
       return allocator;
     }
   }  // namespace allocator

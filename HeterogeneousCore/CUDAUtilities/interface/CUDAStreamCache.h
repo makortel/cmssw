@@ -24,7 +24,7 @@ namespace cudautils {
 
   private:
     friend class ::CUDAService;
-    // intended to be called only from CUDAService destructor
+    // not thread safe, intended to be called only from CUDAService destructor
     void clear();
 
     class Deleter {
