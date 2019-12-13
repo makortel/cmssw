@@ -1,3 +1,4 @@
+#include "FWCore/Utilities/interface/thread_safety_macros.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
@@ -36,7 +37,8 @@ namespace cudautils {
   }
 
   CUDAStreamCache& getCUDAStreamCache() {
-    static CUDAStreamCache cache;
+    // the public interface is thread safe
+    CMS_THREAD_SAFE static CUDAStreamCache cache;
     return cache;
   }
 }  // namespace cudautils
