@@ -29,7 +29,8 @@ private:
   edm::EDGetTokenT<CUDAProduct<CUDAThing>> const srcToken_;
   double const minValue_;
   double const maxValue_;
-  std::unique_ptr<TestCUDAAnalyzerGPUKernel> gpuAlgo_;
+  // the public interface is thread safe
+  CMS_THREAD_SAFE mutable std::unique_ptr<TestCUDAAnalyzerGPUKernel> gpuAlgo_;
 };
 
 TestCUDAAnalyzerGPU::TestCUDAAnalyzerGPU(edm::ParameterSet const& iConfig)

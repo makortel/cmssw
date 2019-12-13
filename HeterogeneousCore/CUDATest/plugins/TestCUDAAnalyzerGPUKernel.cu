@@ -31,7 +31,7 @@ TestCUDAAnalyzerGPUKernel::TestCUDAAnalyzerGPUKernel(cudaStream_t stream) {
   cudaCheck(cudaStreamSynchronize(stream));
 }
 
-void TestCUDAAnalyzerGPUKernel::analyzeAsync(const float *d_input, cudaStream_t stream) const {
+void TestCUDAAnalyzerGPUKernel::analyzeAsync(const float *d_input, cudaStream_t stream) {
   analyze<<<int(ceil(float(NUM_VALUES) / 256)), 256, 0, stream>>>(d_input, sum_.get(), NUM_VALUES);
 }
 
