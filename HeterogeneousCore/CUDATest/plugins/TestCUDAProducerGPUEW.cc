@@ -18,27 +18,27 @@
 
 class TestCUDAProducerGPUEW : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
-  explicit TestCUDAProducerGPUEW(const edm::ParameterSet& iConfig);
+  explicit TestCUDAProducerGPUEW(edm::ParameterSet const& iConfig);
   ~TestCUDAProducerGPUEW() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-  void acquire(const edm::Event& iEvent,
-               const edm::EventSetup& iSetup,
+  void acquire(edm::Event const& iEvent,
+               edm::EventSetup const& iSetup,
                edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
-  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  void produce(edm::Event& iEvent, edm::EventSetup const& iSetup) override;
 
 private:
-  std::string label_;
-  edm::EDGetTokenT<CUDAProduct<CUDAThing>> srcToken_;
-  edm::EDPutTokenT<CUDAProduct<CUDAThing>> dstToken_;
+  std::string const label_;
+  edm::EDGetTokenT<CUDAProduct<CUDAThing>> const srcToken_;
+  edm::EDPutTokenT<CUDAProduct<CUDAThing>> const dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
   CUDAContextState ctxState_;
   cudautils::device::unique_ptr<float[]> devicePtr_;
   cudautils::host::noncached::unique_ptr<float> hostData_;
 };
 
-TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(const edm::ParameterSet& iConfig)
+TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(edm::ParameterSet const& iConfig)
     : label_{iConfig.getParameter<std::string>("@module_label")},
       srcToken_{consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
       dstToken_{produces<CUDAProduct<CUDAThing>>()} {
@@ -52,17 +52,22 @@ void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& des
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag());
   descriptions.addWithDefaultLabel(desc);
+  descriptions.setComment(
+      "This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this is not the first "
+      "algorithm in the chain of the GPU EDProducers, and that transfers some data from GPU to CPU and thus needs to "
+      "synchronize GPU and CPU. The synchronization is implemented with the ExternalWork extension. Produces "
+      "CUDAProduct<CUDAThing>.");
 }
 
-void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent,
-                                    const edm::EventSetup& iSetup,
+void TestCUDAProducerGPUEW::acquire(edm::Event const& iEvent,
+                                    edm::EventSetup const& iSetup,
                                     edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   edm::LogVerbatim("TestCUDAProducerGPUEW") << label_ << " TestCUDAProducerGPUEW::acquire begin event "
                                             << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  const auto& in = iEvent.get(srcToken_);
+  auto const& in = iEvent.get(srcToken_);
   CUDAScopedContextAcquire ctx{in, std::move(waitingTaskHolder), ctxState_};
-  const CUDAThing& input = ctx.get(in);
+  CUDAThing const& input = ctx.get(in);
 
   devicePtr_ = gpuAlgo_.runAlgo(label_, input.get(), ctx.stream());
   // Mimick the need to transfer some of the GPU data back to CPU to
@@ -74,7 +79,7 @@ void TestCUDAProducerGPUEW::acquire(const edm::Event& iEvent,
                                             << iEvent.id().event() << " stream " << iEvent.streamID();
 }
 
-void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, edm::EventSetup const& iSetup) {
   edm::LogVerbatim("TestCUDAProducerGPUEW")
       << label_ << " TestCUDAProducerGPUEW::produce begin event " << iEvent.id().event() << " stream "
       << iEvent.streamID() << " 10th element " << *hostData_;
