@@ -16,23 +16,23 @@
 
 class TestCUDAAnalyzerGPU : public edm::global::EDAnalyzer<> {
 public:
-  explicit TestCUDAAnalyzerGPU(const edm::ParameterSet& iConfig);
+  explicit TestCUDAAnalyzerGPU(edm::ParameterSet const& iConfig);
   ~TestCUDAAnalyzerGPU() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-  void analyze(edm::StreamID, const edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+  void analyze(edm::StreamID, edm::Event const& iEvent, edm::EventSetup const& iSetup) const override;
   void endJob() override;
 
 private:
-  std::string label_;
-  edm::EDGetTokenT<CUDAProduct<CUDAThing>> srcToken_;
-  double minValue_;
-  double maxValue_;
+  std::string const label_;
+  edm::EDGetTokenT<CUDAProduct<CUDAThing>> const srcToken_;
+  double const minValue_;
+  double const maxValue_;
   std::unique_ptr<TestCUDAAnalyzerGPUKernel> gpuAlgo_;
 };
 
-TestCUDAAnalyzerGPU::TestCUDAAnalyzerGPU(const edm::ParameterSet& iConfig)
+TestCUDAAnalyzerGPU::TestCUDAAnalyzerGPU(edm::ParameterSet const& iConfig)
     : label_(iConfig.getParameter<std::string>("@module_label")),
       srcToken_(consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))),
       minValue_(iConfig.getParameter<double>("minValue")),
@@ -53,13 +53,13 @@ void TestCUDAAnalyzerGPU::fillDescriptions(edm::ConfigurationDescriptions& descr
   descriptions.setComment("This EDAnalyzer is part of the TestCUDAProducer* family. It models a GPU analyzer.");
 }
 
-void TestCUDAAnalyzerGPU::analyze(edm::StreamID, const edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+void TestCUDAAnalyzerGPU::analyze(edm::StreamID, edm::Event const& iEvent, edm::EventSetup const& iSetup) const {
   edm::LogVerbatim("TestCUDAAnalyzerGPU") << label_ << " TestCUDAAnalyzerGPU::analyze begin event "
                                           << iEvent.id().event() << " stream " << iEvent.streamID();
 
-  const auto& in = iEvent.get(srcToken_);
+  auto const& in = iEvent.get(srcToken_);
   CUDAScopedContextAnalyze ctx{in};
-  const CUDAThing& input = ctx.get(in);
+  CUDAThing const& input = ctx.get(in);
   gpuAlgo_->analyzeAsync(input.get(), ctx.stream());
 
   edm::LogVerbatim("TestCUDAAnalyzerGPU")

@@ -13,22 +13,21 @@
 
 class TestCUDAProducerGPUFirst : public edm::global::EDProducer<> {
 public:
-  explicit TestCUDAProducerGPUFirst(const edm::ParameterSet& iConfig);
+  explicit TestCUDAProducerGPUFirst(edm::ParameterSet const& iConfig);
   ~TestCUDAProducerGPUFirst() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-  void produce(edm::StreamID stream, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+  void produce(edm::StreamID stream, edm::Event& iEvent, edm::EventSetup const& iSetup) const override;
 
 private:
-  std::string label_;
-  TestCUDAProducerGPUKernel gpuAlgo_;
+  std::string const label_;
+  edm::EDPutTokenT<CUDAProduct<CUDAThing>> const dstToken_;
+  TestCUDAProducerGPUKernel const gpuAlgo_;
 };
 
-TestCUDAProducerGPUFirst::TestCUDAProducerGPUFirst(const edm::ParameterSet& iConfig)
-    : label_(iConfig.getParameter<std::string>("@module_label")) {
-  produces<CUDAProduct<CUDAThing>>();
-}
+TestCUDAProducerGPUFirst::TestCUDAProducerGPUFirst(edm::ParameterSet const& iConfig)
+    : label_(iConfig.getParameter<std::string>("@module_label")), dstToken_{produces<CUDAProduct<CUDAThing>>()} {}
 
 void TestCUDAProducerGPUFirst::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
@@ -40,14 +39,14 @@ void TestCUDAProducerGPUFirst::fillDescriptions(edm::ConfigurationDescriptions& 
 
 void TestCUDAProducerGPUFirst::produce(edm::StreamID streamID,
                                        edm::Event& iEvent,
-                                       const edm::EventSetup& iSetup) const {
+                                       edm::EventSetup const& iSetup) const {
   edm::LogVerbatim("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce begin event "
                                                << iEvent.id().event() << " stream " << iEvent.streamID();
 
   CUDAScopedContextProduce ctx{streamID};
 
   cudautils::device::unique_ptr<float[]> output = gpuAlgo_.runAlgo(label_, ctx.stream());
-  iEvent.put(ctx.wrap(CUDAThing(std::move(output))));
+  ctx.emplace(iEvent, dstToken_, std::move(output));
 
   edm::LogVerbatim("TestCUDAProducerGPUFirst") << label_ << " TestCUDAProducerGPUFirst::produce end event "
                                                << iEvent.id().event() << " stream " << iEvent.streamID();
