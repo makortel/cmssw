@@ -19,8 +19,36 @@ namespace cudautils {
 
   SharedEventPtr CUDAEventCache::getCUDAEvent() {
     const auto dev = cudautils::currentDevice();
+    auto event = makeOrGet(dev);
+    auto ret = cudaEventQuery(event.get());
+    // event is occurred, return immediately
+    if (ret == cudaSuccess) {
+      return event;
+    }
+    // return code is something else than "recorded", throw exception
+    if (ret != cudaErrorNotReady) {
+      cudaCheck(ret);
+    }
+
+    // Got recorded, but not yet occurred event. Try until we get an
+    // occurred event. Need to keep all recorded events until an
+    // occurred event is found in order to avoid ping-pong with a
+    // recorded event.
+    std::vector<SharedEventPtr> ptrs{std::move(event)};
+    do {
+      event = makeOrGet(dev);
+      ret = cudaEventQuery(event.get());
+      if (ret == cudaErrorNotReady) {
+        ptrs.emplace_back(std::move(event));
+      } else if (ret != cudaSuccess) {
+        cudaCheck(ret);
+      }
+    } while (ret != cudaSuccess);
+    return event;
+  }
+
+  SharedEventPtr CUDAEventCache::makeOrGet(int dev) {
     return cache_[dev].makeOrGet([dev]() {
-      // TODO(?): We should not return a recorded, but not-yet-occurred event
       cudaEvent_t event;
       // it should be a bit faster to ignore timings
       cudaCheck(cudaEventCreateWithFlags(&event, cudaEventDisableTiming));
