@@ -10,6 +10,7 @@
 #include "FWCore/Utilities/interface/EDPutToken.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextState.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/SharedEventPtr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/SharedStreamPtr.h"
 
@@ -154,27 +155,18 @@ public:
   explicit CUDAScopedContextProduce(CUDAContextState& state)
       : CUDAScopedContextGetterBase(state.device(), state.releaseStreamPtr()) {}
 
+  /// Record the CUDA event, all asynchronous work must have been queued before the destructor
   ~CUDAScopedContextProduce();
 
   template <typename T>
   std::unique_ptr<CUDAProduct<T>> wrap(T data) {
     // make_unique doesn't work because of private constructor
-    //
-    // CUDAProduct<T> constructor records CUDA event to the CUDA
-    // stream. The event will become "occurred" after all work queued
-    // to the stream before this point has been finished.
-    std::unique_ptr<CUDAProduct<T>> ret(new CUDAProduct<T>(device(), streamPtr(), std::move(data)));
-    createEventIfStreamBusy();
-    ret->setEvent(event_);
-    return ret;
+    return std::unique_ptr<CUDAProduct<T>>(new CUDAProduct<T>(device(), streamPtr(), event_, std::move(data)));
   }
 
   template <typename T, typename... Args>
   auto emplace(edm::Event& iEvent, edm::EDPutTokenT<T> token, Args&&... args) {
-    auto ret = iEvent.emplace(token, device(), streamPtr(), std::forward<Args>(args)...);
-    createEventIfStreamBusy();
-    const_cast<T&>(*ret).setEvent(event_);
-    return ret;
+    return iEvent.emplace(token, device(), streamPtr(), event_, std::forward<Args>(args)...);
   }
 
 private:
@@ -184,9 +176,8 @@ private:
   explicit CUDAScopedContextProduce(int device, cudautils::SharedStreamPtr stream, cudautils::SharedEventPtr event)
       : CUDAScopedContextGetterBase(device, std::move(stream)), event_{std::move(event)} {}
 
-  void createEventIfStreamBusy();
-
-  cudautils::SharedEventPtr event_;
+  // create the CUDA Event upfront to catch possible errors from its creation
+  cudautils::SharedEventPtr event_ = cudautils::getCUDAEventCache().getCUDAEvent();
 };
 
 /**

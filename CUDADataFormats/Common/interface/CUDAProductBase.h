@@ -50,18 +50,17 @@ public:
   // mutable access is needed even if the CUDAScopedContext itself
   // would be const. Therefore it is ok to return a non-const
   // pointer from a const method here.
-  cudaEvent_t event() const { return event_ ? event_.get() : nullptr; }
+  cudaEvent_t event() const { return event_.get(); }
 
 protected:
-  explicit CUDAProductBase(int device, cudautils::SharedStreamPtr stream)
-      : stream_{std::move(stream)}, device_{device} {}
+  explicit CUDAProductBase(int device, cudautils::SharedStreamPtr stream, cudautils::SharedEventPtr event)
+    : stream_{std::move(stream)}, event_{std::move(event)}, device_{device} {}
 
 private:
   friend class impl::CUDAScopedContextBase;
   friend class CUDAScopedContextProduce;
 
-  // The following functions are intended to be used only from CUDAScopedContext
-  void setEvent(cudautils::SharedEventPtr event) { event_ = std::move(event); }
+  // The following function is intended to be used only from CUDAScopedContext
   const cudautils::SharedStreamPtr& streamPtr() const { return stream_; }
 
   bool mayReuseStream() const {

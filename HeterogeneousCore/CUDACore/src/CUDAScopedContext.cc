@@ -3,7 +3,6 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
@@ -107,26 +106,10 @@ void CUDAScopedContextAcquire::throwNoState() {
 ////////////////////
 
 CUDAScopedContextProduce::~CUDAScopedContextProduce() {
-  if (event_) {
-    cudaCheck(cudaEventRecord(event_.get(), stream()));
-  }
-}
-
-void CUDAScopedContextProduce::createEventIfStreamBusy() {
-  if (event_) {
-    return;
-  }
-  auto ret = cudaStreamQuery(stream());
-  if (ret == cudaSuccess) {
-    return;
-  }
-  if (ret != cudaErrorNotReady) {
-    // cudaErrorNotReady indicates that the stream is busy, and thus
-    // is not an error
-    cudaCheck(ret);
-  }
-
-  event_ = cudautils::getCUDAEventCache().getCUDAEvent();
+  // Intentionally not checking the return value to avoid throwing
+  // exceptions. If this call would fail, we should get failures
+  // elsewhere as well.
+  cudaEventRecord(event_.get(), stream());
 }
 
 ////////////////////
