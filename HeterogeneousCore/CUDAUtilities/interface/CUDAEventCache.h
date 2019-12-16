@@ -18,12 +18,19 @@ namespace cudautils {
     CUDAEventCache();
 
     // Gets a (cached) CUDA event for the current device. The event
-    // will be returned to the cache by the shared_ptr destructor.
+    // will be returned to the cache by the shared_ptr destructor. The
+    // returned event is guaranteed to be "occurred", i.e.
+    // cudaEventQuery() == cudaSuccess.
+    //
     // This function is thread safe
     SharedEventPtr getCUDAEvent();
 
   private:
     friend class ::CUDAService;
+
+    // thread safe
+    SharedEventPtr makeOrGet(int dev);
+
     // not thread safe, intended to be called only from CUDAService destructor
     void clear();
 
