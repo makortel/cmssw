@@ -42,12 +42,12 @@ private:
   friend class CUDAScopedContextProduce;
   friend class edm::Wrapper<CUDAProduct<T>>;
 
-  explicit CUDAProduct(int device, cudautils::SharedStreamPtr stream, T data)
-      : CUDAProductBase(device, std::move(stream)), data_(std::move(data)) {}
+  explicit CUDAProduct(int device, cudautils::SharedStreamPtr stream, cudautils::SharedEventPtr event, T data)
+      : CUDAProductBase(device, std::move(stream), std::move(event)), data_(std::move(data)) {}
 
   template <typename... Args>
-  explicit CUDAProduct(int device, cudautils::SharedStreamPtr stream, Args&&... args)
-      : CUDAProductBase(device, std::move(stream)), data_(std::forward<Args>(args)...) {}
+  explicit CUDAProduct(int device, cudautils::SharedStreamPtr stream, cudautils::SharedEventPtr event, Args&&... args)
+      : CUDAProductBase(device, std::move(stream), std::move(event)), data_(std::forward<Args>(args)...) {}
 
   T data_;  //!
 };
