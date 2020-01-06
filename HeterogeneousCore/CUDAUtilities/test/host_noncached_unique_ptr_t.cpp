@@ -4,7 +4,9 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
 
 TEST_CASE("host_noncached_unique_ptr", "[cudaMemTools]") {
-  requireCUDADevices();
+  if (not hasCUDADevices()) {
+    return;
+  }
 
   SECTION("Single element") {
     auto ptr1 = cudautils::make_host_noncached_unique<int>();
