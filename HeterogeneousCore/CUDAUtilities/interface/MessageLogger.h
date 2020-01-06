@@ -6,6 +6,12 @@
 
 namespace cudautils {
 
+  /**
+   * This class is a temporary measure to hide C++17 constructs in
+   * MessaLogger from .cu files (those are mainly files that launch
+   * kernels). It will be removed once we will be able to compile .cu
+   * files with C++17 capable compiler.
+   */
   class MessageLogger {
   public:
     MessageLogger(std::string const& category) : category_(category) {}
