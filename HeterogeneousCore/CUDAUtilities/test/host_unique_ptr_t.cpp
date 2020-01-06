@@ -2,10 +2,10 @@
 
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 
 TEST_CASE("host_unique_ptr", "[cudaMemTools]") {
-  if (not hasCUDADevices()) {
+  if (not cms::cudatest::testDevices()) {
     return;
   }
 

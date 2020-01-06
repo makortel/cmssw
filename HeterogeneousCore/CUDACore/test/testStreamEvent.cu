@@ -13,7 +13,7 @@
 #include <cuda_runtime.h>
 
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 
 namespace {
   constexpr int ARRAY_SIZE = 20000000;
@@ -31,7 +31,7 @@ __global__ void kernel_looping(float *point, unsigned int num) {
 }
 
 int main() {
-  requireCUDADevices();
+  cms::cudatest::requireDevices();
 
   constexpr bool debug = false;
 
