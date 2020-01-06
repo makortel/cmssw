@@ -1,10 +1,10 @@
 #include "catch.hpp"
 
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 
 TEST_CASE("host_noncached_unique_ptr", "[cudaMemTools]") {
-  if (not hasCUDADevices()) {
+  if (not cms::cudatest::testDevices()) {
     return;
   }
 

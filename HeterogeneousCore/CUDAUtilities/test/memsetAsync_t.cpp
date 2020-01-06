@@ -5,10 +5,10 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/memsetAsync.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 
 TEST_CASE("memsetAsync", "[cudaMemTools]") {
-  if (not hasCUDADevices()) {
+  if (not cms::cudatest::testDevices()) {
     return;
   }
 

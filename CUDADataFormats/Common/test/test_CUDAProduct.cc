@@ -3,7 +3,7 @@
 #include "CUDADataFormats/Common/interface/CUDAProduct.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 
@@ -30,7 +30,7 @@ TEST_CASE("Use of CUDAProduct template", "[CUDACore]") {
     auto bar = std::move(foo);
   }
 
-  if (not hasCUDADevices()) {
+  if (not cms::cudatest::testDevices()) {
     return;
   }
 

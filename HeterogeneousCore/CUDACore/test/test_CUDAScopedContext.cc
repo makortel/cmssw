@@ -8,7 +8,7 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
@@ -39,7 +39,7 @@ namespace {
 }  // namespace
 
 TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
-  if (not hasCUDADevices()) {
+  if (not cms::cudatest::testDevices()) {
     return;
   }
 
