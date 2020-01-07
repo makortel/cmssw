@@ -20,6 +20,7 @@ TEST_CASE("host_unique_ptr", "[cudaMemTools]") {
   SECTION("Reset") {
     auto ptr = cudautils::make_host_unique<int>(stream);
     REQUIRE(ptr != nullptr);
+    cudaCheck(cudaStreamSynchronize(stream));
 
     ptr.reset();
     REQUIRE(ptr.get() == nullptr);
@@ -28,6 +29,10 @@ TEST_CASE("host_unique_ptr", "[cudaMemTools]") {
   SECTION("Multiple elements") {
     auto ptr = cudautils::make_host_unique<int[]>(10, stream);
     REQUIRE(ptr != nullptr);
+    cudaCheck(cudaStreamSynchronize(stream));
+
+    ptr.reset();
+    REQUIRE(ptr.get() == nullptr);
   }
 
   SECTION("Allocating too much") {
