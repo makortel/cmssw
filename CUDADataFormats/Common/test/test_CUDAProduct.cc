@@ -5,7 +5,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/EventCache.h"
 
 #include <cuda_runtime_api.h>
 
@@ -15,7 +15,7 @@ namespace cudatest {
     static CUDAScopedContextProduce make(int dev, bool createEvent) {
       cudautils::SharedEventPtr event;
       if (createEvent) {
-        event = cudautils::getCUDAEventCache().getCUDAEvent();
+        event = cudautils::getEventCache().get();
       }
       return CUDAScopedContextProduce(dev, cudautils::getCUDAStreamCache().getCUDAStream(), std::move(event));
     }

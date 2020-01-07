@@ -1,23 +1,23 @@
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/EventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/deviceCount.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/ScopedSetDevice.h"
 
 namespace cudautils {
-  void CUDAEventCache::Deleter::operator()(cudaEvent_t event) const {
+  void EventCache::Deleter::operator()(cudaEvent_t event) const {
     if (device_ != -1) {
       ScopedSetDevice deviceGuard{device_};
       cudaCheck(cudaEventDestroy(event));
     }
   }
 
-  // CUDAEventCache should be constructed by the first call to
-  // getCUDAEventCache() only if we have CUDA devices present
-  CUDAEventCache::CUDAEventCache() : cache_(cudautils::deviceCount()) {}
+  // EventCache should be constructed by the first call to
+  // getEventCache() only if we have CUDA devices present
+  EventCache::EventCache() : cache_(cudautils::deviceCount()) {}
 
-  SharedEventPtr CUDAEventCache::getCUDAEvent() {
+  SharedEventPtr EventCache::get() {
     const auto dev = cudautils::currentDevice();
     auto event = makeOrGet(dev);
     auto ret = cudaEventQuery(event.get());
@@ -47,7 +47,7 @@ namespace cudautils {
     return event;
   }
 
-  SharedEventPtr CUDAEventCache::makeOrGet(int dev) {
+  SharedEventPtr EventCache::makeOrGet(int dev) {
     return cache_[dev].makeOrGet([dev]() {
       cudaEvent_t event;
       // it should be a bit faster to ignore timings
@@ -56,19 +56,19 @@ namespace cudautils {
     });
   }
 
-  void CUDAEventCache::clear() {
+  void EventCache::clear() {
     // Reset the contents of the caches, but leave an
     // edm::ReusableObjectHolder alive for each device. This is needed
     // mostly for the unit tests, where the function-static
-    // CUDAEventCache lives through multiple tests (and go through
+    // EventCache lives through multiple tests (and go through
     // multiple shutdowns of the framework).
     cache_.clear();
     cache_.resize(cudautils::deviceCount());
   }
 
-  CUDAEventCache& getCUDAEventCache() {
+  EventCache& getEventCache() {
     // the public interface is thread safe
-    CMS_THREAD_SAFE static CUDAEventCache cache;
+    CMS_THREAD_SAFE static EventCache cache;
     return cache;
   }
 }  // namespace cudautils
