@@ -1,12 +1,12 @@
 #include "CUDADataFormats/Common/interface/CUDAProductBase.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/eventWorkHasCompleted.h"
 
 bool CUDAProductBase::isAvailable() const {
   // if default-constructed, the product is not available
   if (not event_) {
     return false;
   }
-  return cudautils::eventIsOccurred(event_.get());
+  return cudautils::eventWorkHasCompleted(event_.get());
 }
 
 CUDAProductBase::~CUDAProductBase() {
