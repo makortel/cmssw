@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/EventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/deviceCount.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
@@ -18,7 +18,7 @@ class CUDAESProduct {
 public:
   CUDAESProduct() : gpuDataPerDevice_(cudautils::deviceCount()) {
     for (size_t i = 0; i < gpuDataPerDevice_.size(); ++i) {
-      gpuDataPerDevice_[i].m_event = cudautils::getCUDAEventCache().getCUDAEvent();
+      gpuDataPerDevice_[i].m_event = cudautils::getEventCache().get();
     }
   }
   ~CUDAESProduct() = default;

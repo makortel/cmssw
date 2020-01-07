@@ -11,7 +11,7 @@
 #include "FWCore/Utilities/interface/ReusableObjectHolder.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/EventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
@@ -303,7 +303,7 @@ CUDAService::CUDAService(edm::ParameterSet const& config) {
     cudautils::allocator::getCachingDeviceAllocator();
     cudautils::allocator::getCachingHostAllocator();
   }
-  cudautils::getCUDAEventCache().clear();
+  cudautils::getEventCache().clear();
   cudautils::getCUDAStreamCache().clear();
 
   log << "CUDAService fully initialized";
@@ -322,7 +322,7 @@ CUDAService::~CUDAService() {
       cudautils::allocator::getCachingDeviceAllocator().FreeAllCached();
       cudautils::allocator::getCachingHostAllocator().FreeAllCached();
     }
-    cudautils::getCUDAEventCache().clear();
+    cudautils::getEventCache().clear();
     cudautils::getCUDAStreamCache().clear();
 
     for (int i = 0; i < numberOfDevices_; ++i) {

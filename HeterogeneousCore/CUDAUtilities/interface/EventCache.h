@@ -1,5 +1,5 @@
-#ifndef HeterogeneousCore_CUDAUtilities_CUDAEventCache_h
-#define HeterogeneousCore_CUDAUtilities_CUDAEventCache_h
+#ifndef HeterogeneousCore_CUDAUtilities_EventCache_h
+#define HeterogeneousCore_CUDAUtilities_EventCache_h
 
 #include <vector>
 
@@ -11,11 +11,11 @@
 class CUDAService;
 
 namespace cudautils {
-  class CUDAEventCache {
+  class EventCache {
   public:
     using BareEvent = SharedEventPtr::element_type;
 
-    CUDAEventCache();
+    EventCache();
 
     // Gets a (cached) CUDA event for the current device. The event
     // will be returned to the cache by the shared_ptr destructor. The
@@ -23,7 +23,7 @@ namespace cudautils {
     // cudaEventQuery() == cudaSuccess.
     //
     // This function is thread safe
-    SharedEventPtr getCUDAEvent();
+    SharedEventPtr get();
 
   private:
     friend class ::CUDAService;
@@ -47,9 +47,9 @@ namespace cudautils {
     std::vector<edm::ReusableObjectHolder<BareEvent, Deleter>> cache_;
   };
 
-  // Gets the global instance of a CUDAEventCache
+  // Gets the global instance of a EventCache
   // This function is thread safe
-  CUDAEventCache& getCUDAEventCache();
+  EventCache& getEventCache();
 }  // namespace cudautils
 
 #endif

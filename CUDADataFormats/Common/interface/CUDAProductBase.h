@@ -74,7 +74,7 @@ private:
   // The cudaStream_t is really shared among edm::Event products, so
   // using shared_ptr also here
   cudautils::SharedStreamPtr stream_;  //!
-  // shared_ptr because of caching in CUDAEventCache
+  // shared_ptr because of caching in cudautils::EventCache
   cudautils::SharedEventPtr event_;  //!
 
   // This flag tells whether the CUDA stream may be reused by a

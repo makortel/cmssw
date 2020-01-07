@@ -10,7 +10,7 @@
 #include "FWCore/Utilities/interface/EDPutToken.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAContextState.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/EventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/SharedEventPtr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/SharedStreamPtr.h"
 
@@ -177,7 +177,7 @@ private:
       : CUDAScopedContextGetterBase(device, std::move(stream)), event_{std::move(event)} {}
 
   // create the CUDA Event upfront to catch possible errors from its creation
-  cudautils::SharedEventPtr event_ = cudautils::getCUDAEventCache().getCUDAEvent();
+  cudautils::SharedEventPtr event_ = cudautils::getEventCache().get();
 };
 
 /**
