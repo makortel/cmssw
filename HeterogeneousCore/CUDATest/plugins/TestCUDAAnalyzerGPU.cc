@@ -10,7 +10,7 @@
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/StreamCache.h"
 
 #include "TestCUDAAnalyzerGPUKernel.h"
 
@@ -40,7 +40,7 @@ TestCUDAAnalyzerGPU::TestCUDAAnalyzerGPU(edm::ParameterSet const& iConfig)
       maxValue_(iConfig.getParameter<double>("maxValue")) {
   edm::Service<CUDAService> cs;
   if (cs->enabled()) {
-    auto streamPtr = cudautils::getCUDAStreamCache().getCUDAStream();
+    auto streamPtr = cudautils::getStreamCache().get();
     gpuAlgo_ = std::make_unique<TestCUDAAnalyzerGPUKernel>(streamPtr.get());
   }
 }
@@ -70,7 +70,7 @@ void TestCUDAAnalyzerGPU::analyze(edm::StreamID, edm::Event const& iEvent, edm::
 void TestCUDAAnalyzerGPU::endJob() {
   edm::LogVerbatim("TestCUDAAnalyzerGPU") << label_ << " TestCUDAAnalyzerGPU::endJob begin";
 
-  auto streamPtr = cudautils::getCUDAStreamCache().getCUDAStream();
+  auto streamPtr = cudautils::getStreamCache().get();
   auto value = gpuAlgo_->value(streamPtr.get());
   edm::LogVerbatim("TestCUDAAnalyzerGPU") << label_ << "  accumulated value " << value;
   assert(minValue_ <= value && value <= maxValue_);

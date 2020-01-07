@@ -9,7 +9,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/StreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/EventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/ScopedSetDevice.h"
@@ -24,7 +24,7 @@ namespace cudatest {
       if (createEvent) {
         event = cudautils::getEventCache().get();
       }
-      return CUDAScopedContextProduce(dev, cudautils::getCUDAStreamCache().getCUDAStream(), std::move(event));
+      return CUDAScopedContextProduce(dev, cudautils::getStreamCache().get(), std::move(event));
     }
   };
 }  // namespace cudatest
