@@ -11,7 +11,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/deviceCount.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/eventWorkHasCompleted.h"
 
 template <typename T>
 class CUDAESProduct {
@@ -47,7 +47,7 @@ public:
         // Someone else is filling
 
         // Check first if the recorded event has occurred
-        if (cudautils::eventIsOccurred(data.m_event.get())) {
+        if (cudautils::eventWorkHasCompleted(data.m_event.get())) {
           // It was, so data is accessible from all CUDA streams on
           // the device. Set the 'filled' for all subsequent calls and
           // return the value

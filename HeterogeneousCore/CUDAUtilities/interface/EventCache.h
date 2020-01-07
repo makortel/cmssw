@@ -19,8 +19,8 @@ namespace cudautils {
 
     // Gets a (cached) CUDA event for the current device. The event
     // will be returned to the cache by the shared_ptr destructor. The
-    // returned event is guaranteed to be "occurred", i.e.
-    // cudaEventQuery() == cudaSuccess.
+    // returned event is guaranteed to be in the state where all
+    // captured work has completed, i.e. cudaEventQuery() == cudaSuccess.
     //
     // This function is thread safe
     SharedEventPtr get();

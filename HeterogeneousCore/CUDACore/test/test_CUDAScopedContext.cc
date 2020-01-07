@@ -7,7 +7,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/eventWorkHasCompleted.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/StreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/EventCache.h"
@@ -112,7 +112,7 @@ TEST_CASE("Use of CUDAScopedContext", "[CUDACore]") {
       testCUDAScopedContextKernels_join(prod1, prod2, d_a3.get(), ctx2.stream());
       cudaCheck(cudaStreamSynchronize(ctx2.stream()));
       REQUIRE(wprod2->isAvailable());
-      REQUIRE(cudautils::eventIsOccurred(wprod2->event()));
+      REQUIRE(cudautils::eventWorkHasCompleted(wprod2->event()));
 
       h_a1 = 0;
       h_a2 = 0;
