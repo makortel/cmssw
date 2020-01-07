@@ -1,5 +1,5 @@
-#ifndef HeterogeneousCore_CUDAUtilities_CUDAStreamCache_h
-#define HeterogeneousCore_CUDAUtilities_CUDAStreamCache_h
+#ifndef HeterogeneousCore_CUDAUtilities_StreamCache_h
+#define HeterogeneousCore_CUDAUtilities_StreamCache_h
 
 #include <vector>
 
@@ -11,16 +11,16 @@
 class CUDAService;
 
 namespace cudautils {
-  class CUDAStreamCache {
+  class StreamCache {
   public:
     using BareStream = SharedStreamPtr::element_type;
 
-    CUDAStreamCache();
+    StreamCache();
 
     // Gets a (cached) CUDA stream for the current device. The stream
     // will be returned to the cache by the shared_ptr destructor.
     // This function is thread safe
-    SharedStreamPtr getCUDAStream();
+    SharedStreamPtr get();
 
   private:
     friend class ::CUDAService;
@@ -40,9 +40,9 @@ namespace cudautils {
     std::vector<edm::ReusableObjectHolder<BareStream, Deleter>> cache_;
   };
 
-  // Gets the global instance of a CUDAStreamCache
+  // Gets the global instance of a StreamCache
   // This function is thread safe
-  CUDAStreamCache& getCUDAStreamCache();
+  StreamCache& getStreamCache();
 }  // namespace cudautils
 
 #endif

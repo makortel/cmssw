@@ -12,7 +12,6 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 
 namespace {
   CUDAService makeCUDAService(edm::ParameterSet ps) {
