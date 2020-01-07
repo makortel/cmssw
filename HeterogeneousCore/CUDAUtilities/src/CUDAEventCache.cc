@@ -2,8 +2,8 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/deviceCount.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/ScopedSetDevice.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 
 namespace cudautils {
   void CUDAEventCache::Deleter::operator()(cudaEvent_t event) const {
@@ -15,7 +15,7 @@ namespace cudautils {
 
   // CUDAEventCache should be constructed by the first call to
   // getCUDAEventCache() only if we have CUDA devices present
-  CUDAEventCache::CUDAEventCache() : cache_(cudautils::cudaDeviceCount()) {}
+  CUDAEventCache::CUDAEventCache() : cache_(cudautils::deviceCount()) {}
 
   SharedEventPtr CUDAEventCache::getCUDAEvent() {
     const auto dev = cudautils::currentDevice();
@@ -63,7 +63,7 @@ namespace cudautils {
     // CUDAEventCache lives through multiple tests (and go through
     // multiple shutdowns of the framework).
     cache_.clear();
-    cache_.resize(cudautils::cudaDeviceCount());
+    cache_.resize(cudautils::deviceCount());
   }
 
   CUDAEventCache& getCUDAEventCache() {

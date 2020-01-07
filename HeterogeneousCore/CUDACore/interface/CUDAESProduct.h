@@ -6,18 +6,17 @@
 #include <mutex>
 #include <vector>
 
-#include "FWCore/Concurrency/interface/hardware_pause.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/CUDAEventCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/deviceCount.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/eventIsOccurred.h"
 
 template <typename T>
 class CUDAESProduct {
 public:
-  CUDAESProduct() : gpuDataPerDevice_(cudautils::cudaDeviceCount()) {
+  CUDAESProduct() : gpuDataPerDevice_(cudautils::deviceCount()) {
     for (size_t i = 0; i < gpuDataPerDevice_.size(); ++i) {
       gpuDataPerDevice_[i].m_event = cudautils::getCUDAEventCache().getCUDAEvent();
     }
