@@ -29,6 +29,10 @@ TEST_CASE("device_unique_ptr", "[cudaMemTools]") {
   SECTION("Multiple elements") {
     auto ptr = cudautils::make_device_unique<int[]>(10, stream);
     REQUIRE(ptr != nullptr);
+    cudaCheck(cudaStreamSynchronize(stream));
+
+    ptr.reset();
+    REQUIRE(ptr.get() == nullptr);
   }
 
   SECTION("Allocating too much") {
