@@ -6,10 +6,10 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "CUDADataFormats/Common/interface/Product.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
-#include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
+#include "HeterogeneousCore/CUDATest/interface/Thing.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/StreamCache.h"
 
 #include "TestCUDAAnalyzerGPUKernel.h"
@@ -26,7 +26,7 @@ public:
 
 private:
   std::string const label_;
-  edm::EDGetTokenT<CUDAProduct<CUDAThing>> const srcToken_;
+  edm::EDGetTokenT<cms::cuda::Product<cms::cudatest::Thing>> const srcToken_;
   double const minValue_;
   double const maxValue_;
   // the public interface is thread safe
@@ -35,7 +35,7 @@ private:
 
 TestCUDAAnalyzerGPU::TestCUDAAnalyzerGPU(edm::ParameterSet const& iConfig)
     : label_(iConfig.getParameter<std::string>("@module_label")),
-      srcToken_(consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))),
+      srcToken_(consumes<cms::cuda::Product<cms::cudatest::Thing>>(iConfig.getParameter<edm::InputTag>("src"))),
       minValue_(iConfig.getParameter<double>("minValue")),
       maxValue_(iConfig.getParameter<double>("maxValue")) {
   edm::Service<CUDAService> cs;
@@ -47,7 +47,7 @@ TestCUDAAnalyzerGPU::TestCUDAAnalyzerGPU(edm::ParameterSet const& iConfig)
 
 void TestCUDAAnalyzerGPU::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source of CUDAProduct<CUDAThing>.");
+  desc.add<edm::InputTag>("src", edm::InputTag())->setComment("Source of cms::cuda::Product<cms::cudatest::Thing>.");
   desc.add<double>("minValue", -1e308);
   desc.add<double>("maxValue", 1e308);
   descriptions.addWithDefaultLabel(desc);
@@ -59,8 +59,8 @@ void TestCUDAAnalyzerGPU::analyze(edm::StreamID, edm::Event const& iEvent, edm::
                                           << iEvent.id().event() << " stream " << iEvent.streamID();
 
   auto const& in = iEvent.get(srcToken_);
-  CUDAScopedContextAnalyze ctx{in};
-  CUDAThing const& input = ctx.get(in);
+  cms::cuda::ScopedContextAnalyze ctx{in};
+  cms::cudatest::Thing const& input = ctx.get(in);
   gpuAlgo_->analyzeAsync(input.get(), ctx.stream());
 
   edm::LogVerbatim("TestCUDAAnalyzerGPU")

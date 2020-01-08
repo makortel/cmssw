@@ -1,7 +1,7 @@
 #include "catch.hpp"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "CUDADataFormats/Common/interface/Product.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/StreamCache.h"
@@ -9,22 +9,22 @@
 
 #include <cuda_runtime_api.h>
 
-namespace cudatest {
-  class TestCUDAScopedContext {
+namespace cms::cudatest {
+  class TestScopedContext {
   public:
-    static CUDAScopedContextProduce make(int dev, bool createEvent) {
+    static cuda::ScopedContextProduce make(int dev, bool createEvent) {
       cudautils::SharedEventPtr event;
       if (createEvent) {
         event = cudautils::getEventCache().get();
       }
-      return CUDAScopedContextProduce(dev, cudautils::getStreamCache().get(), std::move(event));
+      return cuda::ScopedContextProduce(dev, cudautils::getStreamCache().get(), std::move(event));
     }
   };
-}  // namespace cudatest
+}  // namespace cms::cudatest
 
-TEST_CASE("Use of CUDAProduct template", "[CUDACore]") {
+TEST_CASE("Use of cms::cuda::Product template", "[CUDACore]") {
   SECTION("Default constructed") {
-    auto foo = CUDAProduct<int>();
+    auto foo = cms::cuda::Product<int>();
     REQUIRE(!foo.isValid());
 
     auto bar = std::move(foo);
@@ -37,11 +37,11 @@ TEST_CASE("Use of CUDAProduct template", "[CUDACore]") {
   constexpr int defaultDevice = 0;
   cudaCheck(cudaSetDevice(defaultDevice));
   {
-    auto ctx = cudatest::TestCUDAScopedContext::make(defaultDevice, true);
-    std::unique_ptr<CUDAProduct<int>> dataPtr = ctx.wrap(10);
+    auto ctx = cms::cudatest::TestScopedContext::make(defaultDevice, true);
+    std::unique_ptr<cms::cuda::Product<int>> dataPtr = ctx.wrap(10);
     auto& data = *dataPtr;
 
-    SECTION("Construct from CUDAScopedContext") {
+    SECTION("Construct from cms::cuda::ScopedContext") {
       REQUIRE(data.isValid());
       REQUIRE(data.device() == defaultDevice);
       REQUIRE(data.stream() == ctx.stream());
@@ -49,13 +49,13 @@ TEST_CASE("Use of CUDAProduct template", "[CUDACore]") {
     }
 
     SECTION("Move constructor") {
-      auto data2 = CUDAProduct<int>(std::move(data));
+      auto data2 = cms::cuda::Product<int>(std::move(data));
       REQUIRE(data2.isValid());
       REQUIRE(!data.isValid());
     }
 
     SECTION("Move assignment") {
-      CUDAProduct<int> data2;
+      cms::cuda::Product<int> data2;
       data2 = std::move(data);
       REQUIRE(data2.isValid());
       REQUIRE(!data.isValid());
