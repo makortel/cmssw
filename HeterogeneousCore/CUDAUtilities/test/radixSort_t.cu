@@ -13,7 +13,6 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/launch.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/radixSort.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 
 template <typename T>
 struct RS {
@@ -39,12 +38,6 @@ void go(bool useShared) {
 
   auto start = std::chrono::high_resolution_clock::now();
   auto delta = start - start;
-
-  if (cudautils::cudaDeviceCount() == 0) {
-    std::cerr << "No CUDA devices on this system"
-              << "\n";
-    exit(EXIT_FAILURE);
-  }
 
   constexpr int blocks = 10;
   constexpr int blockSize = 256 * 32;

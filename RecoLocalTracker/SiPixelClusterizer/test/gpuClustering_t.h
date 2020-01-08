@@ -15,7 +15,6 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/launch.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 #endif
 
 #include "RecoLocalTracker/SiPixelClusterizer/plugins/gpuClustering.h"
@@ -24,12 +23,6 @@
 int main(void) {
 #ifdef __CUDACC__
   cms::cudatest::requireDevices();
-
-  if (cudautils::cudaDeviceCount() == 0) {
-    std::cerr << "No CUDA devices on this system"
-              << "\n";
-    exit(EXIT_FAILURE);
-  }
 #endif
 
   using namespace gpuClustering;

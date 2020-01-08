@@ -9,7 +9,6 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/HistoContainer.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/launch.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 
 template <typename T, int NBINS, int S, int DELTA>
 __global__ void mykernel(T const* __restrict__ v, uint32_t N) {
@@ -93,12 +92,6 @@ __global__ void mykernel(T const* __restrict__ v, uint32_t N) {
 
 template <typename T, int NBINS = 128, int S = 8 * sizeof(T), int DELTA = 1000>
 void go() {
-  if (cudautils::cudaDeviceCount() == 0) {
-    std::cerr << "No CUDA devices on this system"
-              << "\n";
-    exit(EXIT_FAILURE);
-  }
-
   std::mt19937 eng;
 
   int rmin = std::numeric_limits<T>::min();
