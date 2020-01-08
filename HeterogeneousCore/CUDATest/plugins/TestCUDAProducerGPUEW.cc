@@ -6,12 +6,12 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
+#include "CUDADataFormats/Common/interface/Product.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAContextState.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
+#include "HeterogeneousCore/CUDACore/interface/ContextState.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
-#include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
+#include "HeterogeneousCore/CUDATest/interface/Thing.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
 
 #include "TestCUDAProducerGPUKernel.h"
@@ -30,18 +30,18 @@ public:
 
 private:
   std::string const label_;
-  edm::EDGetTokenT<CUDAProduct<CUDAThing>> const srcToken_;
-  edm::EDPutTokenT<CUDAProduct<CUDAThing>> const dstToken_;
+  edm::EDGetTokenT<cms::cuda::Product<cms::cudatest::Thing>> const srcToken_;
+  edm::EDPutTokenT<cms::cuda::Product<cms::cudatest::Thing>> const dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
-  CUDAContextState ctxState_;
+  cms::cuda::ContextState ctxState_;
   cudautils::device::unique_ptr<float[]> devicePtr_;
   cudautils::host::noncached::unique_ptr<float> hostData_;
 };
 
 TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(edm::ParameterSet const& iConfig)
     : label_{iConfig.getParameter<std::string>("@module_label")},
-      srcToken_{consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
-      dstToken_{produces<CUDAProduct<CUDAThing>>()} {
+      srcToken_{consumes<cms::cuda::Product<cms::cudatest::Thing>>(iConfig.getParameter<edm::InputTag>("src"))},
+      dstToken_{produces<cms::cuda::Product<cms::cudatest::Thing>>()} {
   edm::Service<CUDAService> cs;
   if (cs->enabled()) {
     hostData_ = cudautils::make_host_noncached_unique<float>();
@@ -56,7 +56,7 @@ void TestCUDAProducerGPUEW::fillDescriptions(edm::ConfigurationDescriptions& des
       "This EDProducer is part of the TestCUDAProducer* family. It models a GPU algorithm this is not the first "
       "algorithm in the chain of the GPU EDProducers, and that transfers some data from GPU to CPU and thus needs to "
       "synchronize GPU and CPU. The synchronization is implemented with the ExternalWork extension. Produces "
-      "CUDAProduct<CUDAThing>.");
+      "cms::cuda::Product<cms::cuda::Thing>.");
 }
 
 void TestCUDAProducerGPUEW::acquire(edm::Event const& iEvent,
@@ -66,8 +66,8 @@ void TestCUDAProducerGPUEW::acquire(edm::Event const& iEvent,
                                             << iEvent.id().event() << " stream " << iEvent.streamID();
 
   auto const& in = iEvent.get(srcToken_);
-  CUDAScopedContextAcquire ctx{in, std::move(waitingTaskHolder), ctxState_};
-  CUDAThing const& input = ctx.get(in);
+  cms::cuda::ScopedContextAcquire ctx{in, std::move(waitingTaskHolder), ctxState_};
+  cms::cudatest::Thing const& input = ctx.get(in);
 
   devicePtr_ = gpuAlgo_.runAlgo(label_, input.get(), ctx.stream());
   // Mimick the need to transfer some of the GPU data back to CPU to
@@ -84,7 +84,7 @@ void TestCUDAProducerGPUEW::produce(edm::Event& iEvent, edm::EventSetup const& i
       << label_ << " TestCUDAProducerGPUEW::produce begin event " << iEvent.id().event() << " stream "
       << iEvent.streamID() << " 10th element " << *hostData_;
 
-  CUDAScopedContextProduce ctx{ctxState_};
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
 
   ctx.emplace(iEvent, dstToken_, std::move(devicePtr_));
 

@@ -1,6 +1,6 @@
 /**
  * The purpose of this test program is to ensure that the logic for
- * CUDA event use in CUDAProduct and CUDAScopedContext
+ * CUDA event use in cms::cuda::Product and cms::cuda::ScopedContext
  */
 
 #include <iostream>

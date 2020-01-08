@@ -9,12 +9,12 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
+#include "CUDADataFormats/Common/interface/Product.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAContextState.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
+#include "HeterogeneousCore/CUDACore/interface/ContextState.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
-#include "HeterogeneousCore/CUDATest/interface/CUDAThing.h"
+#include "HeterogeneousCore/CUDATest/interface/Thing.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
 
 #include "TestCUDAProducerGPUKernel.h"
@@ -34,21 +34,21 @@ public:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
 private:
-  void addSimpleWork(edm::EventNumber_t eventID, edm::StreamID streamID, CUDAScopedContextTask& ctx);
+  void addSimpleWork(edm::EventNumber_t eventID, edm::StreamID streamID, cms::cuda::ScopedContextTask& ctx);
 
   std::string const label_;
-  edm::EDGetTokenT<CUDAProduct<CUDAThing>> const srcToken_;
-  edm::EDPutTokenT<CUDAProduct<CUDAThing>> const dstToken_;
+  edm::EDGetTokenT<cms::cuda::Product<cms::cudatest::Thing>> const srcToken_;
+  edm::EDPutTokenT<cms::cuda::Product<cms::cudatest::Thing>> const dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
-  CUDAContextState ctxState_;
+  cms::cuda::ContextState ctxState_;
   cudautils::device::unique_ptr<float[]> devicePtr_;
   cudautils::host::noncached::unique_ptr<float> hostData_;
 };
 
 TestCUDAProducerGPUEWTask::TestCUDAProducerGPUEWTask(edm::ParameterSet const& iConfig)
     : label_{iConfig.getParameter<std::string>("@module_label")},
-      srcToken_{consumes<CUDAProduct<CUDAThing>>(iConfig.getParameter<edm::InputTag>("src"))},
-      dstToken_{produces<CUDAProduct<CUDAThing>>()} {
+      srcToken_{consumes<cms::cuda::Product<cms::cudatest::Thing>>(iConfig.getParameter<edm::InputTag>("src"))},
+      dstToken_{produces<cms::cuda::Product<cms::cudatest::Thing>>()} {
   edm::Service<CUDAService> cs;
   if (cs->enabled()) {
     hostData_ = cudautils::make_host_noncached_unique<float>();
@@ -65,7 +65,7 @@ void TestCUDAProducerGPUEWTask::fillDescriptions(edm::ConfigurationDescriptions&
       "alternating the transfers and kernel executions (e.g. to decide which kernel to run next based on a value from "
       "GPU). A synchronization between GPU and CPU is needed after each transfer. The synchronizations are implemented "
       "with the ExternalWork extension and explicit TBB tasks within the module. Produces "
-      "CUDAProduct<CUDAThing>.");
+      "cms::cuda::Product<cms::cudatest::Thing>.");
 }
 
 void TestCUDAProducerGPUEWTask::acquire(edm::Event const& iEvent,
@@ -75,9 +75,9 @@ void TestCUDAProducerGPUEWTask::acquire(edm::Event const& iEvent,
                                                 << iEvent.id().event() << " stream " << iEvent.streamID();
 
   auto const& in = iEvent.get(srcToken_);
-  CUDAScopedContextAcquire ctx{in, waitingTaskHolder, ctxState_};
+  cms::cuda::ScopedContextAcquire ctx{in, waitingTaskHolder, ctxState_};
 
-  CUDAThing const& input = ctx.get(in);
+  cms::cudatest::Thing const& input = ctx.get(in);
 
   devicePtr_ = gpuAlgo_.runAlgo(label_, input.get(), ctx.stream());
   // Mimick the need to transfer some of the GPU data back to CPU to
@@ -87,7 +87,7 @@ void TestCUDAProducerGPUEWTask::acquire(edm::Event const& iEvent,
       cudaMemcpyAsync(hostData_.get(), devicePtr_.get() + 10, sizeof(float), cudaMemcpyDeviceToHost, ctx.stream()));
   // Push a task to run addSimpleWork() after the asynchronous work
   // (and acquire()) has finished instead of produce()
-  ctx.pushNextTask([iev = iEvent.id().event(), istr = iEvent.streamID(), this](CUDAScopedContextTask ctx) {
+  ctx.pushNextTask([iev = iEvent.id().event(), istr = iEvent.streamID(), this](cms::cuda::ScopedContextTask ctx) {
     addSimpleWork(iev, istr, ctx);
   });
 
@@ -97,7 +97,7 @@ void TestCUDAProducerGPUEWTask::acquire(edm::Event const& iEvent,
 
 void TestCUDAProducerGPUEWTask::addSimpleWork(edm::EventNumber_t eventID,
                                               edm::StreamID streamID,
-                                              CUDAScopedContextTask& ctx) {
+                                              cms::cuda::ScopedContextTask& ctx) {
   if (*hostData_ < 13) {
     edm::LogVerbatim("TestCUDAProducerGPUEWTask")
         << label_ << " TestCUDAProducerGPUEWTask::addSimpleWork begin event " << eventID << " stream " << streamID
@@ -105,7 +105,8 @@ void TestCUDAProducerGPUEWTask::addSimpleWork(edm::EventNumber_t eventID,
     cudaCheck(
         cudaMemcpyAsync(hostData_.get(), devicePtr_.get() + 10, sizeof(float), cudaMemcpyDeviceToHost, ctx.stream()));
 
-    ctx.pushNextTask([eventID, streamID, this](CUDAScopedContextTask ctx) { addSimpleWork(eventID, streamID, ctx); });
+    ctx.pushNextTask(
+        [eventID, streamID, this](cms::cuda::ScopedContextTask ctx) { addSimpleWork(eventID, streamID, ctx); });
     gpuAlgo_.runSimpleAlgo(devicePtr_.get(), ctx.stream());
     edm::LogVerbatim("TestCUDAProducerGPUEWTask")
         << label_ << " TestCUDAProducerGPUEWTask::addSimpleWork end event " << eventID << " stream " << streamID;
@@ -124,7 +125,7 @@ void TestCUDAProducerGPUEWTask::produce(edm::Event& iEvent, edm::EventSetup cons
     throw cms::Exception("Assert") << "Expecting 10th element to be 13, got " << *hostData_;
   }
 
-  CUDAScopedContextProduce ctx{ctxState_};
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
 
   ctx.emplace(iEvent, dstToken_, std::move(devicePtr_));
 
