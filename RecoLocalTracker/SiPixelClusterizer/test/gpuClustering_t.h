@@ -13,7 +13,7 @@
 
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/launch.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 #endif
@@ -23,7 +23,7 @@
 
 int main(void) {
 #ifdef __CUDACC__
-  requireCUDADevices();
+  cms::cudatest::requireDevices();
 
   if (cudautils::cudaDeviceCount() == 0) {
     std::cerr << "No CUDA devices on this system"

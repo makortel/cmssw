@@ -7,7 +7,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/HistoContainer.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 
 template <typename T>
@@ -152,7 +152,7 @@ void go() {
 }
 
 int main() {
-  requireCUDADevices();
+  cms::cudatest::requireDevices();
 
   go<int16_t>();
   go<int8_t>();

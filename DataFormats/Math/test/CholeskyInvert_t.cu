@@ -16,7 +16,7 @@
 #include "DataFormats/Math/interface/choleskyInversion.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/launch.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 
@@ -197,7 +197,7 @@ void go(bool soa) {
 }
 
 int main() {
-  requireCUDADevices();
+  cms::cudatest::requireDevices();
 
   go<2>(false);
   go<4>(false);

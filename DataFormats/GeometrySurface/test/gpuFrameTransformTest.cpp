@@ -13,7 +13,7 @@
 #include "DataFormats/GeometrySurface/interface/GloballyPositioned.h"
 #include "DataFormats/GeometrySurface/interface/SOARotation.h"
 #include "DataFormats/GeometrySurface/interface/TkRotation.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 
 void toGlobalWrapper(SOAFrame<float> const *frame,
                      float const *xl,
@@ -26,7 +26,7 @@ void toGlobalWrapper(SOAFrame<float> const *frame,
                      uint32_t n);
 
 int main(void) {
-  requireCUDADevices();
+  cms::cudatest::requireDevices();
 
   typedef float T;
   typedef TkRotation<T> Rotation;

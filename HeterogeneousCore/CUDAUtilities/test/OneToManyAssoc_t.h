@@ -9,7 +9,7 @@
 #ifdef __CUDACC__
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/currentDevice.h"
 
 #endif
@@ -99,7 +99,7 @@ __global__ void verifyBulk(Assoc const* __restrict__ assoc, AtomicPairCounter co
 
 int main() {
 #ifdef __CUDACC__
-  requireCUDADevices();
+  cms::cudatest::requireDevices();
   auto current_device = cudautils::currentDevice();
 #else
   // make sure cuda emulation is working

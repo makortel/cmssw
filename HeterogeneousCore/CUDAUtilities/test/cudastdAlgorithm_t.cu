@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "HeterogeneousCore/CUDAUtilities/interface/cudastdAlgorithm.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/requireCUDADevices.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/requireDevices.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/launch.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaDeviceCount.h"
 
@@ -33,7 +33,7 @@ void wrapper() {
 }
 
 int main() {
-  requireCUDADevices();
+  cms::cudatest::requireDevices();
 
   wrapper();
 }
