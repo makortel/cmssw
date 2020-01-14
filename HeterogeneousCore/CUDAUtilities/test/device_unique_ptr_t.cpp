@@ -13,12 +13,12 @@ TEST_CASE("device_unique_ptr", "[cudaMemTools]") {
   cudaCheck(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
 
   SECTION("Single element") {
-    auto ptr = cudautils::make_device_unique<int>(stream);
+    auto ptr = cms::cuda::make_device_unique<int>(stream);
     REQUIRE(ptr != nullptr);
   }
 
   SECTION("Reset") {
-    auto ptr = cudautils::make_device_unique<int>(stream);
+    auto ptr = cms::cuda::make_device_unique<int>(stream);
     REQUIRE(ptr != nullptr);
     cudaCheck(cudaStreamSynchronize(stream));
 
@@ -27,7 +27,7 @@ TEST_CASE("device_unique_ptr", "[cudaMemTools]") {
   }
 
   SECTION("Multiple elements") {
-    auto ptr = cudautils::make_device_unique<int[]>(10, stream);
+    auto ptr = cms::cuda::make_device_unique<int[]>(10, stream);
     REQUIRE(ptr != nullptr);
     cudaCheck(cudaStreamSynchronize(stream));
 
@@ -37,9 +37,9 @@ TEST_CASE("device_unique_ptr", "[cudaMemTools]") {
 
   SECTION("Allocating too much") {
     constexpr size_t maxSize = 1 << 30;  // 8**10
-    auto ptr = cudautils::make_device_unique<char[]>(maxSize, stream);
+    auto ptr = cms::cuda::make_device_unique<char[]>(maxSize, stream);
     ptr.reset();
-    REQUIRE_THROWS(ptr = cudautils::make_device_unique<char[]>(maxSize + 1, stream));
+    REQUIRE_THROWS(ptr = cms::cuda::make_device_unique<char[]>(maxSize + 1, stream));
   }
 
   cudaCheck(cudaStreamDestroy(stream));

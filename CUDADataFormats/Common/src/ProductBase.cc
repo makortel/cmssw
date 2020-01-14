@@ -7,7 +7,7 @@ namespace cms::cuda {
     if (not event_) {
       return false;
     }
-    return cudautils::eventWorkHasCompleted(event_.get());
+    return eventWorkHasCompleted(event_.get());
   }
 
   ProductBase::~ProductBase() {

@@ -40,7 +40,7 @@ TestCUDAAnalyzerGPU::TestCUDAAnalyzerGPU(edm::ParameterSet const& iConfig)
       maxValue_(iConfig.getParameter<double>("maxValue")) {
   edm::Service<CUDAService> cs;
   if (cs->enabled()) {
-    auto streamPtr = cudautils::getStreamCache().get();
+    auto streamPtr = cms::cuda::getStreamCache().get();
     gpuAlgo_ = std::make_unique<TestCUDAAnalyzerGPUKernel>(streamPtr.get());
   }
 }
@@ -70,7 +70,7 @@ void TestCUDAAnalyzerGPU::analyze(edm::StreamID, edm::Event const& iEvent, edm::
 void TestCUDAAnalyzerGPU::endJob() {
   edm::LogVerbatim("TestCUDAAnalyzerGPU") << label_ << " TestCUDAAnalyzerGPU::endJob begin";
 
-  auto streamPtr = cudautils::getStreamCache().get();
+  auto streamPtr = cms::cuda::getStreamCache().get();
   auto value = gpuAlgo_->value(streamPtr.get());
   edm::LogVerbatim("TestCUDAAnalyzerGPU") << label_ << "  accumulated value " << value;
   assert(minValue_ <= value && value <= maxValue_);

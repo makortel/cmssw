@@ -8,12 +8,12 @@ namespace cms {
     class Thing {
     public:
       Thing() = default;
-      explicit Thing(cudautils::device::unique_ptr<float[]> ptr) : ptr_(std::move(ptr)) {}
+      explicit Thing(cms::cuda::device::unique_ptr<float[]> ptr) : ptr_(std::move(ptr)) {}
 
       const float *get() const { return ptr_.get(); }
 
     private:
-      cudautils::device::unique_ptr<float[]> ptr_;
+      cms::cuda::device::unique_ptr<float[]> ptr_;
     };
   }  // namespace cudatest
 }  // namespace cms

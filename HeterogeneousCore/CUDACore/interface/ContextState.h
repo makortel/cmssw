@@ -27,7 +27,7 @@ namespace cms {
       friend class ScopedContextProduce;
       friend class ScopedContextTask;
 
-      void set(int device, cudautils::SharedStreamPtr stream) {
+      void set(int device, SharedStreamPtr stream) {
         throwIfStream();
         device_ = device;
         stream_ = std::move(stream);
@@ -35,12 +35,12 @@ namespace cms {
 
       int device() const { return device_; }
 
-      const cudautils::SharedStreamPtr& streamPtr() const {
+      const SharedStreamPtr& streamPtr() const {
         throwIfNoStream();
         return stream_;
       }
 
-      cudautils::SharedStreamPtr releaseStreamPtr() {
+      SharedStreamPtr releaseStreamPtr() {
         throwIfNoStream();
         // This function needs to effectively reset stream_ (i.e. stream_
         // must be empty after this function). This behavior ensures that
@@ -52,7 +52,7 @@ namespace cms {
       void throwIfStream() const;
       void throwIfNoStream() const;
 
-      cudautils::SharedStreamPtr stream_;
+      SharedStreamPtr stream_;
       int device_;
     };
   }  // namespace cuda

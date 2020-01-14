@@ -30,7 +30,7 @@ private:
   std::string const label_;
   edm::EDGetTokenT<cms::cuda::Product<cms::cudatest::Thing>> const srcToken_;
   edm::EDPutTokenT<int> const dstToken_;
-  cudautils::host::unique_ptr<float[]> buffer_;
+  cms::cuda::host::unique_ptr<float[]> buffer_;
 };
 
 TestCUDAProducerGPUtoCPU::TestCUDAProducerGPUtoCPU(edm::ParameterSet const& iConfig)
@@ -57,7 +57,7 @@ void TestCUDAProducerGPUtoCPU::acquire(edm::Event const& iEvent,
   cms::cuda::ScopedContextAcquire ctx{in, std::move(waitingTaskHolder)};
   cms::cudatest::Thing const& device = ctx.get(in);
 
-  buffer_ = cudautils::make_host_unique<float[]>(TestCUDAProducerGPUKernel::NUM_VALUES, ctx.stream());
+  buffer_ = cms::cuda::make_host_unique<float[]>(TestCUDAProducerGPUKernel::NUM_VALUES, ctx.stream());
   // Enqueue async copy, continue in produce once finished
   cudaCheck(cudaMemcpyAsync(buffer_.get(),
                             device.get(),

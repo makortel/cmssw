@@ -5,8 +5,9 @@
 
 #include <cuda_runtime.h>
 
-namespace cudautils {
-  /**
+namespace cms {
+  namespace cuda {
+    /**
    * Returns true if the work captured by the event (=queued to the
    * CUDA stream at the point of cudaEventRecord()) has completed.
    *
@@ -14,17 +15,18 @@ namespace cudautils {
    *
    * In case of errors, throws an exception.
    */
-  inline bool eventWorkHasCompleted(cudaEvent_t event) {
-    const auto ret = cudaEventQuery(event);
-    if (ret == cudaSuccess) {
-      return true;
-    } else if (ret == cudaErrorNotReady) {
-      return false;
+    inline bool eventWorkHasCompleted(cudaEvent_t event) {
+      const auto ret = cudaEventQuery(event);
+      if (ret == cudaSuccess) {
+        return true;
+      } else if (ret == cudaErrorNotReady) {
+        return false;
+      }
+      // leave error case handling to cudaCheck
+      cudaCheck(ret);
+      return false;  // to keep compiler happy
     }
-    // leave error case handling to cudaCheck
-    cudaCheck(ret);
-    return false;  // to keep compiler happy
-  }
-}  // namespace cudautils
+  }  // namespace cuda
+}  // namespace cms
 
 #endif
