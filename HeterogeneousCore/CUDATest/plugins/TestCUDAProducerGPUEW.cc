@@ -34,8 +34,8 @@ private:
   edm::EDPutTokenT<cms::cuda::Product<cms::cudatest::Thing>> const dstToken_;
   TestCUDAProducerGPUKernel gpuAlgo_;
   cms::cuda::ContextState ctxState_;
-  cudautils::device::unique_ptr<float[]> devicePtr_;
-  cudautils::host::noncached::unique_ptr<float> hostData_;
+  cms::cuda::device::unique_ptr<float[]> devicePtr_;
+  cms::cuda::host::noncached::unique_ptr<float> hostData_;
 };
 
 TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(edm::ParameterSet const& iConfig)
@@ -44,7 +44,7 @@ TestCUDAProducerGPUEW::TestCUDAProducerGPUEW(edm::ParameterSet const& iConfig)
       dstToken_{produces<cms::cuda::Product<cms::cudatest::Thing>>()} {
   edm::Service<CUDAService> cs;
   if (cs->enabled()) {
-    hostData_ = cudautils::make_host_noncached_unique<float>();
+    hostData_ = cms::cuda::make_host_noncached_unique<float>();
   }
 }
 

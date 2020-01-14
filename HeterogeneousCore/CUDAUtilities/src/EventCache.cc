@@ -6,7 +6,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/eventWorkHasCompleted.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/ScopedSetDevice.h"
 
-namespace cudautils {
+namespace cms::cuda {
   void EventCache::Deleter::operator()(cudaEvent_t event) const {
     if (device_ != -1) {
       ScopedSetDevice deviceGuard{device_};
@@ -16,10 +16,10 @@ namespace cudautils {
 
   // EventCache should be constructed by the first call to
   // getEventCache() only if we have CUDA devices present
-  EventCache::EventCache() : cache_(cudautils::deviceCount()) {}
+  EventCache::EventCache() : cache_(deviceCount()) {}
 
   SharedEventPtr EventCache::get() {
-    const auto dev = cudautils::currentDevice();
+    const auto dev = currentDevice();
     auto event = makeOrGet(dev);
     // captured work has completed, or a just-created event
     if (eventWorkHasCompleted(event.get())) {
@@ -58,7 +58,7 @@ namespace cudautils {
     // EventCache lives through multiple tests (and go through
     // multiple shutdowns of the framework).
     cache_.clear();
-    cache_.resize(cudautils::deviceCount());
+    cache_.resize(deviceCount());
   }
 
   EventCache& getEventCache() {
@@ -66,4 +66,4 @@ namespace cudautils {
     CMS_THREAD_SAFE static EventCache cache;
     return cache;
   }
-}  // namespace cudautils
+}  // namespace cms::cuda

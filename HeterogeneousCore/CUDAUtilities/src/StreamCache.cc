@@ -5,7 +5,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/deviceCount.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/ScopedSetDevice.h"
 
-namespace cudautils {
+namespace cms::cuda {
   void StreamCache::Deleter::operator()(cudaStream_t stream) const {
     if (device_ != -1) {
       ScopedSetDevice deviceGuard{device_};
@@ -15,10 +15,10 @@ namespace cudautils {
 
   // StreamCache should be constructed by the first call to
   // getStreamCache() only if we have CUDA devices present
-  StreamCache::StreamCache() : cache_(cudautils::deviceCount()) {}
+  StreamCache::StreamCache() : cache_(deviceCount()) {}
 
   SharedStreamPtr StreamCache::get() {
-    const auto dev = cudautils::currentDevice();
+    const auto dev = currentDevice();
     return cache_[dev].makeOrGet([dev]() {
       cudaStream_t stream;
       cudaCheck(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
@@ -33,7 +33,7 @@ namespace cudautils {
     // StreamCache lives through multiple tests (and go through
     // multiple shutdowns of the framework).
     cache_.clear();
-    cache_.resize(cudautils::deviceCount());
+    cache_.resize(deviceCount());
   }
 
   StreamCache& getStreamCache() {
@@ -41,4 +41,4 @@ namespace cudautils {
     CMS_THREAD_SAFE static StreamCache cache;
     return cache;
   }
-}  // namespace cudautils
+}  // namespace cms::cuda

@@ -90,7 +90,7 @@ namespace {
     if (bufferSizes.empty())
       return;
 
-    auto streamPtr = cudautils::getStreamCache().get();
+    auto streamPtr = cms::cuda::getStreamCache().get();
 
     std::vector<UniquePtr<char[]> > buffers;
     buffers.reserve(bufferSizes.size());
@@ -104,16 +104,16 @@ namespace {
     cudaCheck(cudaGetDevice(&device));
     for (int i = 0; i < numberOfDevices; ++i) {
       cudaCheck(cudaSetDevice(i));
-      preallocate<cudautils::device::unique_ptr>(
-          [&](size_t size, cudaStream_t stream) { return cudautils::make_device_unique<char[]>(size, stream); },
+      preallocate<cms::cuda::device::unique_ptr>(
+          [&](size_t size, cudaStream_t stream) { return cms::cuda::make_device_unique<char[]>(size, stream); },
           bufferSizes);
     }
     cudaCheck(cudaSetDevice(device));
   }
 
   void hostPreallocate(const std::vector<unsigned int>& bufferSizes) {
-    preallocate<cudautils::host::unique_ptr>(
-        [&](size_t size, cudaStream_t stream) { return cudautils::make_host_unique<char[]>(size, stream); },
+    preallocate<cms::cuda::host::unique_ptr>(
+        [&](size_t size, cudaStream_t stream) { return cms::cuda::make_host_unique<char[]>(size, stream); },
         bufferSizes);
   }
 }  // namespace
@@ -299,12 +299,12 @@ CUDAService::CUDAService(edm::ParameterSet const& config) {
   log << "\n";
 
   // Make sure the caching allocators and stream/event caches are constructed before declaring successful construction
-  if constexpr (cudautils::allocator::useCaching) {
-    cudautils::allocator::getCachingDeviceAllocator();
-    cudautils::allocator::getCachingHostAllocator();
+  if constexpr (cms::cuda::allocator::useCaching) {
+    cms::cuda::allocator::getCachingDeviceAllocator();
+    cms::cuda::allocator::getCachingHostAllocator();
   }
-  cudautils::getEventCache().clear();
-  cudautils::getStreamCache().clear();
+  cms::cuda::getEventCache().clear();
+  cms::cuda::getStreamCache().clear();
 
   log << "CUDAService fully initialized";
   enabled_ = true;
@@ -318,12 +318,12 @@ CUDAService::CUDAService(edm::ParameterSet const& config) {
 CUDAService::~CUDAService() {
   if (enabled_) {
     // Explicitly destruct the allocator before the device resets below
-    if constexpr (cudautils::allocator::useCaching) {
-      cudautils::allocator::getCachingDeviceAllocator().FreeAllCached();
-      cudautils::allocator::getCachingHostAllocator().FreeAllCached();
+    if constexpr (cms::cuda::allocator::useCaching) {
+      cms::cuda::allocator::getCachingDeviceAllocator().FreeAllCached();
+      cms::cuda::allocator::getCachingHostAllocator().FreeAllCached();
     }
-    cudautils::getEventCache().clear();
-    cudautils::getStreamCache().clear();
+    cms::cuda::getEventCache().clear();
+    cms::cuda::getStreamCache().clear();
 
     for (int i = 0; i < numberOfDevices_; ++i) {
       cudaCheck(cudaSetDevice(i));

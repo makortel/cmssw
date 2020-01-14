@@ -17,7 +17,7 @@ public:
   float value(cudaStream_t stream) const;
 
 private:
-  cudautils::device::unique_ptr<float[]> sum_;  // all writes are atomic in CUDA
+  cms::cuda::device::unique_ptr<float[]> sum_;  // all writes are atomic in CUDA
 };
 
 #endif

@@ -18,9 +18,9 @@ namespace cms {
     template <typename T>
     class ESProduct {
     public:
-      ESProduct() : gpuDataPerDevice_(cudautils::deviceCount()) {
+      ESProduct() : gpuDataPerDevice_(deviceCount()) {
         for (size_t i = 0; i < gpuDataPerDevice_.size(); ++i) {
-          gpuDataPerDevice_[i].m_event = cudautils::getEventCache().get();
+          gpuDataPerDevice_[i].m_event = getEventCache().get();
         }
       }
       ~ESProduct() = default;
@@ -30,7 +30,7 @@ namespace cms {
       // to the CUDA stream
       template <typename F>
       const T& dataForCurrentDeviceAsync(cudaStream_t cudaStream, F transferAsync) const {
-        auto device = cudautils::currentDevice();
+        auto device = currentDevice();
 
         auto& data = gpuDataPerDevice_[device];
 
@@ -49,7 +49,7 @@ namespace cms {
             // Someone else is filling
 
             // Check first if the recorded event has occurred
-            if (cudautils::eventWorkHasCompleted(data.m_event.get())) {
+            if (eventWorkHasCompleted(data.m_event.get())) {
               // It was, so data is accessible from all CUDA streams on
               // the device. Set the 'filled' for all subsequent calls and
               // return the value
@@ -88,7 +88,7 @@ namespace cms {
     private:
       struct Item {
         mutable std::mutex m_mutex;
-        CMS_THREAD_GUARD(m_mutex) mutable cudautils::SharedEventPtr m_event;
+        CMS_THREAD_GUARD(m_mutex) mutable SharedEventPtr m_event;
         // non-null if some thread is already filling (cudaStream_t is just a pointer)
         CMS_THREAD_GUARD(m_mutex) mutable cudaStream_t m_fillingStream = nullptr;
         mutable std::atomic<bool> m_filled = false;  // easy check if data has been filled already or not

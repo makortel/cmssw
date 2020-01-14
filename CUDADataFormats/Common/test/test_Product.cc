@@ -13,11 +13,11 @@ namespace cms::cudatest {
   class TestScopedContext {
   public:
     static cuda::ScopedContextProduce make(int dev, bool createEvent) {
-      cudautils::SharedEventPtr event;
+      cms::cuda::SharedEventPtr event;
       if (createEvent) {
-        event = cudautils::getEventCache().get();
+        event = cms::cuda::getEventCache().get();
       }
-      return cuda::ScopedContextProduce(dev, cudautils::getStreamCache().get(), std::move(event));
+      return cuda::ScopedContextProduce(dev, cms::cuda::getStreamCache().get(), std::move(event));
     }
   };
 }  // namespace cms::cudatest

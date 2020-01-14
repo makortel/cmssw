@@ -584,8 +584,8 @@ The memory allocations should be done dynamically with the following functions
 #include "HeterogeneousCore/CUDAUtilities/interface/device_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 
-cudautils::device::unique_ptr<float[]> device_buffer = cudautils::make_device_unique<float[]>(50, cudaStream);
-cudautils::host::unique_ptr<float[]>   host_buffer   = cudautils::make_host_unique<float[]>(50, cudaStream);
+cms::cuda::device::unique_ptr<float[]> device_buffer = cms::cuda::make_device_unique<float[]>(50, cudaStream);
+cms::cuda::host::unique_ptr<float[]>   host_buffer   = cms::cuda::make_host_unique<float[]>(50, cudaStream);
 ```
 
 in the `acquire()` and `produce()` functions. The same
@@ -608,7 +608,7 @@ own `unique_ptr` for that.
 ```cpp
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
 
-cudautils::host::noncached_unique_ptr<float[]> host_buffer = cudautils::make_host_noncached_unique<float[]>(50, flags);
+cms::cuda::host::noncached_unique_ptr<float[]> host_buffer = cms::cuda::make_host_noncached_unique<float[]>(50, flags);
 ```
 The `flags` is passed directly to `cudaHostAlloc()`.
 

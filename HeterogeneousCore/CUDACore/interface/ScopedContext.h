@@ -32,7 +32,7 @@ namespace cms {
         // would be const. Therefore it is ok to return a non-const
         // pointer from a const method here.
         cudaStream_t stream() const { return stream_.get(); }
-        const cudautils::SharedStreamPtr& streamPtr() const { return stream_; }
+        const SharedStreamPtr& streamPtr() const { return stream_; }
 
       protected:
         // The constructors set the current device, but the device
@@ -45,11 +45,11 @@ namespace cms {
 
         explicit ScopedContextBase(const ProductBase& data);
 
-        explicit ScopedContextBase(int device, cudautils::SharedStreamPtr stream);
+        explicit ScopedContextBase(int device, SharedStreamPtr stream);
 
       private:
         int currentDevice_;
-        cudautils::SharedStreamPtr stream_;
+        SharedStreamPtr stream_;
       };
 
       class ScopedContextGetterBase : public ScopedContextBase {
@@ -176,11 +176,11 @@ namespace cms {
       friend class cudatest::TestScopedContext;
 
       // This construcor is only meant for testing
-      explicit ScopedContextProduce(int device, cudautils::SharedStreamPtr stream, cudautils::SharedEventPtr event)
+      explicit ScopedContextProduce(int device, SharedStreamPtr stream, SharedEventPtr event)
           : ScopedContextGetterBase(device, std::move(stream)), event_{std::move(event)} {}
 
       // create the CUDA Event upfront to catch possible errors from its creation
-      cudautils::SharedEventPtr event_ = cudautils::getEventCache().get();
+      SharedEventPtr event_ = getEventCache().get();
     };
 
     /**

@@ -5,12 +5,14 @@
 
 #include <cuda_runtime.h>
 
-namespace cudautils {
-  inline int deviceCount() {
-    int ndevices;
-    cudaCheck(cudaGetDeviceCount(&ndevices));
-    return ndevices;
-  }
-}  // namespace cudautils
+namespace cms {
+  namespace cuda {
+    inline int deviceCount() {
+      int ndevices;
+      cudaCheck(cudaGetDeviceCount(&ndevices));
+      return ndevices;
+    }
+  }  // namespace cuda
+}  // namespace cms
 
 #endif

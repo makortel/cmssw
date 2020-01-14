@@ -55,15 +55,15 @@ namespace cms {
       cudaEvent_t event() const { return event_.get(); }
 
     protected:
-      explicit ProductBase(int device, cudautils::SharedStreamPtr stream, cudautils::SharedEventPtr event)
+      explicit ProductBase(int device, SharedStreamPtr stream, SharedEventPtr event)
           : stream_{std::move(stream)}, event_{std::move(event)}, device_{device} {}
 
     private:
       friend class impl::ScopedContextBase;
       friend class ScopedContextProduce;
 
-      // The following function is intended to be used only from cms::cuda::ScopedContext
-      const cudautils::SharedStreamPtr& streamPtr() const { return stream_; }
+      // The following function is intended to be used only from ScopedContext
+      const SharedStreamPtr& streamPtr() const { return stream_; }
 
       bool mayReuseStream() const {
         bool expected = true;
@@ -75,9 +75,9 @@ namespace cms {
 
       // The cudaStream_t is really shared among edm::Event products, so
       // using shared_ptr also here
-      cudautils::SharedStreamPtr stream_;  //!
-      // shared_ptr because of caching in cudautils::EventCache
-      cudautils::SharedEventPtr event_;  //!
+      SharedStreamPtr stream_;  //!
+      // shared_ptr because of caching in cms::cuda::EventCache
+      SharedEventPtr event_;  //!
 
       // This flag tells whether the CUDA stream may be reused by a
       // consumer or not. The goal is to have a "chain" of modules to
