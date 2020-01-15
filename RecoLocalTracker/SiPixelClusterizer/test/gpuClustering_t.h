@@ -37,14 +37,14 @@ int main(void) {
   auto h_clus = std::make_unique<int[]>(numElements);
 
 #ifdef __CUDACC__
-  auto d_id = cudautils::make_device_unique<uint16_t[]>(numElements, nullptr);
-  auto d_x = cudautils::make_device_unique<uint16_t[]>(numElements, nullptr);
-  auto d_y = cudautils::make_device_unique<uint16_t[]>(numElements, nullptr);
-  auto d_adc = cudautils::make_device_unique<uint16_t[]>(numElements, nullptr);
-  auto d_clus = cudautils::make_device_unique<int[]>(numElements, nullptr);
-  auto d_moduleStart = cudautils::make_device_unique<uint32_t[]>(MaxNumModules + 1, nullptr);
-  auto d_clusInModule = cudautils::make_device_unique<uint32_t[]>(MaxNumModules, nullptr);
-  auto d_moduleId = cudautils::make_device_unique<uint32_t[]>(MaxNumModules, nullptr);
+  auto d_id = cms::cuda::make_device_unique<uint16_t[]>(numElements, nullptr);
+  auto d_x = cms::cuda::make_device_unique<uint16_t[]>(numElements, nullptr);
+  auto d_y = cms::cuda::make_device_unique<uint16_t[]>(numElements, nullptr);
+  auto d_adc = cms::cuda::make_device_unique<uint16_t[]>(numElements, nullptr);
+  auto d_clus = cms::cuda::make_device_unique<int[]>(numElements, nullptr);
+  auto d_moduleStart = cms::cuda::make_device_unique<uint32_t[]>(MaxNumModules + 1, nullptr);
+  auto d_clusInModule = cms::cuda::make_device_unique<uint32_t[]>(MaxNumModules, nullptr);
+  auto d_moduleId = cms::cuda::make_device_unique<uint32_t[]>(MaxNumModules, nullptr);
 #else
 
   auto h_moduleStart = std::make_unique<uint32_t[]>(MaxNumModules + 1);
@@ -255,7 +255,7 @@ int main(void) {
     std::cout << "CUDA countModules kernel launch with " << blocksPerGrid << " blocks of " << threadsPerBlock
               << " threads\n";
 
-    cudautils::launch(countModules, {blocksPerGrid, threadsPerBlock}, d_id.get(), d_moduleStart.get(), d_clus.get(), n);
+    cms::cuda::launch(countModules, {blocksPerGrid, threadsPerBlock}, d_id.get(), d_moduleStart.get(), d_clus.get(), n);
 
     blocksPerGrid = MaxNumModules;  //nModules;
 
@@ -263,7 +263,7 @@ int main(void) {
               << " threads\n";
     cudaCheck(cudaMemset(d_clusInModule.get(), 0, MaxNumModules * sizeof(uint32_t)));
 
-    cudautils::launch(findClus,
+    cms::cuda::launch(findClus,
                       {blocksPerGrid, threadsPerBlock},
                       d_id.get(),
                       d_x.get(),
@@ -289,7 +289,7 @@ int main(void) {
     if (ncl != std::accumulate(nclus, nclus + MaxNumModules, 0))
       std::cout << "ERROR!!!!! wrong number of cluster found" << std::endl;
 
-    cudautils::launch(clusterChargeCut,
+    cms::cuda::launch(clusterChargeCut,
                       {blocksPerGrid, threadsPerBlock},
                       d_id.get(),
                       d_adc.get(),

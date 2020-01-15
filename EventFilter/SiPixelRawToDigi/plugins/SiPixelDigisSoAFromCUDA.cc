@@ -27,10 +27,10 @@ private:
   edm::EDGetTokenT<cms::cuda::Product<SiPixelDigisCUDA>> digiGetToken_;
   edm::EDPutTokenT<SiPixelDigisSoA> digiPutToken_;
 
-  cudautils::host::unique_ptr<uint32_t[]> pdigi_;
-  cudautils::host::unique_ptr<uint32_t[]> rawIdArr_;
-  cudautils::host::unique_ptr<uint16_t[]> adc_;
-  cudautils::host::unique_ptr<int32_t[]> clus_;
+  cms::cuda::host::unique_ptr<uint32_t[]> pdigi_;
+  cms::cuda::host::unique_ptr<uint32_t[]> rawIdArr_;
+  cms::cuda::host::unique_ptr<uint16_t[]> adc_;
+  cms::cuda::host::unique_ptr<int32_t[]> clus_;
 
   int nDigis_;
 };

@@ -123,7 +123,7 @@ void go(bool soa) {
 
   std::cout << mm[SIZE / 2](1, 1) << std::endl;
 
-  auto m_d = cudautils::make_device_unique<double[]>(DIM * DIM * stride(), nullptr);
+  auto m_d = cms::cuda::make_device_unique<double[]>(DIM * DIM * stride(), nullptr);
   cudaCheck(cudaMemcpy(m_d.get(), (double const *)(mm), stride() * sizeof(MX), cudaMemcpyHostToDevice));
 
   constexpr int NKK =
@@ -139,9 +139,9 @@ void go(bool soa) {
     delta -= (std::chrono::high_resolution_clock::now() - start);
 
     if (soa)
-      cudautils::launch(invertSOA<DIM>, {blocksPerGrid, threadsPerBlock}, m_d.get(), SIZE);
+      cms::cuda::launch(invertSOA<DIM>, {blocksPerGrid, threadsPerBlock}, m_d.get(), SIZE);
     else
-      cudautils::launch(invert<MX, DIM>, {blocksPerGrid, threadsPerBlock}, (MX *)(m_d.get()), SIZE);
+      cms::cuda::launch(invert<MX, DIM>, {blocksPerGrid, threadsPerBlock}, (MX *)(m_d.get()), SIZE);
 
     cudaCheck(cudaMemcpy(&mm, m_d.get(), stride() * sizeof(MX), cudaMemcpyDeviceToHost));
 
@@ -154,7 +154,7 @@ void go(bool soa) {
       delta1 -= (std::chrono::high_resolution_clock::now() - start);
 
 #ifndef DOPROF
-      cudautils::launch(invertSeq<MX, DIM>, {blocksPerGrid, threadsPerBlock}, (MX *)(m_d.get()), SIZE);
+      cms::cuda::launch(invertSeq<MX, DIM>, {blocksPerGrid, threadsPerBlock}, (MX *)(m_d.get()), SIZE);
       cudaCheck(cudaMemcpy(&mm, m_d.get(), stride() * sizeof(MX), cudaMemcpyDeviceToHost));
 #endif
       delta1 += (std::chrono::high_resolution_clock::now() - start);

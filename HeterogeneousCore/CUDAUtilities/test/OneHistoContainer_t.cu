@@ -106,7 +106,7 @@ void go() {
   constexpr int N = 12000;
   T v[N];
 
-  auto v_d = cudautils::make_device_unique<T[]>(N, nullptr);
+  auto v_d = cms::cuda::make_device_unique<T[]>(N, nullptr);
   assert(v_d.get());
 
   using Hist = HistoContainer<T, NBINS, N, S>;
@@ -125,7 +125,7 @@ void go() {
     assert(v);
     cudaCheck(cudaMemcpy(v_d.get(), v, N * sizeof(T), cudaMemcpyHostToDevice));
     assert(v_d.get());
-    cudautils::launch(mykernel<T, NBINS, S, DELTA>, {1, 256}, v_d.get(), N);
+    cms::cuda::launch(mykernel<T, NBINS, S, DELTA>, {1, 256}, v_d.get(), N);
   }
 }
 

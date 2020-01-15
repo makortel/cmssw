@@ -33,7 +33,7 @@ private:
   edm::EDGetTokenT<cms::cuda::Product<PixelTrackHeterogeneous>> tokenCUDA_;
   edm::EDPutTokenT<PixelTrackHeterogeneous> tokenSOA_;
 
-  cudautils::host::unique_ptr<pixelTrack::TrackSoA> m_soa;
+  cms::cuda::host::unique_ptr<pixelTrack::TrackSoA> m_soa;
 };
 
 PixelTrackSoAFromCUDA::PixelTrackSoAFromCUDA(const edm::ParameterSet& iConfig)

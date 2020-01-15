@@ -29,7 +29,7 @@ public:
 
   // returns pointer to GPU memory
   const unsigned char *getModToUnpAllAsync(cudaStream_t cudaStream) const;
-  cudautils::device::unique_ptr<unsigned char[]> getModToUnpRegionalAsync(std::set<unsigned int> const &modules,
+  cms::cuda::device::unique_ptr<unsigned char[]> getModToUnpRegionalAsync(std::set<unsigned int> const &modules,
                                                                           cudaStream_t cudaStream) const;
 
 private:

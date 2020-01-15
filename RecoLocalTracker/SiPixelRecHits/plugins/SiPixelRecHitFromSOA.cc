@@ -41,9 +41,9 @@ private:
   edm::EDGetTokenT<SiPixelClusterCollectionNew> clusterToken_;           // Legacy Clusters
 
   uint32_t m_nHits;
-  cudautils::host::unique_ptr<uint16_t[]> m_store16;
-  cudautils::host::unique_ptr<float[]> m_store32;
-  cudautils::host::unique_ptr<uint32_t[]> m_hitsModuleStart;
+  cms::cuda::host::unique_ptr<uint16_t[]> m_store16;
+  cms::cuda::host::unique_ptr<float[]> m_store32;
+  cms::cuda::host::unique_ptr<uint32_t[]> m_hitsModuleStart;
 };
 
 SiPixelRecHitFromSOA::SiPixelRecHitFromSOA(const edm::ParameterSet& iConfig)

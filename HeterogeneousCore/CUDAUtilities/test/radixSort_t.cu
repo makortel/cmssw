@@ -89,10 +89,10 @@ void go(bool useShared) {
 
     std::random_shuffle(v, v + N);
 
-    auto v_d = cudautils::make_device_unique<U[]>(N, nullptr);
-    auto ind_d = cudautils::make_device_unique<uint16_t[]>(N, nullptr);
-    auto ws_d = cudautils::make_device_unique<uint16_t[]>(N, nullptr);
-    auto off_d = cudautils::make_device_unique<uint32_t[]>(blocks + 1, nullptr);
+    auto v_d = cms::cuda::make_device_unique<U[]>(N, nullptr);
+    auto ind_d = cms::cuda::make_device_unique<uint16_t[]>(N, nullptr);
+    auto ws_d = cms::cuda::make_device_unique<uint16_t[]>(N, nullptr);
+    auto off_d = cms::cuda::make_device_unique<uint32_t[]>(blocks + 1, nullptr);
 
     cudaCheck(cudaMemcpy(v_d.get(), v, N * sizeof(T), cudaMemcpyHostToDevice));
     cudaCheck(cudaMemcpy(off_d.get(), offsets, 4 * (blocks + 1), cudaMemcpyHostToDevice));
@@ -105,10 +105,10 @@ void go(bool useShared) {
     delta -= (std::chrono::high_resolution_clock::now() - start);
     constexpr int MaxSize = 256 * 32;
     if (useShared)
-      cudautils::launch(
+      cms::cuda::launch(
           radixSortMultiWrapper<U, NS>, {blocks, ntXBl, MaxSize * 2}, v_d.get(), ind_d.get(), off_d.get(), nullptr);
     else
-      cudautils::launch(
+      cms::cuda::launch(
           radixSortMultiWrapper2<U, NS>, {blocks, ntXBl}, v_d.get(), ind_d.get(), off_d.get(), ws_d.get());
 
     if (i == 0)

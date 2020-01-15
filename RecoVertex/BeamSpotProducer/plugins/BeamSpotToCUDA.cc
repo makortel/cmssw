@@ -17,11 +17,11 @@
 namespace {
   class BSHost {
   public:
-    BSHost() : bs{cudautils::make_host_noncached_unique<BeamSpotCUDA::Data>(cudaHostAllocWriteCombined)} {}
+    BSHost() : bs{cms::cuda::make_host_noncached_unique<BeamSpotCUDA::Data>(cudaHostAllocWriteCombined)} {}
     BeamSpotCUDA::Data* get() { return bs.get(); }
 
   private:
-    cudautils::host::noncached::unique_ptr<BeamSpotCUDA::Data> bs;
+    cms::cuda::host::noncached::unique_ptr<BeamSpotCUDA::Data> bs;
   };
 }  // namespace
 

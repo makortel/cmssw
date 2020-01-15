@@ -33,7 +33,7 @@ private:
   edm::EDGetTokenT<cms::cuda::Product<ZVertexHeterogeneous>> tokenCUDA_;
   edm::EDPutTokenT<ZVertexHeterogeneous> tokenSOA_;
 
-  cudautils::host::unique_ptr<ZVertexSoA> m_soa;
+  cms::cuda::host::unique_ptr<ZVertexSoA> m_soa;
 };
 
 PixelVertexSoAFromCUDA::PixelVertexSoAFromCUDA(const edm::ParameterSet& iConfig)
