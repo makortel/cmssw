@@ -13,7 +13,7 @@
 
 #include <random>
 
-namespace cudatest {
+namespace cms::cudatest {
   GPUTimeCruncher::GPUTimeCruncher(const std::vector<unsigned int>& iters, const std::vector<double>& times) {
     if(iters.size() != times.size()) {
       throw cms::Exception("Configuration") << "CUDA Calibration: got " << iters.size() << " iterations and " << times.size() << " times";

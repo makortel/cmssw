@@ -6,7 +6,7 @@
 #include <chrono>
 #include <vector>
 
-namespace cudatest {
+namespace cms::cudatest {
   /**
    * Calibrate the crunching finding the right relation between number
    * of iterations and time spent. The relation is linear.

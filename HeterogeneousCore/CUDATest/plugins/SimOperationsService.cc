@@ -20,7 +20,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
-namespace cudatest {
+namespace cms::cudatest {
   struct OperationState {
     OperationState(float* kernel_data, std::vector<cms::cuda::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
       kernel_data_d{kernel_data},
@@ -59,7 +59,7 @@ namespace cudatest {
 }
 
 namespace {
-  class OperationTime: public cudatest::OperationBase {
+  class OperationTime: public cms::cudatest::OperationBase {
   public:
     explicit OperationTime(const boost::property_tree::ptree& conf, const double gangFactor = 1.0):
       gangFactor_{gangFactor}
@@ -93,10 +93,10 @@ namespace {
   };
 }
 
-namespace cudatest {
+namespace cms::cudatest {
   class OperationCPU: public OperationTime {
   public:
-    explicit OperationCPU(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher):
+    explicit OperationCPU(const boost::property_tree::ptree& conf, const cms::cudatest::TimeCruncher* cruncher):
       OperationTime(conf),
       cruncher_(cruncher)
     {}
@@ -115,44 +115,44 @@ namespace cudatest {
 }
 
 namespace {
-  class OperationSleep final: public cudatest::OperationCPU {
+  class OperationSleep final: public cms::cudatest::OperationCPU {
   public:
-    explicit OperationSleep(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher):
+    explicit OperationSleep(const boost::property_tree::ptree& conf, const cms::cudatest::TimeCruncher* cruncher):
       OperationCPU(conf, cruncher)
     {}
 
     using OperationCPU::operate;
 
-    void operate(const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const override {
+    void operate(const std::vector<size_t>& indices, const cms::cudatest::SleepFunction& sleep) const override {
       sleep(totalTime(indices));
     }
   };
 
   class OperationKernel final: public OperationTime {
   public:
-    explicit OperationKernel(const boost::property_tree::ptree& conf, const cudatest::GPUTimeCruncher* cruncher, const double gangKernelFactor):
+    explicit OperationKernel(const boost::property_tree::ptree& conf, const cms::cudatest::GPUTimeCruncher* cruncher, const double gangKernelFactor):
       OperationTime(conf, gangKernelFactor),
       gpuCruncher_(cruncher)
     {}
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
+    void operate(const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const override {
       gpuCruncher_->crunch_for(totalTime(indices), state.kernel_data_d, stream);
     };
 
   private:
-    const cudatest::GPUTimeCruncher* gpuCruncher_;
+    const cms::cudatest::GPUTimeCruncher* gpuCruncher_;
   };
 
   std::mutex g_fakeCudaMutex;
   class OperationFake final: public OperationTime {
   public:
-    explicit OperationFake(const boost::property_tree::ptree& conf, const cudatest::TimeCruncher* cruncher, bool useLocks):
+    explicit OperationFake(const boost::property_tree::ptree& conf, const cms::cudatest::TimeCruncher* cruncher, bool useLocks):
       OperationTime(conf),
       cruncher_(cruncher),
       useLocks_(useLocks)
     {}
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
+    void operate(const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const override {
       std::unique_lock lock{g_fakeCudaMutex, std::defer_lock};
       if(useLocks_) {
         lock.lock();
@@ -161,11 +161,11 @@ namespace {
     }
 
   private:
-    const cudatest::TimeCruncher* cruncher_;
+    const cms::cudatest::TimeCruncher* cruncher_;
     const bool useLocks_;
   };
 
-  class OperationBytes: public cudatest::OperationBase {
+  class OperationBytes: public cms::cudatest::OperationBase {
   public:
     explicit OperationBytes(const boost::property_tree::ptree& conf) {
       if(auto unit = conf.get<std::string>("unit"); unit != "bytes") {
@@ -206,7 +206,7 @@ namespace {
 
     unsigned int maxBytesToDevice() const override { return maxBytes(); }
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
+    void operate(const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const override {
       const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
@@ -224,7 +224,7 @@ namespace {
 
     unsigned int maxBytesToHost() const override { return maxBytes(); }
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
+    void operate(const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const override {
       const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
@@ -242,7 +242,7 @@ namespace {
 
     unsigned int maxBytesToHost() const override { return maxBytes(); }
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
+    void operate(const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const override {
       const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
@@ -273,7 +273,7 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
     for(const auto& elem: calib_root_node.get_child("timesInMicroSeconds")) {
       times.push_back(elem.second.get<double>(""));
     }
-    cpuCruncher_ = std::make_unique<cudatest::TimeCruncher>(iters, times);
+    cpuCruncher_ = std::make_unique<cms::cudatest::TimeCruncher>(iters, times);
   }
 
   edm::Service<CUDAService> cs;
@@ -288,7 +288,7 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
     for(const auto& elem: calib_root_node.get_child("timesInMicroSeconds")) {
       times.push_back(elem.second.get<double>(""));
     }
-    gpuCruncher_ = std::make_unique<cudatest::GPUTimeCruncher>(iters, times);
+    gpuCruncher_ = std::make_unique<cms::cudatest::GPUTimeCruncher>(iters, times);
   }
 
 
@@ -307,7 +307,7 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
       for(const auto& op: modfunc.second.get_child("")) {
         auto opname = op.second.get<std::string>("name");
         if(opname == "cpu") {
-          opsCPU.emplace_back(std::make_unique<cudatest::OperationCPU>(op.second, cpuCruncher_.get()));
+          opsCPU.emplace_back(std::make_unique<cms::cudatest::OperationCPU>(op.second, cpuCruncher_.get()));
         }
         else if(opname == "sleep") {
           opsCPU.emplace_back(std::make_unique<OperationSleep>(op.second, cpuCruncher_.get()));
@@ -367,7 +367,7 @@ SimOperationsService::SimOperationsService(edm::ParameterSet const& iConfig, edm
   }
 
   // Initialize CPU cruncher
-  cudatest::getTimeCruncher();
+  cms::cudatest::getTimeCruncher();
 
   // TODO: fix the following
   //edm::LogWarning("foo") << "SimOperations initialized with " << ops_.size() << " operations for " << events() << " events, dropped " << ignored << " because of inconsistent configuration";
@@ -398,7 +398,7 @@ SimOperationsService::GPUData::GPUData(const OpVectorGPU& ops, const unsigned in
 
   // Data for kernel
   {
-    constexpr auto elements = cudatest::GPUTimeCruncher::kernel_elements;
+    constexpr auto elements = cms::cudatest::GPUTimeCruncher::kernel_elements;
     auto h_src = cms::cuda::make_host_noncached_unique<char[]>(elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
     cudaCheck(cudaMalloc(&kernel_data_d_, elements*sizeof(float)));
     for(size_t i=0; i!=elements; ++i) {
@@ -459,20 +459,20 @@ SimOperationsService::GPUData& SimOperationsService::GPUData::operator=(GPUData&
 }
 
 
-cudatest::OperationState SimOperationsService::GPUData::makeState() {
-  return cudatest::OperationState{kernel_data_d_, data_h_src_, data_d_src_};
+cms::cudatest::OperationState SimOperationsService::GPUData::makeState() {
+  return cms::cudatest::OperationState{kernel_data_d_, data_h_src_, data_d_src_};
 }
 
 void SimOperationsService::AcquireGPUProcessor::process(const std::vector<size_t>& indices, cudaStream_t stream) {
   if(index_ >= 0) {
-    cudatest::OperationState state = data_.makeState();
+    cms::cudatest::OperationState state = data_.makeState();
     sos_->acquireGPU(index_, indices, state, stream);
   }
 }
 
 void SimOperationsService::ProduceGPUProcessor::process(const std::vector<size_t>& indices, cudaStream_t stream) {
   if(index_ >= 0) {
-    cudatest::OperationState state = data_.makeState();
+    cms::cudatest::OperationState state = data_.makeState();
     sos_->produceGPU(index_, indices, state, stream);
   }
 }
@@ -526,12 +526,12 @@ void SimOperationsService::acquireCPU(int modIndex, const std::vector<size_t>& i
     op->operate(indices);
   }
 }
-void SimOperationsService::acquireCPU(int modIndex, const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const {
+void SimOperationsService::acquireCPU(int modIndex, const std::vector<size_t>& indices, const cms::cudatest::SleepFunction& sleep) const {
   for(const auto& op: acquireOpsCPU_.at(modIndex).second) {
     op->operate(indices, sleep);
   }
 }
-void SimOperationsService::acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const {
+void SimOperationsService::acquireGPU(int modIndex, const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const {
   for(const auto& op: acquireOpsGPU_.at(modIndex).second) {
     op->operate(indices, state, stream);
     state.opIndex++;
@@ -542,7 +542,7 @@ void SimOperationsService::produceCPU(int modIndex, const std::vector<size_t>& i
     op->operate(indices);
   }
 }
-void SimOperationsService::produceGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const {
+void SimOperationsService::produceGPU(int modIndex, const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const {
   for(const auto& op: produceOpsGPU_.at(modIndex).second) {
     op->operate(indices, state, stream);
     state.opIndex++;

@@ -18,7 +18,7 @@ namespace edm {
   class ConfigurationDescriptions;
 }  // namespace edm
 
-namespace cudatest {
+namespace cms::cudatest {
   class TimeCruncher;
   class GPUTimeCruncher;
 
@@ -31,8 +31,8 @@ namespace cudatest {
 
 
 class SimOperationsService {
-  using OpVectorCPU = std::vector<std::unique_ptr<cudatest::OperationCPU>>;
-  using OpVectorGPU = std::vector<std::unique_ptr<cudatest::OperationBase>>;
+  using OpVectorCPU = std::vector<std::unique_ptr<cms::cudatest::OperationCPU>>;
+  using OpVectorGPU = std::vector<std::unique_ptr<cms::cudatest::OperationBase>>;
 public:
   class GPUData {
   public:
@@ -45,7 +45,7 @@ public:
     GPUData(GPUData&&);
     GPUData& operator=(GPUData&&);
 
-    cudatest::OperationState makeState();
+    cms::cudatest::OperationState makeState();
 
   private:
     void swap(GPUData& rhs);
@@ -68,7 +68,7 @@ public:
         sos_->acquireCPU(index_, indices);
       }
     }
-    void process(const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const {
+    void process(const std::vector<size_t>& indices, const cms::cudatest::SleepFunction& sleep) const {
       if(index_ >= 0) {
         sos_->acquireCPU(index_, indices, sleep);
       }
@@ -148,17 +148,17 @@ public:
 private:
 
   void acquireCPU(int modIndex, const std::vector<size_t>& indices) const;
-  void acquireCPU(int modIndex, const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const;
-  void acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const;
+  void acquireCPU(int modIndex, const std::vector<size_t>& indices, const cms::cudatest::SleepFunction& sleep) const;
+  void acquireGPU(int modIndex, const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const;
   void produceCPU(int modIndex, const std::vector<size_t>& indices) const;
-  void produceGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const;
+  void produceGPU(int modIndex, const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const;
 
   const unsigned int gangSize_;
   const unsigned int gangNum_;
   const int maxEvents_;
 
-  std::unique_ptr<cudatest::TimeCruncher> cpuCruncher_;
-  std::unique_ptr<cudatest::GPUTimeCruncher> gpuCruncher_;
+  std::unique_ptr<cms::cudatest::TimeCruncher> cpuCruncher_;
+  std::unique_ptr<cms::cudatest::GPUTimeCruncher> gpuCruncher_;
 
   std::vector<std::pair<std::string, OpVectorCPU>> acquireOpsCPU_;
   std::vector<std::pair<std::string, OpVectorGPU>> acquireOpsGPU_;

@@ -28,7 +28,7 @@ TestCUDAProducerCPUCrunch::TestCUDAProducerCPUCrunch(const edm::ParameterSet& iC
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
-  cudatest::getTimeCruncher();
+  cms::cudatest::getTimeCruncher();
 }
 
 void TestCUDAProducerCPUCrunch::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -45,7 +45,7 @@ void TestCUDAProducerCPUCrunch::produce(edm::StreamID id, edm::Event& iEvent, co
   }
 
   if(crunchForMicroSeconds_.count() > 0) {
-    cudatest::getTimeCruncher().crunch_for(crunchForMicroSeconds_);
+    cms::cudatest::getTimeCruncher().crunch_for(crunchForMicroSeconds_);
   }
 
   iEvent.emplace(dstToken_, 42);

@@ -7,7 +7,7 @@
 
 // The contents of this class are from
 // https://gitlab.cern.ch/gaudi/Gaudi/blob/master/GaudiSvc/src/CPUCrunchSvc/CPUCrunchSvc.cpp
-namespace cudatest {
+namespace cms::cudatest {
   inline
   unsigned long findPrimes(const unsigned n_iterations ) {
     // Flag to trigger the allocation
