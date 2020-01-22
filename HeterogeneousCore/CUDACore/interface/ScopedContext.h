@@ -76,6 +76,7 @@ namespace cms {
 
       class ScopedContextHolderHelper {
       public:
+        ScopedContextHolderHelper() : hasHolder_{false} {}
         ScopedContextHolderHelper(edm::WaitingTaskWithArenaHolder waitingTaskHolder)
             : waitingTaskHolder_{std::move(waitingTaskHolder)} {}
 
@@ -84,12 +85,14 @@ namespace cms {
 
         void replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
           waitingTaskHolder_ = std::move(waitingTaskHolder);
+          hasHolder_ = true;
         }
 
         void enqueueCallback(int device, cudaStream_t stream);
 
       private:
         edm::WaitingTaskWithArenaHolder waitingTaskHolder_;
+        bool hasHolder_ = true;
       };
     }  // namespace impl
 
@@ -121,6 +124,12 @@ namespace cms {
                                     edm::WaitingTaskWithArenaHolder waitingTaskHolder,
                                     ContextState& state)
           : ScopedContextGetterBase(data), holderHelper_{std::move(waitingTaskHolder)}, contextState_{&state} {}
+
+      // I'm really unsure if these two overloads should be allowed in the end...
+      explicit ScopedContextAcquire(edm::StreamID streamID, ContextState& state)
+          : ScopedContextGetterBase(streamID), contextState_{&state} {}
+      explicit ScopedContextAcquire(const ProductBase& data, ContextState& state)
+          : ScopedContextGetterBase(data), contextState_{&state} {}
 
       ~ScopedContextAcquire();
 

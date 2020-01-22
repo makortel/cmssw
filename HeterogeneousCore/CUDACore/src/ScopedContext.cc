@@ -83,8 +83,10 @@ namespace cms::cuda {
     ////////////////////
 
     void ScopedContextHolderHelper::enqueueCallback(int device, cudaStream_t stream) {
-      cudaCheck(
-          cudaStreamAddCallback(stream, cudaScopedContextCallback, new CallbackData{waitingTaskHolder_, device}, 0));
+      if (hasHolder_) {
+        cudaCheck(
+            cudaStreamAddCallback(stream, cudaScopedContextCallback, new CallbackData{waitingTaskHolder_, device}, 0));
+      }
     }
   }  // namespace impl
 
