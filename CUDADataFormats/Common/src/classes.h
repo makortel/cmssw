@@ -4,5 +4,4 @@
 #include "CUDADataFormats/Common/interface/Product.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 
-
 #endif

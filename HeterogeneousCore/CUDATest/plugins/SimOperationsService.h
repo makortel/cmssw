@@ -27,12 +27,12 @@ namespace cms::cudatest {
   class OperationCPU;
 
   using SleepFunction = std::function<void(std::chrono::nanoseconds)>;
-}
-
+}  // namespace cms::cudatest
 
 class SimOperationsService {
   using OpVectorCPU = std::vector<std::unique_ptr<cms::cudatest::OperationCPU>>;
   using OpVectorGPU = std::vector<std::unique_ptr<cms::cudatest::OperationBase>>;
+
 public:
   class GPUData {
   public:
@@ -54,7 +54,7 @@ public:
 
     // These are indexed by the operation index in ops of Service
     // They may to contain null elements
-    std::vector<char* > data_d_src_;
+    std::vector<char*> data_d_src_;
     std::vector<cms::cuda::host::noncached::unique_ptr<char[]>> data_h_src_;
   };
 
@@ -64,18 +64,20 @@ public:
 
     size_t events() const { return events_; }
     void process(const std::vector<size_t>& indices) const {
-      if(index_ >= 0) {
+      if (index_ >= 0) {
         sos_->acquireCPU(index_, indices);
       }
     }
     void process(const std::vector<size_t>& indices, const cms::cudatest::SleepFunction& sleep) const {
-      if(index_ >= 0) {
+      if (index_ >= 0) {
         sos_->acquireCPU(index_, indices, sleep);
       }
     }
+
   private:
     friend class SimOperationsService;
-    AcquireCPUProcessor(int i, const SimOperationsService* sos, unsigned int events): sos_{sos}, index_{i}, events_{events} {}
+    AcquireCPUProcessor(int i, const SimOperationsService* sos, unsigned int events)
+        : sos_{sos}, index_{i}, events_{events} {}
     const SimOperationsService* sos_ = nullptr;
     int index_ = -1;
     unsigned int events_ = 0;
@@ -87,9 +89,11 @@ public:
 
     size_t events() const { return events_; }
     void process(const std::vector<size_t>& indices, cudaStream_t stream);
+
   private:
     friend class SimOperationsService;
-    AcquireGPUProcessor(int i, const SimOperationsService* sos, GPUData data, unsigned int events): data_{std::move(data)}, sos_{sos}, index_{i}, events_{events} {}
+    AcquireGPUProcessor(int i, const SimOperationsService* sos, GPUData data, unsigned int events)
+        : data_{std::move(data)}, sos_{sos}, index_{i}, events_{events} {}
     GPUData data_;
     const SimOperationsService* sos_ = nullptr;
     int index_ = -1;
@@ -102,14 +106,15 @@ public:
 
     size_t events() const { return events_; }
     void process(const std::vector<size_t>& indices) const {
-      if(index_ >= 0) {
+      if (index_ >= 0) {
         sos_->produceCPU(index_, indices);
       }
     }
 
   private:
     friend class SimOperationsService;
-    ProduceCPUProcessor(int i, const SimOperationsService* sos, unsigned int events): sos_{sos}, index_{i}, events_{events} {}
+    ProduceCPUProcessor(int i, const SimOperationsService* sos, unsigned int events)
+        : sos_{sos}, index_{i}, events_{events} {}
     const SimOperationsService* sos_ = nullptr;
     int index_ = -1;
     unsigned int events_ = 0;
@@ -121,9 +126,11 @@ public:
 
     size_t events() const { return events_; }
     void process(const std::vector<size_t>& indices, cudaStream_t stream);
+
   private:
     friend class SimOperationsService;
-    ProduceGPUProcessor(int i, const SimOperationsService* sos, GPUData data, unsigned int events): data_{std::move(data)}, sos_{sos}, index_{i}, events_{events} {}
+    ProduceGPUProcessor(int i, const SimOperationsService* sos, GPUData data, unsigned int events)
+        : data_{std::move(data)}, sos_{sos}, index_{i}, events_{events} {}
     GPUData data_;
     const SimOperationsService* sos_ = nullptr;
     int index_ = -1;
@@ -141,17 +148,23 @@ public:
 
   AcquireCPUProcessor acquireCPUProcessor(const std::string& moduleLabel) const;
   AcquireGPUProcessor acquireGPUProcessor(const std::string& moduleLabel) const;
-  AcquireGPUProcessor acquireGPUProcessor(const std::string& moduleLabel, int gangSize) const; // override the gang size, if you know what you're doing
+  AcquireGPUProcessor acquireGPUProcessor(const std::string& moduleLabel,
+                                          int gangSize) const;  // override the gang size, if you know what you're doing
   ProduceCPUProcessor produceCPUProcessor(const std::string& moduleLabel) const;
   ProduceGPUProcessor produceGPUProcessor(const std::string& moduleLabel) const;
 
 private:
-
   void acquireCPU(int modIndex, const std::vector<size_t>& indices) const;
   void acquireCPU(int modIndex, const std::vector<size_t>& indices, const cms::cudatest::SleepFunction& sleep) const;
-  void acquireGPU(int modIndex, const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const;
+  void acquireGPU(int modIndex,
+                  const std::vector<size_t>& indices,
+                  cms::cudatest::OperationState& state,
+                  cudaStream_t stream) const;
   void produceCPU(int modIndex, const std::vector<size_t>& indices) const;
-  void produceGPU(int modIndex, const std::vector<size_t>& indices, cms::cudatest::OperationState& state, cudaStream_t stream) const;
+  void produceGPU(int modIndex,
+                  const std::vector<size_t>& indices,
+                  cms::cudatest::OperationState& state,
+                  cudaStream_t stream) const;
 
   const unsigned int gangSize_;
   const unsigned int gangNum_;

@@ -23,8 +23,8 @@ namespace cms::cudatest {
     unsigned int getLoops(const std::chrono::nanoseconds& time) const;
 
     std::vector<unsigned int> niters_;
-    std::vector<double> times_; // in us
+    std::vector<double> times_;  // in us
   };
-}
+}  // namespace cms::cudatest
 
 #endif

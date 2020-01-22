@@ -13,7 +13,7 @@
 #include <mutex>
 #include <thread>
 
-class TestCUDAProducerSimEWSleeping: public edm::stream::EDProducer<edm::ExternalWork> {
+class TestCUDAProducerSimEWSleeping : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit TestCUDAProducerSimEWSleeping(const edm::ParameterSet& iConfig);
   ~TestCUDAProducerSimEWSleeping();
@@ -48,20 +48,21 @@ TestCUDAProducerSimEWSleeping::TestCUDAProducerSimEWSleeping(const edm::Paramete
   acquireOpsCPU_ = sos->acquireCPUProcessor(moduleLabel);
   produceOpsCPU_ = sos->produceCPUProcessor(moduleLabel);
 
-  if(acquireOpsCPU_.events() == 0) {
+  if (acquireOpsCPU_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
   }
   const auto nevents = acquireOpsCPU_.events();
 
-  if(nevents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
-    throw cms::Exception("Configuration") << "Got " << nevents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
+  if (nevents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
+    throw cms::Exception("Configuration")
+        << "Got " << nevents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
   }
 
-  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
+  for (const auto& src : iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
 
-  if(iConfig.getParameter<bool>("produce")) {
+  if (iConfig.getParameter<bool>("produce")) {
     dstToken_ = produces<int>();
   }
 
@@ -78,7 +79,7 @@ void TestCUDAProducerSimEWSleeping::fillDescriptions(edm::ConfigurationDescripti
 }
 
 TestCUDAProducerSimEWSleeping::~TestCUDAProducerSimEWSleeping() {
-  if(sleeperThread_) {
+  if (sleeperThread_) {
     stopProcessing_ = true;
     condition_.notify_one();
     sleeperThread_->join();
@@ -86,13 +87,13 @@ TestCUDAProducerSimEWSleeping::~TestCUDAProducerSimEWSleeping() {
 }
 
 void TestCUDAProducerSimEWSleeping::threadWork() {
-  while(not stopProcessing_.load()) {
+  while (not stopProcessing_.load()) {
     std::chrono::nanoseconds time;
     edm::WaitingTaskWithArenaHolder holder;
     {
       std::unique_lock<std::mutex> lk{mutex_};
       condition_.wait(lk, [this]() { return startProcessing_ or stopProcessing_.load(); });
-      if(stopProcessing_.load()) {
+      if (stopProcessing_.load()) {
         LogTrace("foo") << "Stopping processing";
         break;
       }
@@ -116,28 +117,31 @@ void TestCUDAProducerSimEWSleeping::sleepFor(std::chrono::nanoseconds t) {
   condition_.notify_one();
 }
 
-void TestCUDAProducerSimEWSleeping::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder h) {
+void TestCUDAProducerSimEWSleeping::acquire(const edm::Event& iEvent,
+                                            const edm::EventSetup& iSetup,
+                                            edm::WaitingTaskWithArenaHolder h) {
   // to make sure the dependencies are set correctly
-  for(const auto& t: srcTokens_) {
+  for (const auto& t : srcTokens_) {
     iEvent.get(t);
   }
 
-  if(acquireOpsCPU_.events() > 0) {
+  if (acquireOpsCPU_.events() > 0) {
     // TODO: there can be at most one sleep operation...
     {
       std::lock_guard<std::mutex> lk{mutex_};
       holder_ = std::move(h);
     }
-    acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()}, [this](std::chrono::nanoseconds time) { sleepFor(time); } );
+    acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()},
+                           [this](std::chrono::nanoseconds time) { sleepFor(time); });
   }
 }
 
 void TestCUDAProducerSimEWSleeping::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  if(produceOpsCPU_.events() > 0) {
+  if (produceOpsCPU_.events() > 0) {
     produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
   }
 
-  if(not dstToken_.isUninitialized()) {
+  if (not dstToken_.isUninitialized()) {
     iEvent.emplace(dstToken_, 42);
   }
 }

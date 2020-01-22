@@ -11,15 +11,15 @@
 
 #include "SimOperationsService.h"
 
-class TestCUDAProducerSim: public edm::stream::EDProducer<> {
+class TestCUDAProducerSim : public edm::stream::EDProducer<> {
 public:
   explicit TestCUDAProducerSim(const edm::ParameterSet& iConfig);
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+
 private:
-  
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
   std::vector<edm::EDGetTokenT<cms::cuda::Product<int>>> cudaSrcTokens_;
   edm::EDPutTokenT<int> dstToken_;
@@ -36,21 +36,21 @@ TestCUDAProducerSim::TestCUDAProducerSim(const edm::ParameterSet& iConfig) {
   produceOpsCPU_ = sos->produceCPUProcessor(moduleLabel);
   produceOpsGPU_ = sos->produceGPUProcessor(moduleLabel);
 
-  if(produceOpsCPU_.events() == 0 and produceOpsGPU_.events() == 0) {
+  if (produceOpsCPU_.events() == 0 and produceOpsGPU_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
   }
 
-  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
+  for (const auto& src : iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
-  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
+  for (const auto& src : iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
     cudaSrcTokens_.emplace_back(consumes<cms::cuda::Product<int>>(src));
   }
 
-  if(iConfig.getParameter<bool>("produce")) {
+  if (iConfig.getParameter<bool>("produce")) {
     dstToken_ = produces<int>();
   }
-  if(iConfig.getParameter<bool>("produceCUDA")) {
+  if (iConfig.getParameter<bool>("produceCUDA")) {
     cudaDstToken_ = produces<cms::cuda::Product<int>>();
   }
 }
@@ -68,33 +68,33 @@ void TestCUDAProducerSim::fillDescriptions(edm::ConfigurationDescriptions& descr
 
 void TestCUDAProducerSim::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // to make sure the dependencies are set correctly
-  for(const auto& t: srcTokens_) {
+  for (const auto& t : srcTokens_) {
     iEvent.get(t);
   }
 
-  std::vector<const cms::cuda::Product<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::vector<const cms::cuda::Product<int>*> cudaProducts(cudaSrcTokens_.size(), nullptr);
   std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
-      return &iEvent.get(tok);
-    });
+    return &iEvent.get(tok);
+  });
 
-  auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextProduce(iEvent.streamID()) :
-    cms::cuda::ScopedContextProduce(*cudaProducts[0]);
+  auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextProduce(iEvent.streamID())
+                                  : cms::cuda::ScopedContextProduce(*cudaProducts[0]);
 
-  for(const auto ptr: cudaProducts) {
+  for (const auto ptr : cudaProducts) {
     ctx.get(*ptr);
   }
 
-  if(produceOpsCPU_.events() > 0) {
+  if (produceOpsCPU_.events() > 0) {
     produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
   }
-  if(produceOpsGPU_.events() > 0) {
+  if (produceOpsGPU_.events() > 0) {
     produceOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsGPU_.events()}, ctx.stream());
   }
 
-  if(not dstToken_.isUninitialized()) {
+  if (not dstToken_.isUninitialized()) {
     iEvent.emplace(dstToken_, 42);
   }
-  if(not cudaDstToken_.isUninitialized()) {
+  if (not cudaDstToken_.isUninitialized()) {
     ctx.emplace(iEvent, cudaDstToken_, 42);
   }
 }

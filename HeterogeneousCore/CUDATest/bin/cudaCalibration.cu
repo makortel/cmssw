@@ -18,34 +18,35 @@ namespace {
 
     a[idx] = 0.f;
 
-    for(size_t iloop=0; iloop<loops; ++iloop) {
+    for (size_t iloop = 0; iloop < loops; ++iloop) {
       a[idx] = (a[idx] + 4.0f) * 0.5f - 1.0f;
     }
   }
-}
+}  // namespace
 
 int main(int argc, char **argv) {
-  if(argc < 2) {
+  if (argc < 2) {
     std::cout << "Need at least 1 argument for the numbers of iterations" << std::endl;
     return 1;
   }
 
   // Read input
-  std::vector<size_t> iters(argc-1, 0);
+  std::vector<size_t> iters(argc - 1, 0);
   char *tmp;
-  std::transform(argv+1, argv+argc, iters.begin(), [&tmp](const char *str) {
-      auto val = std::strtol(str, &tmp, 10);
-      if(val < 0) {
-        std::cout << "Got a negative number " << val << std::endl;
-        abort();
-      }
-      return val;
-    });
+  std::transform(argv + 1, argv + argc, iters.begin(), [&tmp](const char *str) {
+    auto val = std::strtol(str, &tmp, 10);
+    if (val < 0) {
+      std::cout << "Got a negative number " << val << std::endl;
+      abort();
+    }
+    return val;
+  });
 
   // Make sure they're increasing
-  for(size_t i=1; i<iters.size(); ++i) {
-    if(iters[i-1] >= iters[i]) {
-      std::cout << "Number of iterations for i " << i-1 << " (" << iters[i-1] << ") is larger than or equal for i " << i << " (" << iters[i] << ")" << std::endl;
+  for (size_t i = 1; i < iters.size(); ++i) {
+    if (iters[i - 1] >= iters[i]) {
+      std::cout << "Number of iterations for i " << i - 1 << " (" << iters[i - 1] << ") is larger than or equal for i "
+                << i << " (" << iters[i] << ")" << std::endl;
       return 1;
     }
   }
@@ -53,31 +54,31 @@ int main(int argc, char **argv) {
   cudaStream_t stream;
   cudaCheck(cudaStreamCreate(&stream));
 
-  float* data_h;
-  float* data_d;
-  cudaCheck(cudaMallocHost(&data_h, kernel_elements*sizeof(float)));
-  cudaCheck(cudaMalloc(&data_d, kernel_elements*sizeof(float)));
+  float *data_h;
+  float *data_d;
+  cudaCheck(cudaMallocHost(&data_h, kernel_elements * sizeof(float)));
+  cudaCheck(cudaMalloc(&data_d, kernel_elements * sizeof(float)));
 
   // Data for kernel
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<float> dis(1e-5, 100.);
 
-  for(size_t i=0; i!=kernel_elements; ++i) {
+  for (size_t i = 0; i != kernel_elements; ++i) {
     data_h[i] = dis(gen);
   }
-  cudaCheck(cudaMemcpy(data_d, data_h, kernel_elements*sizeof(float), cudaMemcpyDefault));
-  
+  cudaCheck(cudaMemcpy(data_d, data_h, kernel_elements * sizeof(float), cudaMemcpyDefault));
+
   // do 4 warmups
-  for(size_t i=0; i<4; ++i) {
+  for (size_t i = 0; i < 4; ++i) {
     kernel_looping<<<1, kernel_elements, 0, stream>>>(data_d, kernel_elements, iters.back());
   }
 
   cudaCheck(cudaStreamSynchronize(stream));
 
   // Then repeat all 4 times
-  for(size_t i=0; i<4; ++i) {
-    for(int n: iters) {
+  for (size_t i = 0; i < 4; ++i) {
+    for (int n : iters) {
       kernel_looping<<<1, kernel_elements, 0, stream>>>(data_d, kernel_elements, n);
       //cudaCheck(cudaStreamSynchronize(stream));
     }

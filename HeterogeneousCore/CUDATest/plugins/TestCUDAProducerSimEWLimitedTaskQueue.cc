@@ -17,9 +17,9 @@
 namespace {
   std::once_flag taskQueueFlag;
   std::unique_ptr<edm::LimitedTaskQueue> taskQueue;
-}
+}  // namespace
 
-class TestCUDAProducerSimEWLimitedTaskQueue: public edm::stream::EDProducer<edm::ExternalWork> {
+class TestCUDAProducerSimEWLimitedTaskQueue : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit TestCUDAProducerSimEWLimitedTaskQueue(const edm::ParameterSet& iConfig);
 
@@ -43,9 +43,9 @@ private:
 };
 
 TestCUDAProducerSimEWLimitedTaskQueue::TestCUDAProducerSimEWLimitedTaskQueue(const edm::ParameterSet& iConfig) {
-  std::call_once(taskQueueFlag, [limit=iConfig.getParameter<unsigned int>("limit")](){
-      taskQueue = std::make_unique<edm::LimitedTaskQueue>(limit);
-    });
+  std::call_once(taskQueueFlag, [limit = iConfig.getParameter<unsigned int>("limit")]() {
+    taskQueue = std::make_unique<edm::LimitedTaskQueue>(limit);
+  });
 
   const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
   edm::Service<SimOperationsService> sos;
@@ -54,29 +54,31 @@ TestCUDAProducerSimEWLimitedTaskQueue::TestCUDAProducerSimEWLimitedTaskQueue(con
   produceOpsCPU_ = sos->produceCPUProcessor(moduleLabel);
   produceOpsGPU_ = sos->produceGPUProcessor(moduleLabel);
 
-  if(acquireOpsCPU_.events() == 0 && acquireOpsGPU_.events() == 0) {
+  if (acquireOpsCPU_.events() == 0 && acquireOpsGPU_.events() == 0) {
     throw cms::Exception("Configuration") << "Got 0 events, which makes this module useless";
   }
   const auto nevents = std::max(acquireOpsCPU_.events(), acquireOpsGPU_.events());
 
-  if(nevents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
-    throw cms::Exception("Configuration") << "Got " << nevents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
+  if (nevents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
+    throw cms::Exception("Configuration")
+        << "Got " << nevents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
   }
-  if(nevents != produceOpsGPU_.events() and produceOpsGPU_.events() > 0) {
-    throw cms::Exception("Configuration") << "Got " << nevents << " events for acquire and " << produceOpsGPU_.events() << " for produce GPU";
+  if (nevents != produceOpsGPU_.events() and produceOpsGPU_.events() > 0) {
+    throw cms::Exception("Configuration")
+        << "Got " << nevents << " events for acquire and " << produceOpsGPU_.events() << " for produce GPU";
   }
 
-  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
+  for (const auto& src : iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
-  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
+  for (const auto& src : iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
     cudaSrcTokens_.emplace_back(consumes<cms::cuda::Product<int>>(src));
   }
 
-  if(iConfig.getParameter<bool>("produce")) {
+  if (iConfig.getParameter<bool>("produce")) {
     dstToken_ = produces<int>();
   }
-  if(iConfig.getParameter<bool>("produceCUDA")) {
+  if (iConfig.getParameter<bool>("produceCUDA")) {
     cudaDstToken_ = produces<cms::cuda::Product<int>>();
   }
 }
@@ -93,57 +95,59 @@ void TestCUDAProducerSimEWLimitedTaskQueue::fillDescriptions(edm::ConfigurationD
   descriptions.addWithDefaultLabel(desc);
 }
 
-void TestCUDAProducerSimEWLimitedTaskQueue::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder h) {
+void TestCUDAProducerSimEWLimitedTaskQueue::acquire(const edm::Event& iEvent,
+                                                    const edm::EventSetup& iSetup,
+                                                    edm::WaitingTaskWithArenaHolder h) {
   // to make sure the dependencies are set correctly
-  for(const auto& t: srcTokens_) {
+  for (const auto& t : srcTokens_) {
     iEvent.get(t);
   }
 
-  std::vector<const cms::cuda::Product<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::vector<const cms::cuda::Product<int>*> cudaProducts(cudaSrcTokens_.size(), nullptr);
   std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
-      return &iEvent.get(tok);
-    });
+    return &iEvent.get(tok);
+  });
 
   // This is now a bit stupid, but I need the ctxState_ to be fully set before calling taskQueue::push()
   {
-    auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
-      cms::cuda::ScopedContextAcquire(*cudaProducts[0], h, ctxState_);
+    auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextAcquire(iEvent.streamID(), h, ctxState_)
+                                    : cms::cuda::ScopedContextAcquire(*cudaProducts[0], h, ctxState_);
 
-    for(const auto ptr: cudaProducts) {
+    for (const auto ptr : cudaProducts) {
       ctx.get(*ptr);
     }
   }
 
-  if(acquireOpsCPU_.events() > 0) {
+  if (acquireOpsCPU_.events() > 0) {
     acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()});
   }
-  if(acquireOpsGPU_.events() > 0) {
+  if (acquireOpsGPU_.events() > 0) {
     queueingFinished_.store(false);
-    taskQueue->push(edm::make_lambda_with_holder(std::move(h), [this,
-                                                                eventId=iEvent.id()](edm::WaitingTaskWithArenaHolder h) {
-                                                   cms::cuda::ScopedContextTask ctx{&ctxState_, std::move(h)};
-                                                   acquireOpsGPU_.process(std::vector<size_t>{eventId.event() % acquireOpsGPU_.events()}, ctx.stream());
-                                                   queueingFinished_.store(true);
-                                                 }));
+    taskQueue->push(
+        edm::make_lambda_with_holder(std::move(h), [this, eventId = iEvent.id()](edm::WaitingTaskWithArenaHolder h) {
+          cms::cuda::ScopedContextTask ctx{&ctxState_, std::move(h)};
+          acquireOpsGPU_.process(std::vector<size_t>{eventId.event() % acquireOpsGPU_.events()}, ctx.stream());
+          queueingFinished_.store(true);
+        }));
   }
 }
 
 void TestCUDAProducerSimEWLimitedTaskQueue::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   cms::cuda::ScopedContextProduce ctx{ctxState_};
-  if(not queueingFinished_.load()) {
+  if (not queueingFinished_.load()) {
     throw cms::Exception("Assert") << "Work was not yet fully queued in acquire!";
   }
-  if(produceOpsCPU_.events() > 0) {
+  if (produceOpsCPU_.events() > 0) {
     produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
   }
-  if(produceOpsGPU_.events() > 0) {
+  if (produceOpsGPU_.events() > 0) {
     produceOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsGPU_.events()}, ctx.stream());
   }
 
-  if(not dstToken_.isUninitialized()) {
+  if (not dstToken_.isUninitialized()) {
     iEvent.emplace(dstToken_, 42);
   }
-  if(not cudaDstToken_.isUninitialized()) {
+  if (not cudaDstToken_.isUninitialized()) {
     ctx.emplace(iEvent, cudaDstToken_, 42);
   }
 }

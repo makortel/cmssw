@@ -21,7 +21,7 @@ namespace {
       const auto gangNum = sos->numberOfGangs();
 
       const auto moduleLabel = iConfig.getParameter<std::string>("@module_label");
-      for(unsigned int i=0; i<gangNum; ++i) {
+      for (unsigned int i = 0; i < gangNum; ++i) {
         auto tmp = std::make_unique<SimOperationsService::AcquireGPUProcessor>(sos->acquireGPUProcessor(moduleLabel));
         events_ = tmp->events();
         acquireOpsGPU_.add(std::move(tmp));
@@ -32,7 +32,10 @@ namespace {
 
     size_t events() const { return events_; }
 
-    void enqueue(unsigned int eventIndex, std::vector<const cms::cuda::Product<int>*> inputData, edm::WaitingTaskWithArenaHolder holder, cms::cuda::ScopedContextAcquire& ctx) const {
+    void enqueue(unsigned int eventIndex,
+                 std::vector<const cms::cuda::Product<int>*> inputData,
+                 edm::WaitingTaskWithArenaHolder holder,
+                 cms::cuda::ScopedContextAcquire& ctx) const {
       std::vector<size_t> indicesToLaunch;
       std::vector<edm::WaitingTaskWithArenaHolder> holdersToLaunch;
       std::vector<std::vector<const cms::cuda::Product<int>*>> inputsToLaunch;
@@ -41,45 +44,49 @@ namespace {
         workIndices_.push_back(eventIndex % events());
         workHolders_.emplace_back(std::move(holder));
         workInputs_.emplace_back(std::move(inputData));
-        LogTrace("Foo") << "Enqueued work for event " << eventIndex << ", queue size is " << workIndices_.size() << " last index " << workIndices_.back() << ", has info for events " << events();
-        if(workIndices_.size() == gangSize_) {
+        LogTrace("Foo") << "Enqueued work for event " << eventIndex << ", queue size is " << workIndices_.size()
+                        << " last index " << workIndices_.back() << ", has info for events " << events();
+        if (workIndices_.size() == gangSize_) {
           std::swap(workIndices_, indicesToLaunch);
           std::swap(workHolders_, holdersToLaunch);
           std::swap(workInputs_, inputsToLaunch);
           reserve();
         }
       }
-      if(not indicesToLaunch.empty()) {
+      if (not indicesToLaunch.empty()) {
         LogTrace("Foo").log([&](auto& l) {
-            l << "Launching work for indices ";
-            for(auto i: indicesToLaunch) {
-              l << i << " ";
-            }
-            l << "in CUDA stream " << ctx.stream();
-          });
+          l << "Launching work for indices ";
+          for (auto i : indicesToLaunch) {
+            l << i << " ";
+          }
+          l << "in CUDA stream " << ctx.stream();
+        });
         // need to synchronize the input data only wrt. the CUDA stream the work will be executed in
-        for(auto& inputsForEvent: inputsToLaunch) {
-          for(auto* input: inputsForEvent) {
+        for (auto& inputsForEvent : inputsToLaunch) {
+          for (auto* input : inputsForEvent) {
             ctx.get(*input);
           }
         }
         auto opsPtr = acquireOpsGPU_.tryToGet();
-        if(not opsPtr) {
-          throw cms::Exception("LogicError") << "Tried to get acquire operations in Ganger::enqueue, but got none. Are gangSize and gangNum compatible with numberOfStreams?";
+        if (not opsPtr) {
+          throw cms::Exception("LogicError") << "Tried to get acquire operations in Ganger::enqueue, but got none. Are "
+                                                "gangSize and gangNum compatible with numberOfStreams?";
         }
 
         opsPtr->process(indicesToLaunch, ctx.stream());
-        ctx.replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task(tbb::task::allocate_root(),
-                                                                                            [holders=std::move(holdersToLaunch),
-                                                                                             opsPtr=std::move(opsPtr)](std::exception_ptr const* excptr) mutable {
-                                                                                              LogTrace("Foo") << "Joint callback task to reset shared_ptr and release contained WaitingTaskWithArenaHolders";
-                                                                                              opsPtr.reset();
-                                                                                              for(auto& h: holders) {
-                                                                                                if(excptr) {
-                                                                                                  h.doneWaiting(*excptr);
-                                                                                                }
-                                                                                              }
-                                                                                            })});
+        ctx.replaceWaitingTaskHolder(edm::WaitingTaskWithArenaHolder{edm::make_waiting_task(
+            tbb::task::allocate_root(),
+            [holders = std::move(holdersToLaunch),
+             opsPtr = std::move(opsPtr)](std::exception_ptr const* excptr) mutable {
+              LogTrace("Foo")
+                  << "Joint callback task to reset shared_ptr and release contained WaitingTaskWithArenaHolders";
+              opsPtr.reset();
+              for (auto& h : holders) {
+                if (excptr) {
+                  h.doneWaiting(*excptr);
+                }
+              }
+            })});
       }
     }
 
@@ -102,9 +109,9 @@ namespace {
     size_t events_ = 0;
     unsigned int gangSize_ = 0;
   };
-}
+}  // namespace
 
-class TestCUDAProducerSimEWGanged: public edm::stream::EDProducer<edm::ExternalWork, edm::GlobalCache<Ganger>> {
+class TestCUDAProducerSimEWGanged : public edm::stream::EDProducer<edm::ExternalWork, edm::GlobalCache<Ganger>> {
 public:
   explicit TestCUDAProducerSimEWGanged(const edm::ParameterSet& iConfig, const Ganger* ganger);
 
@@ -118,8 +125,8 @@ public:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   static void globalEndJob(const Ganger* ganger) {}
+
 private:
-  
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
   std::vector<edm::EDGetTokenT<cms::cuda::Product<int>>> cudaSrcTokens_;
   edm::EDPutTokenT<int> dstToken_;
@@ -139,30 +146,33 @@ TestCUDAProducerSimEWGanged::TestCUDAProducerSimEWGanged(const edm::ParameterSet
   produceOpsGPU_ = sos->produceGPUProcessor(moduleLabel);
 
   const auto acquireEvents = ganger->events();
-  if(acquireEvents == 0) {
+  if (acquireEvents == 0) {
     throw cms::Exception("Configuration") << "Got 0 events for GPU ops, which makes this module useless";
   }
-  if(acquireEvents != acquireOpsCPU_.events() and acquireOpsCPU_.events() > 0) {
-    throw cms::Exception("LogicError") << "Got " << acquireEvents << " from GPU acquire ops, but " << acquireOpsCPU_.events() << " from CPU ops";
+  if (acquireEvents != acquireOpsCPU_.events() and acquireOpsCPU_.events() > 0) {
+    throw cms::Exception("LogicError") << "Got " << acquireEvents << " from GPU acquire ops, but "
+                                       << acquireOpsCPU_.events() << " from CPU ops";
   }
-  if(acquireEvents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
-    throw cms::Exception("Configuration") << "Got " << acquireEvents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
+  if (acquireEvents != produceOpsCPU_.events() and produceOpsCPU_.events() > 0) {
+    throw cms::Exception("Configuration")
+        << "Got " << acquireEvents << " events for acquire and " << produceOpsCPU_.events() << " for produce CPU";
   }
-  if(acquireEvents != produceOpsGPU_.events() and produceOpsGPU_.events() > 0) {
-    throw cms::Exception("Configuration") << "Got " << acquireEvents << " events for acquire and " << produceOpsGPU_.events() << " for produce CPU";
+  if (acquireEvents != produceOpsGPU_.events() and produceOpsGPU_.events() > 0) {
+    throw cms::Exception("Configuration")
+        << "Got " << acquireEvents << " events for acquire and " << produceOpsGPU_.events() << " for produce CPU";
   }
 
-  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
+  for (const auto& src : iConfig.getParameter<std::vector<edm::InputTag>>("srcs")) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
-  for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
+  for (const auto& src : iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
     cudaSrcTokens_.emplace_back(consumes<cms::cuda::Product<int>>(src));
   }
 
-  if(iConfig.getParameter<bool>("produce")) {
+  if (iConfig.getParameter<bool>("produce")) {
     dstToken_ = produces<int>();
   }
-  if(iConfig.getParameter<bool>("produceCUDA")) {
+  if (iConfig.getParameter<bool>("produceCUDA")) {
     cudaDstToken_ = produces<cms::cuda::Product<int>>();
   }
 }
@@ -178,25 +188,27 @@ void TestCUDAProducerSimEWGanged::fillDescriptions(edm::ConfigurationDescription
   descriptions.addWithDefaultLabel(desc);
 }
 
-void TestCUDAProducerSimEWGanged::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder h) {
+void TestCUDAProducerSimEWGanged::acquire(const edm::Event& iEvent,
+                                          const edm::EventSetup& iSetup,
+                                          edm::WaitingTaskWithArenaHolder h) {
   // to make sure the dependencies are set correctly
-  for(const auto& t: srcTokens_) {
+  for (const auto& t : srcTokens_) {
     iEvent.get(t);
   }
 
-  std::vector<const cms::cuda::Product<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::vector<const cms::cuda::Product<int>*> cudaProducts(cudaSrcTokens_.size(), nullptr);
   std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
-      return &iEvent.get(tok);
-    });
+    return &iEvent.get(tok);
+  });
 
   // In principle the cms::cuda::ScopedContext is not needed in acquire() in
   // those streams that do not process the data, but it is needed in
   // produce() in all streams, so let's just create it here to leave
   // ctxState_ in valid state in all stream.
-  auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
-    cms::cuda::ScopedContextAcquire(*cudaProducts[0], h, ctxState_);
+  auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextAcquire(iEvent.streamID(), h, ctxState_)
+                                  : cms::cuda::ScopedContextAcquire(*cudaProducts[0], h, ctxState_);
 
-  if(acquireOpsCPU_.events() > 0) {
+  if (acquireOpsCPU_.events() > 0) {
     acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()});
   }
   globalCache()->enqueue(iEvent.id().event(), std::move(cudaProducts), std::move(h), ctx);
@@ -205,17 +217,17 @@ void TestCUDAProducerSimEWGanged::acquire(const edm::Event& iEvent, const edm::E
 void TestCUDAProducerSimEWGanged::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   cms::cuda::ScopedContextProduce ctx{ctxState_};
 
-  if(produceOpsCPU_.events() > 0) {
+  if (produceOpsCPU_.events() > 0) {
     produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
   }
-  if(produceOpsGPU_.events() > 0) {
+  if (produceOpsGPU_.events() > 0) {
     produceOpsGPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsGPU_.events()}, ctx.stream());
   }
 
-  if(not dstToken_.isUninitialized()) {
+  if (not dstToken_.isUninitialized()) {
     iEvent.emplace(dstToken_, 42);
   }
-  if(not cudaDstToken_.isUninitialized()) {
+  if (not cudaDstToken_.isUninitialized()) {
     ctx.emplace(iEvent, cudaDstToken_, 42);
   }
 }
