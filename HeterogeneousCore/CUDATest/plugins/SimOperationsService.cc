@@ -9,11 +9,13 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_unique_ptr.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/copyAsync.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
 #include "SimOperationsService.h"
 #include "TimeCruncher.h"
 #include "GPUTimeCruncher.h"
 
+#include <mutex>
 #include <random>
 
 #include <boost/property_tree/json_parser.hpp>
@@ -50,7 +52,7 @@ namespace cudatest {
     virtual unsigned int maxBytesToDevice() const { return 0; }
     virtual unsigned int maxBytesToHost() const { return 0; }
 
-    virtual void operate(const std::vector<size_t>& indices, OperationState& state, cuda::stream_t<>& stream) const {
+    virtual void operate(const std::vector<size_t>& indices, OperationState& state, cudaStream_t stream) const {
       throw cms::Exception("NotImplemented") << "OperationBase::operate()";
     }
   };
@@ -133,7 +135,7 @@ namespace {
       gpuCruncher_(cruncher)
     {}
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const override {
+    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
       gpuCruncher_->crunch_for(totalTime(indices), state.kernel_data_d, stream);
     };
 
@@ -150,7 +152,7 @@ namespace {
       useLocks_(useLocks)
     {}
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const override {
+    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
       std::unique_lock lock{g_fakeCudaMutex, std::defer_lock};
       if(useLocks_) {
         lock.lock();
@@ -204,14 +206,14 @@ namespace {
 
     unsigned int maxBytesToDevice() const override { return maxBytes(); }
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const override {
+    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
       const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
 
       auto data_d = cudautils::make_device_unique<char[]>(bytes, stream);
       LogTrace("foo") << "MemcpyToDevice " << i << " from " << static_cast<const void*>(state.data_h_src[i]) << " to " << static_cast<const void*>(data_d.get()) << " " << bytes << " bytes";
-      cuda::memory::async::copy(data_d.get(), state.data_h_src[i], bytes, stream.id());
+      cudaCheck(cudaMemcpyAsync(data_d.get(), state.data_h_src[i], bytes, cudaMemcpyHostToDevice, stream));
       state.data_d_dst.emplace_back(std::move(data_d));
     }
   };
@@ -222,14 +224,14 @@ namespace {
 
     unsigned int maxBytesToHost() const override { return maxBytes(); }
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const override {
+    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
       const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
 
       auto data_h = cudautils::make_host_unique<char[]>(bytes, stream);
       LogTrace("foo") << "MemcpyToHost " << i << " from " << static_cast<const void*>(state.data_d_src[i]) << " to " << static_cast<const void*>(data_h.get()) << " " << bytes << " bytes";
-      cuda::memory::async::copy(data_h.get(), state.data_d_src[i], bytes, stream.id());
+      cudaCheck(cudaMemcpyAsync(data_h.get(), state.data_d_src[i], bytes, cudaMemcpyHostToDevice, stream));
       state.data_h_dst.emplace_back(std::move(data_h));
     }
   };
@@ -240,13 +242,13 @@ namespace {
 
     unsigned int maxBytesToHost() const override { return maxBytes(); }
 
-    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const override {
+    void operate(const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const override {
       const auto i = state.opIndex;
 
       const auto bytes = totalBytes(indices);
 
       LogTrace("foo") << "Memset " << i << " on 0x" << static_cast<const void*>(state.data_d_src[i]) << " " << bytes << " bytes";
-      cuda::memory::device::async::set(state.data_d_src[i], 42, bytes, stream.id());
+      cudaCheck(cudaMemsetAsync(state.data_d_src[i], 42, bytes, stream));
     }
   };
 }
@@ -398,11 +400,11 @@ SimOperationsService::GPUData::GPUData(const OpVectorGPU& ops, const unsigned in
   {
     constexpr auto elements = cudatest::GPUTimeCruncher::kernel_elements;
     auto h_src = cudautils::make_host_noncached_unique<char[]>(elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
-    cuda::throw_if_error(cudaMalloc(&kernel_data_d_, elements*sizeof(float)));
+    cudaCheck(cudaMalloc(&kernel_data_d_, elements*sizeof(float)));
     for(size_t i=0; i!=elements; ++i) {
       h_src[i] = disf(gen);
     }
-    cuda::throw_if_error(cudaMemcpy(kernel_data_d_, h_src.get(), elements*sizeof(float), cudaMemcpyDefault));
+    cudaCheck(cudaMemcpy(kernel_data_d_, h_src.get(), elements*sizeof(float), cudaMemcpyDefault));
   }
       
   // Data for transfer operations
@@ -419,22 +421,22 @@ SimOperationsService::GPUData::GPUData(const OpVectorGPU& ops, const unsigned in
     }
     if(const auto bytesToH = gangSize*ops[i]->maxBytesToHost();
        bytesToH > 0) {
-      cuda::throw_if_error(cudaMalloc(&data_d_src_[i], bytesToH));
+      cudaCheck(cudaMalloc(&data_d_src_[i], bytesToH));
       LogTrace("foo") << "Device ptr " << i << " bytes " << bytesToH << " ptr " << static_cast<const void*>(data_d_src_[i]);
       auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
       for(unsigned int j=0; j<bytesToH; ++j) {
         h_src[j] = disc(gen);
       }
-      cuda::throw_if_error(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
+      cudaCheck(cudaMemcpy(data_d_src_[i], h_src.get(), bytesToH, cudaMemcpyDefault));
     }
   }
 }
 
 SimOperationsService::GPUData::~GPUData() {
   if(kernel_data_d_ != nullptr) {
-    cuda::throw_if_error(cudaFree(kernel_data_d_));
+    cudaCheck(cudaFree(kernel_data_d_));
     for(auto& ptr: data_d_src_) {
-      cuda::throw_if_error(cudaFree(ptr));
+      cudaCheck(cudaFree(ptr));
     }
   }
 }
@@ -461,14 +463,14 @@ cudatest::OperationState SimOperationsService::GPUData::makeState() {
   return cudatest::OperationState{kernel_data_d_, data_h_src_, data_d_src_};
 }
 
-void SimOperationsService::AcquireGPUProcessor::process(const std::vector<size_t>& indices, cuda::stream_t<>& stream) {
+void SimOperationsService::AcquireGPUProcessor::process(const std::vector<size_t>& indices, cudaStream_t stream) {
   if(index_ >= 0) {
     cudatest::OperationState state = data_.makeState();
     sos_->acquireGPU(index_, indices, state, stream);
   }
 }
 
-void SimOperationsService::ProduceGPUProcessor::process(const std::vector<size_t>& indices, cuda::stream_t<>& stream) {
+void SimOperationsService::ProduceGPUProcessor::process(const std::vector<size_t>& indices, cudaStream_t stream) {
   if(index_ >= 0) {
     cudatest::OperationState state = data_.makeState();
     sos_->produceGPU(index_, indices, state, stream);
@@ -529,7 +531,7 @@ void SimOperationsService::acquireCPU(int modIndex, const std::vector<size_t>& i
     op->operate(indices, sleep);
   }
 }
-void SimOperationsService::acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const {
+void SimOperationsService::acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const {
   for(const auto& op: acquireOpsGPU_.at(modIndex).second) {
     op->operate(indices, state, stream);
     state.opIndex++;
@@ -540,7 +542,7 @@ void SimOperationsService::produceCPU(int modIndex, const std::vector<size_t>& i
     op->operate(indices);
   }
 }
-void SimOperationsService::produceGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const {
+void SimOperationsService::produceGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const {
   for(const auto& op: produceOpsGPU_.at(modIndex).second) {
     op->operate(indices, state, stream);
     state.opIndex++;

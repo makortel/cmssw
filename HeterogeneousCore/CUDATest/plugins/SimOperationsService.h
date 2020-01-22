@@ -10,7 +10,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 
-#include <cuda/api_wrappers.h>
+#include <cuda_runtime.h>
 
 namespace edm {
   class ParameterSet;
@@ -86,7 +86,7 @@ public:
     AcquireGPUProcessor() = default;
 
     size_t events() const { return events_; }
-    void process(const std::vector<size_t>& indices, cuda::stream_t<>& stream);
+    void process(const std::vector<size_t>& indices, cudaStream_t stream);
   private:
     friend class SimOperationsService;
     AcquireGPUProcessor(int i, const SimOperationsService* sos, GPUData data, unsigned int events): data_{std::move(data)}, sos_{sos}, index_{i}, events_{events} {}
@@ -120,7 +120,7 @@ public:
     ProduceGPUProcessor() = default;
 
     size_t events() const { return events_; }
-    void process(const std::vector<size_t>& indices, cuda::stream_t<>& stream);
+    void process(const std::vector<size_t>& indices, cudaStream_t stream);
   private:
     friend class SimOperationsService;
     ProduceGPUProcessor(int i, const SimOperationsService* sos, GPUData data, unsigned int events): data_{std::move(data)}, sos_{sos}, index_{i}, events_{events} {}
@@ -149,9 +149,9 @@ private:
 
   void acquireCPU(int modIndex, const std::vector<size_t>& indices) const;
   void acquireCPU(int modIndex, const std::vector<size_t>& indices, const cudatest::SleepFunction& sleep) const;
-  void acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const;
+  void acquireGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const;
   void produceCPU(int modIndex, const std::vector<size_t>& indices) const;
-  void produceGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cuda::stream_t<>& stream) const;
+  void produceGPU(int modIndex, const std::vector<size_t>& indices, cudatest::OperationState& state, cudaStream_t stream) const;
 
   const unsigned int gangSize_;
   const unsigned int gangNum_;

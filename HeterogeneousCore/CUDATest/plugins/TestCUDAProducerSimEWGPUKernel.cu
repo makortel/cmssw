@@ -12,6 +12,6 @@ namespace {
   }
 }
 
-void TestCUDAProducerSimEWGPUKernel::kernel(float *data, size_t elements, size_t loops, cuda::stream_t<>& stream) {
-  kernel_looping<<<1,32,0, stream.id()>>>(data, elements, loops);
+void TestCUDAProducerSimEWGPUKernel::kernel(float *data, size_t elements, size_t loops, cudaStream_t stream) {
+  kernel_looping<<<1,32,0, stream>>>(data, elements, loops);
 }

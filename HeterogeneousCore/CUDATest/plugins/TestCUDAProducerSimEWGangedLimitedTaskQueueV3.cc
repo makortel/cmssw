@@ -150,7 +150,7 @@ namespace {
                                          for(auto i: indicesToLaunch) {
                                            l << i << " ";
                                          }
-                                         l << "in CUDA stream " << ctx.stream().id();
+                                         l << "in CUDA stream " << ctx.stream();
                                        });
                                      opsPtr->process(indicesToLaunch, ctx.stream());
                                    } catch(...) {

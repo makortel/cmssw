@@ -3,6 +3,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
 
 #include "GPUTimeCruncher.h"
@@ -33,14 +34,14 @@ namespace cudatest {
 
     float *kernel_data_d;
     auto h_src = cudautils::make_host_noncached_unique<char[]>(kernel_elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
-    cuda::throw_if_error(cudaMalloc(&kernel_data_d, kernel_elements*sizeof(float)));
+    cudaCheck(cudaMalloc(&kernel_data_d, kernel_elements*sizeof(float)));
     for(size_t i=0; i!=kernel_elements; ++i) {
       h_src[i] = dis(gen);
     }
-    cuda::throw_if_error(cudaMemcpy(kernel_data_d, h_src.get(), kernel_elements*sizeof(float), cudaMemcpyDefault));
+    cudaCheck(cudaMemcpy(kernel_data_d, h_src.get(), kernel_elements*sizeof(float), cudaMemcpyDefault));
   }
 
-  void GPUTimeCruncher::crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const {
+  void GPUTimeCruncher::crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cudaStream_t stream) const {
     const auto loops = getLoops(time);
     TestCUDAProducerSimEWGPUKernel::kernel(kernel_data_d, kernel_elements, loops, stream);
   }

@@ -8,6 +8,7 @@
 
 #include "CUDADataFormats/Common/interface/Product.h"
 #include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
 #include "SimOperationsService.h"
 
@@ -103,7 +104,7 @@ void TestCUDAProducerSimBlocking::produce(edm::Event& iEvent, const edm::EventSe
   }
 
   // The blocking wait
-  ctx.stream().synchronize();
+  cudaCheck(cudaStreamSynchronize(ctx.stream()));
 
   // Produce part
   if(produceOpsCPU_.events() > 0) {

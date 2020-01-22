@@ -56,7 +56,7 @@ namespace {
             for(auto i: indicesToLaunch) {
               l << i << " ";
             }
-            l << "in CUDA stream " << ctx.stream().id();
+            l << "in CUDA stream " << ctx.stream();
           });
         // need to synchronize the input data only wrt. the CUDA stream the work will be executed in
         for(auto& inputsForEvent: inputsToLaunch) {

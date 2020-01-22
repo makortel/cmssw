@@ -1,7 +1,7 @@
 #ifndef HeterogeneousCore_CUDATest_GPUTimeCruncher_h
 #define HeterogeneousCore_CUDATest_GPUTimeCruncher_h
 
-#include <cuda/api_wrappers.h>
+#include <cuda_runtime.h>
 
 #include <chrono>
 #include <vector>
@@ -15,7 +15,7 @@ namespace cudatest {
   public:
     GPUTimeCruncher(const std::vector<unsigned int>& iters, const std::vector<double>& times);
 
-    void crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cuda::stream_t<>& stream) const;
+    void crunch_for(const std::chrono::nanoseconds& time, float* kernel_data_d, cudaStream_t stream) const;
 
     static constexpr size_t kernel_elements = 32;
 
