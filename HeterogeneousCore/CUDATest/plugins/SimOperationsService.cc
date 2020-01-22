@@ -22,7 +22,7 @@
 
 namespace cudatest {
   struct OperationState {
-    OperationState(float* kernel_data, std::vector<cudautils::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
+    OperationState(float* kernel_data, std::vector<cms::cuda::host::noncached::unique_ptr<char[]>>& h_src, std::vector<char *> d_src):
       kernel_data_d{kernel_data},
       data_d_src{std::move(d_src)}
     {
@@ -37,8 +37,8 @@ namespace cudatest {
     std::vector<char *> data_h_src;
     std::vector<char *> data_d_src;
 
-    std::vector<cudautils::host::unique_ptr<char[]>> data_h_dst;
-    std::vector<cudautils::device::unique_ptr<char[]>> data_d_dst;
+    std::vector<cms::cuda::host::unique_ptr<char[]>> data_h_dst;
+    std::vector<cms::cuda::device::unique_ptr<char[]>> data_d_dst;
 
     int opIndex = 0;
   };
@@ -211,7 +211,7 @@ namespace {
 
       const auto bytes = totalBytes(indices);
 
-      auto data_d = cudautils::make_device_unique<char[]>(bytes, stream);
+      auto data_d = cms::cuda::make_device_unique<char[]>(bytes, stream);
       LogTrace("foo") << "MemcpyToDevice " << i << " from " << static_cast<const void*>(state.data_h_src[i]) << " to " << static_cast<const void*>(data_d.get()) << " " << bytes << " bytes";
       cudaCheck(cudaMemcpyAsync(data_d.get(), state.data_h_src[i], bytes, cudaMemcpyHostToDevice, stream));
       state.data_d_dst.emplace_back(std::move(data_d));
@@ -229,7 +229,7 @@ namespace {
 
       const auto bytes = totalBytes(indices);
 
-      auto data_h = cudautils::make_host_unique<char[]>(bytes, stream);
+      auto data_h = cms::cuda::make_host_unique<char[]>(bytes, stream);
       LogTrace("foo") << "MemcpyToHost " << i << " from " << static_cast<const void*>(state.data_d_src[i]) << " to " << static_cast<const void*>(data_h.get()) << " " << bytes << " bytes";
       cudaCheck(cudaMemcpyAsync(data_h.get(), state.data_d_src[i], bytes, cudaMemcpyHostToDevice, stream));
       state.data_h_dst.emplace_back(std::move(data_h));
@@ -399,7 +399,7 @@ SimOperationsService::GPUData::GPUData(const OpVectorGPU& ops, const unsigned in
   // Data for kernel
   {
     constexpr auto elements = cudatest::GPUTimeCruncher::kernel_elements;
-    auto h_src = cudautils::make_host_noncached_unique<char[]>(elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
+    auto h_src = cms::cuda::make_host_noncached_unique<char[]>(elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
     cudaCheck(cudaMalloc(&kernel_data_d_, elements*sizeof(float)));
     for(size_t i=0; i!=elements; ++i) {
       h_src[i] = disf(gen);
@@ -413,7 +413,7 @@ SimOperationsService::GPUData::GPUData(const OpVectorGPU& ops, const unsigned in
   for(size_t i=0; i!=ops.size(); ++i) {
     if(const auto bytesToD = gangSize*ops[i]->maxBytesToDevice();
        bytesToD > 0) {
-      data_h_src_[i] = cudautils::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
+      data_h_src_[i] = cms::cuda::make_host_noncached_unique<char[]>(bytesToD /*, cudaHostAllocWriteCombined*/);
       LogTrace("foo") << "Host ptr " << i << " bytes " << bytesToD << " ptr " << static_cast<const void*>(data_h_src_[i].get());
       for(unsigned int j=0; j<bytesToD; ++j) {
         data_h_src_[i][j] = disc(gen);
@@ -423,7 +423,7 @@ SimOperationsService::GPUData::GPUData(const OpVectorGPU& ops, const unsigned in
        bytesToH > 0) {
       cudaCheck(cudaMalloc(&data_d_src_[i], bytesToH));
       LogTrace("foo") << "Device ptr " << i << " bytes " << bytesToH << " ptr " << static_cast<const void*>(data_d_src_[i]);
-      auto h_src = cudautils::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
+      auto h_src = cms::cuda::make_host_noncached_unique<char[]>(bytesToH /*, cudaHostAllocWriteCombined*/);
       for(unsigned int j=0; j<bytesToH; ++j) {
         h_src[j] = disc(gen);
       }

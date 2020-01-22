@@ -33,7 +33,7 @@ namespace cudatest {
     std::uniform_real_distribution<float> dis(1e-5, 100.);
 
     float *kernel_data_d;
-    auto h_src = cudautils::make_host_noncached_unique<char[]>(kernel_elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
+    auto h_src = cms::cuda::make_host_noncached_unique<char[]>(kernel_elements*sizeof(float) /*, cudaHostAllocWriteCombined*/);
     cudaCheck(cudaMalloc(&kernel_data_d, kernel_elements*sizeof(float)));
     for(size_t i=0; i!=kernel_elements; ++i) {
       h_src[i] = dis(gen);

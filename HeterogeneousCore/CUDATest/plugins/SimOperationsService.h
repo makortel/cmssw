@@ -55,7 +55,7 @@ public:
     // These are indexed by the operation index in ops of Service
     // They may to contain null elements
     std::vector<char* > data_d_src_;
-    std::vector<cudautils::host::noncached::unique_ptr<char[]>> data_h_src_;
+    std::vector<cms::cuda::host::noncached::unique_ptr<char[]>> data_h_src_;
   };
 
   class AcquireCPUProcessor {
