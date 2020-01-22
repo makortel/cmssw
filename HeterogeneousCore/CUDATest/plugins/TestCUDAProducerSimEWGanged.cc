@@ -7,8 +7,8 @@
 #include "FWCore/Utilities/interface/ReusableObjectHolder.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "CUDADataFormats/Common/interface/Product.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 
 #include "SimOperationsService.h"
 
@@ -32,10 +32,10 @@ namespace {
 
     size_t events() const { return events_; }
 
-    void enqueue(unsigned int eventIndex, std::vector<const CUDAProduct<int>*> inputData, edm::WaitingTaskWithArenaHolder holder, CUDAScopedContextAcquire& ctx) const {
+    void enqueue(unsigned int eventIndex, std::vector<const cms::cuda::Product<int>*> inputData, edm::WaitingTaskWithArenaHolder holder, cms::cuda::ScopedContextAcquire& ctx) const {
       std::vector<size_t> indicesToLaunch;
       std::vector<edm::WaitingTaskWithArenaHolder> holdersToLaunch;
-      std::vector<std::vector<const CUDAProduct<int>*>> inputsToLaunch;
+      std::vector<std::vector<const cms::cuda::Product<int>*>> inputsToLaunch;
       {
         std::lock_guard<std::mutex> guard{mutex_};
         workIndices_.push_back(eventIndex % events());
@@ -94,7 +94,7 @@ namespace {
     // These three are protected with the mutex
     mutable std::vector<size_t> workIndices_;
     mutable std::vector<edm::WaitingTaskWithArenaHolder> workHolders_;
-    mutable std::vector<std::vector<const CUDAProduct<int>*>> workInputs_;
+    mutable std::vector<std::vector<const cms::cuda::Product<int>*>> workInputs_;
 
     // one for each gang (i.e. N(streams) / gangSize)
     mutable edm::ReusableObjectHolder<SimOperationsService::AcquireGPUProcessor> acquireOpsGPU_;
@@ -121,10 +121,10 @@ public:
 private:
   
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
-  std::vector<edm::EDGetTokenT<CUDAProduct<int>>> cudaSrcTokens_;
+  std::vector<edm::EDGetTokenT<cms::cuda::Product<int>>> cudaSrcTokens_;
   edm::EDPutTokenT<int> dstToken_;
-  edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
-  CUDAContextState ctxState_;
+  edm::EDPutTokenT<cms::cuda::Product<int>> cudaDstToken_;
+  cms::cuda::ContextState ctxState_;
 
   SimOperationsService::AcquireCPUProcessor acquireOpsCPU_;
   SimOperationsService::ProduceGPUProcessor produceOpsGPU_;
@@ -156,14 +156,14 @@ TestCUDAProducerSimEWGanged::TestCUDAProducerSimEWGanged(const edm::ParameterSet
     srcTokens_.emplace_back(consumes<int>(src));
   }
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
-    cudaSrcTokens_.emplace_back(consumes<CUDAProduct<int>>(src));
+    cudaSrcTokens_.emplace_back(consumes<cms::cuda::Product<int>>(src));
   }
 
   if(iConfig.getParameter<bool>("produce")) {
     dstToken_ = produces<int>();
   }
   if(iConfig.getParameter<bool>("produceCUDA")) {
-    cudaDstToken_ = produces<CUDAProduct<int>>();
+    cudaDstToken_ = produces<cms::cuda::Product<int>>();
   }
 }
 
@@ -184,17 +184,17 @@ void TestCUDAProducerSimEWGanged::acquire(const edm::Event& iEvent, const edm::E
     iEvent.get(t);
   }
 
-  std::vector<const CUDAProduct<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::vector<const cms::cuda::Product<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
   std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
       return &iEvent.get(tok);
     });
 
-  // In principle the CUDAScopedContext is not needed in acquire() in
+  // In principle the cms::cuda::ScopedContext is not needed in acquire() in
   // those streams that do not process the data, but it is needed in
   // produce() in all streams, so let's just create it here to leave
   // ctxState_ in valid state in all stream.
-  auto ctx = cudaProducts.empty() ? CUDAScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
-    CUDAScopedContextAcquire(*cudaProducts[0], h, ctxState_);
+  auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
+    cms::cuda::ScopedContextAcquire(*cudaProducts[0], h, ctxState_);
 
   if(acquireOpsCPU_.events() > 0) {
     acquireOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % acquireOpsCPU_.events()});
@@ -203,7 +203,7 @@ void TestCUDAProducerSimEWGanged::acquire(const edm::Event& iEvent, const edm::E
 }
 
 void TestCUDAProducerSimEWGanged::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  CUDAScopedContextProduce ctx{ctxState_};
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
 
   if(produceOpsCPU_.events() > 0) {
     produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});

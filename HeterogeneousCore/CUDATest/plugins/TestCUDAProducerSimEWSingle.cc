@@ -6,8 +6,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 
 #include "SimOperationsService.h"
 
@@ -20,7 +19,7 @@ public:
   void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder) override;
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 private:
-  CUDAContextState ctxState_;
+  cms::cuda::ContextState ctxState_;
 
   struct Module {
     Module(SimOperationsService::AcquireCPUProcessor ac,
@@ -77,7 +76,7 @@ void TestCUDAProducerSimEWSingle::fillDescriptions(edm::ConfigurationDescription
 }
 
 void TestCUDAProducerSimEWSingle::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder h) {
-  auto ctx = CUDAScopedContextAcquire(iEvent.streamID(), std::move(h), ctxState_);
+  auto ctx = cms::cuda::ScopedContextAcquire(iEvent.streamID(), std::move(h), ctxState_);
 
   for(auto& m: modules_) {
     if(m.acquireOpsCPU.events() > 0) {
@@ -91,7 +90,7 @@ void TestCUDAProducerSimEWSingle::acquire(const edm::Event& iEvent, const edm::E
 }
 
 void TestCUDAProducerSimEWSingle::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  CUDAScopedContextProduce ctx{ctxState_};
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
 
   for(auto& m: modules_) {
     if(m.produceOpsCPU.events() > 0) {

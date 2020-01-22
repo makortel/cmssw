@@ -7,8 +7,8 @@
 #include "FWCore/Concurrency/interface/SerialTaskQueue.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "CUDADataFormats/Common/interface/Product.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 
 #include "SimOperationsService.h"
 
@@ -29,10 +29,10 @@ public:
 
 private:
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
-  std::vector<edm::EDGetTokenT<CUDAProduct<int>>> cudaSrcTokens_;
+  std::vector<edm::EDGetTokenT<cms::cuda::Product<int>>> cudaSrcTokens_;
   edm::EDPutTokenT<int> dstToken_;
-  edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
-  CUDAContextState ctxState_;
+  edm::EDPutTokenT<cms::cuda::Product<int>> cudaDstToken_;
+  cms::cuda::ContextState ctxState_;
   std::atomic<bool> queueingFinished_ = true;
 
   SimOperationsService::AcquireCPUProcessor acquireOpsCPU_;
@@ -65,14 +65,14 @@ TestCUDAProducerSimEWSerialTaskQueue::TestCUDAProducerSimEWSerialTaskQueue(const
     srcTokens_.emplace_back(consumes<int>(src));
   }
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
-    cudaSrcTokens_.emplace_back(consumes<CUDAProduct<int>>(src));
+    cudaSrcTokens_.emplace_back(consumes<cms::cuda::Product<int>>(src));
   }
 
   if(iConfig.getParameter<bool>("produce")) {
     dstToken_ = produces<int>();
   }
   if(iConfig.getParameter<bool>("produceCUDA")) {
-    cudaDstToken_ = produces<CUDAProduct<int>>();
+    cudaDstToken_ = produces<cms::cuda::Product<int>>();
   }
 }
 
@@ -93,15 +93,15 @@ void TestCUDAProducerSimEWSerialTaskQueue::acquire(const edm::Event& iEvent, con
     iEvent.get(t);
   }
 
-  std::vector<const CUDAProduct<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::vector<const cms::cuda::Product<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
   std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
       return &iEvent.get(tok);
     });
 
   // This is now a bit stupid, but I need the ctxState_ to be fully set before calling taskQueue::push()
   {
-    auto ctx = cudaProducts.empty() ? CUDAScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
-      CUDAScopedContextAcquire(*cudaProducts[0], h, ctxState_);
+    auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextAcquire(iEvent.streamID(), h, ctxState_) :
+      cms::cuda::ScopedContextAcquire(*cudaProducts[0], h, ctxState_);
 
     for(const auto ptr: cudaProducts) {
       ctx.get(*ptr);
@@ -115,7 +115,7 @@ void TestCUDAProducerSimEWSerialTaskQueue::acquire(const edm::Event& iEvent, con
     queueingFinished_.store(false);
     taskQueue.push(edm::make_lambda_with_holder(std::move(h), [this,
                                                                eventId=iEvent.id()](edm::WaitingTaskWithArenaHolder h) {
-                                                  CUDAScopedContextTask ctx{&ctxState_, std::move(h)};
+                                                  cms::cuda::ScopedContextTask ctx{&ctxState_, std::move(h)};
                                                   acquireOpsGPU_.process(std::vector<size_t>{eventId.event() % acquireOpsGPU_.events()}, ctx.stream());
                                                   queueingFinished_.store(true);
                                                 }));
@@ -123,7 +123,7 @@ void TestCUDAProducerSimEWSerialTaskQueue::acquire(const edm::Event& iEvent, con
 }
 
 void TestCUDAProducerSimEWSerialTaskQueue::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  CUDAScopedContextProduce ctx{ctxState_};
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
   if(not queueingFinished_.load()) {
     throw cms::Exception("Assert") << "Work was not yet fully queued in acquire!";
   }

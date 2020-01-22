@@ -4,7 +4,6 @@
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include "HeterogeneousCore/CUDAUtilities/interface/host_noncached_unique_ptr.h"
-#include "HeterogeneousCore/CUDAUtilities/interface/CUDAStreamCache.h"
 
 #include "GPUTimeCruncher.h"
 #include "TestCUDAProducerSimEWGPUKernel.h"

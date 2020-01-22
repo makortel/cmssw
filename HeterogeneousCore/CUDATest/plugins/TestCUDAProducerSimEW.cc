@@ -6,8 +6,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "CUDADataFormats/Common/interface/CUDAProduct.h"
-#include "HeterogeneousCore/CUDACore/interface/CUDAScopedContext.h"
+#include "CUDADataFormats/Common/interface/Product.h"
+#include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 
 #include "SimOperationsService.h"
 
@@ -22,10 +22,10 @@ public:
 private:
   
   std::vector<edm::EDGetTokenT<int>> srcTokens_;
-  std::vector<edm::EDGetTokenT<CUDAProduct<int>>> cudaSrcTokens_;
+  std::vector<edm::EDGetTokenT<cms::cuda::Product<int>>> cudaSrcTokens_;
   edm::EDPutTokenT<int> dstToken_;
-  edm::EDPutTokenT<CUDAProduct<int>> cudaDstToken_;
-  CUDAContextState ctxState_;
+  edm::EDPutTokenT<cms::cuda::Product<int>> cudaDstToken_;
+  cms::cuda::ContextState ctxState_;
 
   SimOperationsService::AcquireCPUProcessor acquireOpsCPU_;
   SimOperationsService::AcquireGPUProcessor acquireOpsGPU_;
@@ -57,14 +57,14 @@ TestCUDAProducerSimEW::TestCUDAProducerSimEW(const edm::ParameterSet& iConfig) {
     srcTokens_.emplace_back(consumes<int>(src));
   }
   for(const auto& src: iConfig.getParameter<std::vector<edm::InputTag>>("cudaSrcs")) {
-    cudaSrcTokens_.emplace_back(consumes<CUDAProduct<int>>(src));
+    cudaSrcTokens_.emplace_back(consumes<cms::cuda::Product<int>>(src));
   }
 
   if(iConfig.getParameter<bool>("produce")) {
     dstToken_ = produces<int>();
   }
   if(iConfig.getParameter<bool>("produceCUDA")) {
-    cudaDstToken_ = produces<CUDAProduct<int>>();
+    cudaDstToken_ = produces<cms::cuda::Product<int>>();
   }
 }
 
@@ -85,13 +85,13 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
     iEvent.get(t);
   }
 
-  std::vector<const CUDAProduct<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
+  std::vector<const cms::cuda::Product<int> *> cudaProducts(cudaSrcTokens_.size(), nullptr);
   std::transform(cudaSrcTokens_.begin(), cudaSrcTokens_.end(), cudaProducts.begin(), [&iEvent](const auto& tok) {
       return &iEvent.get(tok);
     });
 
-  auto ctx = cudaProducts.empty() ? CUDAScopedContextAcquire(iEvent.streamID(), std::move(h), ctxState_) :
-    CUDAScopedContextAcquire(*cudaProducts[0], std::move(h), ctxState_);
+  auto ctx = cudaProducts.empty() ? cms::cuda::ScopedContextAcquire(iEvent.streamID(), std::move(h), ctxState_) :
+    cms::cuda::ScopedContextAcquire(*cudaProducts[0], std::move(h), ctxState_);
 
   for(const auto ptr: cudaProducts) {
     ctx.get(*ptr);
@@ -106,7 +106,7 @@ void TestCUDAProducerSimEW::acquire(const edm::Event& iEvent, const edm::EventSe
 }
 
 void TestCUDAProducerSimEW::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  CUDAScopedContextProduce ctx{ctxState_};
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
 
   if(produceOpsCPU_.events() > 0) {
     produceOpsCPU_.process(std::vector<size_t>{iEvent.id().event() % produceOpsCPU_.events()});
