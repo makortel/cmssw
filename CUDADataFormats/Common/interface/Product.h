@@ -13,7 +13,7 @@ namespace edm {
 namespace cms {
   namespace cuda {
     namespace impl {
-      class ScopedContextGetterBase;
+      class ScopedContextBase;
     }
 
     /**
@@ -41,7 +41,7 @@ namespace cms {
       Product& operator=(Product&&) = default;
 
     private:
-      friend class impl::ScopedContextGetterBase;
+      friend class impl::ScopedContextBase;
       friend class ScopedContextProduce;
       friend class edm::Wrapper<Product<T>>;
 

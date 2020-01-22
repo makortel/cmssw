@@ -57,12 +57,10 @@ namespace cms::cuda {
       cudaCheck(cudaSetDevice(currentDevice_));
     }
 
-    ////////////////////
-
-    void ScopedContextGetterBase::synchronizeStreams(int dataDevice,
-                                                     cudaStream_t dataStream,
-                                                     bool available,
-                                                     cudaEvent_t dataEvent) {
+    void ScopedContextBase::synchronizeStreams(int dataDevice,
+                                               cudaStream_t dataStream,
+                                               bool available,
+                                               cudaEvent_t dataEvent) {
       if (dataDevice != device()) {
         // Eventually replace with prefetch to current device (assuming unified memory works)
         // If we won't go to unified memory, need to figure out something else...
@@ -81,6 +79,8 @@ namespace cms::cuda {
         }
       }
     }
+
+    ////////////////////
 
     void ScopedContextHolderHelper::enqueueCallback(int device, cudaStream_t stream) {
       cudaCheck(

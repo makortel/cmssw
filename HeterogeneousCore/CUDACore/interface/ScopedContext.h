@@ -34,6 +34,12 @@ namespace cms {
         cudaStream_t stream() const { return stream_.get(); }
         const SharedStreamPtr& streamPtr() const { return stream_; }
 
+        template <typename T>
+        const T& get(const Product<T>& data) {
+          synchronizeStreams(data.device(), data.stream(), data.isAvailable(), data.event());
+          return data.data_;
+        }
+
       protected:
         // The constructors set the current device, but the device
         // is not set back to the previous value at the destructor. This
@@ -48,17 +54,15 @@ namespace cms {
         explicit ScopedContextBase(int device, SharedStreamPtr stream);
 
       private:
+        void synchronizeStreams(int dataDevice, cudaStream_t dataStream, bool available, cudaEvent_t dataEvent);
+
         int currentDevice_;
         SharedStreamPtr stream_;
       };
 
       class ScopedContextGetterBase : public ScopedContextBase {
       public:
-        template <typename T>
-        const T& get(const Product<T>& data) {
-          synchronizeStreams(data.device(), data.stream(), data.isAvailable(), data.event());
-          return data.data_;
-        }
+        using ScopedContextBase::get;
 
         template <typename T>
         const T& get(const edm::Event& iEvent, edm::EDGetTokenT<Product<T>> token) {
@@ -68,8 +72,6 @@ namespace cms {
       protected:
         template <typename... Args>
         ScopedContextGetterBase(Args&&... args) : ScopedContextBase(std::forward<Args>(args)...) {}
-
-        void synchronizeStreams(int dataDevice, cudaStream_t dataStream, bool available, cudaEvent_t dataEvent);
       };
 
       class ScopedContextHolderHelper {
