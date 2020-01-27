@@ -590,6 +590,7 @@ else:
 
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1
 process.load('HeterogeneousCore.CUDAServices.NVProfilerService_cfi')
+#process.NVProfilerService.highlightModules = ["InDetAmbiguitySolverAlg","MuonCombinedAlg","CaloCellMakerAlg"]
 #process.Tracer = cms.Service("Tracer")
 #process.options.wantSummary = False
 

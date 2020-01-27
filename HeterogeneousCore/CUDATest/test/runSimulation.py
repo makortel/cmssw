@@ -24,9 +24,9 @@ background_time = 4*60*60
 nev_quantum = 4000
 #nev_per_stream = 300*nev_quantum
 nblocks_per_stream = {
-    1: 85,
-    2: 45,
-    3: 7,
+    1: 68,
+    2: 60,
+    3: 6,
     4: 4,
     5: 2,
     6: 5,
@@ -78,7 +78,9 @@ def run(nev, nstr, cores_main, opts, logfilename):
         nvprof = []
         cmsRun = ["cmsRun", opts.config, "maxEvents=%d"%nev, "numberOfStreams=%d"%nstr, "numberOfThreads=%d"%nth] + opts.args
         if opts.histoFileName is not None:
-            cmsRun.append("histoFileName="+opts.histoFileName.replace(".", "_nstr%d_nth%d."%(nstr, nth)))
+            with open(opts.histoFileName, "a+") as histofile:
+                histofile.write("\nnstr%d_nth%d\n" % (nstr, nth))
+            cmsRun.append("histoFileName="+opts.histoFileName)
         if opts.taskset:
             taskset = ["taskset", "-c", ",".join(cores_main)]
         if opts.nvprof:

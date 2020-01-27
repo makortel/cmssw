@@ -20,6 +20,12 @@ def functionMultiplyKernel(data, factor):
             op["values"] = [int(x*factor) for x in op["values"]]
     return data
 
+def functionMultiplySleep(data, factor):
+    for op in data:
+        if op["name"] == "sleep":
+            op["values"] = [int(x*factor) for x in op["values"]]
+    return data
+
 def functionMultiplyCopy(data, factor):
     for op in data:
         if "memcpy" in op["name"]:
@@ -131,6 +137,8 @@ def main(opts):
         appendTransform(transformModulePerFunction, functionMean)
     if opts.multiplyKernel is not None:
         appendTransform(transformModulePerFunction, lambda da: functionMultiplyKernel(da, opts.multiplyKernel))
+    if opts.multiplySleep is not None:
+        appendTransform(transformModulePerFunction, lambda da: functionMultiplySleep(da, opts.multiplySleep))
     if opts.multiplyCopy is not None:
         appendTransform(transformModulePerFunction, lambda da: functionMultiplyCopy(da, opts.multiplyCopy))
     if opts.kernelsToCPU:
@@ -206,6 +214,8 @@ if __name__ == "__main__":
                         help="Multiply all kernel lengths with this value (default: None)")
     parser.add_argument("--multiplyCopy", type=float, default=None,
                         help="Multiply all memcpy lengths with this value (default: None)")
+    parser.add_argument("--multiplySleep", type=float, default=None,
+                        help="Multiply all sleep lengths with this value (default: None)")
 
     opts = parser.parse_args()
 
