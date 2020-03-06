@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 def customizePixelTracksForProfilingGPUOnly(process):
-    process.MessageLogger.cerr.FwkReport.reportEvery = 100
+#    process.MessageLogger.cerr.FwkReport.reportEvery = 100
 
     process.Raw2Hit = cms.Path(process.offlineBeamSpot+process.offlineBeamSpotCUDA+process.siPixelClustersCUDAPreSplitting+process.siPixelRecHitsCUDAPreSplitting)
 
