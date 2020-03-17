@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -18,6 +19,8 @@
 
 namespace {
   constexpr float micronsToCm = 1.0e-4;
+
+  std::once_flag dumpflag;
 }
 
 //-----------------------------------------------------------------------------
@@ -61,6 +64,16 @@ PixelCPEFast::PixelCPEFast(edm::ParameterSet const& conf,
   yerr_endcap_def_ = 0.00075;
 
   fillParamsForGpu();
+
+  std::call_once(dumpflag, [&](){
+      std::ofstream out("cpefast.bin", std::ios::binary);
+      out.write(reinterpret_cast<char const*>(&m_commonParamsGPU), sizeof(pixelCPEforGPU::CommonParams));
+      unsigned int ndetParams = m_detParamsGPU.size();
+      out.write(reinterpret_cast<char const*>(&ndetParams), sizeof(unsigned int));
+      out.write(reinterpret_cast<char const*>(m_detParamsGPU.data()), ndetParams*sizeof(pixelCPEforGPU::DetParams));
+      out.write(reinterpret_cast<char const*>(&m_averageGeometry), sizeof(pixelCPEforGPU::AverageGeometry));
+      out.write(reinterpret_cast<char const*>(&m_layerGeometry), sizeof(pixelCPEforGPU::LayerGeometry));
+    });
 
   cpuData_ = {
       &m_commonParamsGPU,

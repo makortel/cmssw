@@ -67,6 +67,7 @@ void CAHitNtupletCUDA::fillDescriptions(edm::ConfigurationDescriptions& descript
 
 void CAHitNtupletCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& es) const {
   auto bf = 1. / PixelRecoUtilities::fieldInInvGev(es);
+  edm::LogPrint("foo") << "bf = " << std::setprecision(15) << bf;
 
   if (m_OnGPU) {
     edm::Handle<cms::cuda::Product<TrackingRecHit2DCUDA>> hHits;

@@ -72,7 +72,9 @@ private:
   std::unique_ptr<pixelgpudetails::SiPixelRawToClusterGPUKernel::WordFedAppender> wordFedAppender_;
   PixelDataFormatter::Errors errors_;
 
-  std::ofstream out_;
+  std::ofstream outraw_;
+  std::ofstream outdigi_;
+
 
   const bool includeErrors_;
   const bool useQuality_;
@@ -87,7 +89,8 @@ SiPixelRawToClusterCUDA::SiPixelRawToClusterCUDA(const edm::ParameterSet& iConfi
       gainsToken_(esConsumes<SiPixelGainCalibrationForHLTGPU, SiPixelGainCalibrationForHLTGPURcd>()),
       cablingMapToken_(esConsumes<SiPixelFedCablingMap, SiPixelFedCablingMapRcd>(
           edm::ESInputTag("", iConfig.getParameter<std::string>("CablingMapLabel")))),
-      out_("raw.bin", std::ios::binary),
+      outraw_("raw.bin", std::ios::binary),
+      outdigi_("digicluster.bin", std::ios::binary),
       includeErrors_(iConfig.getParameter<bool>("IncludeErrors")),
       useQuality_(iConfig.getParameter<bool>("UseQualityInfo")),
       usePilotBlade_(iConfig.getParameter<bool>("UsePilotBlade"))  // Control the usage of pilot-blade data, FED=40
@@ -187,13 +190,14 @@ void SiPixelRawToClusterCUDA::acquire(const edm::Event& iEvent,
   // Dump data
   {
     unsigned nfeds = fedIds_.size();
-    out_.write(reinterpret_cast<char const*>(&nfeds), sizeof(unsigned));
+    outraw_.write(reinterpret_cast<char const*>(&nfeds), sizeof(unsigned));
+    edm::LogPrint("foo") << "FED id " << fedIds_.front();
     for (unsigned int fedId : fedIds_) {
-      out_.write(reinterpret_cast<char const*>(&fedId), sizeof(unsigned int));
+      outraw_.write(reinterpret_cast<char const*>(&fedId), sizeof(unsigned int));
       const FEDRawData& rawData = buffers.FEDData(fedId);
       unsigned int fedSize = rawData.size();
-      out_.write(reinterpret_cast<char const*>(&fedSize), sizeof(unsigned int));
-      out_.write(reinterpret_cast<char const*>(rawData.data()), rawData.size());
+      outraw_.write(reinterpret_cast<char const*>(&fedSize), sizeof(unsigned int));
+      outraw_.write(reinterpret_cast<char const*>(rawData.data()), rawData.size());
     }
 
     std::call_once(dump_flag, [&]() {
@@ -279,6 +283,15 @@ void SiPixelRawToClusterCUDA::produce(edm::Event& iEvent, const edm::EventSetup&
   cms::cuda::ScopedContextProduce ctx{ctxState_};
 
   auto tmp = gpuAlgo_.getResults();
+
+  unsigned int value;
+  value = tmp.first.nModules();
+  outdigi_.write(reinterpret_cast<char const*>(&value), sizeof(unsigned int));
+  value = tmp.first.nDigis();
+  outdigi_.write(reinterpret_cast<char const*>(&value), sizeof(unsigned int));
+  value = tmp.second.nClusters();
+  outdigi_.write(reinterpret_cast<char const*>(&value), sizeof(unsigned int));
+
   ctx.emplace(iEvent, digiPutToken_, std::move(tmp.first));
   ctx.emplace(iEvent, clusterPutToken_, std::move(tmp.second));
   if (includeErrors_) {
