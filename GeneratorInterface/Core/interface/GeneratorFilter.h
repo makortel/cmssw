@@ -61,10 +61,13 @@ namespace edm {
     void preallocThreads(unsigned int iThreads) override;
 
   private:
+    // two-phase construction to allow specialization of the constructor
+    void init(ParameterSet const& ps);
+
     Hadronizer hadronizer_;
     //gen::ExternalDecayDriver* decayer_;
-    Decayer* decayer_;
-    unsigned int nEventsInLumiBlock_;
+    Decayer* decayer_ = nullptr;
+    unsigned int nEventsInLumiBlock_ = 0;
     unsigned int nThreads_{1};
     bool initialized_ = false;
   };
@@ -75,7 +78,12 @@ namespace edm {
 
   template <class HAD, class DEC>
   GeneratorFilter<HAD, DEC>::GeneratorFilter(ParameterSet const& ps)
-      : EDFilter(), hadronizer_(ps, consumesCollector()), decayer_(nullptr), nEventsInLumiBlock_(0) {
+      : hadronizer_(ps) {
+    init(ps);
+  }
+
+  template <class HAD, class DEC>
+  void GeneratorFilter<HAD, DEC>::init(ParameterSet const& ps) {
     // TODO:
     // Put the list of types produced by the filters here.
     // The current design calls for:
