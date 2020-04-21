@@ -31,7 +31,7 @@ namespace gen {
 
   class AMPTHadronizer : public BaseHadronizer {
   public:
-    AMPTHadronizer(const edm::ParameterSet&, edm::ConsumesCollector&&);
+    AMPTHadronizer(const edm::ParameterSet&);
     ~AMPTHadronizer() override;
 
     bool generatePartonsAndHadronize();

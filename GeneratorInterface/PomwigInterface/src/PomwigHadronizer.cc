@@ -86,7 +86,7 @@ namespace gen {
   const std::vector<std::string> PomwigHadronizer::theSharedResources = {edm::SharedResourceNames::kHerwig6,
                                                                          gen::FortranInstance::kFortranInstance};
 
-  PomwigHadronizer::PomwigHadronizer(const edm::ParameterSet &params, edm::ConsumesCollector&& iC)
+  PomwigHadronizer::PomwigHadronizer(const edm::ParameterSet &params)
       : BaseHadronizer(params),
         needClear(false),
         parameters(params.getParameter<edm::ParameterSet>("HerwigParameters")),

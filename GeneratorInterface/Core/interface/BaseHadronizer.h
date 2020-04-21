@@ -29,7 +29,6 @@
 #include "GeneratorInterface/LHEInterface/interface/LHEEvent.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/LuminosityBlock.h"
-#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "CLHEP/Random/RandomEngine.h"
 
 // foward declarations

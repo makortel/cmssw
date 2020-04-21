@@ -179,7 +179,7 @@ namespace gen {
 
   class ReggeGribovPartonMCHadronizer : public BaseHadronizer {
   public:
-    ReggeGribovPartonMCHadronizer(const edm::ParameterSet&, edm::ConsumesCollector&&);
+    ReggeGribovPartonMCHadronizer(const edm::ParameterSet&);
     ~ReggeGribovPartonMCHadronizer() override;
 
     bool generatePartonsAndHadronize();

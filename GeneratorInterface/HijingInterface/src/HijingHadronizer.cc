@@ -53,7 +53,7 @@ float rlu_(unsigned int* iseed) {
 
 const std::vector<std::string> HijingHadronizer::theSharedResources = {edm::SharedResourceNames::kPythia6};
 
-HijingHadronizer::HijingHadronizer(const ParameterSet& pset, edm::ConsumesCollector&& iC)
+HijingHadronizer::HijingHadronizer(const ParameterSet& pset)
     : BaseHadronizer(pset),
       evt(nullptr),
       pset_(pset),

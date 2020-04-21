@@ -35,7 +35,7 @@ namespace gen {
 
   class ExhumeHadronizer : public BaseHadronizer {
   public:
-    ExhumeHadronizer(edm::ParameterSet const& ps, edm::ConsumesCollector&&);
+    ExhumeHadronizer(edm::ParameterSet const& ps);
     ~ExhumeHadronizer() override;
 
     // bool generatePartons();
