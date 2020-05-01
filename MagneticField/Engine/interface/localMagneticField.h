@@ -19,7 +19,7 @@ namespace local {
   class MagneticField {
   public:
     MagneticField() : field_(nullptr) {}
-    MagneticField(::MagneticField const* field) : field_(field) {}
+    explicit MagneticField(::MagneticField const* field) : field_(field) {}
 
     /// Field value ad specified global point, in Tesla
     GlobalVector inTesla(const GlobalPoint& gp) { return field_->inTesla(gp, cache_); }
