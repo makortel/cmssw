@@ -11,6 +11,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "MagneticField/Engine/interface/MagneticField.h"
+#include "MagneticField/Engine/interface/localMagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -39,9 +40,9 @@ public:
     ESHandle<MagneticField> magfield;
     setup.get<IdealMagneticFieldRecord>().get(magfield);
 
-    field = magfield.product();
+    local::MagneticField field(magfield.product());
 
-    cout << "Field Nominal Value: " << field->nominalValue() << endl;
+    cout << "Field Nominal Value: " << field.nominalValue() << endl;
 
     double x, y, z;
 
@@ -53,12 +54,9 @@ public:
 
       GlobalPoint g(x, y, z);
 
-      cout << "At R=" << g.perp() << " phi=" << g.phi() << " B=" << field->inTesla(g) << endl;
+      cout << "At R=" << g.perp() << " phi=" << g.phi() << " B=" << field.inTesla(g) << endl;
     }
   }
-
-private:
-  const MagneticField* field;
 };
 
 DEFINE_FWK_MODULE(queryField);

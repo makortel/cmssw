@@ -51,7 +51,7 @@ bool VolumeGridTester::testInside() const {
         }
 
         // Check that points within numerical accuracy to grid boundary points are discoverable
-        if (field_ != nullptr &&
+        if (field_.isValid() &&
             ((j == 0 || j == sizes.h - 1) || (k == 0 || k == sizes.d - 1) || (i == 0 || i == sizes.w - 1))) {
           GlobalPoint gp = volume_->toGlobal(lp);
 
@@ -90,8 +90,8 @@ void VolumeGridTester::dumpProblem(const MFGrid::LocalPoint& lp, double toleranc
 }
 
 bool VolumeGridTester::testFind(GlobalPoint gp) const {
-  if (field_->isDefined(gp)) {
-    MagVolume const* vol = field_->findVolume(gp);
+  if (field_.isDefined(gp)) {
+    MagVolume const* vol = field_.findVolume(gp);
     if (vol == nullptr) {
       cout << "ERROR: VolumeGridTester: No volume found! Global point: " << setprecision(8) << gp
            << " , at R= " << gp.perp() << ", Z= " << gp.z() << endl;

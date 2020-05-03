@@ -46,6 +46,7 @@ public:
   GlobalVector inTeslaUnchecked(const GlobalPoint& g, MagneticFieldCache& cache) const override;
 
   const MagVolume* findVolume(const GlobalPoint& gp) const;
+  const MagVolume* findVolume(const GlobalPoint& gp, MagneticFieldCache& cache) const;
 
   bool isDefined(const GlobalPoint& gp) const override;
 

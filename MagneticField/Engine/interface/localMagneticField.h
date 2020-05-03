@@ -4,52 +4,70 @@
 #include "MagneticField/Engine/interface/MagneticField.h"
 
 namespace local {
-  /**
-   * A helper class for efficient thread-safe internal caching in
-   * classes deriving from ::MagneticField (where such caching is
-   * useful). This class is intended to provide the interface of
-   * MagneticField while passing the cache internally. It is intended
-   * as a straightforward replacement of ::MagneticField in the user
-   * code.
-   *
-   * Note that one local::MagneticField object should not be shared
-   * between threads. In case of doubt, copy the local::MagneticField
-   * object (e.g. for tbb::parallel_for);
-   */
-  class MagneticField {
-  public:
-    MagneticField() : field_(nullptr) {}
-    explicit MagneticField(::MagneticField const* field) : field_(field) {}
+  namespace detail {
+    /**
+     * A helper class for efficient thread-safe internal caching in
+     * classes deriving from ::MagneticField (where such caching is
+     * useful). This class is intended to provide the interface of
+     * MagneticField while passing the cache internally. It is intended
+     * as a straightforward replacement of ::MagneticField in the user
+     * code.
+     *
+     * Note that one local::MagneticField object should not be shared
+     * between threads. In case of doubt, copy the local::MagneticField
+     * object (e.g. for tbb::parallel_for);
+     */
+    template <typename T>
+    class MagneticFieldT {
+      template <typename U>
+      friend class MagneticFieldT;
 
-    /// Field value ad specified global point, in Tesla
-    GlobalVector inTesla(const GlobalPoint& gp) { return field_->inTesla(gp, cache_); }
+    public:
+      MagneticFieldT() = default;
+      explicit MagneticFieldT(T const* field) : field_(field) {}
 
-    /// Field value ad specified global point, in KGauss
-    GlobalVector inKGauss(const GlobalPoint& gp) { return inTesla(gp) * 10.F; }
+      template <typename U>
+      explicit MagneticFieldT(const MagneticFieldT<U>& field) : field_(dynamic_cast<T const*>(field.field_)) {}
 
-    /// Field value ad specified global point, in 1/Gev
-    GlobalVector inInverseGeV(const GlobalPoint& gp) { return inTesla(gp) * 2.99792458e-3F; }
+      /// Field value ad specified global point, in Tesla
+      GlobalVector inTesla(const GlobalPoint& gp) { return field_->inTesla(gp, cache_); }
 
-    /// True if the point is within the region where the concrete field
-    // engine is defined.
-    bool isDefined(const GlobalPoint& gp) const { return field_->isDefined(gp); }
+      /// Field value ad specified global point, in KGauss
+      GlobalVector inKGauss(const GlobalPoint& gp) { return inTesla(gp) * 10.F; }
 
-    /// Optional implementation that derived classes can implement to provide faster query
-    /// by skipping the check to isDefined.
-    GlobalVector inTeslaUnchecked(const GlobalPoint& gp) { return field_->inTeslaUnchecked(gp, cache_); }
+      /// Field value ad specified global point, in 1/Gev
+      GlobalVector inInverseGeV(const GlobalPoint& gp) { return inTesla(gp) * 2.99792458e-3F; }
 
-    /// The nominal field value for this map in kGauss
-    int nominalValue() const { return field_->nominalValue(); }
+      /// True if the point is within the region where the concrete field
+      // engine is defined.
+      bool isDefined(const GlobalPoint& gp) const { return field_->isDefined(gp); }
 
-    void reset(::MagneticField const* iField) {
-      field_ = iField;
-      cache_.reset();
-    }
+      /// Optional implementation that derived classes can implement to provide faster query
+      /// by skipping the check to isDefined.
+      GlobalVector inTeslaUnchecked(const GlobalPoint& gp) { return field_->inTeslaUnchecked(gp, cache_); }
 
-  private:
-    ::MagneticField const* field_;
-    MagneticFieldCache cache_;
-  };
+      /// The nominal field value for this map in kGauss
+      int nominalValue() const { return field_->nominalValue(); }
+
+      void reset(T const* iField) {
+        field_ = iField;
+        cache_.reset();
+      }
+
+    protected:
+      T const* field() const { return field_; }
+
+      T const* field() { return field_; }
+
+      MagneticFieldCache& cache() { return cache_; }
+
+    private:
+      T const* field_ = nullptr;
+      MagneticFieldCache cache_;
+    };
+  }  // namespace detail
+
+  using MagneticField = detail::MagneticFieldT<::MagneticField>;
 }  // namespace local
 
 #endif

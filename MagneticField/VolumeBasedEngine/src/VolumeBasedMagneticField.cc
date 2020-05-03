@@ -77,6 +77,10 @@ GlobalVector VolumeBasedMagneticField::inTeslaUnchecked(const GlobalPoint& gp, M
 
 const MagVolume* VolumeBasedMagneticField::findVolume(const GlobalPoint& gp) const { return field->findVolume(gp); }
 
+const MagVolume* VolumeBasedMagneticField::findVolume(const GlobalPoint& gp, MagneticFieldCache& cache) const {
+  return field->findVolume(gp, cache);
+}
+
 bool VolumeBasedMagneticField::isDefined(const GlobalPoint& gp) const {
   return (fabs(gp.z()) < maxZ && gp.perp2() < maxRsq);
 }

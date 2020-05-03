@@ -11,9 +11,11 @@
 #include "MagneticField/VolumeBasedEngine/interface/MagGeometry.h"
 #include "MagneticField/GeomBuilder/test/stubs/MagGeometryExerciser.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
+#include "MagneticField/Engine/interface/localMagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "MagneticField/GeomBuilder/src/MagGeoBuilderFromDDD.h"
 #include "MagneticField/VolumeBasedEngine/interface/VolumeBasedMagneticField.h"
+#include "MagneticField/VolumeBasedEngine/interface/localVolumeBasedMagneticField.h"
 
 #include <iostream>
 #include <vector>
@@ -34,7 +36,7 @@ public:
   virtual void endJob() {}
 
 private:
-  void testGrids(const vector<MagVolume6Faces const*>& bvol, const VolumeBasedMagneticField* field);
+  void testGrids(const vector<MagVolume6Faces const*>& bvol, local::VolumeBasedMagneticField& field);
 };
 
 using namespace edm;
@@ -43,8 +45,8 @@ void testMagGeometryAnalyzer::analyze(const edm::Event& event, const edm::EventS
   ESHandle<MagneticField> magfield;
   eventSetup.get<IdealMagneticFieldRecord>().get(magfield);
 
-  const VolumeBasedMagneticField* field = dynamic_cast<const VolumeBasedMagneticField*>(magfield.product());
-  const MagGeometry* geom = field->field;
+  local::VolumeBasedMagneticField field(local::MagneticField(magfield.product()));
+  const MagGeometry* geom = field.field()->field;
 
   // Test that findVolume succeeds for random points
   // This check is actually aleady covered by the standard regression.
@@ -70,7 +72,7 @@ void testMagGeometryAnalyzer::analyze(const edm::Event& event, const edm::EventS
 #include "VolumeGridTester.h"
 
 void testMagGeometryAnalyzer::testGrids(const vector<MagVolume6Faces const*>& bvol,
-                                        const VolumeBasedMagneticField* field) {
+                                        local::VolumeBasedMagneticField& field) {
   static map<string, int> nameCalls;
 
   for (vector<MagVolume6Faces const*>::const_iterator i = bvol.begin(); i != bvol.end(); i++) {

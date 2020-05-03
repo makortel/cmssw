@@ -2,16 +2,13 @@
 #define SimG4Core_MagneticField_FieldBuilder_H
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "MagneticField/Engine/interface/localMagneticField.h"
 #include <memory>
 
 class CMSFieldManager;
 class G4Mag_UsualEqRhs;
 class G4PropagatorInField;
 class G4LogicalVolume;
-
-namespace local {
-  class MagneticField;
-}
 
 namespace sim {
   class Field;

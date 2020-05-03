@@ -27,6 +27,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "MagneticField/Engine/interface/MagneticField.h"
+#include "MagneticField/Engine/interface/localMagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -36,6 +37,7 @@
 #include "DataFormats/GeometryVector/interface/CoordinateSets.h"
 #include "MagneticField/GeomBuilder/test/stubs/GlobalPointProvider.h"
 #include "MagneticField/VolumeBasedEngine/interface/MagGeometry.h"
+#include "MagneticField/VolumeBasedEngine/interface/localVolumeBasedMagneticField.h"
 #include "MagneticField/VolumeGeometry/interface/MagVolume6Faces.h"
 
 #include "FWCore/ParameterSet/interface/FileInPath.h"
@@ -75,15 +77,15 @@ public:
 
   ~testMagneticField() {}
 
-  void go(GlobalPoint g) { std::cout << "At: " << g << " phi=" << g.phi() << " B= " << field->inTesla(g) << std::endl; }
+  void go(GlobalPoint g) { std::cout << "At: " << g << " phi=" << g.phi() << " B= " << field.inTesla(g) << std::endl; }
 
   virtual void analyze(const edm::Event& event, const edm::EventSetup& setup) {
     ESHandle<MagneticField> magfield;
     setup.get<IdealMagneticFieldRecord>().get(magfield);
 
-    field = magfield.product();
+    field.reset(magfield.product());
 
-    std::cout << "Nominal Field " << field->nominalValue() << "\n" << std::endl;
+    std::cout << "Nominal Field " << field.nominalValue() << "\n" << std::endl;
 
     go(GlobalPoint(0, 0, 0));
 
@@ -132,7 +134,7 @@ public:
   void compareSectorTables(string file);
 
 private:
-  const MagneticField* field;
+  local::MagneticField field;
   string inputFile;
   string inputFileType;
   string outputFile;
@@ -153,7 +155,7 @@ void testMagneticField::writeValidationTable(int npoints, string filename) {
 
     for (int i = 0; i < npoints; ++i) {
       GlobalPoint gp = p.getPoint();
-      GlobalVector f = field->inTesla(gp);
+      GlobalVector f = field.inTesla(gp);
       file << setprecision(9)  //<< i << " "
            << gp.x() << " " << gp.y() << " " << gp.z() << " " << f.x() << " " << f.y() << " " << f.z() << endl;
     }
@@ -163,7 +165,7 @@ void testMagneticField::writeValidationTable(int npoints, string filename) {
 
     for (int i = 0; i < npoints; ++i) {
       GlobalPoint gp = p.getPoint();
-      GlobalVector f = field->inTesla(gp);
+      GlobalVector f = field.inTesla(gp);
       px = gp.x();
       py = gp.y();
       pz = gp.z();
@@ -236,7 +238,7 @@ void testMagneticField::validate(string filename, string type) {
       continue;
 
     GlobalVector oldB(bx, by, bz);
-    GlobalVector newB = field->inTesla(gp);
+    GlobalVector newB = field.inTesla(gp);
     if ((newB - oldB).mag() > reso) {
       ++fail;
       float delta = (newB - oldB).mag();
@@ -514,19 +516,19 @@ void testMagneticField::fillFromTable(string inputFile, vector<GlobalPoint>& p, 
 
 // Get the pointer of the volume containing a point
 const MagVolume6Faces* testMagneticField::findVolume(GlobalPoint& gp) {
-  const VolumeBasedMagneticField* vbffield = dynamic_cast<const VolumeBasedMagneticField*>(field);
-  if (vbffield) {
-    return (dynamic_cast<const MagVolume6Faces*>(vbffield->findVolume(gp)));
+  local::VolumeBasedMagneticField vbffield(field);
+  if (vbffield.isValid()) {
+    return (dynamic_cast<const MagVolume6Faces*>(vbffield.findVolume(gp)));
   }
-  return 0;
+  return nullptr;
 }
 
 // Find a specific volume:sector
 const MagVolume6Faces* testMagneticField::findMasterVolume(int volume, int sector) {
-  const MagGeometry* vbffield = (dynamic_cast<const VolumeBasedMagneticField*>(field))->field;
+  const MagGeometry* vbffield = local::VolumeBasedMagneticField(field).field()->field;
 
-  if (vbffield == 0)
-    return 0;
+  if (vbffield == nullptr)
+    return nullptr;
 
   const vector<MagVolume6Faces const*>& bvol = vbffield->barrelVolumes();
   for (vector<MagVolume6Faces const*>::const_iterator i = bvol.begin(); i != bvol.end(); i++) {
