@@ -654,7 +654,9 @@ class InputTag(_ParameterTypeBase):
         return InputTag(*parts)
     @staticmethod
     def _stringFromArgument(arg):
-        if isinstance(arg, str):
+        if isinstance(arg, InputTag):
+            return arg
+        elif isinstance(arg, str):
             return arg
         else:
             if len(arg) > 3:
@@ -992,7 +994,12 @@ class VLuminosityBlockID(_ValidatingParameterListBase):
 
 class VInputTag(_ValidatingParameterListBase):
     def __init__(self,*arg,**args):
-        super(VInputTag,self).__init__(*arg,**args)
+        if len(arg) == 1 and not isinstance(arg[0], str):
+            try:
+                arg = iter(arg[0])
+            except TypeError:
+                pass
+        super(VInputTag,self).__init__((InputTag._stringFromArgument(x) for x in arg),**args)
     @staticmethod
     def _itemIsValid(item):
         return InputTag._isValid(item)
@@ -1607,6 +1614,9 @@ if __name__ == "__main__":
             self.assertEqual(pset.it.getProcessName(), "proc")
             with self.assertRaises(RuntimeError):
                 pset.it = ["label", "too", "many", "elements"]
+
+            vit = VInputTag(("a2",), ("b2", "i"), ("c2", "i", "p"))
+            self.assertEqual(repr(vit), "cms.VInputTag(\"a2\", \"b2:i\", \"c2:i:p\")")
 
             pset = PSet(vit = VInputTag())
             pset.vit = ["a", "b:i", "c:i:p"]
