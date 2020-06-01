@@ -63,9 +63,9 @@ public:
     const HcalDbRecord& dbRecord = rcd.getRecord<HcalDbRecord>();
     const HcalDbService& cond = dbRecord.get(condToken_);
     const HcalRecoParams& params = rcd.get(myParamsToken_);
-    const HcalSeverityLevelComputer& severity = rcd.getRecord<HcalSeverityLevelComputerRcd>().get(sevToken_);
-    const HcalChannelQuality& qual = dbRecord.getRecord<HcalChannelQualityRcd>().get(qualToken_);
-    const CaloGeometry& geom = rcd.getRecord<CaloGeometryRecord>().get(geomToken_);
+    const HcalSeverityLevelComputer& severity = rcd.get(sevToken_);
+    const HcalChannelQuality& qual = dbRecord.get(qualToken_);
+    const CaloGeometry& geom = rcd.get(geomToken_);
 
     // HcalTopology is taken from "params" created by the "produce1" method
     const HcalTopology& htopo(*params.topo());
