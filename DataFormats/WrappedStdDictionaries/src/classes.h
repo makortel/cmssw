@@ -1,5 +1,6 @@
 #include "DataFormats/Common/interface/Wrapper.h"
 
+#include <array>
 #include <map>
 #include <vector>
 #include <list>

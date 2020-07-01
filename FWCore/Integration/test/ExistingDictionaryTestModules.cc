@@ -9,6 +9,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "DataFormats/TestObjects/interface/ToyProducts.h"
 
+#include <array>
 #include <cassert>
 #include <memory>
 #include <vector>
@@ -23,7 +24,10 @@ namespace edmtest {
     explicit ExistingDictionaryTestProducer(edm::ParameterSet const&)
         : intToken_{produces<int>()},
           vecUniqIntToken_{produces<std::vector<std::unique_ptr<int>>>()},
-          vecUniqIntProdToken_{produces<std::vector<std::unique_ptr<IntProduct>>>()} {}
+      vecUniqIntProdToken_{produces<std::vector<std::unique_ptr<IntProduct>>>()},
+      uniqIntToken_{produces<std::unique_ptr<int>>()}
+      //arrayIntToken_{produces<std::array<int, 4>>()}
+    {}
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
       edm::ParameterSetDescription desc;
@@ -40,12 +44,16 @@ namespace edmtest {
       std::vector<std::unique_ptr<IntProduct>> foo2;
       foo2.emplace_back(std::make_unique<IntProduct>(1));
       iEvent.emplace(vecUniqIntProdToken_, std::move(foo2));
+
+      //iEvent.emplace(arrayIntToken_, std::array<int,4>{{1,2,3,42}});
     }
 
   private:
     const edm::EDPutTokenT<int> intToken_;
     const edm::EDPutTokenT<std::vector<std::unique_ptr<int>>> vecUniqIntToken_;
     const edm::EDPutTokenT<std::vector<std::unique_ptr<IntProduct>>> vecUniqIntProdToken_;
+    const edm::EDPutTokenT<std::unique_ptr<int>> uniqIntToken_;
+    //const edm::EDPutTokenT<std::array<int, 4>> arrayIntToken_;
   };
 
   class ExistingDictionaryTestAnalyzer : public edm::global::EDAnalyzer<> {
@@ -55,6 +63,7 @@ namespace edmtest {
           vecUniqIntToken_{consumes<std::vector<std::unique_ptr<int>>>(iConfig.getParameter<edm::InputTag>("src"))},
           vecUniqIntProdToken_{
               consumes<std::vector<std::unique_ptr<IntProduct>>>(iConfig.getParameter<edm::InputTag>("src"))},
+          //arrayIntToken_{consumes<std::array<int, 4>>(iConfig.getParameter<edm::InputTag>("src"))},
           testVecUniqInt_{iConfig.getParameter<bool>("testVecUniqInt")} {}
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -87,12 +96,21 @@ namespace edmtest {
         assert(elem.get() != nullptr);
         assert(elem->value == 1);
       }
+
+      /*
+      const auto& arrayInt = iEvent.get(arrayIntToken_);
+      assert(arrayInt[0] == 1);
+      assert(arrayInt[1] == 2);
+      assert(arrayInt[2] == 3);
+      assert(arrayInt[3] == 42);
+      */
     }
 
   private:
     const edm::EDGetTokenT<int> intToken_;
     const edm::EDGetTokenT<std::vector<std::unique_ptr<int>>> vecUniqIntToken_;
     const edm::EDGetTokenT<std::vector<std::unique_ptr<IntProduct>>> vecUniqIntProdToken_;
+    //const edm::EDGetTokenT<std::array<int, 4>> arrayIntToken_;
     const bool testVecUniqInt_;
   };
 }  // namespace edmtest
