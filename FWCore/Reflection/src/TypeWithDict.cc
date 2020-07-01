@@ -807,11 +807,7 @@ namespace edm {
 
   // A related free function
   bool hasDictionary(std::type_info const& ti) {
-    if (ti.name()[1] == '\0') {
-      // returns true for built in types (single character mangled names)
-      return true;
-    }
-    return (TClassTable::GetDict(ti) != nullptr);
+    return TDictionary::GetDictionary(ti) != nullptr;
   }
 
   bool operator==(TypeWithDict const& a, TypeWithDict const& b) { return a.name() == b.name(); }
