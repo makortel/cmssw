@@ -10,6 +10,7 @@
 #include "FWCore/Reflection/interface/DictionaryTools.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Reflection/interface/TypeWithDict.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include <vector>
 #include <typeindex>
@@ -54,6 +55,7 @@ namespace edm {
       if (!checkDictionary(missingDictionaries, p->typeID_)) {
         checkDictionaryOfWrappedType(missingDictionaries, p->typeID_);
         producedTypes.emplace_back(p->typeID_.className());
+        edm::LogPrint("foo") << "checkDictionary at " << __LINE__ << " for " << p->typeID_.className();
         continue;
       }
       auto branchType = convertToBranchType(p->transition_);
@@ -97,12 +99,14 @@ namespace edm {
           // make it transient is in the line that causes the wrapped dictionary
           // to be created. Just to be safe I leave this check here ...
           producedTypes.emplace_back(pdesc.className());
+          edm::LogPrint("foo") << "checkDictionary at " << __LINE__;
           continue;
         }
       } else {
         // also check constituents of wrapped types if it is not transient
         if (!checkClassDictionaries(missingDictionaries, pdesc.wrappedName(), pdesc.wrappedType())) {
           producedTypes.emplace_back(pdesc.className());
+        edm::LogPrint("foo") << "checkDictionary at " << __LINE__;
           continue;
         }
       }

@@ -61,6 +61,7 @@ to have dictionaries.
 
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 
 namespace edm {
 
@@ -93,6 +94,7 @@ namespace edm {
                        std::string const& name,
                        TypeWithDict const& typeWithDict) {
     if (!bool(typeWithDict) || typeWithDict.invalidTypeInfo()) {
+      std::cout << "checkDictionary " << bool(typeWithDict) << " " << typeWithDict.invalidTypeInfo() << std::endl;
       missingDictionaries.emplace_back(name);
       return false;
     }
