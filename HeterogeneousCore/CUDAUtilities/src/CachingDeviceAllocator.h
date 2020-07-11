@@ -219,8 +219,8 @@ namespace notcub {
     // Fields
     //---------------------------------------------------------------------
 
-    // CMS: use std::mutex instead of cub::Mutex
-    std::mutex mutex;  /// Mutex for thread-safety
+    // CMS: use std::mutex instead of cub::Mutex, declare mutable
+    mutable std::mutex mutex;  /// Mutex for thread-safety
 
     unsigned int bin_growth;  /// Geometric growth factor for bin-sizes
     unsigned int min_bin;     /// Minimum bin enumeration
@@ -713,6 +713,12 @@ namespace notcub {
       }
 
       return error;
+    }
+
+    // CMS: give access to cache allocation status
+    GpuCachedBytes CacheStatus() const {
+      std::unique_lock mutex_locker(mutex);
+      return cached_bytes;
     }
 
     /**
