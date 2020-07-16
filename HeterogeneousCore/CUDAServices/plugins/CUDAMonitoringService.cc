@@ -91,7 +91,8 @@ namespace {
       auto found = cachingDeviceAllocatorStatus.find(i);
       if (found != cachingDeviceAllocatorStatus.end()) {
         auto const& cached = found->second;
-        log << "; CachingDeviceAllocator " << cached.live / mbytes << " MB live " << cached.free / mbytes << " MB free "
+        log << "; CachingDeviceAllocator " << cached.live / mbytes << " MB live "
+            << "(" << cached.liveRequested / mbytes << " MB requested) " << cached.free / mbytes << " MB free "
             << (cached.live + cached.free) / mbytes << " MB total cached";
       }
     }
