@@ -44,6 +44,7 @@
 #include <mutex>
 
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/deviceAllocatorStatus.h"
 
 /// CUB namespace
 namespace notcub {
@@ -168,13 +169,7 @@ namespace notcub {
     /// BlockDescriptor comparator function interface
     typedef bool (*Compare)(const BlockDescriptor &, const BlockDescriptor &);
 
-    class TotalBytes {
-    public:
-      size_t free;
-      size_t live;
-      size_t liveRequested;  // CMS: monitor also requested amount
-      TotalBytes() { free = live = liveRequested = 0; }
-    };
+    // CMS: Moved TotalBytes to deviceAllocatorStatus.h
 
     /// Set type for cached blocks (ordered by size)
     typedef std::multiset<BlockDescriptor, Compare> CachedBlocks;
@@ -183,7 +178,8 @@ namespace notcub {
     typedef std::multiset<BlockDescriptor, Compare> BusyBlocks;
 
     /// Map type of device ordinals to the number of cached bytes cached by each device
-    typedef std::map<int, TotalBytes> GpuCachedBytes;
+    // CMS: Moved definition to deviceAllocatorStatus.h
+    using GpuCachedBytes = cms::cuda::allocator::GpuCachedBytes;
 
     //---------------------------------------------------------------------
     // Utility functions

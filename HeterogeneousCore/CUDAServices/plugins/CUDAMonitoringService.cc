@@ -13,7 +13,7 @@
 #include "FWCore/ServiceRegistry/interface/ServiceMaker.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
-#include "HeterogeneousCore/CUDAUtilities/src/getCachingDeviceAllocator.h"
+#include "HeterogeneousCore/CUDAUtilities/interface/deviceAllocatorStatus.h"
 
 namespace edm {
   class StreamContext;
@@ -78,7 +78,7 @@ void CUDAMonitoringService::fillDescriptions(edm::ConfigurationDescriptions& des
 namespace {
   template <typename T>
   void dumpUsedMemory(T& log, int num) {
-    auto const cachingDeviceAllocatorStatus = cms::cuda::allocator::getCachingDeviceAllocator().CacheStatus();
+    auto const cachingDeviceAllocatorStatus = cms::cuda::deviceAllocatorStatus();
     int old = 0;
     cudaCheck(cudaGetDevice(&old));
     constexpr auto mbytes = 1 << 20;
