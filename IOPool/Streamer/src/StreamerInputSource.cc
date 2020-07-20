@@ -484,7 +484,7 @@ namespace edm {
   StreamerInputSource::EventPrincipalHolder::getThinnedProduct(edm::ProductID const& id, unsigned int index) const {
     if (eventPrincipal_)
       return eventPrincipal_->getThinnedProduct(id, index);
-    return {};
+    return std::nullopt;
   }
 
   void StreamerInputSource::EventPrincipalHolder::getThinnedProducts(ProductID const& pid,
@@ -492,6 +492,11 @@ namespace edm {
                                                                      std::vector<unsigned int>& keys) const {
     if (eventPrincipal_)
       eventPrincipal_->getThinnedProducts(pid, wrappers, keys);
+  }
+
+  std::optional<unsigned int> StreamerInputSource::EventPrincipalHolder::getThinnedKeyFrom(
+      edm::ProductID const& parent, unsigned int index, edm::ProductID const& thinned) const {
+    return eventPrincipal_ ? eventPrincipal_->getThinnedKeyFrom(parent, index, thinned) : std::optional<unsigned int>{};
   }
 
   unsigned int StreamerInputSource::EventPrincipalHolder::transitionIndex_() const {

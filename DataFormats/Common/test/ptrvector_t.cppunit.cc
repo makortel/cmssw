@@ -44,12 +44,18 @@ namespace testPtr {
     edm::WrapperBase const* getIt(edm::ProductID const&) const override { return hold_; }
     std::optional<std::tuple<edm::WrapperBase const*, unsigned int>> getThinnedProduct(edm::ProductID const&,
                                                                                        unsigned int) const override {
-      return {};
+      return std::nullopt;
     }
 
     void getThinnedProducts(edm::ProductID const& pid,
                             std::vector<edm::WrapperBase const*>& wrappers,
                             std::vector<unsigned int>& keys) const override {}
+
+    std::optional<unsigned int> getThinnedKeyFrom(edm::ProductID const&,
+                                                  unsigned int,
+                                                  edm::ProductID const&) const override {
+      return std::nullopt;
+    }
 
     unsigned int transitionIndex_() const override { return 0U; }
 

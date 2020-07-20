@@ -24,6 +24,7 @@
 #include "DataFormats/Common/interface/Wrapper.h"
 #include "DataFormats/Common/interface/WrapperBase.h"
 #include "DataFormats/Common/interface/getThinned_implementation.h"
+#include "DataFormats/Common/interface/getThinnedKeyFrom_implementation.h"
 #include "DataFormats/Provenance/interface/ThinnedAssociationsHelper.h"
 
 #include "FWCore/FWLite/interface/setRefStreamer.h"
@@ -423,6 +424,32 @@ namespace fwlite {
         [this, eventEntry](edm::ProductID const& p) { return getByProductID(p, eventEntry); },
         foundContainers,
         keys);
+  }
+
+  std::optional<unsigned int> DataGetterHelper::getThinnedKeyFrom(edm::ProductID const& parentID,
+                                                                  unsigned int key,
+                                                                  edm::ProductID const& thinnedID,
+                                                                  Long_t eventEntry) const {
+    edm::BranchID parent = branchMap_->productToBranchID(parentID);
+    if (!parent.isValid())
+      return std::nullopt;
+    edm::BranchID thinned = branchMap_->productToBranchID(thinnedID);
+    if (!thinned.isValid())
+      return std::nullopt;
+
+    try {
+      return edm::detail::getThinnedKeyFrom_implementation(
+          parentID,
+          parent,
+          key,
+          thinnedID,
+          thinned,
+          branchMap_->thinnedAssociationsHelper(),
+          [this, eventEntry](edm::BranchID const& branchID) { return getThinnedAssociation(branchID, eventEntry); });
+    } catch (edm::Exception& ex) {
+      ex.addContext("Calling DataGetterHelper::getThinnedKeyFrom()");
+      throw ex;
+    }
   }
 
   edm::ThinnedAssociation const* DataGetterHelper::getThinnedAssociation(edm::BranchID const& branchID,

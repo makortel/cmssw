@@ -5,6 +5,7 @@
 #include "DataFormats/Common/interface/ThinnedAssociation.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 #include "DataFormats/Common/interface/getThinned_implementation.h"
+#include "DataFormats/Common/interface/getThinnedKeyFrom_implementation.h"
 #include "DataFormats/Provenance/interface/BranchIDList.h"
 #include "DataFormats/Provenance/interface/BranchIDListHelper.h"
 #include "DataFormats/Provenance/interface/BranchListIndex.h"
@@ -323,6 +324,23 @@ namespace edm {
         [this](ProductID const& p) { return getIt(p); },
         foundContainers,
         keys);
+  }
+
+  std::optional<unsigned int> EventPrincipal::getThinnedKeyFrom(ProductID const& parentID,
+                                                                unsigned int key,
+                                                                ProductID const& thinnedID) const {
+    BranchID parent = pidToBid(parentID);
+    BranchID thinned = pidToBid(thinnedID);
+
+    try {
+      return detail::getThinnedKeyFrom_implementation(
+          parentID, parent, key, thinnedID, thinned, *thinnedAssociationsHelper_, [this](BranchID const& branchID) {
+            return getThinnedAssociation(branchID);
+          });
+    } catch (Exception& ex) {
+      ex.addContext("Calling EventPrincipal::getThinnedKeyFrom()");
+      throw ex;
+    }
   }
 
   Provenance EventPrincipal::getProvenance(ProductID const& pid, ModuleCallingContext const* mcc) const {
