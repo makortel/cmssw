@@ -1,6 +1,44 @@
 import copy
 import FWCore.ParameterSet.Config as cms
 
+_deleteEarly = False
+
+def _branchName(productType, moduleLabel, instanceLabel, process):
+    return "%scmscudaProduct_%s_%s_%s" % (productType, moduleLabel, instanceLabel, process.name_())
+
+def _pixelBranches(process):
+    def _bn(p, m, i=""):
+        return _branchName(p, m, i, process)
+    return [
+        _bn("BeamSpotCUDA", "hltOnlineBeamSpotCUDA"),
+        _bn("SiPixelDigiErrorsCUDA", "hltSiPixelClustersCUDA"),
+        _bn("SiPixelDigisCUDA", "hltSiPixelClustersCUDA"),
+        _bn("SiPixelClustersCUDA", "hltSiPixelClustersCUDA"),
+        _bn("TrackingRecHit2DCUDA", "hltSiPixelRecHitsCUDA"),
+        _bn("PixelTrackHeterogeneous", "hltPixelTracksHitQuadruplets"),
+        _bn("ZVertexHeterogeneous", "hltPixelVerticesCUDA"),
+    ]
+
+def _ecalBranches(process):
+    def _bn(p, m, i=""):
+        return _branchName(p, m, i, process)
+    return [
+        _bn("calocommonDevStoragePolicyecalDigisCollection", "hltEcalDigisGPU", "digisLabelEB"),
+        _bn("calocommonDevStoragePolicyecalDigisCollection", "hltEcalDigisGPU", "digisLabelEE"),
+        _bn("calocommonDevStoragePolicyecalUncalibratedRecHit", "hltEcalUncalibRecHitGPU", "recHitsLabelEB"),
+        _bn("calocommonDevStoragePolicyecalUncalibratedRecHit", "hltEcalUncalibRecHitGPU", "recHitsLabelEE"),
+    ]
+
+def _hcalBranches(process):
+    def _bn(p, m, i=""):
+        return _branchName(p, m, i, process)
+    return [
+        _bn("hcalFlavor01calocommonDevStoragePolicyhcalDigiCollection", "hltHcalDigisGPU", "digisLabelF01HE"),
+        _bn("hcalFlavor5calocommonDevStoragePolicyhcalDigiCollection", "hltHcalDigisGPU", "digisLabelF5HB"),
+        _bn("hcalFlavor3calocommonDevStoragePolicyhcalDigiCollection", "hltHcalDigisGPU", "digisLabelF3HB"),
+        _bn("calocommonDevStoragePolicyhcalRecHitCollection", "hltHbherecoGPU"),
+    ]
+
 # customisation for running on CPUs, common parts
 def customise_cpu_common(process):
 
@@ -35,6 +73,9 @@ def customise_gpu_common(process):
     )
 
     process.load("HeterogeneousCore.CUDAServices.NVProfilerService_cfi")
+
+    if _deleteEarly:
+        process.options.canDeleteEarly = pixelBranches(process)+ecalBranches(process)+hcalBranches(process)
 
     # done
     return process
@@ -149,6 +190,10 @@ def customise_gpu_pixel(process):
 
     # referenced in process.HLTDoLocalPixelSequence
 
+    def _earlyDeleteConsumes(module):
+        if _earlyDelete:
+            module.mightGet = cms.untracked.vstring(_pixelBranches(process))
+
     process.hltOnlineBeamSpotCUDA = cms.EDProducer("BeamSpotToCUDA",
         src = cms.InputTag("hltOnlineBeamSpot")
     )
@@ -165,6 +210,7 @@ def customise_gpu_pixel(process):
     process.hltSiPixelDigisSoA = cms.EDProducer("SiPixelDigisSoAFromCUDA",
         src = cms.InputTag("hltSiPixelClustersCUDA")
     )
+    _earlyDeleteConsumes(process.hltSiPixelDigisSoA)
 
     process.hltSiPixelDigisClusters = cms.EDProducer("SiPixelDigisClustersFromSoA",
         src = cms.InputTag("hltSiPixelDigisSoA")
@@ -173,6 +219,7 @@ def customise_gpu_pixel(process):
     process.hltSiPixelDigiErrorsSoA = cms.EDProducer("SiPixelDigiErrorsSoAFromCUDA",
         src = cms.InputTag("hltSiPixelClustersCUDA")
     )
+    _earlyDeleteConsumes(process.hltSiPixelDigiErrorsSoA)
 
     from EventFilter.SiPixelRawToDigi.siPixelDigiErrorsFromSoA_cfi import siPixelDigiErrorsFromSoA as _siPixelDigiErrorsFromSoA
     process.hltSiPixelDigiErrors = _siPixelDigiErrorsFromSoA.clone(
@@ -184,6 +231,7 @@ def customise_gpu_pixel(process):
         pixelRecHitSrc = cms.InputTag("hltSiPixelRecHitsCUDA"),
         src = cms.InputTag("hltSiPixelDigisClusters")
     )
+    _earlyDeleteConsumes(process.hltSiPixelRecHits)
 
     process.hltSiPixelDigis = cms.EDAlias(
         hltSiPixelDigisClusters = cms.VPSet(
@@ -224,6 +272,7 @@ def customise_gpu_pixel(process):
     process.hltPixelTracksSoA = cms.EDProducer("PixelTrackSoAFromCUDA",
         src = cms.InputTag("hltPixelTracksHitQuadruplets")
     )
+    _earlyDeleteConsumes(process.hltPixelTracksSoA)
 
     process.hltPixelTracks = cms.EDProducer("PixelTrackProducerFromSoA",
         beamSpot = cms.InputTag("hltOnlineBeamSpot"),
@@ -243,6 +292,7 @@ def customise_gpu_pixel(process):
     process.hltPixelVerticesSoA = cms.EDProducer("PixelVertexSoAFromCUDA",
         src = cms.InputTag("hltPixelVerticesCUDA")
     )
+    _earlyDeleteConsumes(process.hltPixelVerticesSoA)
 
     process.hltPixelVertices = cms.EDProducer("PixelVertexProducerFromSoA",
         src = cms.InputTag("hltPixelVerticesSoA"),
@@ -321,6 +371,10 @@ def customise_gpu_ecal(process):
 
     # Modules and EDAliases
 
+    def _earlyDeleteConsumes(module):
+        if _earlyDelete:
+            module.mightGet = cms.untracked.vstring(_ecalBranches(process))
+
     process.hltEcalDigisGPU = cms.EDProducer("EcalRawToDigiGPU",
         InputLabel = cms.InputTag("rawDataCollector"),
         FEDs = cms.vint32(
@@ -349,6 +403,7 @@ def customise_gpu_ecal(process):
         digisOutLabelEE = cms.string("eeDigis"),
         produceDummyIntegrityCollections = cms.bool(True)
     )
+    _earlyDeleteConsumes(process.hltEcalDigis)
 
     from RecoLocalCalo.EcalRecProducers.ecalUncalibRecHitProducerGPU_cfi import ecalUncalibRecHitProducerGPU as _ecalUncalibRecHitProducerGPU
     process.hltEcalUncalibRecHitGPU = _ecalUncalibRecHitProducerGPU.clone(
@@ -363,6 +418,7 @@ def customise_gpu_ecal(process):
         recHitsOutLabelEB = cms.string("EcalUncalibRecHitsEB"),
         recHitsOutLabelEE = cms.string("EcalUncalibRecHitsEE")
     )
+    _earlyDeleteConsumes(process.hltEcalUncalibRecHitSoA)
 
     process.hltEcalUncalibRecHit = cms.EDProducer("EcalUncalibRecHitConvertGPU2CPUFormat",
         recHitsLabelGPUEB = cms.InputTag("hltEcalUncalibRecHitSoA", "EcalUncalibRecHitsEB"),
@@ -488,6 +544,10 @@ def customise_gpu_hcal(process):
 
     # Modules and EDAliases
 
+    def _earlyDeleteConsumes(module):
+        if _earlyDelete:
+            module.mightGet = cms.untracked.vstring(_hcalBranches(process))
+
     # The HCAL unpacker running on the gpu supports only the HB and HE digis.
     # So, run the legacy unacker on the cpu, then convert the HB and HE digis
     # to SoA format and copy them to the gpu.
@@ -519,6 +579,7 @@ def customise_gpu_hcal(process):
         recHitsM0LabelOut = "",
         recHitsLegacyLabelOut = ""
     )
+    _earlyDeleteConsumes(process.hltHbhereco)
 
 
     # Sequences
