@@ -4,6 +4,7 @@
 #include "DataFormats/Common/interface/FunctorHandleExceptionFactory.h"
 #include "DataFormats/Common/interface/ThinnedAssociation.h"
 #include "DataFormats/Common/interface/Wrapper.h"
+#include "DataFormats/Common/interface/getThinned_implementation.h"
 #include "DataFormats/Provenance/interface/BranchIDList.h"
 #include "DataFormats/Provenance/interface/BranchIDListHelper.h"
 #include "DataFormats/Provenance/interface/BranchListIndex.h"
@@ -301,43 +302,16 @@ namespace edm {
   WrapperBase const* EventPrincipal::getIt(ProductID const& pid) const { return getByProductID(pid).wrapper(); }
 
   WrapperBase const* EventPrincipal::getThinnedProduct(ProductID const& pid, unsigned int& key) const {
-    BranchID parent = pidToBid(pid);
-
-    // Loop over thinned containers which were made by selecting elements from the parent container
-    for (auto associatedBranches = thinnedAssociationsHelper_->parentBegin(parent),
-              iEnd = thinnedAssociationsHelper_->parentEnd(parent);
-         associatedBranches != iEnd;
-         ++associatedBranches) {
-      ThinnedAssociation const* thinnedAssociation = getThinnedAssociation(associatedBranches->association());
-      if (thinnedAssociation == nullptr)
-        continue;
-
-      if (associatedBranches->parent() != pidToBid(thinnedAssociation->parentCollectionID())) {
-        continue;
-      }
-
-      unsigned int thinnedIndex = 0;
-      // Does this thinned container have the element referenced by key?
-      // If yes, thinnedIndex is set to point to it in the thinned container
-      if (!thinnedAssociation->hasParentIndex(key, thinnedIndex)) {
-        continue;
-      }
-      // Get the thinned container and return a pointer if we can find it
-      ProductID const& thinnedCollectionPID = thinnedAssociation->thinnedCollectionID();
-      BasicHandle bhThinned = getByProductID(thinnedCollectionPID);
-      if (!bhThinned.isValid()) {
-        // Thinned container is not found, try looking recursively in thinned containers
-        // which were made by selecting elements from this thinned container.
-        WrapperBase const* wrapperBase = getThinnedProduct(thinnedCollectionPID, thinnedIndex);
-        if (wrapperBase != nullptr) {
-          key = thinnedIndex;
-          return wrapperBase;
-        } else {
-          continue;
-        }
-      }
-      key = thinnedIndex;
-      return bhThinned.wrapper();
+    auto wrapperKey = detail::getThinnedProduct(
+        pid,
+        key,
+        *thinnedAssociationsHelper_,
+        [this](ProductID const& p) { return pidToBid(p); },
+        [this](BranchID const& b) { return getThinnedAssociation(b); },
+        [this](ProductID const& p) { return getIt(p); });
+    if (wrapperKey.has_value()) {
+      key = std::get<unsigned int>(*wrapperKey);
+      return std::get<WrapperBase const*>(*wrapperKey);
     }
     return nullptr;
   }

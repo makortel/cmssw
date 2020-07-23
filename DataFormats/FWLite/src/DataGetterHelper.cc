@@ -23,6 +23,7 @@
 #include "DataFormats/Common/interface/ThinnedAssociation.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 #include "DataFormats/Common/interface/WrapperBase.h"
+#include "DataFormats/Common/interface/getThinned_implementation.h"
 #include "DataFormats/Provenance/interface/ThinnedAssociationsHelper.h"
 
 #include "FWCore/FWLite/interface/setRefStreamer.h"
@@ -402,49 +403,16 @@ namespace fwlite {
   edm::WrapperBase const* DataGetterHelper::getThinnedProduct(edm::ProductID const& pid,
                                                               unsigned int& key,
                                                               Long_t eventEntry) const {
-    edm::BranchID parent = branchMap_->productToBranchID(pid);
-    if (!parent.isValid())
-      return nullptr;
-    edm::ThinnedAssociationsHelper const& thinnedAssociationsHelper = branchMap_->thinnedAssociationsHelper();
-
-    // Loop over thinned containers which were made by selecting elements from the parent container
-    for (auto associatedBranches = thinnedAssociationsHelper.parentBegin(parent),
-              iEnd = thinnedAssociationsHelper.parentEnd(parent);
-         associatedBranches != iEnd;
-         ++associatedBranches) {
-      edm::ThinnedAssociation const* thinnedAssociation =
-          getThinnedAssociation(associatedBranches->association(), eventEntry);
-      if (thinnedAssociation == nullptr)
-        continue;
-
-      if (associatedBranches->parent() != branchMap_->productToBranchID(thinnedAssociation->parentCollectionID())) {
-        continue;
-      }
-
-      unsigned int thinnedIndex = 0;
-      // Does this thinned container have the element referenced by key?
-      // If yes, thinnedIndex is set to point to it in the thinned container
-      if (!thinnedAssociation->hasParentIndex(key, thinnedIndex)) {
-        continue;
-      }
-      // Get the thinned container and return a pointer if we can find it
-      edm::ProductID const& thinnedCollectionPID = thinnedAssociation->thinnedCollectionID();
-      edm::WrapperBase const* thinnedCollection = getByProductID(thinnedCollectionPID, eventEntry);
-
-      if (thinnedCollection == nullptr) {
-        // Thinned container is not found, try looking recursively in thinned containers
-        // which were made by selecting elements from this thinned container.
-        edm::WrapperBase const* thinnedFromRecursiveCall =
-            getThinnedProduct(thinnedCollectionPID, thinnedIndex, eventEntry);
-        if (thinnedFromRecursiveCall != nullptr) {
-          key = thinnedIndex;
-          return thinnedFromRecursiveCall;
-        } else {
-          continue;
-        }
-      }
-      key = thinnedIndex;
-      return thinnedCollection;
+    auto wrapperKey = edm::detail::getThinnedProduct(
+        pid,
+        key,
+        branchMap_->thinnedAssociationsHelper(),
+        [this](edm::ProductID const& p) { return branchMap_->productToBranchID(p); },
+        [this, eventEntry](edm::BranchID const& b) { return getThinnedAssociation(b, eventEntry); },
+        [this, eventEntry](edm::ProductID const& p) { return getByProductID(p, eventEntry); });
+    if (wrapperKey.has_value()) {
+      key = std::get<unsigned int>(*wrapperKey);
+      return std::get<edm::WrapperBase const*>(*wrapperKey);
     }
     return nullptr;
   }
