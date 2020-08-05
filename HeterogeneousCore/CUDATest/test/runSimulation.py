@@ -134,7 +134,7 @@ def main(opts):
     nthreads = range(opts.minThreads,maxThreads+1)
     if len(opts.numThreads) > 0:
         nthreads = [x for x in opts.numThreads if x >= opts.minThreads and x <= maxThreads]
-    n_streams_threads = [(i, i) for i in nthreads]
+    n_streams_threads = [(i*opts.streamsPerThread, i) for i in nthreads]
     if len(opts.numStreams) > 0:
         n_streams_threads = [(s, t) for t in nthreads for s in opts.numStreams]
 
@@ -249,6 +249,8 @@ if __name__ == "__main__":
                         help="Maximum number of threads to use in the scan (default: -1 for the number of cores)")
     parser.add_argument("--numThreads", type=str, default="",
                         help="Comma separated list of numbers of threads to use in the scan (default: empty for all)")
+    parser.add_argument("--streamsPerThread", type=int, default=1,
+                        help="Number of streams per thread (default 1)")
     parser.add_argument("--numStreams", type=str, default="",
                         help="Comma separated list of numbers of streams to use in the scan (default: empty for always the same as the number of threads). If both number of threads and number of streams have more than 1 element, a 2D scan is done with all the combinations")
     parser.add_argument("--variant", type=int, default=1,
