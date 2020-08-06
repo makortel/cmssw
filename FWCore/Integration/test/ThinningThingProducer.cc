@@ -34,12 +34,13 @@ namespace edmtest {
 
     void preChoose(edm::Handle<edmtest::ThingCollection> tc, edm::Event const& event, edm::EventSetup const& es);
 
-    bool choose(unsigned int iIndex, edmtest::Thing const& iItem);
+    bool choose(unsigned int iIndex, edmtest::Thing const& iItem) const;
 
     void reset() { keysToSave_.clear(); }
 
   private:
     edm::EDGetTokenT<TrackOfThingsCollection> trackToken_;
+    edm::ESGetToken<edmtest::WhatsIt, GadgetRcd> setupToken_;
     std::set<unsigned int> keysToSave_;
     unsigned int offsetToThinnedKey_;
     unsigned int offsetToValue_;
@@ -49,6 +50,7 @@ namespace edmtest {
 
   ThinningThingSelector::ThinningThingSelector(edm::ParameterSet const& pset, edm::ConsumesCollector&& cc) {
     trackToken_ = cc.consumes<TrackOfThingsCollection>(pset.getParameter<edm::InputTag>("trackTag"));
+    setupToken_ = cc.esConsumes<edmtest::WhatsIt, GadgetRcd>();
     offsetToThinnedKey_ = pset.getParameter<unsigned int>("offsetToThinnedKey");
     offsetToValue_ = pset.getParameter<unsigned int>("offsetToValue");
     expectedCollectionSize_ = pset.getParameter<unsigned int>("expectedCollectionSize");
@@ -80,12 +82,11 @@ namespace edmtest {
     }
 
     // Just checking to see the EventSetup works from here. Not really using it for anything.
-    edm::ESHandle<edmtest::WhatsIt> pSetup;
-    es.get<GadgetRcd>().get(pSetup);
+    edm::ESHandle<edmtest::WhatsIt> pSetup = es.getHandle(setupToken_);
     pSetup.isValid();
   }
 
-  bool ThinningThingSelector::choose(unsigned int iIndex, edmtest::Thing const& iItem) {
+  bool ThinningThingSelector::choose(unsigned int iIndex, edmtest::Thing const& iItem) const {
     // Just checking to see the element in the container got passed in OK. Not really using it.
     // Just using %10 because it coincidentally works with the arbitrary numbers I picked, no meaning really.
     auto const expected = slimmedValueFactor_ * (iIndex + offsetToValue_);
