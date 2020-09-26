@@ -19,10 +19,11 @@
 
 // Framework
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Utilities/interface/ESGetToken.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
 // Abstract base class provides common interface to different payload getters
@@ -57,7 +58,10 @@ public:
 template <class thePayloadObject, class theDBRecordType>
 class SiPixelGainCalibrationServicePayloadGetter : public SiPixelGainCalibrationServiceBase {
 public:
+  // For clients not yet migrated to esConsumes
   explicit SiPixelGainCalibrationServicePayloadGetter(const edm::ParameterSet& conf);
+  // For clients migrated to esConsumes
+  explicit SiPixelGainCalibrationServicePayloadGetter(const edm::ParameterSet& conf, edm::ConsumesCollector iC);
   ~SiPixelGainCalibrationServicePayloadGetter() override{};
 
   //Abstract methods
@@ -94,7 +98,9 @@ protected:
 
   edm::ParameterSet conf_;
   bool ESetupInit_;
-  edm::ESHandle<thePayloadObject> ped;
+  // TODO: make const when esConsumes migration has finished
+  edm::ESGetToken<thePayloadObject, theDBRecordType> pedToken_;
+  const thePayloadObject* ped = nullptr;
   int numberOfRowsAveragedOver_;
   double gainLow_;
   double gainHigh_;
@@ -143,9 +149,23 @@ SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::S
 }
 
 template <class thePayloadObject, class theDBRecordType>
+SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::SiPixelGainCalibrationServicePayloadGetter(
+    const edm::ParameterSet& conf, edm::ConsumesCollector iC)
+    : SiPixelGainCalibrationServicePayloadGetter(conf) {
+  pedToken_ = iC.esConsumes();
+}
+
+template <class thePayloadObject, class theDBRecordType>
 void SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::setESObjects(
     const edm::EventSetup& es) {
-  es.get<theDBRecordType>().get(ped);
+  if (pedToken_.isInitialized()) {
+    ped = &es.getData(pedToken_);
+  } else {
+    // assume the caller has not been migrated esConsumes, to be removed later
+    edm::ESHandle<thePayloadObject> hped;
+    es.get<theDBRecordType>().get(hped);
+    ped = hped.product();
+  }
   // ped->initialize();  moved to cond infrastructure
   numberOfRowsAveragedOver_ = ped->getNumberOfRowsToAverageOver();
   ESetupInit_ = true;
