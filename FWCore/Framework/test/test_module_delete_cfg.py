@@ -22,7 +22,7 @@ intEventProducer = cms.EDProducer("IntProducer", ivalue = cms.int32(1))
 intNonEventProducer = cms.EDProducer("NonEventIntProducer", ivalue = cms.int32(1))
 intEventProducerMustRun = cms.EDProducer("edmtest::MustRunIntProducer", ivalue = cms.int32(1))
 intEventConsumer = cms.EDAnalyzer("IntTestAnalyzer",
-    moduleLabel = cms.untracked.string("producerEventConsumed"),
+    moduleLabel = cms.untracked.InputTag("producerEventConsumed"),
     valueMustMatch = cms.untracked.int32(1)
 )
 def nonEventConsumer(transition, sourcePattern, expected):
