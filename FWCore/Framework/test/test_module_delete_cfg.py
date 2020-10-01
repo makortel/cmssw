@@ -124,8 +124,8 @@ class SwitchProducerTest(cms.SwitchProducer):
 process.producerEventSwitchProducerNotConsumed = cms.EDProducer("edmtest::TestModuleDeleteProducer")
 process.producerEventSwitchProducerConsumed = intEventProducerMustRun.clone()
 process.producerEventSwitchProducer = SwitchProducerTest(
-    test1 = cms.EDProducer("AddIntsProducer", labels = cms.vstring("producerEventSwitchProducerNotConsumed")),
-    test2 = cms.EDProducer("AddIntsProducer", labels = cms.vstring("producerEventSwitchProducerConsumed")),
+    test1 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("producerEventSwitchProducerNotConsumed")),
+    test2 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("producerEventSwitchProducerConsumed")),
 )
 
 process.consumerNotExist = cms.EDAnalyzer("edmtest::GenericIntsAnalyzer",
