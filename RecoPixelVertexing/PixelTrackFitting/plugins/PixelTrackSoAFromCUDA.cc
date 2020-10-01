@@ -79,7 +79,12 @@ void PixelTrackSoAFromCUDA::produce(edm::Event& iEvent, edm::EventSetup const& i
   std::cout << "found " << nt << " tracks in cpu SoA at " << &tsoa << std::endl;
   */
 
-  unsigned int ntracks = m_soa->m_nTracks;
+  unsigned int ntracks = 0;
+  for (int i=0; i<m_soa->stride(); ++i) {
+    if (m_soa->nHits(i) > 0) {
+      ++ntracks;
+    }
+  }
   out_.write(reinterpret_cast<char const*>(&ntracks), sizeof(unsigned int));
 
   // DO NOT  make a copy  (actually TWO....)
