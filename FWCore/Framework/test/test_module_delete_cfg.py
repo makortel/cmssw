@@ -84,7 +84,7 @@ process.producerEventNotConsumedChain10 = cms.EDProducer("edmtest::TestModuleDel
 )
 
 process.producerEventPartiallyConsumedChain1 = intEventProducerMustRun.clone()
-process.producerEventPartiallyConsumedChain2 = cms.EDProducer("AddIntsProducer", labels = cms.vstring("producerEventPartiallyConsumedChain1"))
+process.producerEventPartiallyConsumedChain2 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("producerEventPartiallyConsumedChain1"))
 process.producerEventPartiallyConsumedChain3 = cms.EDProducer("edmtest::TestModuleDeleteInLumiProducer",
     srcEvent = cms.untracked.VInputTag("producerEventPartiallyConsumedChain1")
 )
