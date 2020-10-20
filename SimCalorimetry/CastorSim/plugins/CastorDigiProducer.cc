@@ -18,6 +18,7 @@
 #include "SimGeneral/MixingModule/interface/PileUpEventPrincipal.h"
 
 CastorDigiProducer::CastorDigiProducer(const edm::ParameterSet &ps,
+                                       BunchSpace const &bunchSpace,
                                        edm::ProducesCollector producesCollector,
                                        edm::ConsumesCollector &iC)
     : theConditionsToken(iC.esConsumes()),

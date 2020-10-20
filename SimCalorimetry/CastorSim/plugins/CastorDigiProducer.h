@@ -33,7 +33,10 @@ class PileUpEventPrincipal;
 
 class CastorDigiProducer : public DigiAccumulatorMixMod {
 public:
-  explicit CastorDigiProducer(const edm::ParameterSet &ps, edm::ProducesCollector, edm::ConsumesCollector &iC);
+  explicit CastorDigiProducer(const edm::ParameterSet &ps,
+                              BunchSpace const &bunchSpace,
+                              edm::ProducesCollector,
+                              edm::ConsumesCollector &iC);
   ~CastorDigiProducer() override;
 
   void initializeEvent(edm::Event const &e, edm::EventSetup const &c) override;

@@ -9,7 +9,10 @@ namespace edm {
   class ConsumesCollector;
   class ParameterSet;
 
-  typedef DigiAccumulatorMixMod*(DAFunc)(ParameterSet const&, ProducesCollector, ConsumesCollector&);
+  typedef DigiAccumulatorMixMod*(DAFunc)(ParameterSet const&,
+                                         DigiAccumulatorMixMod::BunchSpace const&,
+                                         ProducesCollector,
+                                         ConsumesCollector&);
   typedef edmplugin::PluginFactory<DAFunc> DigiAccumulatorMixModPluginFactory;
 
   class DigiAccumulatorMixModFactory {
@@ -19,6 +22,7 @@ namespace edm {
     static DigiAccumulatorMixModFactory const* get();
 
     std::unique_ptr<DigiAccumulatorMixMod> makeDigiAccumulator(ParameterSet const&,
+                                                               DigiAccumulatorMixMod::BunchSpace const&,
                                                                ProducesCollector,
                                                                ConsumesCollector&) const;
 

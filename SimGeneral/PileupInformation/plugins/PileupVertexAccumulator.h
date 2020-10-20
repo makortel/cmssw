@@ -40,7 +40,10 @@ class PileUpEventPrincipal;
 namespace cms {
   class PileupVertexAccumulator : public DigiAccumulatorMixMod {
   public:
-    explicit PileupVertexAccumulator(const edm::ParameterSet& conf, edm::ProducesCollector, edm::ConsumesCollector& iC);
+    explicit PileupVertexAccumulator(const edm::ParameterSet& conf,
+                                     BunchSpace const& bunchSpace,
+                                     edm::ProducesCollector,
+                                     edm::ConsumesCollector& iC);
 
     ~PileupVertexAccumulator() override;
 

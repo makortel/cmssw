@@ -35,6 +35,7 @@
 #include "Geometry/EcalAlgo/interface/EcalEndcapGeometry.h"
 
 EcalDigiProducer::EcalDigiProducer(const edm::ParameterSet &params,
+                                   BunchSpace const &bunchSpace,
                                    edm::ProducesCollector producesCollector,
                                    edm::ConsumesCollector &iC)
     : EcalDigiProducer(params, iC) {

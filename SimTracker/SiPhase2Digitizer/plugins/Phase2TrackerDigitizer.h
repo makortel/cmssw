@@ -53,6 +53,10 @@ namespace cms {
     using ModuleTypeCache = std::unordered_map<uint32_t, TrackerGeometry::ModuleType>;
 
     explicit Phase2TrackerDigitizer(const edm::ParameterSet& iConfig,
+                                    BunchSpace const& bunchSpace,
+                                    edm::ProducesCollector,
+                                    edm::ConsumesCollector& iC);
+    explicit Phase2TrackerDigitizer(const edm::ParameterSet& iConfig,
                                     edm::ProducesCollector,
                                     edm::ConsumesCollector& iC);
     ~Phase2TrackerDigitizer() override;

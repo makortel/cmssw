@@ -55,7 +55,10 @@ class TrackerGeometry;
  */
 class SiStripDigitizer : public DigiAccumulatorMixMod {
 public:
-  explicit SiStripDigitizer(const edm::ParameterSet& conf, edm::ProducesCollector, edm::ConsumesCollector& iC);
+  explicit SiStripDigitizer(const edm::ParameterSet& conf,
+                            BunchSpace const& bunchSpace,
+                            edm::ProducesCollector,
+                            edm::ConsumesCollector& iC);
 
   ~SiStripDigitizer() override;
 

@@ -85,6 +85,7 @@ class PSimHit;
 class TrackingTruthAccumulator : public DigiAccumulatorMixMod {
 public:
   explicit TrackingTruthAccumulator(const edm::ParameterSet &config,
+                                    BunchSpace const &bunchSpace,
                                     edm::ProducesCollector,
                                     edm::ConsumesCollector &iC);
 

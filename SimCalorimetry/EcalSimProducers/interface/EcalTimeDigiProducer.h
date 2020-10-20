@@ -30,7 +30,10 @@ namespace edm {
 
 class EcalTimeDigiProducer : public DigiAccumulatorMixMod {
 public:
-  EcalTimeDigiProducer(const edm::ParameterSet &params, edm::ProducesCollector, edm::ConsumesCollector &);
+  EcalTimeDigiProducer(const edm::ParameterSet &params,
+                       BunchSpace const &bunchSpace,
+                       edm::ProducesCollector,
+                       edm::ConsumesCollector &);
   ~EcalTimeDigiProducer() override;
 
   void initializeEvent(edm::Event const &e, edm::EventSetup const &c) override;

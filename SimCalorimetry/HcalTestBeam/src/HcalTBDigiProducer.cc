@@ -17,6 +17,7 @@
 #include "CalibCalorimetry/HcalAlgos/interface/HcalTimeSlew.h"
 
 HcalTBDigiProducer::HcalTBDigiProducer(const edm::ParameterSet &ps,
+                                       BunchSpace const &bunchSpace,
                                        edm::ProducesCollector producesCollector,
                                        edm::ConsumesCollector &iC)
     : theParameterMap(new HcalTBSimParameterMap(ps)),

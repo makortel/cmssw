@@ -15,11 +15,10 @@ namespace CLHEP {
 
 class MTDDigiProducer : public DigiAccumulatorMixMod {
 public:
-  MTDDigiProducer(edm::ParameterSet const& pset, edm::ProducesCollector, edm::ConsumesCollector& iC);
-  MTDDigiProducer(edm::ParameterSet const& pset, edm::ConsumesCollector& iC) {
-    throw cms::Exception("DeprecatedConstructor")
-        << "Please make sure you're calling this with the threaded mixing module...";
-  }
+  MTDDigiProducer(edm::ParameterSet const& pset,
+                  BunchSpace const& bunchSpace,
+                  edm::ProducesCollector,
+                  edm::ConsumesCollector& iC);
 
   void initializeEvent(edm::Event const&, edm::EventSetup const&) override;
   void finalizeEvent(edm::Event&, edm::EventSetup const&) override;

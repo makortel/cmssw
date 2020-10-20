@@ -62,6 +62,7 @@
 
 namespace cms {
   PileupVertexAccumulator::PileupVertexAccumulator(const edm::ParameterSet& iConfig,
+                                                   BunchSpace const& bunchSpace,
                                                    edm::ProducesCollector producesCollector,
                                                    edm::ConsumesCollector& iC)
       : Mtag_(iConfig.getParameter<edm::InputTag>("vtxTag")),

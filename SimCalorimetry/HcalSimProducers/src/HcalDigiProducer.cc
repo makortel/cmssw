@@ -5,6 +5,7 @@
 #include "SimCalorimetry/HcalSimProducers/interface/HcalDigiProducer.h"
 
 HcalDigiProducer::HcalDigiProducer(edm::ParameterSet const &pset,
+                                   BunchSpace const &bunchSpace,
                                    edm::ProducesCollector producesCollector,
                                    edm::ConsumesCollector &iC)
     : DigiAccumulatorMixMod(), theDigitizer_(pset, iC) {

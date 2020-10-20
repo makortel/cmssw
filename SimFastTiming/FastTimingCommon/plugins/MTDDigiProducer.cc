@@ -8,6 +8,7 @@
 
 //
 MTDDigiProducer::MTDDigiProducer(edm::ParameterSet const& pset,
+                                 BunchSpace const& bunchSpace,
                                  edm::ProducesCollector producesCollector,
                                  edm::ConsumesCollector& iC)
     : DigiAccumulatorMixMod() {

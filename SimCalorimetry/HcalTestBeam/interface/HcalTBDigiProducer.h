@@ -34,7 +34,10 @@ namespace CLHEP {
 
 class HcalTBDigiProducer : public DigiAccumulatorMixMod {
 public:
-  explicit HcalTBDigiProducer(const edm::ParameterSet &ps, edm::ProducesCollector, edm::ConsumesCollector &iC);
+  explicit HcalTBDigiProducer(const edm::ParameterSet &ps,
+                              BunchSpace const &bunchSpace,
+                              edm::ProducesCollector,
+                              edm::ConsumesCollector &iC);
   ~HcalTBDigiProducer() override;
 
   void initializeEvent(edm::Event const &e, edm::EventSetup const &c) override;

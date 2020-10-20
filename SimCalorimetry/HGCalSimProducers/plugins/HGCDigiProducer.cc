@@ -9,9 +9,10 @@
 
 //
 HGCDigiProducer::HGCDigiProducer(edm::ParameterSet const& pset,
+                                 BunchSpace const& bunchSpace,
                                  edm::ProducesCollector producesCollector,
                                  edm::ConsumesCollector& iC)
-    : HGCDigiProducer(pset, iC) {
+    : DigiAccumulatorMixMod(), theDigitizer_(pset, iC) {
   premixStage1_ = pset.getParameter<bool>("premixStage1");
   if (premixStage1_) {
     producesCollector.produces<PHGCSimAccumulator>(theDigitizer_.digiCollection());
@@ -19,9 +20,6 @@ HGCDigiProducer::HGCDigiProducer(edm::ParameterSet const& pset,
     producesCollector.produces<HGCalDigiCollection>(theDigitizer_.digiCollection());
   }
 }
-
-HGCDigiProducer::HGCDigiProducer(edm::ParameterSet const& pset, edm::ConsumesCollector& iC)
-    : DigiAccumulatorMixMod(), theDigitizer_(pset, iC) {}
 
 //
 void HGCDigiProducer::initializeEvent(edm::Event const& event, edm::EventSetup const& es) {

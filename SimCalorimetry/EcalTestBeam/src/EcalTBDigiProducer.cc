@@ -14,9 +14,10 @@
 #include "SimDataFormats/EcalTestBeam/interface/PEcalTBInfo.h"
 
 EcalTBDigiProducer::EcalTBDigiProducer(const edm::ParameterSet &params,
+                                       BunchSpace const &bunchSpace,
                                        edm::ProducesCollector producesCollector,
                                        edm::ConsumesCollector &iC)
-    : EcalDigiProducer(params, producesCollector, iC), m_geometryToken(iC.esConsumes()) {
+    : EcalDigiProducer(params, bunchSpace, producesCollector, iC), m_geometryToken(iC.esConsumes()) {
   std::string const instance("simEcalUnsuppressedDigis");
   m_EBdigiFinalTag = params.getParameter<std::string>("EBdigiFinalCollection");
   m_EBdigiTempTag = params.getParameter<std::string>("EBdigiCollection");
