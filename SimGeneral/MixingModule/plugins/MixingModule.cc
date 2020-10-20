@@ -273,13 +273,15 @@ namespace edm {
   void MixingModule::createDigiAccumulators(const edm::ParameterSet& mixingPSet, edm::ConsumesCollector& iC) {
     ParameterSet const& digiPSet = mixingPSet.getParameterSet("digitizers");
     std::vector<std::string> digiNames = digiPSet.getParameterNames();
+    DigiAccumulatorMixMod::BunchSpace const bunchSpace{.bunchSpaceFromConfiguration = bunchSpace_,
+                                                       .bunchSpaceReadFromDB = readDB_};
     for (auto const& digiName : digiNames) {
       ParameterSet const& pset = digiPSet.getParameterSet(digiName);
       if (pset.existsAs<edm::InputTag>("HepMCProductLabel")) {
         consumes<HepMCProduct>(pset.getParameter<edm::InputTag>("HepMCProductLabel"));
       }
       std::unique_ptr<DigiAccumulatorMixMod> accumulator = std::unique_ptr<DigiAccumulatorMixMod>(
-          DigiAccumulatorMixModFactory::get()->makeDigiAccumulator(pset, producesCollector(), iC));
+          DigiAccumulatorMixModFactory::get()->makeDigiAccumulator(pset, bunchSpace, producesCollector(), iC));
       // Create appropriate DigiAccumulator
       if (accumulator.get() != nullptr) {
         digiAccumulators_.push_back(accumulator.release());

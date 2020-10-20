@@ -60,6 +60,12 @@
 namespace cms {
 
   Phase2TrackerDigitizer::Phase2TrackerDigitizer(const edm::ParameterSet& iConfig,
+                                                 BunchSpace const& bunchSpace,
+                                                 edm::ProducesCollector producesCollector,
+                                                 edm::ConsumesCollector& iC)
+      : Phase2TrackerDigitizer(iConfig, producesCollector, iC) {}
+
+  Phase2TrackerDigitizer::Phase2TrackerDigitizer(const edm::ParameterSet& iConfig,
                                                  edm::ProducesCollector producesCollector,
                                                  edm::ConsumesCollector& iC)
       : first_(true),

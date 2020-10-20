@@ -22,8 +22,10 @@ namespace CLHEP {
 
 class HGCDigiProducer : public DigiAccumulatorMixMod {
 public:
-  HGCDigiProducer(edm::ParameterSet const& pset, edm::ProducesCollector, edm::ConsumesCollector& iC);
-  HGCDigiProducer(edm::ParameterSet const& pset, edm::ConsumesCollector& iC);
+  HGCDigiProducer(edm::ParameterSet const& pset,
+                  BunchSpace const& bunchSpace,
+                  edm::ProducesCollector,
+                  edm::ConsumesCollector& iC);
 
   void initializeEvent(edm::Event const&, edm::EventSetup const&) override;
   void finalizeEvent(edm::Event&, edm::EventSetup const&) override;

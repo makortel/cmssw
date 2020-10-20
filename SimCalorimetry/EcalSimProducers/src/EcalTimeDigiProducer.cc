@@ -14,6 +14,7 @@
 //#define ecal_time_debug 1
 
 EcalTimeDigiProducer::EcalTimeDigiProducer(const edm::ParameterSet &params,
+                                           BunchSpace const &bunchSpace,
                                            edm::ProducesCollector producesCollector,
                                            edm::ConsumesCollector &sumes)
     : DigiAccumulatorMixMod(),

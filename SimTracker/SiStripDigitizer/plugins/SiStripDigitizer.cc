@@ -51,6 +51,7 @@
 #include "CLHEP/Random/RandFlat.h"
 
 SiStripDigitizer::SiStripDigitizer(const edm::ParameterSet& conf,
+                                   BunchSpace const& bunchSpace,
                                    edm::ProducesCollector producesCollector,
                                    edm::ConsumesCollector& iC)
     : hitsProducer(conf.getParameter<std::string>("hitsProducer")),

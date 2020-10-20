@@ -255,6 +255,7 @@ namespace {
 //---------------------------------------------------------------------------------
 
 TrackingTruthAccumulator::TrackingTruthAccumulator(const edm::ParameterSet &config,
+                                                   BunchSpace const &bunchSpace,
                                                    edm::ProducesCollector producesCollector,
                                                    edm::ConsumesCollector &iC)
     : messageCategory_("TrackingTruthAccumulator"),

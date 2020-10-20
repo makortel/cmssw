@@ -43,7 +43,10 @@ namespace CLHEP {
 namespace cms {
   class SiPixelDigitizer : public DigiAccumulatorMixMod {
   public:
-    explicit SiPixelDigitizer(const edm::ParameterSet& conf, edm::ProducesCollector, edm::ConsumesCollector& iC);
+    explicit SiPixelDigitizer(const edm::ParameterSet& conf,
+                              BunchSpace const& bunchSpace,
+                              edm::ProducesCollector,
+                              edm::ConsumesCollector& iC);
 
     ~SiPixelDigitizer() override;
 

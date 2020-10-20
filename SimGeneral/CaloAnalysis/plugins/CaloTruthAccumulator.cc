@@ -125,7 +125,10 @@ using DecayChain = adjacency_list<listS, vecS, directedS, VertexMotherParticlePr
 
 class CaloTruthAccumulator : public DigiAccumulatorMixMod {
 public:
-  explicit CaloTruthAccumulator(const edm::ParameterSet &config, edm::ProducesCollector, edm::ConsumesCollector &iC);
+  explicit CaloTruthAccumulator(const edm::ParameterSet &config,
+                                BunchSpace const &bunchSpace,
+                                edm::ProducesCollector,
+                                edm::ConsumesCollector &iC);
 
 private:
   void initializeEvent(const edm::Event &event, const edm::EventSetup &setup) override;
@@ -359,6 +362,7 @@ namespace {
 }  // namespace
 
 CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
+                                           BunchSpace const &bunchSpace,
                                            edm::ProducesCollector producesCollector,
                                            edm::ConsumesCollector &iC)
     : messageCategory_("CaloTruthAccumulator"),

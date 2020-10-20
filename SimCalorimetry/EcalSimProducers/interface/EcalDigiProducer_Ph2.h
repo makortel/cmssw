@@ -54,6 +54,7 @@ public:
   typedef EBDigitizerTraits_Ph2::ElectronicsSim EcalElectronicsSim_Ph2;
 
   EcalDigiProducer_Ph2(const edm::ParameterSet& params,
+                       BunchSpace const &bunchSpace,
                        edm::ProducesCollector producesCollector,
                        edm::ConsumesCollector& iC);
   EcalDigiProducer_Ph2(const edm::ParameterSet& params, edm::ConsumesCollector& iC);

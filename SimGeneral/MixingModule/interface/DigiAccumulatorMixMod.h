@@ -40,6 +40,11 @@ class PileUpEventPrincipal;
 
 class DigiAccumulatorMixMod {
 public:
+  struct BunchSpace {
+    int const bunchSpaceFromConfiguration;
+    bool const bunchSpaceReadFromDB;
+  };
+
   DigiAccumulatorMixMod();
 
   virtual ~DigiAccumulatorMixMod();

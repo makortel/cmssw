@@ -78,7 +78,10 @@ namespace CLHEP {
 
 class EcalDigiProducer : public DigiAccumulatorMixMod {
 public:
-  EcalDigiProducer(const edm::ParameterSet &params, edm::ProducesCollector, edm::ConsumesCollector &iC);
+  EcalDigiProducer(const edm::ParameterSet &params,
+                   BunchSpace const &bunchSpace,
+                   edm::ProducesCollector,
+                   edm::ConsumesCollector &iC);
   EcalDigiProducer(const edm::ParameterSet &params, edm::ConsumesCollector &iC);
   ~EcalDigiProducer() override;
 

@@ -20,7 +20,10 @@ class PileUpEventPrincipal;
 
 class EcalTBDigiProducer : public EcalDigiProducer {
 public:
-  EcalTBDigiProducer(const edm::ParameterSet &params, edm::ProducesCollector, edm::ConsumesCollector &iC);
+  EcalTBDigiProducer(const edm::ParameterSet &params,
+                     BunchSpace const &bunchSpace,
+                     edm::ProducesCollector,
+                     edm::ConsumesCollector &iC);
   ~EcalTBDigiProducer() override;
 
   void initializeEvent(edm::Event const &, edm::EventSetup const &) override;

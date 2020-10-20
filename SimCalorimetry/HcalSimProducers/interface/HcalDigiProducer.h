@@ -19,7 +19,10 @@ namespace CLHEP {
 
 class HcalDigiProducer : public DigiAccumulatorMixMod {
 public:
-  HcalDigiProducer(edm::ParameterSet const &pset, edm::ProducesCollector, edm::ConsumesCollector &iC);
+  HcalDigiProducer(edm::ParameterSet const &pset,
+                   BunchSpace const &bunchSpace,
+                   edm::ProducesCollector,
+                   edm::ConsumesCollector &iC);
 
   HcalDigiProducer(edm::ParameterSet const &pset, edm::ConsumesCollector &iC);
 

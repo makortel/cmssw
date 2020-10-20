@@ -79,6 +79,7 @@
 
 namespace cms {
   SiPixelDigitizer::SiPixelDigitizer(const edm::ParameterSet& iConfig,
+                                     BunchSpace const& bunchSpace,
                                      edm::ProducesCollector producesCollector,
                                      edm::ConsumesCollector& iC)
       : firstInitializeEvent_(true),
