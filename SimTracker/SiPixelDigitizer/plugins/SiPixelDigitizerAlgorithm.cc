@@ -170,7 +170,9 @@ void SiPixelDigitizerAlgorithm::init(const edm::EventSetup& es) {
 
 //=========================================================================
 
-SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
+SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
+                                                     edm::DigiAccumulatorMixMod::BunchSpace const& bunchSpace,
+                                                     edm::ConsumesCollector iC)
     : mapToken_(iC.esConsumes()),
       geomToken_(iC.esConsumes()),
 
@@ -328,8 +330,11 @@ SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& co
     // EventSetup, so if that capability is really needed we'd need to
     // invent something new (similar to mayConsume in the ESProducer
     // side). So for now, let's consume both payloads.
-    SiPixelDynamicInefficiencyToken_ = iC.esConsumes();
-    SiPixelDynamicInefficiencyToken50ns_ = iC.esConsumes(edm::ESInputTag("", "50ns"));
+    if (bunchSpace.bunchSpaceFromConfiguration == 50) {
+      SiPixelDynamicInefficiencyToken_ = iC.esConsumes(edm::ESInputTag("", "50ns"));
+    } else {
+      SiPixelDynamicInefficiencyToken_ = iC.esConsumes();
+    }
   }
   if (KillBadFEDChannels) {
     scenarioProbabilityToken_ = iC.esConsumes();
@@ -596,12 +601,9 @@ SiPixelDigitizerAlgorithm::PixelEfficiencies::PixelEfficiencies(const edm::Param
 }
 
 // Read DynIneff Scale factors from DB
-void SiPixelDigitizerAlgorithm::init_DynIneffDB(const edm::EventSetup& es, const unsigned int& bunchspace) {
+void SiPixelDigitizerAlgorithm::init_DynIneffDB(const edm::EventSetup& es) {
   if (AddPixelInefficiency && !pixelEfficiencies_.FromConfig) {
-    if (bunchspace == 50)
-      SiPixelDynamicInefficiency_ = &es.getData(SiPixelDynamicInefficiencyToken50ns_);
-    else
-      SiPixelDynamicInefficiency_ = &es.getData(SiPixelDynamicInefficiencyToken_);
+    SiPixelDynamicInefficiency_ = &es.getData(SiPixelDynamicInefficiencyToken_);
     pixelEfficiencies_.init_from_db(geom_, SiPixelDynamicInefficiency_);
   }
 }
