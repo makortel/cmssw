@@ -82,7 +82,7 @@ PreMixingSiPixelWorker::PreMixingSiPixelWorker(const edm::ParameterSet& ps,
                                                edm::ConsumesCollector&& iC)
     : tTopoToken_(iC.esConsumes()),
       pDDToken_(iC.esConsumes(edm::ESInputTag("", ps.getParameter<std::string>("PixGeometryType")))),
-      digitizer_(ps, iC) {
+      digitizer_(ps, iC, SiPixelDigitizerAlgorithm::ForPreMixingTag()) {
   // declare the products to produce
 
   pixeldigi_collectionSig_ = ps.getParameter<edm::InputTag>("pixeldigiCollectionSig");

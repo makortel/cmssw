@@ -170,7 +170,8 @@ void SiPixelDigitizerAlgorithm::init(const edm::EventSetup& es) {
 
 //=========================================================================
 
-SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
+SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
+                                                     edm::ConsumesCollector iC)
     : mapToken_(iC.esConsumes()),
       geomToken_(iC.esConsumes()),
 
@@ -320,17 +321,6 @@ SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& co
   if (use_LorentzAngle_DB_) {
     SiPixelLorentzAngleToken_ = iC.esConsumes();
   }
-  if (AddPixelInefficiency && !pixelEfficiencies_.FromConfig) {
-    // TODO: in practice the bunchspacing is known at MixingModule
-    // construction time, and thus we could declare the consumption of
-    // the actual product. In principle, however, MixingModule is
-    // capable of updating (parts of) its configuration from the
-    // EventSetup, so if that capability is really needed we'd need to
-    // invent something new (similar to mayConsume in the ESProducer
-    // side). So for now, let's consume both payloads.
-    SiPixelDynamicInefficiencyToken_ = iC.esConsumes();
-    SiPixelDynamicInefficiencyToken50ns_ = iC.esConsumes(edm::ESInputTag("", "50ns"));
-  }
   if (KillBadFEDChannels) {
     scenarioProbabilityToken_ = iC.esConsumes();
     PixelFEDChannelCollectionMapToken_ = iC.esConsumes();
@@ -348,6 +338,34 @@ SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& co
 
   TheNewSiPixelChargeReweightingAlgorithmClass = std::make_unique<SiPixelChargeReweightingAlgorithm>(conf, iC);
 }
+
+SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
+                                                     DigiAccumulatorMixMod::BunchSpace const& bunchSpace,
+                                                     edm::ConsumesCollector iC)
+  : SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(conf, iC) {
+  if (AddPixelInefficiency && !pixelEfficiencies_.FromConfig) {
+    if (bunchSpace.bunchSpaceFromConfiguration == 50) {
+      SiPixelDynamicInefficiencyToken50ns_ = iC.esConsumes(edm::ESInputTag("", "50ns"));
+    } else {
+      SiPixelDynamicInefficiencyToken_ = iC.esConsumes();
+    }
+  }
+}
+
+SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
+                                                     edm::ConsumesCollector iC,
+                                                     ForPreMixingTag)
+  : SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(conf, iC) {
+  if (AddPixelInefficiency && !pixelEfficiencies_.FromConfig) {
+    // TODO: In PreMixingModule the bunch spacing is known only at
+    // event-by-event time. Currently framework has no means so
+    // specify consumption of ESProducts based on information in
+    // EDProducts. Therefore, for now, both payloads are consumed.
+    SiPixelDynamicInefficiencyToken_ = iC.esConsumes();
+    SiPixelDynamicInefficiencyToken50ns_ = iC.esConsumes(edm::ESInputTag("", "50ns"));
+  }
+}
+
 
 std::map<int, SiPixelDigitizerAlgorithm::CalParameters, std::less<int> > SiPixelDigitizerAlgorithm::initCal() const {
   using std::cerr;

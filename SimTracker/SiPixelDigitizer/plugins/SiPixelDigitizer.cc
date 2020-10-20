@@ -111,7 +111,7 @@ namespace cms {
              "in the configuration file or remove the modules that require it.";
     }
 
-    _pixeldigialgo = std::make_unique<SiPixelDigitizerAlgorithm>(iConfig, iC);
+    _pixeldigialgo = std::make_unique<SiPixelDigitizerAlgorithm>(iConfig, bunchSpace, iC);
     if (NumberOfEndcapDisks != 2)
       producesCollector.produces<PixelFEDChannelCollection>();
   }
