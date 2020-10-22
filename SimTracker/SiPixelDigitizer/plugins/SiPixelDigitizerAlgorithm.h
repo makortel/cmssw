@@ -62,9 +62,7 @@ public:
                             edm::ConsumesCollector iC);
   // For PreMixingModule, bunch space is known only at event-by-event (from pileup)
   struct ForPreMixingTag {};
-  SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
-                            edm::ConsumesCollector iC,
-                            ForPreMixingTag);
+  SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf, edm::ConsumesCollector iC, ForPreMixingTag);
   ~SiPixelDigitizerAlgorithm();
 
   // initialization that cannot be done in the constructor
@@ -155,8 +153,7 @@ public:
   };  // end class Amplitude
 
 private:
-  SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
-                            edm::ConsumesCollector iC);
+  SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf, edm::ConsumesCollector iC);
 
   //Accessing Lorentz angle from DB:
   edm::ESGetToken<SiPixelLorentzAngle, SiPixelLorentzAngleSimRcd> SiPixelLorentzAngleToken_;
