@@ -170,8 +170,7 @@ void SiPixelDigitizerAlgorithm::init(const edm::EventSetup& es) {
 
 //=========================================================================
 
-SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
-                                                     edm::ConsumesCollector iC)
+SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
     : mapToken_(iC.esConsumes()),
       geomToken_(iC.esConsumes()),
 
@@ -342,7 +341,7 @@ SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& co
 SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
                                                      DigiAccumulatorMixMod::BunchSpace const& bunchSpace,
                                                      edm::ConsumesCollector iC)
-  : SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(conf, iC) {
+    : SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(conf, iC) {
   if (AddPixelInefficiency && !pixelEfficiencies_.FromConfig) {
     if (bunchSpace.bunchSpaceFromConfiguration == 50) {
       SiPixelDynamicInefficiencyToken50ns_ = iC.esConsumes(edm::ESInputTag("", "50ns"));
@@ -355,7 +354,7 @@ SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& co
 SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
                                                      edm::ConsumesCollector iC,
                                                      ForPreMixingTag)
-  : SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(conf, iC) {
+    : SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(conf, iC) {
   if (AddPixelInefficiency && !pixelEfficiencies_.FromConfig) {
     // TODO: In PreMixingModule the bunch spacing is known only at
     // event-by-event time. Currently framework has no means so
@@ -365,7 +364,6 @@ SiPixelDigitizerAlgorithm::SiPixelDigitizerAlgorithm(const edm::ParameterSet& co
     SiPixelDynamicInefficiencyToken50ns_ = iC.esConsumes(edm::ESInputTag("", "50ns"));
   }
 }
-
 
 std::map<int, SiPixelDigitizerAlgorithm::CalParameters, std::less<int> > SiPixelDigitizerAlgorithm::initCal() const {
   using std::cerr;
