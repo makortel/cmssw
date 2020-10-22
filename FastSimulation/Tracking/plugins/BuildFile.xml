@@ -17,6 +17,7 @@
 <use name="TrackingTools/PatternTools"/>
 <use name="TrackingTools/TrajectoryState"/>
 <use name="SimGeneral/MixingModule"/>
+<use name="SimGeneral/PreMixingModule"/>
 <library name="FastSimulationTrackingPlugins" file="*.cc">
   <flags EDM_PLUGIN="1"/>
 </library>

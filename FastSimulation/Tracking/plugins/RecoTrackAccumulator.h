@@ -32,6 +32,12 @@ namespace edm {
 
 class RecoTrackAccumulator : public DigiAccumulatorMixMod {
 public:
+  // For MixingModule
+  explicit RecoTrackAccumulator(const edm::ParameterSet& conf,
+                                const BunchSpace& bunchSpace,
+                                edm::ProducesCollector,
+                                edm::ConsumesCollector& iC);
+  // For PreMixingModule
   explicit RecoTrackAccumulator(const edm::ParameterSet& conf, edm::ProducesCollector, edm::ConsumesCollector& iC);
   ~RecoTrackAccumulator() override;
 
