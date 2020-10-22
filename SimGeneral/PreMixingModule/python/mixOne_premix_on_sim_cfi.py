@@ -162,11 +162,9 @@ fastSim.toModify(mixData,
         strip = None,
         pixelSimLink = None,
         stripSimLink = None,
-        tracks = cms.PSet(
-            workerType = cms.string("PreMixingDigiAccumulatorWorker"),
-            accumulator = _recoTrackAccumulator.clone(
-                pileUpTracks = "mix:generalTracks"
-            )
+        tracks = _recoTrackAccumulator.clone(
+            accumulatorType = "PreMixingRecoTrackWorker",
+            pileUpTracks = "mix:generalTracks"
         ),
         dt = dict(
             labelSig = "mix:MuonSimHitsMuonDTHits",

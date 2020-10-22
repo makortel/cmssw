@@ -8,6 +8,12 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 RecoTrackAccumulator::RecoTrackAccumulator(const edm::ParameterSet& conf,
+                                           const BunchSpace& bunchSpace,
+                                           edm::ProducesCollector producesCollector,
+                                           edm::ConsumesCollector& iC)
+    : RecoTrackAccumulator(conf, producesCollector, iC) {}
+
+RecoTrackAccumulator::RecoTrackAccumulator(const edm::ParameterSet& conf,
                                            edm::ProducesCollector producesCollector,
                                            edm::ConsumesCollector& iC)
     : signalTracksTag(conf.getParameter<edm::InputTag>("signalTracks")),
