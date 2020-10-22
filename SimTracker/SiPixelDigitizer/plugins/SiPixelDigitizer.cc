@@ -111,7 +111,7 @@ namespace cms {
              "in the configuration file or remove the modules that require it.";
     }
 
-    _pixeldigialgo = std::make_unique<SiPixelDigitizerAlgorithm>(iConfig, iC);
+    _pixeldigialgo = std::make_unique<SiPixelDigitizerAlgorithm>(iConfig, bunchSpace, iC);
     if (NumberOfEndcapDisks != 2)
       producesCollector.produces<PixelFEDChannelCollection>();
   }
@@ -251,7 +251,8 @@ namespace cms {
     std::vector<edm::DetSet<PixelDigiSimLink> > theDigiLinkVector;
 
     if (firstFinalizeEvent_) {
-      _pixeldigialgo->init_DynIneffDB(iSetup);
+      const unsigned int bunchspace = PileupInfo_->getMix_bunchSpacing();
+      _pixeldigialgo->init_DynIneffDB(iSetup, bunchspace);
       firstFinalizeEvent_ = false;
     }
     _pixeldigialgo->calculateInstlumiFactor(PileupInfo_.get());

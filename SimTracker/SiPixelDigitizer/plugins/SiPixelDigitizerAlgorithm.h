@@ -9,6 +9,7 @@
 #include "DataFormats/GeometryVector/interface/LocalPoint.h"
 #include "SimDataFormats/EncodedEventId/interface/EncodedEventId.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHit.h"
+#include "SimGeneral/MixingModule/interface/DigiAccumulatorMixMod.h"
 #include "SimTracker/Common/interface/SimHitInfoForLinks.h"
 #include "DataFormats/Math/interface/approx_exp.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupMixingContent.h"
@@ -55,9 +56,15 @@ class SiPixelChargeReweightingAlgorithm;
 
 class SiPixelDigitizerAlgorithm {
 public:
+  // For MixingModule, bunch space is known from configuration or from EventSetup
   SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
-                            edm::DigiAccumulatorMixMod::BunchSpace const& bunchSpace,
-                            ConsumesCollector iC);
+                            DigiAccumulatorMixMod::BunchSpace const& bunchSpace,
+                            edm::ConsumesCollector iC);
+  // For PreMixingModule, bunch space is known only at event-by-event (from pileup)
+  struct ForPreMixingTag {};
+  SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
+                            edm::ConsumesCollector iC,
+                            ForPreMixingTag);
   ~SiPixelDigitizerAlgorithm();
 
   // initialization that cannot be done in the constructor
@@ -80,7 +87,7 @@ public:
                 const TrackerTopology* tTopo,
                 CLHEP::HepRandomEngine*);
   void calculateInstlumiFactor(PileupMixingContent* puInfo);
-  void init_DynIneffDB(const edm::EventSetup&);
+  void init_DynIneffDB(const edm::EventSetup&, const unsigned int&);
   std::unique_ptr<PixelFEDChannelCollection> chooseScenario(PileupMixingContent* puInfo, CLHEP::HepRandomEngine*);
 
   // for premixing
@@ -148,6 +155,9 @@ public:
   };  // end class Amplitude
 
 private:
+  SiPixelDigitizerAlgorithm(const edm::ParameterSet& conf,
+                            edm::ConsumesCollector iC);
+
   //Accessing Lorentz angle from DB:
   edm::ESGetToken<SiPixelLorentzAngle, SiPixelLorentzAngleSimRcd> SiPixelLorentzAngleToken_;
   const SiPixelLorentzAngle* SiPixelLorentzAngle_ = nullptr;
@@ -164,6 +174,7 @@ private:
 
   // Get Dynamic Inefficiency scale factors from DB
   edm::ESGetToken<SiPixelDynamicInefficiency, SiPixelDynamicInefficiencyRcd> SiPixelDynamicInefficiencyToken_;
+  edm::ESGetToken<SiPixelDynamicInefficiency, SiPixelDynamicInefficiencyRcd> SiPixelDynamicInefficiencyToken50ns_;
   const SiPixelDynamicInefficiency* SiPixelDynamicInefficiency_ = nullptr;
 
   // For BadFEDChannel simulation
