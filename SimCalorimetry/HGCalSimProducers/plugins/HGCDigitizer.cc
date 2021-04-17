@@ -274,29 +274,14 @@ void HGCDigitizer::initializeEvent(edm::Event const& e, edm::EventSetup const& e
     CaloGeometry const& geom = es.getData(geomToken_);
 
     gHGCal_ = nullptr;
-    gHcal_ = nullptr;
 
-    if (producesEEDigis())
-      gHGCal_ = dynamic_cast<const HGCalGeometry*>(geom.getSubdetectorGeometry(myDet_, mySubDet_));
-    if (producesHEfrontDigis())
-      gHGCal_ = dynamic_cast<const HGCalGeometry*>(geom.getSubdetectorGeometry(myDet_, mySubDet_));
-    if (producesHFNoseDigis())
-      gHGCal_ = dynamic_cast<const HGCalGeometry*>(geom.getSubdetectorGeometry(myDet_, mySubDet_));
-
-    if (producesHEbackDigis()) {
-      if (geometryType_ == 0) {
-        gHcal_ = dynamic_cast<const HcalGeometry*>(geom.getSubdetectorGeometry(DetId::Hcal, HcalEndcap));
-      } else {
-        gHGCal_ = dynamic_cast<const HGCalGeometry*>(geom.getSubdetectorGeometry(myDet_, mySubDet_));
-      }
-    }
+    gHGCal_ =
+        dynamic_cast<const HGCalGeometry*>(geom.getSubdetectorGeometry(theDigitizer_->det(), theDigitizer_->subdet()));
 
     int nadded(0);
     //valid ID lists
     if (nullptr != gHGCal_) {
       getValidDetIds(gHGCal_, validIds_);
-    } else if (nullptr != gHcal_) {
-      getValidDetIds(gHcal_, validIds_);
     } else {
       throw cms::Exception("BadConfiguration") << "HGCDigitizer is not producing EE, FH, or BH digis!";
     }
