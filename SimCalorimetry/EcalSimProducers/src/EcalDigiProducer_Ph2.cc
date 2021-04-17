@@ -42,6 +42,7 @@
 //This producer calls the EcalLiteDTUCoder, the PhaseII noise matrices and the EcalLiteDTUPedestals
 //*****************************************//
 EcalDigiProducer_Ph2::EcalDigiProducer_Ph2(const edm::ParameterSet& params,
+                                           const DigiAccumulatorMixMod::BunchSpace&,
                                            edm::ProducesCollector producesCollector,
                                            edm::ConsumesCollector& iC)
     : EcalDigiProducer_Ph2(params, iC) {
