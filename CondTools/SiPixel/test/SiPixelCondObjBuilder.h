@@ -27,6 +27,8 @@
 //#include "CondFormats/SiPixelObjects/interface/SiPixelGainCalibration.h"
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationService.h"
 #include "CondFormats/SiPixelObjects/interface/PixelIndices.h"
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include <string>
 
 namespace cms {

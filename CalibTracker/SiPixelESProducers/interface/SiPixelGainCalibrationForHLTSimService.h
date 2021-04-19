@@ -23,9 +23,9 @@ class SiPixelGainCalibrationForHLTSimService
     : public SiPixelGainCalibrationServicePayloadGetter<SiPixelGainCalibrationForHLT,
                                                         SiPixelGainCalibrationForHLTSimRcd> {
 public:
-  explicit SiPixelGainCalibrationForHLTSimService(const edm::ParameterSet& conf)
+  explicit SiPixelGainCalibrationForHLTSimService(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
       : SiPixelGainCalibrationServicePayloadGetter<SiPixelGainCalibrationForHLT, SiPixelGainCalibrationForHLTSimRcd>(
-            conf){};
+                                                                                                                     conf, std::move(iC)){};
   ~SiPixelGainCalibrationForHLTSimService() override{};
 
   // column granularity

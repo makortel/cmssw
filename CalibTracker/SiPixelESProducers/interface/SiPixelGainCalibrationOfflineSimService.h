@@ -23,10 +23,6 @@ class SiPixelGainCalibrationOfflineSimService
     : public SiPixelGainCalibrationServicePayloadGetter<SiPixelGainCalibrationOffline,
                                                         SiPixelGainCalibrationOfflineSimRcd> {
 public:
-  // For clients not yet migrated to esConsumes
-  explicit SiPixelGainCalibrationOfflineSimService(const edm::ParameterSet& conf)
-      : SiPixelGainCalibrationServicePayloadGetter(conf){};
-  // For clients migrated to esConsumes
   explicit SiPixelGainCalibrationOfflineSimService(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
       : SiPixelGainCalibrationServicePayloadGetter(conf, iC){};
 

@@ -58,9 +58,6 @@ public:
 template <class thePayloadObject, class theDBRecordType>
 class SiPixelGainCalibrationServicePayloadGetter : public SiPixelGainCalibrationServiceBase {
 public:
-  // For clients not yet migrated to esConsumes
-  explicit SiPixelGainCalibrationServicePayloadGetter(const edm::ParameterSet& conf);
-  // For clients migrated to esConsumes
   explicit SiPixelGainCalibrationServicePayloadGetter(const edm::ParameterSet& conf, edm::ConsumesCollector iC);
   ~SiPixelGainCalibrationServicePayloadGetter() override{};
 
@@ -98,8 +95,7 @@ protected:
 
   edm::ParameterSet conf_;
   bool ESetupInit_;
-  // TODO: make const when esConsumes migration has finished
-  edm::ESGetToken<thePayloadObject, theDBRecordType> pedToken_;
+  const edm::ESGetToken<thePayloadObject, theDBRecordType> pedToken_;
   const thePayloadObject* ped = nullptr;
   int numberOfRowsAveragedOver_;
   double gainLow_;
@@ -129,8 +125,8 @@ protected:
 
 template <class thePayloadObject, class theDBRecordType>
 SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::SiPixelGainCalibrationServicePayloadGetter(
-    const edm::ParameterSet& conf)
-    : conf_(conf), ESetupInit_(false) {
+    const edm::ParameterSet& conf, edm::ConsumesCollector iC)
+  : conf_(conf), ESetupInit_(false), pedToken_(iC.esConsumes()) {
   edm::LogInfo("SiPixelGainCalibrationServicePayloadGetter")
       << "[SiPixelGainCalibrationServicePayloadGetter::SiPixelGainCalibrationServicePayloadGetter]";
   // Initialize cache variables
@@ -149,23 +145,9 @@ SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::S
 }
 
 template <class thePayloadObject, class theDBRecordType>
-SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::SiPixelGainCalibrationServicePayloadGetter(
-    const edm::ParameterSet& conf, edm::ConsumesCollector iC)
-    : SiPixelGainCalibrationServicePayloadGetter(conf) {
-  pedToken_ = iC.esConsumes();
-}
-
-template <class thePayloadObject, class theDBRecordType>
 void SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::setESObjects(
     const edm::EventSetup& es) {
-  if (pedToken_.isInitialized()) {
-    ped = &es.getData(pedToken_);
-  } else {
-    // assume the caller has not been migrated esConsumes, to be removed later
-    edm::ESHandle<thePayloadObject> hped;
-    es.get<theDBRecordType>().get(hped);
-    ped = hped.product();
-  }
+  ped = &es.getData(pedToken_);
   // ped->initialize();  moved to cond infrastructure
   numberOfRowsAveragedOver_ = ped->getNumberOfRowsToAverageOver();
   ESetupInit_ = true;

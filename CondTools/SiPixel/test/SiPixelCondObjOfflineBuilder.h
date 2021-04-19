@@ -22,11 +22,12 @@
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 //#include "CondFormats/SiPixelObjects/interface/SiPixelGainCalibration.h"
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationOfflineService.h"
 #include "CondFormats/SiPixelObjects/interface/PixelIndices.h"
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include <string>
 
 namespace cms {
@@ -34,10 +35,8 @@ namespace cms {
   public:
     explicit SiPixelCondObjOfflineBuilder(const edm::ParameterSet& iConfig);
 
-    ~SiPixelCondObjOfflineBuilder(){};
     virtual void beginJob();
     virtual void analyze(const edm::Event&, const edm::EventSetup&);
-    virtual void endJob();
     bool loadFromFile();
 
   private:
