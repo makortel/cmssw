@@ -8,12 +8,14 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 namespace cms {
-  SiPixelCondObjAllPayloadsReader::SiPixelCondObjAllPayloadsReader(const edm::ParameterSet& conf) : conf_(conf), tkGeomToken_(esConsumes()) {
+  SiPixelCondObjAllPayloadsReader::SiPixelCondObjAllPayloadsReader(const edm::ParameterSet& conf)
+      : conf_(conf), tkGeomToken_(esConsumes()) {
     std::string payloadType = conf.getParameter<std::string>("payloadType");
     if (strcmp(payloadType.c_str(), "HLT") == 0) {
       SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationForHLTService>(conf, consumesCollector());
     } else if (strcmp(payloadType.c_str(), "Offline") == 0) {
-      SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationOfflineService>(conf, consumesCollector());
+      SiPixelGainCalibrationService_ =
+          std::make_unique<SiPixelGainCalibrationOfflineService>(conf, consumesCollector());
     } else if (strcmp(payloadType.c_str(), "Full") == 0) {
       SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationService>(conf, consumesCollector());
     }

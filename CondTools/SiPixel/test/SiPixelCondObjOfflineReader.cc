@@ -11,11 +11,14 @@
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 
 namespace cms {
-  SiPixelCondObjOfflineReader::SiPixelCondObjOfflineReader(const edm::ParameterSet& conf) : conf_(conf), tkGeomToken_(esConsumes()) {
+  SiPixelCondObjOfflineReader::SiPixelCondObjOfflineReader(const edm::ParameterSet& conf)
+      : conf_(conf), tkGeomToken_(esConsumes()) {
     if (conf_.getParameter<bool>("useSimRcd"))
-      SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationOfflineSimService>(conf_, consumesCollector());
+      SiPixelGainCalibrationService_ =
+          std::make_unique<SiPixelGainCalibrationOfflineSimService>(conf_, consumesCollector());
     else
-      SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationOfflineService>(conf_, consumesCollector());
+      SiPixelGainCalibrationService_ =
+          std::make_unique<SiPixelGainCalibrationOfflineService>(conf_, consumesCollector());
   }
 
   void SiPixelCondObjOfflineReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {

@@ -23,7 +23,7 @@ class SiPixelGainCalibrationForHLTService final
 public:
   explicit SiPixelGainCalibrationForHLTService(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
       : SiPixelGainCalibrationServicePayloadGetter<SiPixelGainCalibrationForHLT, SiPixelGainCalibrationForHLTRcd>(
-                                                                                                                  conf, std::move(iC)){};
+            conf, std::move(iC)){};
   ~SiPixelGainCalibrationForHLTService() override{};
 
   void calibrate(

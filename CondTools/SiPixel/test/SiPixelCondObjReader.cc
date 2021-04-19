@@ -10,7 +10,7 @@
 
 namespace cms {
   SiPixelCondObjReader::SiPixelCondObjReader(const edm::ParameterSet& conf)
-    : conf_(conf), tkGeomToken_(esConsumes()), SiPixelGainCalibrationService_(conf, consumesCollector()) {}
+      : conf_(conf), tkGeomToken_(esConsumes()), SiPixelGainCalibrationService_(conf, consumesCollector()) {}
 
   void SiPixelCondObjReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
     //Create Subdirectories

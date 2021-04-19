@@ -142,7 +142,7 @@ void SiPixelGainCalibrationReadDQMFile::fillDatabase(const edm::EventSetup &iSet
             << std::endl;
   uint32_t detid = 0;
   therootfile->cd();
-  const TrackerGeometry* pDD = &iSetup.getData(pddToken_);
+  const TrackerGeometry *pDD = &iSetup.getData(pddToken_);
   edm::LogInfo("SiPixelCondObjOfflineBuilder") << " There are " << pDD->dets().size() << " detectors" << std::endl;
 
   int NDetid = 0;

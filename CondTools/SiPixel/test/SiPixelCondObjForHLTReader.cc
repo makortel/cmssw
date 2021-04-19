@@ -11,11 +11,14 @@
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationForHLTSimService.h"
 
 namespace cms {
-  SiPixelCondObjForHLTReader::SiPixelCondObjForHLTReader(const edm::ParameterSet& conf) : conf_(conf), tkGeomToken_(esConsumes()) {
+  SiPixelCondObjForHLTReader::SiPixelCondObjForHLTReader(const edm::ParameterSet& conf)
+      : conf_(conf), tkGeomToken_(esConsumes()) {
     if (conf_.getParameter<bool>("useSimRcd"))
-      SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationForHLTSimService>(conf_, consumesCollector());
+      SiPixelGainCalibrationService_ =
+          std::make_unique<SiPixelGainCalibrationForHLTSimService>(conf_, consumesCollector());
     else
-      SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationForHLTService>(conf_, consumesCollector());
+      SiPixelGainCalibrationService_ =
+          std::make_unique<SiPixelGainCalibrationForHLTService>(conf_, consumesCollector());
   }
 
   void SiPixelCondObjForHLTReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {

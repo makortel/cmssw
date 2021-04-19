@@ -126,7 +126,7 @@ protected:
 template <class thePayloadObject, class theDBRecordType>
 SiPixelGainCalibrationServicePayloadGetter<thePayloadObject, theDBRecordType>::SiPixelGainCalibrationServicePayloadGetter(
     const edm::ParameterSet& conf, edm::ConsumesCollector iC)
-  : conf_(conf), ESetupInit_(false), pedToken_(iC.esConsumes()) {
+    : conf_(conf), ESetupInit_(false), pedToken_(iC.esConsumes()) {
   edm::LogInfo("SiPixelGainCalibrationServicePayloadGetter")
       << "[SiPixelGainCalibrationServicePayloadGetter::SiPixelGainCalibrationServicePayloadGetter]";
   // Initialize cache variables

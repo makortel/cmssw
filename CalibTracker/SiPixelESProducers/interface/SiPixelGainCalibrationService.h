@@ -22,7 +22,8 @@ class SiPixelGainCalibrationService
     : public SiPixelGainCalibrationServicePayloadGetter<SiPixelGainCalibration, SiPixelGainCalibrationRcd> {
 public:
   explicit SiPixelGainCalibrationService(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
-    : SiPixelGainCalibrationServicePayloadGetter<SiPixelGainCalibration, SiPixelGainCalibrationRcd>(conf, std::move(iC)){};
+      : SiPixelGainCalibrationServicePayloadGetter<SiPixelGainCalibration, SiPixelGainCalibrationRcd>(conf,
+                                                                                                      std::move(iC)){};
   ~SiPixelGainCalibrationService() override{};
 
   // pixel granularity
