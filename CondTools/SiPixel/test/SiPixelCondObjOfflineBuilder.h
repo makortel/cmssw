@@ -42,6 +42,7 @@ namespace cms {
   private:
     edm::ParameterSet conf_;
     bool appendMode_;
+    edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> pddToken_;
     SiPixelGainCalibrationOffline* SiPixelGainCalibration_;
     SiPixelGainCalibrationOfflineService SiPixelGainCalibrationService_;
     std::string recordName_;

@@ -41,14 +41,14 @@ namespace cms {
   public:
     explicit SiPixelCondObjForHLTReader(const edm::ParameterSet &iConfig);
 
-    virtual void beginJob();
     virtual void analyze(const edm::Event &, const edm::EventSetup &);
     virtual void endJob();
 
   private:
     edm::ParameterSet conf_;
     //edm::ESHandle<SiPixelGainCalibration> SiPixelGainCalibration_;
-    SiPixelGainCalibrationServiceBase *SiPixelGainCalibrationService_;
+    const edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> tkGeomToken_;
+    std::unique_ptr<SiPixelGainCalibrationServiceBase> SiPixelGainCalibrationService_;
 
     std::map<uint32_t, TH1F *> _TH1F_Pedestals_m;
     std::map<uint32_t, TH1F *> _TH1F_Gains_m;

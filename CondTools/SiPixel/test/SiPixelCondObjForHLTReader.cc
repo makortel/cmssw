@@ -15,7 +15,7 @@ namespace cms {
     if (conf_.getParameter<bool>("useSimRcd"))
       SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationForHLTSimService>(conf_, consumesCollector());
     else
-      SiPixelGainCalibrationService_ = std:make_unique<SiPixelGainCalibrationForHLTService(conf_, consumesCollector());
+      SiPixelGainCalibrationService_ = std::make_unique<SiPixelGainCalibrationForHLTService>(conf_, consumesCollector());
   }
 
   void SiPixelCondObjForHLTReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {

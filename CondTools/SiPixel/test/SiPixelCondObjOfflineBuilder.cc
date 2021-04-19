@@ -18,8 +18,9 @@ namespace cms {
   SiPixelCondObjOfflineBuilder::SiPixelCondObjOfflineBuilder(const edm::ParameterSet& iConfig)
       : conf_(iConfig),
         appendMode_(conf_.getUntrackedParameter<bool>("appendMode", true)),
+        pddToken_(esConsumes()),
         SiPixelGainCalibration_(nullptr),
-        SiPixelGainCalibrationService_(iConfig),
+        SiPixelGainCalibrationService_(iConfig, consumesCollector()),
         recordName_(iConfig.getParameter<std::string>("record")),
         meanPed_(conf_.getParameter<double>("meanPed")),
         rmsPed_(conf_.getParameter<double>("rmsPed")),
@@ -62,8 +63,7 @@ namespace cms {
     float maxgain = 10.;
     SiPixelGainCalibration_ = new SiPixelGainCalibrationOffline(minped, maxped, mingain, maxgain);
 
-    iSetup.get<TrackerDigiGeometryRecord>().get(pDD);
-    const TrackerGeometry* pDD = &iSetup.getData(pddToken_;)
+    const TrackerGeometry* pDD = &iSetup.getData(pddToken_);
     edm::LogInfo("SiPixelCondObjOfflineBuilder") << " There are " << pDD->dets().size() << " detectors" << std::endl;
 
     for (TrackerGeometry::DetContainer::const_iterator it = pDD->dets().begin(); it != pDD->dets().end(); it++) {

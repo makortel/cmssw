@@ -15,8 +15,9 @@ namespace cms {
   SiPixelCondObjBuilder::SiPixelCondObjBuilder(const edm::ParameterSet& iConfig)
       : conf_(iConfig),
         appendMode_(conf_.getUntrackedParameter<bool>("appendMode", true)),
+        pddToken_(esConsumes()),
         SiPixelGainCalibration_(nullptr),
-        SiPixelGainCalibrationService_(iConfig),
+        SiPixelGainCalibrationService_(iConfig, consumesCollector()),
         recordName_(iConfig.getParameter<std::string>("record")),
         meanPed_(conf_.getParameter<double>("meanPed")),
         rmsPed_(conf_.getParameter<double>("rmsPed")),

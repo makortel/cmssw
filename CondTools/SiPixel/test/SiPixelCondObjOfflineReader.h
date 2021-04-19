@@ -48,7 +48,7 @@ namespace cms {
     edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> tkGeomToken_;
     std::string recordName_;
     //edm::ESHandle<SiPixelGainCalibration> SiPixelGainCalibration_;
-    SiPixelGainCalibrationServiceBase *SiPixelGainCalibrationService_;
+    std::unique_ptr<SiPixelGainCalibrationServiceBase> SiPixelGainCalibrationService_;
 
     std::map<uint32_t, TH1F *> _TH1F_Pedestals_m;
     std::map<uint32_t, TH1F *> _TH1F_Gains_m;
