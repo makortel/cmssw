@@ -293,7 +293,7 @@ pixelLessStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConvert
 )
 pixelLessStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'pixelLessStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 7,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-pixelLessStep.json',
     clustersToSkip = 'pixelLessStepClusters',
 )
 trackingMkFitPixelLessStep.toReplaceWith(pixelLessStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(

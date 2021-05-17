@@ -277,7 +277,7 @@ tobTecStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConverter.
 )
 tobTecStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'tobTecStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 8,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-tobTecStep.json',
     clustersToSkip = 'tobTecStepClusters',
 )
 trackingMkFitTobTecStep.toReplaceWith(tobTecStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(

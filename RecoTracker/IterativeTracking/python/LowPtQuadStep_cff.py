@@ -186,7 +186,7 @@ lowPtQuadStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConvert
 )
 lowPtQuadStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'lowPtQuadStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 2,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-lowPtQuadStep.json',
     clustersToSkip = 'lowPtQuadStepClusters',
 )
 trackingMkFitLowPtQuadStep.toReplaceWith(lowPtQuadStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(

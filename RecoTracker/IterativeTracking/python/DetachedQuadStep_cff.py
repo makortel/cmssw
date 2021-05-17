@@ -194,7 +194,7 @@ detachedQuadStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConv
 )
 detachedQuadStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'detachedQuadStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 4,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-detachedQuadStep.json',
     clustersToSkip = 'detachedQuadStepClusters',
 )
 trackingMkFitDetachedQuadStep.toReplaceWith(detachedQuadStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(

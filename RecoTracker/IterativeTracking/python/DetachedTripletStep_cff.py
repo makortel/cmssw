@@ -222,7 +222,7 @@ detachedTripletStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedC
 )
 detachedTripletStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'detachedTripletStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 5,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-detachedTripletStep.json',
     clustersToSkip = 'detachedTripletStepClusters',
 )
 trackingMkFitDetachedTripletStep.toReplaceWith(detachedTripletStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(

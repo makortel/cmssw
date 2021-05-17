@@ -75,6 +75,7 @@ MkFitProducer::MkFitProducer(edm::ParameterSet const& iConfig)
       minGoodStripCharge_{static_cast<float>(
           iConfig.getParameter<edm::ParameterSet>("minGoodStripCharge").getParameter<double>("value"))},
       configFile_{iConfig.getParameter<edm::FileInPath>("config").fullPath()},
+      config_{nullptr},
       seedCleaning_{iConfig.getParameter<bool>("seedCleaning")},
       backwardFitInCMSSW_{iConfig.getParameter<bool>("backwardFitInCMSSW")},
       removeDuplicates_{iConfig.getParameter<bool>("removeDuplicates")},

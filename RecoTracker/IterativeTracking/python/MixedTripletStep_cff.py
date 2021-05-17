@@ -300,7 +300,7 @@ mixedTripletStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConv
 )
 mixedTripletStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'mixedTripletStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 6,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-mixedTripletStep.json',
     clustersToSkip = 'mixedTripletStepClusters',
 )
 trackingMkFitMixedTripletStep.toReplaceWith(mixedTripletStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(

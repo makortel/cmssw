@@ -234,7 +234,7 @@ initialStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConverter
 )
 initialStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'initialStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 0,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-initialStep.json',
 )
 trackingMkFitInitialStep.toReplaceWith(initialStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
     seeds = 'initialStepSeeds',

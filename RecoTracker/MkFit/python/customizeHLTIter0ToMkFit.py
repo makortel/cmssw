@@ -36,6 +36,7 @@ def customizeHLTIter0ToMkFit(process):
     process.hltIter0PFlowCkfTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
         hits = "hltIter0PFlowCkfTrackCandidatesMkFitHits",
         seeds = "hltIter0PFlowCkfTrackCandidatesMkFitSeeds",
+        config = 'RecoTracker/MkFit/data/mkfit-phase1-initialStep.json',
         minGoodStripCharge = dict(refToPSet_ = 'HLTSiStripClusterChargeCutLoose'),
     )
     process.hltIter0PFlowCkfTrackCandidates = mkFitOutputConverter_cfi.mkFitOutputConverter.clone(

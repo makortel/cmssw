@@ -250,7 +250,7 @@ lowPtTripletStepTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConv
 )
 lowPtTripletStepTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
     seeds = 'lowPtTripletStepTrackCandidatesMkFitSeeds',
-    iterationNumber = 3,
+    config = 'RecoTracker/MkFit/data/mkfit-phase1-lowPtTripletStep.json',
     clustersToSkip = 'lowPtTripletStepClusters',
 )
 trackingMkFitLowPtTripletStep.toReplaceWith(lowPtTripletStepTrackCandidates, mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
