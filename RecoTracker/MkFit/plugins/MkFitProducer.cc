@@ -17,6 +17,7 @@
 #include "RecoTracker/MkFit/interface/MkFitSeedWrapper.h"
 #include "RecoTracker/MkFit/interface/MkFitOutputWrapper.h"
 #include "RecoTracker/MkFit/interface/MkFitGeometry.h"
+#include "RecoTracker/MkFit/interface/MkFitIterationConfig.h"
 #include "RecoTracker/Record/interface/TrackerRecoGeometryRecord.h"
 
 // mkFit includes
@@ -55,11 +56,10 @@ private:
   edm::EDGetTokenT<edm::ContainerMask<edmNew::DetSetVector<SiPixelCluster> > > pixelMaskToken_;
   edm::EDGetTokenT<edm::ContainerMask<edmNew::DetSetVector<SiStripCluster> > > stripMaskToken_;
   edm::ESGetToken<MkFitGeometry, TrackerRecoGeometryRecord> mkFitGeomToken_;
+  edm::ESGetToken<MkFitIterationConfig, TrackerRecoGeometryRecord> mkFitIterConfigToken_;
   edm::EDPutTokenT<MkFitOutputWrapper> putToken_;
   std::function<double(mkfit::Event&, mkfit::MkBuilder&)> buildFunction_;
   const float minGoodStripCharge_;
-  std::string configFile_;
-  mutable std::atomic<mkfit::IterationConfig const*> config_;
   bool seedCleaning_;
   bool backwardFitInCMSSW_;
   bool removeDuplicates_;
@@ -68,14 +68,13 @@ private:
 };
 
 MkFitProducer::MkFitProducer(edm::ParameterSet const& iConfig)
-    : hitToken_{consumes<MkFitHitWrapper>(iConfig.getParameter<edm::InputTag>("hits"))},
-      seedToken_{consumes<MkFitSeedWrapper>(iConfig.getParameter<edm::InputTag>("seeds"))},
-      mkFitGeomToken_{esConsumes<MkFitGeometry, TrackerRecoGeometryRecord>()},
+    : hitToken_{consumes(iConfig.getParameter<edm::InputTag>("hits"))},
+      seedToken_{consumes(iConfig.getParameter<edm::InputTag>("seeds"))},
+      mkFitGeomToken_{esConsumes()},
+      mkFitIterConfigToken_{esConsumes(iConfig.getParameter<edm::ESInputTag>("config"))},
       putToken_{produces<MkFitOutputWrapper>()},
       minGoodStripCharge_{static_cast<float>(
           iConfig.getParameter<edm::ParameterSet>("minGoodStripCharge").getParameter<double>("value"))},
-      configFile_{iConfig.getParameter<edm::FileInPath>("config").fullPath()},
-      config_{nullptr},
       seedCleaning_{iConfig.getParameter<bool>("seedCleaning")},
       backwardFitInCMSSW_{iConfig.getParameter<bool>("backwardFitInCMSSW")},
       removeDuplicates_{iConfig.getParameter<bool>("removeDuplicates")},
@@ -114,7 +113,8 @@ void MkFitProducer::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add("clustersToSkip", edm::InputTag());
   desc.add<std::string>("buildingRoutine", "cloneEngine")
       ->setComment("Valid values are: 'bestHit', 'standard', 'cloneEngine'");
-  desc.add<edm::FileInPath>("config")->setComment("Path to the JSON file for the mkFit configuration parameters");
+  desc.add<edm::ESInputTag>("config")->setComment(
+      "ESProduct that has the mkFit configuration parameters for this iteration");
   desc.add("seedCleaning", true)->setComment("Clean seeds within mkFit");
   desc.add("removeDuplicates", true)->setComment("Run duplicate removal within mkFit");
   desc.add("backwardFitInCMSSW", false)
@@ -148,6 +148,7 @@ void MkFitProducer::produce(edm::StreamID iID, edm::Event& iEvent, const edm::Ev
   // sure that the ESProducer is called even if the input/output
   // converters
   const auto& mkFitGeom = iSetup.getData(mkFitGeomToken_);
+  const auto& mkFitIterConfig = iSetup.getData(mkFitIterConfigToken_);
 
   const std::vector<bool>* pixelMaskPtr = nullptr;
   std::vector<bool> pixelMask;
@@ -183,22 +184,9 @@ void MkFitProducer::produce(edm::StreamID iID, edm::Event& iEvent, const edm::Ev
   auto seeds_mutable = seeds.seeds();
   mkfit::TrackVec tracks;
 
-  if (not config_) {
-    // TODO: strong assumption that a reference to an IterationConfig
-    // is valid while the ConfigJson_Load_File is called in other
-    // thread (e.g. two MkFitProducer instances do not use the same
-    // IterationConfig)
-    std::scoped_lock lk{configMutex};
-    if (not config_) {
-      // TODO: gross violation of policies for EventSetup products
-      config_ =
-          &mkfit::ConfigJson_Load_File(const_cast<mkfit::IterationsInfo&>(mkFitGeom.iterationsInfo()), configFile_);
-    }
-  }
-
   auto lambda = [&]() {
     mkfit::run_OneIteration(mkFitGeom.trackerInfo(),
-                            *config_,
+                            mkFitIterConfig.get(),
                             hits.eventOfHits(),
                             {pixelMaskPtr, &stripMask},
                             streamCache(iID)->get(),
