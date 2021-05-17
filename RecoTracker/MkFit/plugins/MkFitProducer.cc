@@ -31,6 +31,12 @@
 
 // std includes
 #include <functional>
+#include <mutex>
+
+namespace {
+  // TODO: to be removed after the configuration does not require a global write
+  std::mutex configMutex;
+}  // namespace
 
 class MkFitProducer : public edm::global::EDProducer<edm::StreamCache<mkfit::MkBuilderWrapper> > {
 public:
@@ -52,7 +58,8 @@ private:
   edm::EDPutTokenT<MkFitOutputWrapper> putToken_;
   std::function<double(mkfit::Event&, mkfit::MkBuilder&)> buildFunction_;
   const float minGoodStripCharge_;
-  int iterationNumber_;  // TODO: temporary solution
+  std::string configFile_;
+  mutable std::atomic<mkfit::IterationConfig const*> config_;
   bool seedCleaning_;
   bool backwardFitInCMSSW_;
   bool removeDuplicates_;
@@ -67,7 +74,7 @@ MkFitProducer::MkFitProducer(edm::ParameterSet const& iConfig)
       putToken_{produces<MkFitOutputWrapper>()},
       minGoodStripCharge_{static_cast<float>(
           iConfig.getParameter<edm::ParameterSet>("minGoodStripCharge").getParameter<double>("value"))},
-      iterationNumber_{iConfig.getParameter<int>("iterationNumber")},
+      configFile_{iConfig.getParameter<edm::FileInPath>("config").fullPath()},
       seedCleaning_{iConfig.getParameter<bool>("seedCleaning")},
       backwardFitInCMSSW_{iConfig.getParameter<bool>("backwardFitInCMSSW")},
       removeDuplicates_{iConfig.getParameter<bool>("removeDuplicates")},
@@ -106,7 +113,7 @@ void MkFitProducer::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add("clustersToSkip", edm::InputTag());
   desc.add<std::string>("buildingRoutine", "cloneEngine")
       ->setComment("Valid values are: 'bestHit', 'standard', 'cloneEngine'");
-  desc.add<int>("iterationNumber", 0)->setComment("Iteration number (default: 0)");
+  desc.add<edm::FileInPath>("config")->setComment("Path to the JSON file for the mkFit configuration parameters");
   desc.add("seedCleaning", true)->setComment("Clean seeds within mkFit");
   desc.add("removeDuplicates", true)->setComment("Run duplicate removal within mkFit");
   desc.add("backwardFitInCMSSW", false)
@@ -175,9 +182,22 @@ void MkFitProducer::produce(edm::StreamID iID, edm::Event& iEvent, const edm::Ev
   auto seeds_mutable = seeds.seeds();
   mkfit::TrackVec tracks;
 
+  if (not config_) {
+    // TODO: strong assumption that a reference to an IterationConfig
+    // is valid while the ConfigJson_Load_File is called in other
+    // thread (e.g. two MkFitProducer instances do not use the same
+    // IterationConfig)
+    std::scoped_lock lk{configMutex};
+    if (not config_) {
+      // TODO: gross violation of policies for EventSetup products
+      config_ =
+          &mkfit::ConfigJson_Load_File(const_cast<mkfit::IterationsInfo&>(mkFitGeom.iterationsInfo()), configFile_);
+    }
+  }
+
   auto lambda = [&]() {
     mkfit::run_OneIteration(mkFitGeom.trackerInfo(),
-                            mkFitGeom.iterationsInfo()[iterationNumber_],
+                            *config_,
                             hits.eventOfHits(),
                             {pixelMaskPtr, &stripMask},
                             streamCache(iID)->get(),
