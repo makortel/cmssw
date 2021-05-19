@@ -35,11 +35,7 @@ void MkFitIterationConfigESProducer::fillDescriptions(edm::ConfigurationDescript
 
 std::unique_ptr<MkFitIterationConfig> MkFitIterationConfigESProducer::produce(const TrackerRecoGeometryRecord& iRecord) {
   auto const& geom = iRecord.get(geomToken_);
-  // copy to avoid writes to shared object
-  auto itsInfo = std::make_unique<mkfit::IterationsInfo>(geom.iterationsInfo());
-  auto const* itConfig = &mkfit::ConfigJson_Load_File(*itsInfo, configFile_);
-
-  return std::make_unique<MkFitIterationConfig>(std::move(itsInfo), itConfig);
+  return std::make_unique<MkFitIterationConfig>(mkfit::ConfigJson_Load_File(geom.iterationsInfo(), configFile_));
 }
 
 DEFINE_FWK_EVENTSETUP_MODULE(MkFitIterationConfigESProducer);

@@ -4,7 +4,6 @@
 #include <memory>
 
 namespace mkfit {
-  class IterationsInfo;
   class IterationConfig;
 }  // namespace mkfit
 
@@ -15,14 +14,13 @@ namespace mkfit {
  */
 class MkFitIterationConfig {
 public:
-  MkFitIterationConfig(std::unique_ptr<mkfit::IterationsInfo> info, const mkfit::IterationConfig* config);
+  MkFitIterationConfig(std::unique_ptr<mkfit::IterationConfig> config);
   ~MkFitIterationConfig();
 
   const mkfit::IterationConfig& get() const { return *config_; }
 
 private:
-  std::unique_ptr<mkfit::IterationsInfo> iterationsInfo_;  // copy of all parameters
-  const mkfit::IterationConfig* config_;  // parameters of this iteration, points to an object inside iterationsInfo_
+  std::unique_ptr<mkfit::IterationConfig> config_;  // parameters of this iteration
 };
 
 #endif

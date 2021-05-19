@@ -2,8 +2,7 @@
 
 #include "mkFit/IterationConfig.h"
 
-MkFitIterationConfig::MkFitIterationConfig(std::unique_ptr<mkfit::IterationsInfo> info,
-                                           const mkfit::IterationConfig* config)
-    : iterationsInfo_{std::move(info)}, config_{config} {}
+MkFitIterationConfig::MkFitIterationConfig(std::unique_ptr<mkfit::IterationConfig> config)
+    : config_{std::move(config)} {}
 
 MkFitIterationConfig::~MkFitIterationConfig() = default;
