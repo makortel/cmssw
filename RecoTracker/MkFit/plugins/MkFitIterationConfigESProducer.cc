@@ -4,7 +4,6 @@
 #include "RecoTracker/Record/interface/TrackerRecoGeometryRecord.h"
 
 #include "RecoTracker/MkFit/interface/MkFitGeometry.h"
-#include "RecoTracker/MkFit/interface/MkFitIterationConfig.h"
 
 // mkFit includes
 #include "mkFit/IterationConfig.h"
@@ -15,7 +14,7 @@ public:
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-  std::unique_ptr<MkFitIterationConfig> produce(const TrackerRecoGeometryRecord& iRecord);
+  std::unique_ptr<mkfit::IterationConfig> produce(const TrackerRecoGeometryRecord& iRecord);
 
 private:
   const edm::ESGetToken<MkFitGeometry, TrackerRecoGeometryRecord> geomToken_;
@@ -33,9 +32,8 @@ void MkFitIterationConfigESProducer::fillDescriptions(edm::ConfigurationDescript
   descriptions.addWithDefaultLabel(desc);
 }
 
-std::unique_ptr<MkFitIterationConfig> MkFitIterationConfigESProducer::produce(const TrackerRecoGeometryRecord& iRecord) {
-  auto const& geom = iRecord.get(geomToken_);
-  return std::make_unique<MkFitIterationConfig>(mkfit::ConfigJson_Load_File(geom.iterationsInfo(), configFile_));
+std::unique_ptr<mkfit::IterationConfig> MkFitIterationConfigESProducer::produce(const TrackerRecoGeometryRecord& iRecord) {
+  return mkfit::ConfigJson_Load_File(iRecord.get(geomToken_).iterationsInfo(), configFile_);
 }
 
 DEFINE_FWK_EVENTSETUP_MODULE(MkFitIterationConfigESProducer);

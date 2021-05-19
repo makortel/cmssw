@@ -17,7 +17,6 @@
 #include "RecoTracker/MkFit/interface/MkFitSeedWrapper.h"
 #include "RecoTracker/MkFit/interface/MkFitOutputWrapper.h"
 #include "RecoTracker/MkFit/interface/MkFitGeometry.h"
-#include "RecoTracker/MkFit/interface/MkFitIterationConfig.h"
 #include "RecoTracker/Record/interface/TrackerRecoGeometryRecord.h"
 
 // mkFit includes
@@ -56,7 +55,7 @@ private:
   edm::EDGetTokenT<edm::ContainerMask<edmNew::DetSetVector<SiPixelCluster> > > pixelMaskToken_;
   edm::EDGetTokenT<edm::ContainerMask<edmNew::DetSetVector<SiStripCluster> > > stripMaskToken_;
   edm::ESGetToken<MkFitGeometry, TrackerRecoGeometryRecord> mkFitGeomToken_;
-  edm::ESGetToken<MkFitIterationConfig, TrackerRecoGeometryRecord> mkFitIterConfigToken_;
+  edm::ESGetToken<mkfit::IterationConfig, TrackerRecoGeometryRecord> mkFitIterConfigToken_;
   edm::EDPutTokenT<MkFitOutputWrapper> putToken_;
   std::function<double(mkfit::Event&, mkfit::MkBuilder&)> buildFunction_;
   const float minGoodStripCharge_;
@@ -186,7 +185,7 @@ void MkFitProducer::produce(edm::StreamID iID, edm::Event& iEvent, const edm::Ev
 
   auto lambda = [&]() {
     mkfit::run_OneIteration(mkFitGeom.trackerInfo(),
-                            mkFitIterConfig.get(),
+                            mkFitIterConfig,
                             hits.eventOfHits(),
                             {pixelMaskPtr, &stripMask},
                             streamCache(iID)->get(),

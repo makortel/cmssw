@@ -1,3 +1,3 @@
-#include "RecoTracker/MkFit/interface/MkFitIterationConfig.h"
+#include "mkFit/IterationConfig.h"
 #include "FWCore/Utilities/interface/typelookup.h"
-TYPELOOKUP_DATA_REG(MkFitIterationConfig);
+TYPELOOKUP_DATA_REG(mkfit::IterationConfig);
