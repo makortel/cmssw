@@ -226,6 +226,9 @@ void RunManagerMTWorker::beginRun(edm::EventSetup const& es) {
   for (auto& maker : m_sdMakers) {
     maker.second->beginRun(es);
   }
+  if (m_pUseMagneticField) {
+    m_pMagField = &es.getData(m_MagField);
+  }
 }
 
 void RunManagerMTWorker::endRun() {
