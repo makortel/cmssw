@@ -128,6 +128,7 @@ mixedTripletStepHitDoubletsA = _hitPairEDProducer.clone(
     produceIntermediateHitDoublets = True,
 )
 from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cfi import pixelTripletLargeTipEDProducer as _pixelTripletLargeTipEDProducer
+from RecoTracker.TkMSParametrization.multipleScatteringParametrisationMakerESProducer_cfi import *
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
 mixedTripletStepHitTripletsA = _pixelTripletLargeTipEDProducer.clone(
     doublets              = 'mixedTripletStepHitDoubletsA',

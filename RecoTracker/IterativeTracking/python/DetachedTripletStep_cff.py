@@ -74,6 +74,7 @@ detachedTripletStepHitDoublets = _hitPairEDProducer.clone(
     produceIntermediateHitDoublets = True,
 )
 from RecoPixelVertexing.PixelTriplets.pixelTripletLargeTipEDProducer_cfi import pixelTripletLargeTipEDProducer as _pixelTripletLargeTipEDProducer
+from RecoTracker.TkMSParametrization.multipleScatteringParametrisationMakerESProducer_cfi import *
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
 detachedTripletStepHitTriplets = _pixelTripletLargeTipEDProducer.clone(
     doublets = 'detachedTripletStepHitDoublets',

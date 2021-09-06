@@ -5,6 +5,7 @@ from RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitMatcher_cfi import *
 from RecoTracker.TransientTrackingRecHit.TransientTrackingRecHitBuilder_cfi import *
 from RecoTracker.MeasurementDet.MeasurementTrackerESProducer_cfi import *
 from TrackingTools.MaterialEffects.MaterialPropagator_cfi import *
+from RecoTracker.TkMSParametrization.multipleScatteringParametrisationMakerESProducer_cfi import *
 from RecoTracker.TkSeedingLayers.TTRHBuilderWithoutAngle4MixedTriplets_cfi import *
 from RecoTracker.TkSeedingLayers.TTRHBuilderWithoutAngle4MixedPairs_cfi import *
 from RecoTracker.TkSeedingLayers.MixedLayerTriplets_cfi import *

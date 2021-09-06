@@ -2,6 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 from RecoTracker.TkHitPairs.hitPairEDProducer_cfi import hitPairEDProducer as _hitPairEDProducer
 from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
+from RecoTracker.TkMSParametrization.multipleScatteringParametrisationMakerESProducer_cfi import *
 from RecoPixelVertexing.PixelTriplets.PixelTripletHLTGenerator_cfi import *
 from RecoPixelVertexing.PixelTrackFitting.pixelFitterByHelixProjections_cfi import *
 from RecoPixelVertexing.PixelTrackFitting.pixelTrackCleanerBySharedHits_cfi import *

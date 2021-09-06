@@ -31,6 +31,11 @@ def customiseFor34612(process):
 
     return process
 
+# MultipleScatteringParametrisationMakerESProducer
+def customiseForXXXXX(process):
+    from RecoTracker.TkMSParametrization.multipleScatteringParametrisationMakerESProducer_cfi import multipleScatteringParametrisationMakerESProducer as maker
+    process.hltMultipleScatteringParametrisationMakerESProducer = maker.clone()
+    return process
 
 def customiseHCALFor2018Input(process):
     """Customise the HLT to run on Run 2 data/MC using the old readout for the HCAL barel"""
@@ -152,5 +157,7 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
 
     # New cards for DT local reco
     process = customiseFor34612(process)
+
+    process = customiseForXXXXX(process)
 
     return process

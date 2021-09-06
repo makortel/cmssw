@@ -43,6 +43,7 @@ initialStepHitDoubletsPreSplitting = _hitPairEDProducer.clone(
     produceIntermediateHitDoublets = True,
 )
 from RecoPixelVertexing.PixelTriplets.pixelTripletHLTEDProducer_cfi import pixelTripletHLTEDProducer as _pixelTripletHLTEDProducer
+from RecoTracker.TkMSParametrization.multipleScatteringParametrisationMakerESProducer_cfi import *
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
 import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi
 initialStepHitTripletsPreSplitting = _pixelTripletHLTEDProducer.clone(
