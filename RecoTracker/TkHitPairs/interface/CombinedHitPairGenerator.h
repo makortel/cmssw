@@ -37,7 +37,7 @@ public:
                 const edm::EventSetup& es) override;
 
 private:
-  CombinedHitPairGenerator(const CombinedHitPairGenerator& cb);
+  //CombinedHitPairGenerator(const CombinedHitPairGenerator& cb);
 
   edm::EDGetTokenT<SeedingLayerSetsHits> theSeedingLayerToken;
 

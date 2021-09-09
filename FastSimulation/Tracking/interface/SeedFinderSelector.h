@@ -8,6 +8,7 @@
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/SeedingLayerSetsHits.h"
 #include "RecoTracker/TkSeedingLayers/interface/SeedingLayerSetsBuilder.h"
+#include "FWCore/Framework/interface/FrameworkfwdMostUsed.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 class TrackingRegion;
@@ -17,13 +18,10 @@ class HitTripletGeneratorFromPairAndLayers;
 class MeasurementTracker;
 class CAHitTripletGenerator;
 class CAHitQuadrupletGenerator;
-
-namespace edm {
-  class Event;
-  class EventSetup;
-  class ParameterSet;
-  class ConsumesCollector;
-}  // namespace edm
+class MagneticField;
+class IdealMagneticFieldRecord;
+class MultipleScatteringParametrisationMaker;
+class NavigationSchoolRecord;
 
 class SeedFinderSelector {
 public:
@@ -53,6 +51,10 @@ private:
   std::vector<unsigned> layerPairs_;
   edm::ESHandle<TrackerTopology> trackerTopology;
   std::vector<SeedingLayerSetsBuilder::SeedingLayerId> seedingLayerIds;
+  const edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> fieldToken_;
+  const edm::ESGetToken<MultipleScatteringParametrisationMaker, NavigationSchoolRecord> msMakerToken_;
+  const MagneticField* field_;
+  const MultipleScatteringParametrisationMaker* msmaker_;
 };
 
 #endif
