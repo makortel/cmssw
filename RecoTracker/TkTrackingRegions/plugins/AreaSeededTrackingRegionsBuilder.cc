@@ -47,8 +47,14 @@ void AreaSeededTrackingRegionsBuilder::fillDescriptions(edm::ParameterSetDescrip
   desc.add<bool>("searchOpt", false);
 }
 
-AreaSeededTrackingRegionsBuilder::Builder AreaSeededTrackingRegionsBuilder::beginEvent(const edm::Event& e) const {
-  auto builder = Builder(this);
+AreaSeededTrackingRegionsBuilder::Builder AreaSeededTrackingRegionsBuilder::beginEvent(
+    const edm::Event& e, const edm::EventSetup& es) const {
+  const auto& field = es.getData(token_field);
+  const MultipleScatteringParametrisationMaker* msmaker = nullptr;
+  if (m_precise) {
+    msmaker = &es.getData(token_msmaker);
+  }
+  auto builder = Builder(this, &field, msmaker);
 
   if (!token_measurementTracker.isUninitialized()) {
     edm::Handle<MeasurementTrackerEvent> hmte;
@@ -291,8 +297,10 @@ std::unique_ptr<TrackingRegion> AreaSeededTrackingRegionsBuilder::Builder::regio
                                                                origin.second,
                                                                dEtaTemp,
                                                                dPhiTemp,
-                                                               m_conf->m_whereToUseMeasurementTracker,
+                                                               *m_field,
+                                                               m_msmaker,
                                                                m_conf->m_precise,
+                                                               m_conf->m_whereToUseMeasurementTracker,
                                                                m_measurementTracker,
                                                                m_conf->m_searchOpt);
     }
@@ -315,8 +323,10 @@ std::unique_ptr<TrackingRegion> AreaSeededTrackingRegionsBuilder::Builder::regio
                                                              origin.second,
                                                              dEta,
                                                              dPhi,
-                                                             m_conf->m_whereToUseMeasurementTracker,
+                                                             *m_field,
+                                                             m_msmaker,
                                                              m_conf->m_precise,
+                                                             m_conf->m_whereToUseMeasurementTracker,
                                                              m_measurementTracker,
                                                              m_conf->m_searchOpt);
   }
