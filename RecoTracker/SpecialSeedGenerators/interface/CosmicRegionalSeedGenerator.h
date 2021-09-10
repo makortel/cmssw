@@ -33,8 +33,6 @@
 #include "Math/GenVector/PxPyPzE4D.h"
 
 //Geometry
-#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "Geometry/CommonDetUnit/interface/GeomDet.h"
 #include "Geometry/CommonDetUnit/interface/PixelGeomDetUnit.h"
 #include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetUnit.h"
@@ -56,16 +54,12 @@ public:
                                                         const edm::EventSetup& es) const override;
 
 private:
-  edm::ParameterSet conf_;
-  edm::ParameterSet regionPSet;
-
   float ptMin_;
   float rVertex_;
   float zVertex_;
   float deltaEta_;
   float deltaPhi_;
 
-  std::string thePropagatorName_;
   std::string regionBase_;
 
   edm::InputTag recoMuonsCollection_;
@@ -76,6 +70,8 @@ private:
   edm::EDGetTokenT<reco::TrackCollection> recoTrackMuonsToken_;
   edm::EDGetTokenT<reco::RecoChargedCandidateCollection> recoL2MuonsToken_;
   edm::EDGetTokenT<MeasurementTrackerEvent> measurementTrackerEventToken_;
+  edm::ESGetToken<Propagator, TrackingComponentsRecord> propagatorToken_;
+  edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> magfieldToken_;
 
   bool doJetsExclusionCheck_;
   double deltaRExclusionSize_;
