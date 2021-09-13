@@ -5,13 +5,17 @@
 #include "FWCore/Framework/interface/Event.h"
 
 // track reco
+#include "MagneticField/Engine/interface/MagneticField.h"
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "RecoTracker/MeasurementDet/interface/MeasurementTracker.h"
 #include "RecoTracker/TkHitPairs/interface/RecHitsSortedInPhi.h"
 #include "RecoTracker/TkHitPairs/interface/HitPairGeneratorFromLayerPair.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
+#include "RecoTracker/TkMSParametrization/interface/MultipleScatteringParametrisationMaker.h"
 #include "RecoTracker/TkSeedGenerator/interface/MultiHitGeneratorFromPairAndLayers.h"
 #include "RecoTracker/TkSeedGenerator/interface/MultiHitGeneratorFromPairAndLayersFactory.h"
 #include "RecoTracker/Record/interface/CkfComponentsRecord.h"
+#include "RecoTracker/Record/interface/NavigationSchoolRecord.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayers.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayersFactory.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/CAHitTripletGenerator.h"
@@ -83,6 +87,9 @@ void SeedFinderSelector::initEvent(const edm::Event &ev, const edm::EventSetup &
   es.get<CkfComponentsRecord>().get(measurementTrackerLabel_, measurementTrackerHandle);
   es.get<TrackerTopologyRcd>().get(trackerTopology);
   measurementTracker_ = &(*measurementTrackerHandle);
+
+  field_ = &es.getData(fieldToken_);
+  msmaker_ = &es.getData(msMakerToken_);
 
   if (multiHitGenerator_) {
     multiHitGenerator_->initES(es);
