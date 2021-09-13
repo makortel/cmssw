@@ -105,10 +105,9 @@ public:
       if (m_nSigmaZBeamSpot < 0.)
         edm::LogError("CandidateSeededTrackingRegionsProducer")
             << "nSigmaZBeamSpot must be positive for BeamSpotSigma mode!";
-
-      if (m_precise) {
-        token_msmaker = iC.esConsumes();
-      }
+    }
+    if (m_precise) {
+      token_msmaker = iC.esConsumes();
     }
   }
 
