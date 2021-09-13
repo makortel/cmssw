@@ -48,8 +48,6 @@ public:
 
   void hitSets(const TrackingRegion& region,
                OrderedMultiHits& trs,
-               const edm::Event& ev,
-               const edm::EventSetup& es,
                const HitDoublets& doublets,
                const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers,
                LayerCacheType& layerCache,
@@ -57,7 +55,6 @@ public:
 
   void hitTriplets(const TrackingRegion& region,
                    OrderedMultiHits& result,
-                   const edm::EventSetup& es,
                    const HitDoublets& doublets,
                    const RecHitsSortedInPhi** thirdHitMap,
                    const std::vector<const DetLayer*>& thirdLayerDetLayer,
@@ -65,7 +62,6 @@ public:
 
   void hitSets(const TrackingRegion& region,
                OrderedMultiHits& result,
-               const edm::EventSetup& es,
                const HitDoublets& doublets,
                const RecHitsSortedInPhi** thirdHitMap,
                const std::vector<const DetLayer*>& thirdLayerDetLayer,
