@@ -16,7 +16,7 @@ namespace {
 
 AreaSeededTrackingRegionsBuilder::AreaSeededTrackingRegionsBuilder(const edm::ParameterSet& regPSet,
                                                                    edm::ConsumesCollector& iC)
-    : candidates_(regPSet, iC) {
+    : candidates_(regPSet, iC), token_field(iC.esConsumes()) {
   m_extraPhi = regPSet.getParameter<double>("extraPhi");
   m_extraEta = regPSet.getParameter<double>("extraEta");
 
@@ -31,6 +31,9 @@ AreaSeededTrackingRegionsBuilder::AreaSeededTrackingRegionsBuilder(const edm::Pa
         iC.consumes<MeasurementTrackerEvent>(regPSet.getParameter<edm::InputTag>("measurementTrackerName"));
   }
   m_searchOpt = regPSet.getParameter<bool>("searchOpt");
+  if (m_precise) {
+    token_msmaker = iC.esConsumes();
+  }
 }
 
 void AreaSeededTrackingRegionsBuilder::fillDescriptions(edm::ParameterSetDescription& desc) {
