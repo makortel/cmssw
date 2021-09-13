@@ -34,7 +34,7 @@
 class HITrackingRegionForPrimaryVtxProducer : public TrackingRegionProducer {
 public:
   HITrackingRegionForPrimaryVtxProducer(const edm::ParameterSet& cfg, edm::ConsumesCollector&& iC)
-      : theFieldToken(iC.esConsumes()) {
+      : theTtopoToken(iC.esConsumes()), theFieldToken(iC.esConsumes()) {
     edm::ParameterSet regionPSet = cfg.getParameter<edm::ParameterSet>("RegionPSet");
     thePtMin = regionPSet.getParameter<double>("ptMin");
     theOriginRadius = regionPSet.getParameter<double>("originRadius");
