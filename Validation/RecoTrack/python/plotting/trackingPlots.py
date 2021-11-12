@@ -582,7 +582,8 @@ def _trackingSubFoldersFallbackPreSplitting(subfolder):
 _additionalTrackQualities = [
     "Pt09",
     "ByOriginalAlgo",
-    "ByAlgoMask"
+    "ByAlgoMask",
+    "BtvLike",
 ]
 def _mapCollectionToAlgoQuality(collName):
     if "Hp" in collName:

@@ -263,6 +263,8 @@ for _eraName, _postfix, _era in _relevantEras:
 _taskForEachEra(_addSelectorsByOriginalAlgoMask, modDict = globals(),
                     args = ["_selectorsByAlgoAndHpNoGenTkDupMerge"], plainArgs = ["ByOriginalAlgo", "originalAlgorithm"],
                     names = "_selectorsByOriginalAlgo", task = "_tracksValidationSelectorsByOriginalAlgo")
+for _eraName, _postfix, _era in _relevantEras:
+    locals()["_selectorsByOriginalAlgoNoHp"+_postfix] = [x for x in locals()["_selectorsByOriginalAlgo"+_postfix] if x[-2:] != "Hp"]
 
 
 for _eraName, _postfix, _era in _relevantEras:
@@ -791,6 +793,14 @@ _taskForEachEra(_addSelectorsBySrc, modDict = globals(),
                 args = ["_selectorsByAlgoAndHpNoGenTk"], plainArgs = ["FromPVPt09", "generalTracksFromPVPt09"],
                 names = "_selectorsFromPVPt09Standalone", task = "_tracksValidationSelectorsFromPVPt09Standalone")
 
+# Select BTV-like by iteration
+_taskForEachEra(_addSelectorsBySrc, modDict=globals(),
+                args=["_selectorsByAlgo"], plainArgs=["BtvLike", "cutsRecoTracksBtvLike"],
+                names="_selectorsBtvLikeStandalone", task="_tracksValidationSelectorsBtvLikeStandalone")
+_taskForEachEra(_addSelectorsBySrc, modDict=globals(),
+                args=["_selectorsByOriginalAlgoNoHp"], plainArgs=["BtvLike", "cutsRecoTracksBtvLike"],
+                names="_selectorsBtvLikeByOriginalAlgoStandalone", task="_tracksValidationSelectorsBtvLikeByOriginalAlgoStandalone")
+
 # MTV instances
 trackValidatorStandalone = trackValidator.clone(
     cores = "highPtJets"
@@ -799,7 +809,7 @@ trackValidatorTPPtLess09Standalone = trackValidatorTPPtLess09.clone(
     cores = "highPtJets"
 )
 for _eraName, _postfix, _era in _relevantEras:
-    _setForEra(trackValidatorStandalone, _eraName, _era, label = trackValidator.label + locals()["_selectorsByAlgoMask"+_postfix] + locals()["_selectorsPt09Standalone"+_postfix])
+    _setForEra(trackValidatorStandalone, _eraName, _era, label = trackValidator.label + locals()["_selectorsByAlgoMask"+_postfix] + locals()["_selectorsPt09Standalone"+_postfix] + locals()["_selectorsBtvLikeStandalone"+_postfix] + locals()["_selectorsBtvLikeByOriginalAlgoStandalone"+_postfix])
     _setForEra(trackValidatorTPPtLess09Standalone, _eraName, _era, label = trackValidatorTPPtLess09.label + locals()["_selectorsByAlgoMask"+_postfix] + locals()["_selectorsPt09Standalone"+_postfix])
 
 trackValidatorFromPVStandalone = trackValidatorFromPV.clone(
@@ -843,7 +853,9 @@ tracksValidationSelectorsStandalone = cms.Task(
     tracksValidationSelectorsByAlgoMaskStandalone,
     tracksValidationSelectorsPt09Standalone,
     tracksValidationSelectorsFromPVStandalone,
-    tracksValidationSelectorsFromPVPt09Standalone
+    tracksValidationSelectorsFromPVPt09Standalone,
+    tracksValidationSelectorsBtvLikeStandalone,
+    tracksValidationSelectorsBtvLikeByOriginalAlgoStandalone
 )
 
 # we copy this for both Standalone and TrackingOnly
