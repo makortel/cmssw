@@ -514,7 +514,6 @@ void testEventsetupRecord::getExepTest() {
   ESParentContext pc;
   dummyRecord.setImpl(&dummyRecordImpl, 0, getTokenIndices.data(), &eventSetupImpl_, &pc);
   ESHandle<Dummy> dummyPtr = dummyRecord.getHandle(token);
-  //CPPUNIT_ASSERT_THROW(dummyRecord.get(dummyPtr), ExceptionType);
 }
 
 void testEventsetupRecord::doGetTest() {
@@ -724,19 +723,18 @@ void testEventsetupRecord::proxyResetTest() {
 
   EventSetupRecordProvider const* constRecordProvider = dummyProvider.get();
 
-  edm::ESConsumesInfo consumesInfo;
-  edm::ESConsumesCollectorT<DummyRecord> cc(&consumesInfo, static_cast<unsigned int>(edm::Transition::Event));
-  auto token = cc.consumes<Dummy>();
-  std::vector<edm::ESProxyIndex> getTokenIndices{edm::ESProxyIndex(0)};
-
-  DummyRecord dummyRecord;
-  ESParentContext pc;
-  dummyRecord.setImpl(&constRecordProvider->firstRecordImpl(), 0, getTokenIndices.data(), &eventSetupImpl_, &pc);
-
   Dummy myDummy;
   std::shared_ptr<WorkingDummyProxy> workingProxy = std::make_shared<WorkingDummyProxy>(&myDummy);
 
   const DataKey workingDataKey(DataKey::makeTypeTag<WorkingDummyProxy::value_type>(), "");
+  DummyDataConsumer consumer{edm::ESInputTag("", "")};
+  SetupRecord sr{consumer, dummyRecordKey_, eventSetupImpl_, &activityRegistry, {{workingDataKey, workingProxy.get()}}};
+  DummyRecord dummyRecord = sr.makeRecord();
+
+  edm::ESConsumesInfo consumesInfo;
+  edm::ESConsumesCollectorT<DummyRecord> cc(&consumesInfo, static_cast<unsigned int>(edm::Transition::Event));
+  auto token = cc.consumes<Dummy>();
+  std::vector<edm::ESProxyIndex> getTokenIndices{edm::ESProxyIndex(0)};
 
   std::shared_ptr<WorkingDummyProvider> wdProv = std::make_shared<WorkingDummyProvider>(workingDataKey, workingProxy);
   CPPUNIT_ASSERT(nullptr != wdProv.get());
@@ -765,6 +763,7 @@ void testEventsetupRecord::proxyResetTest() {
   dummyProvider->resetProxies();
   CPPUNIT_ASSERT(workingProxy->invalidateCalled());
   CPPUNIT_ASSERT(workingProxy->invalidateTransientCalled());
+  consumer.prefetch(sr.dummyRecordImpl);
   hDummy = dummyRecord.getHandle(token);
   CPPUNIT_ASSERT(&myDummy2 == &(*hDummy));
   CPPUNIT_ASSERT(!workingProxy->invalidateCalled());
