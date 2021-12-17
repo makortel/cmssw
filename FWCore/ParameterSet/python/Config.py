@@ -228,6 +228,7 @@ class Process(object):
                                       allowAnyLabel_ = required.untracked.uint32
                                   )
                               ),
+                              useAccelerators = untracked.vstring('auto'),
                               wantSummary = untracked.bool(False),
                               fileMode = untracked.string('FULLMERGE'),
                               forceEventSetupCacheClearOnNewRun = untracked.bool(False),
@@ -1151,7 +1152,7 @@ class Process(object):
         aliases = parameterSet.getVString(tracked, labelAliases)
         for name,value in itemDict.items():
             value.appendToProcessDescLists_(modules, aliases, name)
-            value.insertInto(parameterSet, name)
+            value.insertInto(parameterSet, name, self.options.useAccelerators)
         modules.sort()
         aliases.sort()
         parameterSet.addVString(tracked, labelModules, modules)
@@ -1378,6 +1379,7 @@ class Process(object):
                 return pset
 
         self.validate()
+        self.processAccelerators()
         processPSet.addString(True, "@process_name", self.name_())
         all_modules = self.producers_().copy()
         all_modules.update(self.filters_())
@@ -1430,6 +1432,30 @@ class Process(object):
         #if self.source_() == None and self.looper_() == None:
         #    raise RuntimeError("No input source was found for this process")
         pass
+
+    def processAccelerators(self):
+        if len(self.options.useAccelerators) >= 2:
+            raise Exception("Multiple accelerator types are not yet supported")
+
+        if len(self.options.useAccelerators) == 1 and self.options.useAccelerators[0] == "auto":
+            have_nvidia_gpu = (os.system("cudaIsEnabled") == 0)
+            if have_nvidia_gpu:
+                self.options.useAccelerators = ["gpu-nvidia"]
+            else:
+                self.options.useAccelerators = []
+
+        if len(self.options.useAccelerators) == 0:
+            if hasattr(self, "CUDAService"):
+                self.CUDAService.enabled = False
+        elif self.options.useAccelerators[0] == "gpu-nvidia":
+            if hasattr(self, "CUDAService"):
+                self.CUDAService.enabled = True
+            else:
+                self.CUDAService = Service("CUDAService",
+                    enabled = untracked.bool(True)
+                )
+        else:
+            raise Exception("Invalid value of '{}' in process.options.useAccelerators, valid values are 'auto', 'gpu-nvidia'".format(self.options.useAccelerators[0]))
 
     def prefer(self, esmodule,*args,**kargs):
         """Prefer this ES source or producer.  The argument can
@@ -1918,10 +1944,10 @@ if __name__=="__main__":
         def __init__(self, **kargs):
             super(SwitchProducerTest,self).__init__(
                 dict(
-                    test1 = lambda: (True, -10),
-                    test2 = lambda: (True, -9),
-                    test3 = lambda: (True, -8),
-                    test4 = lambda: (True, -7)
+                    test1 = lambda useAccelerators: (True, -10),
+                    test2 = lambda useAccelerators: (True, -9),
+                    test3 = lambda useAccelerators: (True, -8),
+                    test4 = lambda useAccelerators: (True, -7)
                 ), **kargs)
     specialImportRegistry.registerSpecialImportForType(SwitchProducerTest, "from test import SwitchProducerTest")
 
@@ -2122,6 +2148,7 @@ process.options = cms.untracked.PSet(
     printDependencies = cms.untracked.bool(False),
     sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
     throwIfIllegalParameter = cms.untracked.bool(True),
+    useAccelerators = cms.untracked.vstring('auto'),
     wantSummary = cms.untracked.bool(False)
 )
 
