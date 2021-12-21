@@ -710,6 +710,8 @@ class Process(object):
         if typeName in self.__dict__:
             self.__dict__[typeName]._inProcess = False
         self.__dict__[typeName]=mod
+    def _placeExtender(self,typeName,mod):
+        self._place(typeName, mod, self.__extenders)
     def load(self, moduleName):
         moduleName = moduleName.replace("/",".")
         module = __import__(moduleName)
@@ -1440,7 +1442,7 @@ class Process(object):
     def processAccelerators(self):
         # Sanity check
         useSet = set(self.options.useAccelerators.value())
-        extSet = set([ext.label() for ext in self.__dict__['_Process__extenders']])
+        extSet = set([ext.label() for ext in self.__dict__['_Process__extenders'].values()])
         extSet.add("auto")
         diff = useSet.difference(extSet)
         if len(diff) > 0:
@@ -1455,14 +1457,14 @@ class Process(object):
             if len(self.options.useAccelerators) >= 2:
                 raise Exception("process.options.useAccelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.useAccelerators)))
             newValue = set()
-            for ext in self.__dict__['_Process__extenders']:
+            for ext in self.__dict__['_Process__extenders'].values():
                 if ext.isEnabled():
                     newValue.add(ext.label())
             self.options.useAccelerators = list(newValue)
 
         # Customize
-        for ext in self.__dict__['_Process__extenders']:
-            ext.apply(process)
+        for ext in self.__dict__['_Process__extenders'].values():
+            ext.apply(self)
 
     def prefer(self, esmodule,*args,**kargs):
         """Prefer this ES source or producer.  The argument can
@@ -1858,11 +1860,15 @@ class ProcessModifier(object):
                 self.__seenProcesses.add(process)
 
 # TODO: figure out better name
-class ProcessExtender(object):
+class ProcessExtender(_ConfigureComponent,_Unlabelable):
     """A class used to 'extend' Process' behavior at the worker nodes, at
     the point where the python configuration is serialized for C++."""
     def __init__(self):
         pass
+    def _place(self, name, proc):
+        proc._placeExtender(self.type_(), self)
+    def type_(self):
+        return type(self).__name__
     def isEnabled(self):
         return False
     def apply(self, process):
