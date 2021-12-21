@@ -136,6 +136,7 @@ class Process(object):
         self.__dict__['_Process__partialschedules'] = {}
         self.__isStrict = False
         self.__dict__['_Process__modifiers'] = Mods
+        self.__dict__['_Process__extenders'] = {}
         self.options = Process.defaultOptions_()
         self.maxEvents = Process.defaultMaxEvents_()
         self.maxLuminosityBlocks = Process.defaultMaxLuminosityBlocks_()
@@ -721,6 +722,7 @@ class Process(object):
         seqs = dict()
         tasksToAttach = dict()
         mods = []
+        exnteders = []
         for name in dir(other):
             #'from XX import *' ignores these, and so should we.
             if name.startswith('_'):
@@ -744,6 +746,8 @@ class Process(object):
                 self.add_(item)
             elif isinstance(item,ProcessModifier):
                 mods.append(item)
+            elif isinstance(item,ProcessExtender):
+                self.__dict__['_Process__extenders'][type(item).__name__] = item
             elif isinstance(item,ProcessFragment):
                 self.extend(item)
 
@@ -1434,28 +1438,31 @@ class Process(object):
         pass
 
     def processAccelerators(self):
-        if len(self.options.useAccelerators) >= 2:
-            raise Exception("Multiple accelerator types are not yet supported")
+        # Sanity check
+        useSet = set(self.options.useAccelerators.value())
+        extSet = set([ext.label() for ext in self.__dict__['_Process__extenders']])
+        extSet.add("auto")
+        diff = useSet.difference(extSet)
+        if len(diff) > 0:
+            invalid = ",".join(diff)
+            valid = ",".join(["auto"]+list(extSet))
+            raise Exception("Invalid value{} of {} in process.options.useAccelerators, valid values are {}".format("s" if len(diff) > 2 else "",
+                                                                                                                   invalid,
+                                                                                                                   valid))
 
-        if len(self.options.useAccelerators) == 1 and self.options.useAccelerators[0] == "auto":
-            have_nvidia_gpu = (os.system("cudaIsEnabled") == 0)
-            if have_nvidia_gpu:
-                self.options.useAccelerators = ["gpu-nvidia"]
-            else:
-                self.options.useAccelerators = []
+        # Resolve 'auto'
+        if "auto" in self.options.useAccelerators:
+            if len(self.options.useAccelerators) >= 2:
+                raise Exception("process.options.useAccelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.useAccelerators)))
+            newValue = set()
+            for ext in self.__dict__['_Process__extenders']:
+                if ext.isEnabled():
+                    newValue.add(ext.label())
+            self.options.useAccelerators = list(newValue)
 
-        if len(self.options.useAccelerators) == 0:
-            if hasattr(self, "CUDAService"):
-                self.CUDAService.enabled = False
-        elif self.options.useAccelerators[0] == "gpu-nvidia":
-            if hasattr(self, "CUDAService"):
-                self.CUDAService.enabled = True
-            else:
-                self.CUDAService = Service("CUDAService",
-                    enabled = untracked.bool(True)
-                )
-        else:
-            raise Exception("Invalid value of '{}' in process.options.useAccelerators, valid values are 'auto', 'gpu-nvidia'".format(self.options.useAccelerators[0]))
+        # Customize
+        for ext in self.__dict__['_Process__extenders']:
+            ext.apply(process)
 
     def prefer(self, esmodule,*args,**kargs):
         """Prefer this ES source or producer.  The argument can
@@ -1849,6 +1856,17 @@ class ProcessModifier(object):
             if process not in self.__seenProcesses:
                 self.__func(process)
                 self.__seenProcesses.add(process)
+
+# TODO: figure out better name
+class ProcessExtender(object):
+    """A class used to 'extend' Process' behavior at the worker nodes, at
+    the point where the python configuration is serialized for C++."""
+    def __init__(self):
+        pass
+    def isEnabled(self):
+        return False
+    def apply(self, process):
+        pass
 
 if __name__=="__main__":
     import unittest
