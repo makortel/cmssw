@@ -13,7 +13,7 @@ class ProcessExtenderCUDA(cms.ProcessExtender):
         if not hasattr(process, "CUDAService"):
             process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
 
-        if self.label() in process.options.useAccelerators:
+        if self.label() in process.options.accelerators:
             process.CUDAService.enabled = True
             process.MessageLogger.CUDAService = cms.untracked.PSet()
         else:

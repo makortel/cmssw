@@ -229,7 +229,7 @@ class Process(object):
                                       allowAnyLabel_ = required.untracked.uint32
                                   )
                               ),
-                              useAccelerators = untracked.vstring('auto'),
+                              accelerators = untracked.vstring('auto'),
                               wantSummary = untracked.bool(False),
                               fileMode = untracked.string('FULLMERGE'),
                               forceEventSetupCacheClearOnNewRun = untracked.bool(False),
@@ -1158,7 +1158,7 @@ class Process(object):
         aliases = parameterSet.getVString(tracked, labelAliases)
         for name,value in itemDict.items():
             value.appendToProcessDescLists_(modules, aliases, name)
-            value.insertInto(parameterSet, name, self.options.useAccelerators)
+            value.insertInto(parameterSet, name, self.options.accelerators)
         modules.sort()
         aliases.sort()
         parameterSet.addVString(tracked, labelModules, modules)
@@ -1441,26 +1441,26 @@ class Process(object):
 
     def processAccelerators(self):
         # Sanity check
-        useSet = set(self.options.useAccelerators.value())
+        useSet = set(self.options.accelerators.value())
         extSet = set([ext.label() for ext in self.__dict__['_Process__extenders'].values()])
         extSet.add("auto")
         diff = useSet.difference(extSet)
         if len(diff) > 0:
             invalid = ",".join(diff)
             valid = ",".join(["auto"]+list(extSet))
-            raise Exception("Invalid value{} of {} in process.options.useAccelerators, valid values are {}".format("s" if len(diff) > 2 else "",
-                                                                                                                   invalid,
-                                                                                                                   valid))
+            raise Exception("Invalid value{} of {} in process.options.accelerators, valid values are {}".format("s" if len(diff) > 2 else "",
+                                                                                                                invalid,
+                                                                                                                valid))
 
         # Resolve 'auto'
-        if "auto" in self.options.useAccelerators:
-            if len(self.options.useAccelerators) >= 2:
-                raise Exception("process.options.useAccelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.useAccelerators)))
+        if "auto" in self.options.accelerators:
+            if len(self.options.accelerators) >= 2:
+                raise Exception("process.options.accelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.accelerators)))
             newValue = set()
             for ext in self.__dict__['_Process__extenders'].values():
                 if ext.isEnabled():
                     newValue.add(ext.label())
-            self.options.useAccelerators = list(newValue)
+            self.options.accelerators = list(newValue)
 
         # Customize
         for ext in self.__dict__['_Process__extenders'].values():
@@ -1968,10 +1968,10 @@ if __name__=="__main__":
         def __init__(self, **kargs):
             super(SwitchProducerTest,self).__init__(
                 dict(
-                    test1 = lambda useAccelerators: (True, -10),
-                    test2 = lambda useAccelerators: (True, -9),
-                    test3 = lambda useAccelerators: (True, -8),
-                    test4 = lambda useAccelerators: (True, -7)
+                    test1 = lambda accelerators: (True, -10),
+                    test2 = lambda accelerators: (True, -9),
+                    test3 = lambda accelerators: (True, -8),
+                    test4 = lambda accelerators: (True, -7)
                 ), **kargs)
     specialImportRegistry.registerSpecialImportForType(SwitchProducerTest, "from test import SwitchProducerTest")
 
@@ -2172,7 +2172,7 @@ process.options = cms.untracked.PSet(
     printDependencies = cms.untracked.bool(False),
     sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
     throwIfIllegalParameter = cms.untracked.bool(True),
-    useAccelerators = cms.untracked.vstring('auto'),
+    acelerators = cms.untracked.vstring('auto'),
     wantSummary = cms.untracked.bool(False)
 )
 
