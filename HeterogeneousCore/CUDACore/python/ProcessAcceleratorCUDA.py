@@ -2,9 +2,9 @@ import FWCore.ParameterSet.Config as cms
 
 import os
 
-class ProcessExtenderCUDA(cms.ProcessExtender):
+class ProcessAcceleratorCUDA(cms.ProcessAccelerator):
     def __init__(self):
-        super(ProcessExtenderCUDA,self).__init__()
+        super(ProcessAcceleratorCUDA,self).__init__()
     def isEnabled(self):
         return (os.system("cudaIsEnabled") == 0)
     def label(self):
@@ -19,4 +19,4 @@ class ProcessExtenderCUDA(cms.ProcessExtender):
         else:
             process.CUDAService.enabled = False
             
-cms.specialImportRegistry.registerSpecialImportForType(ProcessExtenderCUDA, "from HeterogeneousCore.CUDACore.ProcessExtenderCUDA import ProcessExtenderCUDA")
+cms.specialImportRegistry.registerSpecialImportForType(ProcessAcceleratorCUDA, "from HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA import ProcessAcceleratorCUDA")

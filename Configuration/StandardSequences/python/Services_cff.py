@@ -10,8 +10,8 @@ from DQMServices.Core.DQMStore_cfi import *
 
 # load CUDA services when the "gpu" or "pixelNtupletFit" modifiers are enabled
 def _addCUDAServices(process):
-    from HeterogeneousCore.CUDACore.ProcessExtenderCUDA import ProcessExtenderCUDA
-    process.ProcessExtenderCUDA = ProcessExtenderCUDA
+    from HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA import ProcessAcceleratorCUDA
+    process.ProcessAcceleratorCUDA = ProcessAcceleratorCUDA
 
 from Configuration.ProcessModifiers.gpu_cff import gpu
 from Configuration.ProcessModifiers.pixelNtupletFit_cff import pixelNtupletFit

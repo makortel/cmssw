@@ -136,7 +136,7 @@ class Process(object):
         self.__dict__['_Process__partialschedules'] = {}
         self.__isStrict = False
         self.__dict__['_Process__modifiers'] = Mods
-        self.__dict__['_Process__extenders'] = {}
+        self.__dict__['_Process__accelerators'] = {}
         self.options = Process.defaultOptions_()
         self.maxEvents = Process.defaultMaxEvents_()
         self.maxLuminosityBlocks = Process.defaultMaxLuminosityBlocks_()
@@ -710,8 +710,8 @@ class Process(object):
         if typeName in self.__dict__:
             self.__dict__[typeName]._inProcess = False
         self.__dict__[typeName]=mod
-    def _placeExtender(self,typeName,mod):
-        self._place(typeName, mod, self.__extenders)
+    def _placeAccelerator(self,typeName,mod):
+        self._place(typeName, mod, self.__accelerators)
     def load(self, moduleName):
         moduleName = moduleName.replace("/",".")
         module = __import__(moduleName)
@@ -748,8 +748,8 @@ class Process(object):
                 self.add_(item)
             elif isinstance(item,ProcessModifier):
                 mods.append(item)
-            elif isinstance(item,ProcessExtender):
-                self.__dict__['_Process__extenders'][type(item).__name__] = item
+            elif isinstance(item,ProcessAccelerator):
+                self.__dict__['_Process__accelerators'][type(item).__name__] = item
             elif isinstance(item,ProcessFragment):
                 self.extend(item)
 
@@ -1442,12 +1442,12 @@ class Process(object):
     def processAccelerators(self):
         # Sanity check
         useSet = set(self.options.accelerators.value())
-        extSet = set([ext.label() for ext in self.__dict__['_Process__extenders'].values()])
-        extSet.add("auto")
-        diff = useSet.difference(extSet)
+        accSet = set([acc.label() for acc in self.__dict__['_Process__accelerators'].values()])
+        accSet.add("auto")
+        diff = useSet.difference(accSet)
         if len(diff) > 0:
             invalid = ",".join(diff)
-            valid = ",".join(["auto"]+list(extSet))
+            valid = ",".join(["auto"]+list(accSet))
             raise Exception("Invalid value{} of {} in process.options.accelerators, valid values are {}".format("s" if len(diff) > 2 else "",
                                                                                                                 invalid,
                                                                                                                 valid))
@@ -1457,14 +1457,14 @@ class Process(object):
             if len(self.options.accelerators) >= 2:
                 raise Exception("process.options.accelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.accelerators)))
             newValue = set()
-            for ext in self.__dict__['_Process__extenders'].values():
-                if ext.isEnabled():
-                    newValue.add(ext.label())
+            for acc in self.__dict__['_Process__accelerators'].values():
+                if acc.isEnabled():
+                    newValue.add(acc.label())
             self.options.accelerators = list(newValue)
 
         # Customize
-        for ext in self.__dict__['_Process__extenders'].values():
-            ext.apply(self)
+        for acc in self.__dict__['_Process__accelerators'].values():
+            acc.apply(self)
 
     def prefer(self, esmodule,*args,**kargs):
         """Prefer this ES source or producer.  The argument can
@@ -1859,10 +1859,14 @@ class ProcessModifier(object):
                 self.__func(process)
                 self.__seenProcesses.add(process)
 
-# TODO: figure out better name
-class ProcessExtender(_ConfigureComponent,_Unlabelable):
-    """A class used to 'extend' Process' behavior at the worker nodes, at
-    the point where the python configuration is serialized for C++."""
+class ProcessAccelerator(_ConfigureComponent,_Unlabelable):
+    """A class used to specify possible compute accelerators in a Process
+    instance. It is intended to be derived for any
+    accelerator/portability technology, and provides hooks such that a
+    specific customization can be applied to the Process on a worker
+    node at the point where the python configuration is serialized for C++.
+
+    The customizations must touch only untracked parameters."""
     def __init__(self):
         pass
     def _place(self, name, proc):
@@ -2151,6 +2155,7 @@ process.options = cms.untracked.PSet(
     IgnoreCompletely = cms.untracked.vstring(),
     Rethrow = cms.untracked.vstring(),
     SkipEvent = cms.untracked.vstring(),
+    accelerators = cms.untracked.vstring('auto'),
     allowUnscheduled = cms.obsolete.untracked.bool,
     canDeleteEarly = cms.untracked.vstring(),
     deleteNonConsumedUnscheduledModules = cms.untracked.bool(True),
@@ -2172,7 +2177,6 @@ process.options = cms.untracked.PSet(
     printDependencies = cms.untracked.bool(False),
     sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
     throwIfIllegalParameter = cms.untracked.bool(True),
-    acelerators = cms.untracked.vstring('auto'),
     wantSummary = cms.untracked.bool(False)
 )
 
