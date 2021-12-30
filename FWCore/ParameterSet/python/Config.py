@@ -716,6 +716,7 @@ class Process(object):
         self.__dict__[typeName]=mod
     def _placeAccelerator(self,typeName,mod):
         self._place(typeName, mod, self.__accelerators)
+        self.__dict__[typeName]=mod
     def load(self, moduleName):
         moduleName = moduleName.replace("/",".")
         module = __import__(moduleName)
@@ -728,7 +729,6 @@ class Process(object):
         seqs = dict()
         tasksToAttach = dict()
         mods = []
-        exnteders = []
         for name in dir(other):
             #'from XX import *' ignores these, and so should we.
             if name.startswith('_'):
@@ -752,8 +752,6 @@ class Process(object):
                 self.add_(item)
             elif isinstance(item,ProcessModifier):
                 mods.append(item)
-            elif isinstance(item,ProcessAccelerator):
-                self.__dict__['_Process__accelerators'][type(item).__name__] = item
             elif isinstance(item,ProcessFragment):
                 self.extend(item)
 
@@ -1900,6 +1898,13 @@ class ProcessAccelerator(_ConfigureComponent,_Unlabelable):
     def apply(self, process):
         pass
 
+# Need to be a module-level function for the configuration with a
+# SwitchProducer to be pickleable.
+def _switchproducer_test2_case1(accelerators):
+    return ("test1" in accelerators, -10)
+def _switchproducer_test2_case2(accelerators):
+    return ("test2" in accelerators, -9)
+
 if __name__=="__main__":
     import unittest
     import copy
@@ -2005,17 +2010,17 @@ if __name__=="__main__":
         def __init__(self, **kargs):
             super(SwitchProducerTest2,self).__init__(
                 dict(
-                    test1 = lambda accelerators: ("test1" in accelerators, -10),
-                    test2 = lambda accelerators: ("test2" in accelerators, -9),
-                    test3 = lambda accelerators: ("test3" in accelerators, -8),
-                    test4 = lambda accelerators: ("test4" in accelerators, -7)
+                    test1 = _switchproducer_test2_case1,
+                    test2 = _switchproducer_test2_case2,
                 ), **kargs)
     specialImportRegistry.registerSpecialImportForType(SwitchProducerTest2, "from test import SwitchProducerTest2")
 
     class ProcessAcceleratorTest(ProcessAccelerator):
-        def __init__(self, enabled=["test1", "test2", "test3", "test4"]):
+        def __init__(self, enabled=["test1", "test2"]):
             super(ProcessAcceleratorTest,self).__init__()
-            self._labels = ["test1", "test2", "test3", "test4"]
+            self._labels = ["test1", "test2"]
+            self.setEnabled(enabled)
+        def setEnabled(self, enabled):
             invalid = set(enabled).difference(set(self._labels))
             if len(invalid) > 0:
                 raise Exception("Tried to enabled nonexistent test accelerators {}".format(",".join(invalid)))
@@ -4030,7 +4035,7 @@ process.MessageLogger = cms.Service("MessageLogger",
 
 
 process.ProcessAcceleratorTest = ProcessAcceleratorTest(
-    enabled = ['test1', 'test2', 'test3', 'test4']
+    enabled = ['test1', 'test2']
 )
 
 
@@ -4041,8 +4046,6 @@ process.ProcessAcceleratorTest = ProcessAcceleratorTest(
             accelerators = p.values["options"][1].values["accelerators"][1]
             self.assertTrue("test1" in accelerators)
             self.assertTrue("test2" in accelerators)
-            self.assertTrue("test3" in accelerators)
-            self.assertTrue("test4" in accelerators)
             self.assertEqual((True, "AcceleratorTestProducer"), p.values["acceleratorTestProducer"][1].values["@module_type"])
 
             proc = Process("TEST")
@@ -4071,5 +4074,25 @@ process.ProcessAcceleratorTest = ProcessAcceleratorTest(
             proc.fillProcessDesc(p)
             self.assertEqual((False, "sp@test1"), p.values["sp"][1].values["@chosen_case"])
 
+            import pickle
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest()
+            proc.sp = SwitchProducerTest2(test2 = EDProducer("Foo",
+                                                             a = int32(1),
+                                                             b = PSet(c = int32(2))),
+                                          test1 = EDProducer("Bar",
+                                                             aa = int32(11),
+                                                             bb = PSet(cc = int32(12))))
+            proc.p = Path(proc.sp)
+            pkl = pickle.dumps(proc)
+            unpkl = pickle.loads(pkl)
+            p = TestMakePSet()
+            unpkl.fillProcessDesc(p)
+            self.assertEqual((False, "sp@test2"), p.values["sp"][1].values["@chosen_case"])
+            unpkl = pickle.loads(pkl)
+            unpkl.ProcessAcceleratorTest.setEnabled(["test1"])
+            p = TestMakePSet()
+            unpkl.fillProcessDesc(p)
+            self.assertEqual((False, "sp@test1"), p.values["sp"][1].values["@chosen_case"])
 
     unittest.main()
