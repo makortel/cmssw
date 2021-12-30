@@ -1459,7 +1459,7 @@ class Process(object):
         for acc in self.__dict__['_Process__accelerators'].values():
             for l in acc.enabledLabels():
                 availableAccelerators.add(l)
-        availableAccelerators = list(availableAccelerators)
+        availableAccelerators = sorted(list(availableAccelerators))
         parameterSet.addVString(False, "@available_accelerators", availableAccelerators)
 
         # Resolve 'auto'
