@@ -50,7 +50,7 @@ namespace edm {
     eventSetupDescription.addUntracked<edm::ParameterSetDescription>("forceNumberOfConcurrentIOVs", nestedDescription);
     description.addUntracked<edm::ParameterSetDescription>("eventSetup", eventSetupDescription);
 
-    description.addUntracked<std::vector<std::string>>("useAccelerators", {"auto"})
+    description.addUntracked<std::vector<std::string>>("accelerators", {"auto"})
       ->setComment("Specify the compute accelerator(s) the job should use. Empty value means that no accelerators will be used. Special value 'auto', can be used for automatically deduce what accelerators to use based on the available hardware. Valid values are:\n"
                    "- 'auto': automatic based on hardware (default)\n"
                    "- 'gpu-nvidia': NVIDIA GPU");
