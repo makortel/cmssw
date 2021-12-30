@@ -327,6 +327,10 @@ class Process(object):
         """returns a dict of the services that have been added to the Process"""
         return DictTypes.FixedKeysDict(self.__services)
     services = property(services_,doc="dictionary containing the services for the process")
+    def processAccelerators_(self):
+        """returns a dict of the ProcessAccelerators that have been added to the Process"""
+        return DictTypes.FixedKeysDict(self.__accelerators)
+    processAccelerators = property(processAccelerators_,doc="dictionary containing the ProcessAccelerators for the process")
     def es_producers_(self):
         """returns a dict of the esproducers that have been added to the Process"""
         return DictTypes.FixedKeysDict(self.__esproducers)
@@ -1010,6 +1014,7 @@ class Process(object):
         result+=self._dumpPythonList(self.analyzers_(), options)
         result+=self._dumpPythonList(self.outputModules_(), options)
         result+=self._dumpPythonList(self.services_(), options)
+        result+=self._dumpPythonList(self.processAccelerators_(), options)
         result+=self._dumpPythonList(self.es_producers_(), options)
         result+=self._dumpPythonList(self.es_sources_(), options)
         result+=self._dumpPython(self.es_prefers_(), options)
@@ -1385,7 +1390,7 @@ class Process(object):
                 return pset
 
         self.validate()
-        self.processAccelerators()
+        self.handleProcessAccelerators()
         processPSet.addString(True, "@process_name", self.name_())
         all_modules = self.producers_().copy()
         all_modules.update(self.filters_())
@@ -1439,10 +1444,10 @@ class Process(object):
         #    raise RuntimeError("No input source was found for this process")
         pass
 
-    def processAccelerators(self):
+    def handleProcessAccelerators(self):
         # Sanity check
         useSet = set(self.options.accelerators.value())
-        accSet = set([acc.label() for acc in self.__dict__['_Process__accelerators'].values()])
+        accSet = set([label for acc in self.__dict__['_Process__accelerators'].values() for label in acc.labels()])
         accSet.add("auto")
         diff = useSet.difference(accSet)
         if len(diff) > 0:
@@ -1458,8 +1463,8 @@ class Process(object):
                 raise Exception("process.options.accelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.accelerators)))
             newValue = set()
             for acc in self.__dict__['_Process__accelerators'].values():
-                if acc.isEnabled():
-                    newValue.add(acc.label())
+                for l in acc.enabledLabels():
+                    newValue.add(l)
             self.options.accelerators = list(newValue)
 
         # Customize
@@ -1870,11 +1875,28 @@ class ProcessAccelerator(_ConfigureComponent,_Unlabelable):
     def __init__(self):
         pass
     def _place(self, name, proc):
-        proc._placeExtender(self.type_(), self)
+        proc._placeAccelerator(self.type_(), self)
     def type_(self):
         return type(self).__name__
-    def isEnabled(self):
-        return False
+    def dumpPython(self, options=PrintOptions()):
+        specialImportRegistry.registerUse(self)
+        result = self.__class__.__name__+"(" # not including cms. since the deriving classes are not in cms "namespace"
+        options.indent()
+        res = self.dumpPythonImpl(options)
+        options.unindent()
+        if len(res) > 0:
+            result += "\n"+res+"\n"
+        result += ")\n"
+        return result
+
+
+    # The following methods are hooks to be overridden (if needed) in the deriving class
+    def dumpPythonImpl(self, options):
+        return ""
+    def labels(self):
+        return []
+    def enabledLabels(self):
+        return []
     def apply(self, process):
         pass
 
@@ -1978,6 +2000,38 @@ if __name__=="__main__":
                     test4 = lambda accelerators: (True, -7)
                 ), **kargs)
     specialImportRegistry.registerSpecialImportForType(SwitchProducerTest, "from test import SwitchProducerTest")
+
+    class SwitchProducerTest2(SwitchProducer):
+        def __init__(self, **kargs):
+            super(SwitchProducerTest2,self).__init__(
+                dict(
+                    test1 = lambda accelerators: ("test1" in accelerators, -10),
+                    test2 = lambda accelerators: ("test2" in accelerators, -9),
+                    test3 = lambda accelerators: ("test3" in accelerators, -8),
+                    test4 = lambda accelerators: ("test4" in accelerators, -7)
+                ), **kargs)
+    specialImportRegistry.registerSpecialImportForType(SwitchProducerTest2, "from test import SwitchProducerTest2")
+
+    class ProcessAcceleratorTest(ProcessAccelerator):
+        def __init__(self, enabled=["test1", "test2", "test3", "test4"]):
+            super(ProcessAcceleratorTest,self).__init__()
+            self._labels = ["test1", "test2", "test3", "test4"]
+            invalid = set(enabled).difference(set(self._labels))
+            if len(invalid) > 0:
+                raise Exception("Tried to enabled nonexistent test accelerators {}".format(",".join(invalid)))
+            self._enabled = enabled[:]
+        def dumpPythonImpl(self,options):
+            result = "{}enabled = [{}]".format(options.indentation(),
+                                               ", ".join(["'{}'".format(e) for e in self._enabled]))
+            return result
+        def labels(self):
+            return self._labels
+        def enabledLabels(self):
+            return self._enabled
+        def apply(self, process):
+            process.acceleratorTestProducer = EDProducer("AcceleratorTestProducer")
+            process.acceleratorTestPath = Path(process.acceleratorTestProducer)
+    specialImportRegistry.registerSpecialImportForType(ProcessAcceleratorTest, "from test import ProcessAcceleratorTest")
 
     class TestModuleCommand(unittest.TestCase):
         def setUp(self):
@@ -3831,5 +3885,191 @@ process.schedule = cms.Schedule(*[ process.path1, process.endpath1 ], tasks=[pro
             p = Process('PROCESS')
             p.extend(f)
             self.assertTrue(hasattr(p,'fltr'))
+        def testProcessAccelerator(self):
+            proc = Process("TEST")
+            self.assertRaises(TypeError, setattr, proc, "processAcceleratorTest", ProcessAcceleratorTest())
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest()
+            self.assertEqual(proc.dumpPython(),
+"""import FWCore.ParameterSet.Config as cms
+from test import ProcessAcceleratorTest
+
+process = cms.Process("TEST")
+
+process.maxEvents = cms.untracked.PSet(
+    input = cms.optional.untracked.int32,
+    output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
+)
+
+process.maxLuminosityBlocks = cms.untracked.PSet(
+    input = cms.untracked.int32(-1)
+)
+
+process.options = cms.untracked.PSet(
+    FailPath = cms.untracked.vstring(),
+    IgnoreCompletely = cms.untracked.vstring(),
+    Rethrow = cms.untracked.vstring(),
+    SkipEvent = cms.untracked.vstring(),
+    accelerators = cms.untracked.vstring('auto'),
+    allowUnscheduled = cms.obsolete.untracked.bool,
+    canDeleteEarly = cms.untracked.vstring(),
+    deleteNonConsumedUnscheduledModules = cms.untracked.bool(True),
+    dumpOptions = cms.untracked.bool(False),
+    emptyRunLumiMode = cms.obsolete.untracked.string,
+    eventSetup = cms.untracked.PSet(
+        forceNumberOfConcurrentIOVs = cms.untracked.PSet(
+            allowAnyLabel_=cms.required.untracked.uint32
+        ),
+        numberOfConcurrentIOVs = cms.untracked.uint32(0)
+    ),
+    fileMode = cms.untracked.string('FULLMERGE'),
+    forceEventSetupCacheClearOnNewRun = cms.untracked.bool(False),
+    makeTriggerResults = cms.obsolete.untracked.bool,
+    numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(0),
+    numberOfConcurrentRuns = cms.untracked.uint32(1),
+    numberOfStreams = cms.untracked.uint32(0),
+    numberOfThreads = cms.untracked.uint32(1),
+    printDependencies = cms.untracked.bool(False),
+    sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
+    throwIfIllegalParameter = cms.untracked.bool(True),
+    wantSummary = cms.untracked.bool(False)
+)
+
+process.MessageLogger = cms.Service("MessageLogger",
+    cerr = cms.untracked.PSet(
+        FwkReport = cms.untracked.PSet(
+            limit = cms.untracked.int32(10000000),
+            reportEvery = cms.untracked.int32(1)
+        ),
+        FwkSummary = cms.untracked.PSet(
+            limit = cms.untracked.int32(10000000),
+            reportEvery = cms.untracked.int32(1)
+        ),
+        INFO = cms.untracked.PSet(
+            limit = cms.untracked.int32(0)
+        ),
+        Root_NoDictionary = cms.untracked.PSet(
+            limit = cms.untracked.int32(0)
+        ),
+        default = cms.untracked.PSet(
+            limit = cms.untracked.int32(10000000)
+        ),
+        enable = cms.untracked.bool(True),
+        enableStatistics = cms.untracked.bool(True),
+        lineLength = cms.optional.untracked.int32,
+        noLineBreaks = cms.optional.untracked.bool,
+        noTimeStamps = cms.untracked.bool(False),
+        resetStatistics = cms.untracked.bool(False),
+        statisticsThreshold = cms.untracked.string('WARNING'),
+        threshold = cms.untracked.string('INFO'),
+        allowAnyLabel_=cms.optional.untracked.PSetTemplate(
+            limit = cms.optional.untracked.int32,
+            reportEvery = cms.untracked.int32(1),
+            timespan = cms.optional.untracked.int32
+        )
+    ),
+    cout = cms.untracked.PSet(
+        enable = cms.untracked.bool(False),
+        enableStatistics = cms.untracked.bool(False),
+        lineLength = cms.optional.untracked.int32,
+        noLineBreaks = cms.optional.untracked.bool,
+        noTimeStamps = cms.optional.untracked.bool,
+        resetStatistics = cms.untracked.bool(False),
+        statisticsThreshold = cms.optional.untracked.string,
+        threshold = cms.optional.untracked.string,
+        allowAnyLabel_=cms.optional.untracked.PSetTemplate(
+            limit = cms.optional.untracked.int32,
+            reportEvery = cms.untracked.int32(1),
+            timespan = cms.optional.untracked.int32
+        )
+    ),
+    debugModules = cms.untracked.vstring(),
+    default = cms.untracked.PSet(
+        limit = cms.optional.untracked.int32,
+        lineLength = cms.untracked.int32(80),
+        noLineBreaks = cms.untracked.bool(False),
+        noTimeStamps = cms.untracked.bool(False),
+        reportEvery = cms.untracked.int32(1),
+        statisticsThreshold = cms.untracked.string('INFO'),
+        threshold = cms.untracked.string('INFO'),
+        timespan = cms.optional.untracked.int32,
+        allowAnyLabel_=cms.optional.untracked.PSetTemplate(
+            limit = cms.optional.untracked.int32,
+            reportEvery = cms.untracked.int32(1),
+            timespan = cms.optional.untracked.int32
+        )
+    ),
+    files = cms.untracked.PSet(
+        allowAnyLabel_=cms.optional.untracked.PSetTemplate(
+            enableStatistics = cms.untracked.bool(False),
+            extension = cms.optional.untracked.string,
+            filename = cms.optional.untracked.string,
+            lineLength = cms.optional.untracked.int32,
+            noLineBreaks = cms.optional.untracked.bool,
+            noTimeStamps = cms.optional.untracked.bool,
+            output = cms.optional.untracked.string,
+            resetStatistics = cms.untracked.bool(False),
+            statisticsThreshold = cms.optional.untracked.string,
+            threshold = cms.optional.untracked.string,
+            allowAnyLabel_=cms.optional.untracked.PSetTemplate(
+                limit = cms.optional.untracked.int32,
+                reportEvery = cms.untracked.int32(1),
+                timespan = cms.optional.untracked.int32
+            )
+        )
+    ),
+    suppressDebug = cms.untracked.vstring(),
+    suppressFwkInfo = cms.untracked.vstring(),
+    suppressInfo = cms.untracked.vstring(),
+    suppressWarning = cms.untracked.vstring(),
+    allowAnyLabel_=cms.optional.untracked.PSetTemplate(
+        limit = cms.optional.untracked.int32,
+        reportEvery = cms.untracked.int32(1),
+        timespan = cms.optional.untracked.int32
+    )
+)
+
+
+process.ProcessAcceleratorTest = ProcessAcceleratorTest(
+    enabled = ['test1', 'test2', 'test3', 'test4']
+)
+
+
+""")
+            p = TestMakePSet()
+            proc.fillProcessDesc(p)
+            self.assertFalse(p.values["options"][1].values["accelerators"][0])
+            accelerators = p.values["options"][1].values["accelerators"][1]
+            self.assertTrue("test1" in accelerators)
+            self.assertTrue("test2" in accelerators)
+            self.assertTrue("test3" in accelerators)
+            self.assertTrue("test4" in accelerators)
+            self.assertEqual((True, "AcceleratorTestProducer"), p.values["acceleratorTestProducer"][1].values["@module_type"])
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest(enabled=["test1"])
+            p = TestMakePSet()
+            proc.fillProcessDesc(p)
+            self.assertEqual(["test1"], p.values["options"][1].values["accelerators"][1])
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest()
+            proc.options.accelerators = ["test2"]
+            p = TestMakePSet()
+            proc.fillProcessDesc(p)
+            self.assertEqual(["test2"], p.values["options"][1].values["accelerators"][1])
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest(enabled=["test1"])
+            proc.sp = SwitchProducerTest2(test2 = EDProducer("Foo",
+                                                             a = int32(1),
+                                                             b = PSet(c = int32(2))),
+                                          test1 = EDProducer("Bar",
+                                                             aa = int32(11),
+                                                             bb = PSet(cc = int32(12))))
+            proc.p = Path(proc.sp)
+            p = TestMakePSet()
+            proc.fillProcessDesc(p)
+            self.assertEqual((False, "sp@test1"), p.values["sp"][1].values["@chosen_case"])
+
 
     unittest.main()
