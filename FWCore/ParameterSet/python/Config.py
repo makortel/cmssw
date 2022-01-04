@@ -1450,10 +1450,10 @@ class Process(object):
         diff = useSet.difference(accSet)
         if len(diff) > 0:
             invalid = ",".join(diff)
-            valid = ",".join(["auto"]+list(accSet))
-            raise Exception("Invalid value{} of {} in process.options.accelerators, valid values are {}".format("s" if len(diff) > 2 else "",
-                                                                                                                invalid,
-                                                                                                                valid))
+            valid = ",".join(sorted(list(accSet)))
+            raise ValueError("Invalid value{} of {} in process.options.accelerators, valid values are {}".format("s" if len(diff) > 2 else "",
+                                                                                                                 invalid,
+                                                                                                                 valid))
 
         availableAccelerators = set()
         for acc in self.__dict__['_Process__accelerators'].values():
@@ -4080,6 +4080,12 @@ process.ProcessAcceleratorTest = ProcessAcceleratorTest(
             proc.fillProcessDesc(p)
             self.assertEqual(["test2"], p.values["options"][1].values["accelerators"][1])
             self.assertEqual(["test1"], p.values["@available_accelerators"][1])
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest()
+            proc.options.accelerators = ["test3"]
+            p = TestMakePSet()
+            self.assertRaises(ValueError, proc.fillProcessDesc, p)
 
             proc = Process("TEST")
             proc.ProcessAcceleratorTest = ProcessAcceleratorTest(enabled=["test1"])
