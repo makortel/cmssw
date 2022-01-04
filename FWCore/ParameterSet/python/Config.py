@@ -1465,7 +1465,7 @@ class Process(object):
         # Resolve 'auto'
         if "auto" in self.options.accelerators:
             if len(self.options.accelerators) >= 2:
-                raise Exception("process.options.accelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.accelerators)))
+                raise ValueError("process.options.accelerators may contain 'auto' only as the only element, now it has {} elements".format(len(self.options.accelerators)))
             newValue = set()
             self.options.accelerators = list(availableAccelerators)
 
@@ -4084,6 +4084,12 @@ process.ProcessAcceleratorTest = ProcessAcceleratorTest(
             proc = Process("TEST")
             proc.ProcessAcceleratorTest = ProcessAcceleratorTest()
             proc.options.accelerators = ["test3"]
+            p = TestMakePSet()
+            self.assertRaises(ValueError, proc.fillProcessDesc, p)
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest()
+            proc.options.accelerators = ["auto", "test1"]
             p = TestMakePSet()
             self.assertRaises(ValueError, proc.fillProcessDesc, p)
 
