@@ -147,7 +147,7 @@
     <use name="FWCore/Utilities"/>
   </bin>
 
-  <test name="TestIntegrationProcessAccelerator" command="run_TestProcessAccelerator"/>
+  <test name="TestIntegrationProcessAccelerator" command="run_TestProcessAccelerator.sh"/>
 
   <test name="CatchStdExceptiontest" command="CatchStdExceptiontest.sh"/>
 
