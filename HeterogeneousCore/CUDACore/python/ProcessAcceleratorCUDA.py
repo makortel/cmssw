@@ -5,7 +5,7 @@ import os
 class ProcessAcceleratorCUDA(cms.ProcessAccelerator):
     def __init__(self):
         super(ProcessAcceleratorCUDA,self).__init__()
-        self._label = "gpu_nvidia"
+        self._label = "gpu-nvidia"
     def labels(self):
         return [self._label]
     def enabledLabels(self):
