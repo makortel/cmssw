@@ -8,7 +8,7 @@
   <ifrelease name="_GPU_">
     <test name="TestCUDATestOnGPU" command="runtests.sh gpu"/>
   <else/>
-    <test name="TestCUDATestOnGPU" command="runtests.sh cpu"/>
+    <test name="TestCUDATestOnCPU" command="runtests.sh cpu"/>
   </ifrelease>
 
 </iftool>
