@@ -23,9 +23,7 @@ def customiseCommon(process):
 
     # Services
 
-    process.load("HeterogeneousCore.CUDAServices.CUDAService_cfi")
-    if 'MessageLogger' in process.__dict__:
-        process.MessageLogger.CUDAService = cms.untracked.PSet()
+    process.load("HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA_cfi")
 
     # NVProfilerService is broken in CMSSW 12.0.x and later
     #process.load("HeterogeneousCore.CUDAServices.NVProfilerService_cfi")
