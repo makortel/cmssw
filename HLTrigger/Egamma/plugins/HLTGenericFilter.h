@@ -10,8 +10,6 @@
 #include "HLTrigger/HLTcore/interface/HLTFilter.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
-#include "FWCore/PluginManager/interface/ModuleDef.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -22,10 +20,6 @@
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateIsolation.h"
 
 #include "DataFormats/HLTReco/interface/TriggerFilterObjectWithRefs.h"
-
-namespace edm {
-  class ConfigurationDescriptions;
-}
 
 //
 // class declaration
