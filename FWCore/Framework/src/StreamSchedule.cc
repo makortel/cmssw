@@ -546,7 +546,48 @@ namespace edm {
     found->beginStream(streamID_, streamContext_);
   }
 
-  void StreamSchedule::deleteModule(std::string const& iLabel) { workerManager_.deleteModuleIfExists(iLabel); }
+  void StreamSchedule::deleteModule(std::string const& iLabel) {
+    //edm::LogPrint("Foo") << "Deleting module " << iLabel;
+    Worker const* deletedModuleWorker = workerManager_.deleteModuleIfExists(iLabel);
+    // For a deleted module, need to remove it from the "might get"
+    // list of branches that are going to be deleted early
+    if (deletedModuleWorker != nullptr and deletedModuleWorker->earlyDeleteHelper() != nullptr and
+        not earlyDeleteHelpers_.empty()) {
+      // This can be achieved by removing the range of indices to
+      // branches of an EarlyDeleteHelper of the Worker holding the
+      // deleted module. Also decrease the count for each such branch.
+      auto const ptrdiff = deletedModuleWorker->earlyDeleteHelper() - &earlyDeleteHelpers_.front();
+      //edm::LogPrint("foo") << "ptrdiff " << ptrdiff;
+      std::vector<EarlyDeleteHelper>::iterator deletedModuleEarlyDeleteHelper = earlyDeleteHelpers_.begin() + ptrdiff;
+      auto const clearBegin = deletedModuleEarlyDeleteHelper->begin();
+      auto const clearEnd = deletedModuleEarlyDeleteHelper->end();
+      //edm::LogPrint("foo") << "clearBegin " << clearBegin << " clearEnd " << clearEnd;
+      for (auto it = clearBegin; it != clearEnd; ++it) {
+        --(earlyDeleteBranchToCount_[*it].count);
+        //edm::LogPrint("foo") << " i " << *it << " new count " << earlyDeleteBranchToCount_[*it].count;
+      }
+      auto const beginAddress = &earlyDeleteHelperToBranchIndicies_.front();
+      earlyDeleteHelperToBranchIndicies_.erase(earlyDeleteHelperToBranchIndicies_.begin() + (clearBegin - beginAddress),
+                                               earlyDeleteHelperToBranchIndicies_.begin() + (clearEnd - beginAddress));
+
+      // Clear the (begin, end) range from the EarlyDeleteHelper to
+      // make sure any calls to it won't do anything. In principle it
+      // would be better to remove it from earlyDeleteHelpers_, but
+      // that ould invalidate all the pointers to it distributed in
+      // Workers.
+      deletedModuleEarlyDeleteHelper->clearRange();
+
+      // Adjust the indices of all EarlyDeleteHelpers after the current one in the earlyDeleteHelpers_
+      auto const delta = clearEnd - clearBegin;
+      assert(delta > 0);
+      for (auto it = deletedModuleEarlyDeleteHelper + 1; it != earlyDeleteHelpers_.end(); ++it) {
+        bool const alreadyCleared = (it->begin() == it->end());
+        if (not alreadyCleared) {
+          it->shiftIndexPointers(delta);
+        }
+      }
+    }
+  }
 
   std::vector<ModuleDescription const*> StreamSchedule::getAllModuleDescriptions() const {
     std::vector<ModuleDescription const*> result;

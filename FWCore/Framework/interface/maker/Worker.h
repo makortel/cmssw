@@ -196,6 +196,7 @@ namespace edm {
     void setActivityRegistry(std::shared_ptr<ActivityRegistry> areg);
 
     void setEarlyDeleteHelper(EarlyDeleteHelper* iHelper);
+    EarlyDeleteHelper const* earlyDeleteHelper() const { return earlyDeleteHelper_.get(); }
 
     //Used to make EDGetToken work
     virtual void updateLookup(BranchType iBranchType, ProductResolverIndexHelper const&) = 0;

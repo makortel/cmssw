@@ -58,6 +58,9 @@ namespace edm {
     void appendIndex(unsigned int index);
     void shiftIndexPointers(unsigned int iShift);
 
+    // used for non-consumed unscheduled modules
+    void clearRange();
+
     unsigned int* begin() { return pBeginIndex_; }
     unsigned int* end() { return pEndIndex_; }
 

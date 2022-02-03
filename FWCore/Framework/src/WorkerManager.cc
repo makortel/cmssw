@@ -30,7 +30,7 @@ namespace edm {
         unscheduled_(*areg),
         lastSetupEventPrincipal_(nullptr) {}  // WorkerManager::WorkerManager
 
-  void WorkerManager::deleteModuleIfExists(std::string const& moduleLabel) {
+  Worker const* WorkerManager::deleteModuleIfExists(std::string const& moduleLabel) {
     auto worker = workerReg_.get(moduleLabel);
     if (worker != nullptr) {
       auto eraseBeg = std::remove(allWorkers_.begin(), allWorkers_.end(), worker);
@@ -38,6 +38,7 @@ namespace edm {
       unscheduled_.removeWorker(worker);
       workerReg_.deleteModule(moduleLabel);
     }
+    return worker;
   }
 
   Worker* WorkerManager::getWorker(ParameterSet& pset,

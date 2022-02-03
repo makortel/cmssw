@@ -44,7 +44,7 @@ namespace edm {
                   std::shared_ptr<ActivityRegistry> actReg,
                   ExceptionToActionTable const& actions);
 
-    void deleteModuleIfExists(std::string const& moduleLabel);
+    Worker const* deleteModuleIfExists(std::string const& moduleLabel);
 
     void addToUnscheduledWorkers(ParameterSet& pset,
                                  ProductRegistry& preg,

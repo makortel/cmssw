@@ -101,6 +101,7 @@ void EarlyDeleteHelper::shiftIndexPointers(unsigned int iShift) {
   pBeginIndex_ -= iShift;
 }
 
+void EarlyDeleteHelper::clearRange() { pEndIndex_ = pBeginIndex_; }
 //
 // const member functions
 //
