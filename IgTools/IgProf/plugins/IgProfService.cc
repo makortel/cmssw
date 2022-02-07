@@ -58,6 +58,11 @@ IgProfService::IgProfService(ParameterSet const &ps, ActivityRegistry &iRegistry
   atPreEvent_ = ps.getUntrackedParameter<std::string>("reportToFileAtPreEvent", atPreEvent_);
   atPostEvent_ = ps.getUntrackedParameter<std::string>("reportToFileAtPostEvent", atPostEvent_);
 
+  modules_ = ps.getUntrackedParameter<std::vector<std::string>>("reportModules", modules_);
+  std::sort(modules_.begin(), modules_.end());
+  atPreModuleEvent_ = ps.getUntrackedParameter<std::string>("reportToFileAtPreModuleEvent", atPreModuleEvent_);
+  atPostModuleEvent_ = ps.getUntrackedParameter<std::string>("reportToFileAtPostModuleEvent", atPostModuleEvent_);
+
   atPostEndLumi_ = ps.getUntrackedParameter<std::string>("reportToFileAtPostEndLumi", atPostEndLumi_);
   atPostEndRun_ = ps.getUntrackedParameter<std::string>("reportToFileAtPostEndRun", atPostEndRun_);
   atPostEndJob_ = ps.getUntrackedParameter<std::string>("reportToFileAtPostEndJob", atPostEndJob_);
@@ -72,6 +77,9 @@ IgProfService::IgProfService(ParameterSet const &ps, ActivityRegistry &iRegistry
 
   iRegistry.watchPreEvent(this, &IgProfService::preEvent);
   iRegistry.watchPostEvent(this, &IgProfService::postEvent);
+
+  iRegistry.watchPreModuleEvent(this, &IgProfService::preModuleEvent);
+  iRegistry.watchPreModuleEvent(this, &IgProfService::postModuleEvent);
 
   iRegistry.watchPostGlobalEndLumi(this, &IgProfService::postEndLumi);
   iRegistry.watchPostGlobalEndRun(this, &IgProfService::postEndRun);
@@ -106,9 +114,35 @@ void IgProfService::postEvent(StreamContext const &iStream) {
     makeDump(atPostEvent_);
 }
 
-void IgProfService::postEndLumi(GlobalContext const &) { makeDump(atPostEndLumi_); }
+void IgProfService::preModuleEvent(StreamContext const &iStream, ModuleCallingContext const& mcc) {
+  nevent_ = iStream.eventID().event();
+  if ((prescale_ > 0) && (nrecord_ >= mineventrecord_) && (((nrecord_ - mineventrecord_) % prescale_) == 0)) {
+    auto const& moduleLabel = mcc.moduleDescription()->moduleLabel();
+    if (std::binary_search(modules_.begin(), modules_.end(), moduleLabel)) {
+      makeDump(atPreModuleEvent_, moduleLabel);
+    }
+  }
+}
 
-void IgProfService::postEndRun(GlobalContext const &) { makeDump(atPostEndRun_); }
+void IgProfService::postModuleEvent(StreamContext const &iStream, ModuleCallingContext const& mcc) {
+  nevent_ = iStream.eventID().event();
+  if ((prescale_ > 0) && (nrecord_ >= mineventrecord_) && (((nrecord_ - mineventrecord_) % prescale_) == 0)) {
+    auto const& moduleLabel = mcc.moduleDescription()->moduleLabel();
+    if (std::binary_search(modules_.begin(), modules_.end(), moduleLabel)) {
+      makeDump(atPostModuleEvent_, moduleLabel);
+    }
+  }
+}
+
+void IgProfService::postEndLumi(GlobalContext const &gc) {
+  nlumi_ = gc.luminosityBlockID().luminosityBlock();
+  makeDump(atPostEndLumi_);
+}
+
+void IgProfService::postEndRun(GlobalContext const &gc) {
+  nrun_ = gc.luminosityBlockID().run();
+  makeDump(atPostEndRun_);
+}
 
 void IgProfService::postEndJob() { makeDump(atPostEndJob_); }
 
@@ -122,7 +156,7 @@ void IgProfService::postCloseFile(std::string const &) {
   makeDump(atPostCloseFile_);
 }
 
-void IgProfService::makeDump(const std::string &format) {
+void IgProfService::makeDump(const std::string &format, std::string_view moduleLabel) {
   if (!dump_ || format.empty())
     return;
 
@@ -133,6 +167,7 @@ void IgProfService::makeDump(const std::string &format) {
   final = replaceU64(final, "%L", nlumi_);
   final = replace(final, "%F", nfileopened_);
   final = replace(final, "%C", nfileclosed_);
+  final = replace(final, "%M", moduleLabel);
   dump_(final.c_str());
 }
 
@@ -163,5 +198,18 @@ std::string IgProfService::replaceU64(const std::string &s, const char *pat, uns
 
   return result;
 }
+
+std::string IgProfService::replace(const std::string &s, const char *pat, std::string_view val) {
+  size_t pos = 0;
+  size_t patlen = strlen(pat);
+  std::string result = s;
+  while ((pos = result.find(pat, pos)) != std::string::npos) {
+    result.replace(pos, patlen, val.data());
+    pos = pos - patlen + val.size();
+  }
+
+  return result;
+}
+
 
 DEFINE_FWK_SERVICE(IgProfService);
