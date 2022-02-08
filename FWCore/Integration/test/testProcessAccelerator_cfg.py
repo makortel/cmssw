@@ -31,8 +31,9 @@ class SwitchProducerTest(cms.SwitchProducer):
     def __init__(self, **kargs):
         super(SwitchProducerTest,self).__init__(
             dict(
-                test1 = lambda accelerators: ("test1" in accelerators, -10),
-                test2 = lambda accelerators: ("test2" in accelerators, -9),
+                cpu = cms.SwitchProducer.getCpu(),
+                test1 = lambda accelerators: ("test1" in accelerators, 2),
+                test2 = lambda accelerators: ("test2" in accelerators, 3),
             ), **kargs)
 
 process = cms.Process("PROD1")
@@ -46,6 +47,7 @@ if args.accelerators is not None:
 
 process.intProducer1 = cms.EDProducer("ManyIntProducer", ivalue = cms.int32(1))
 process.intProducer2 = cms.EDProducer("ManyIntProducer", ivalue = cms.int32(2))
+process.failIntProducer = cms.EDProducer("ManyIntProducer", ivalue = cms.int32(-1), throw = cms.untracked.bool(True))
 
 if args.enableTest2 and ("test2" in args.accelerators or "auto" in args.accelerators):
     process.intProducer1.throw = cms.untracked.bool(True)
@@ -53,6 +55,7 @@ else:
     process.intProducer2.throw = cms.untracked.bool(True)
 
 process.intProducer = SwitchProducerTest(
+    cpu = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("failIntProducer")),
     test1 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer1")),
     test2 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer2"))
 )
@@ -60,9 +63,10 @@ process.intProducer = SwitchProducerTest(
 process.intConsumer = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer"))
 
 process.t = cms.Task(
+    process.failIntProducer,
     process.intProducer1,
     process.intProducer2,
-    process.intProducer
+    process.intProducer,
 )
 process.p = cms.Path(
     process.intConsumer,
