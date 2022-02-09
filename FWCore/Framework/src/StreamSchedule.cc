@@ -324,6 +324,7 @@ namespace edm {
       size_t nextOpenIndex = 0;
       unsigned int* beginAddress = &(earlyDeleteHelperToBranchIndicies_.front());
       for (auto& branchAndWorker : branchToReadingWorker) {
+        edm::LogPrint("foo") << "del " << branchAndWorker.first << " mod " << branchAndWorker.second->description()->moduleLabel();
         if (lastBranchName != branchAndWorker.first) {
           //have to put back the period we removed earlier in order to get the proper name
           BranchID bid(branchAndWorker.first + ".");

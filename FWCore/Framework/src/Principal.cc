@@ -392,6 +392,7 @@ namespace edm {
   void Principal::deleteProduct(BranchID const& id) const {
     auto phb = getExistingProduct(id);
     assert(nullptr != phb);
+    edm::LogPrint("foo") << "Deleting early " << phb->branchDescription();
     phb->unsafe_deleteProduct();
   }
 
