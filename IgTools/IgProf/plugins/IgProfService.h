@@ -61,6 +61,7 @@ namespace edm {
       std::string atPostEvent_;
 
       std::vector<std::string> modules_;
+      std::vector<std::string> moduleTypes_;
       std::string atPreModuleEvent_;
       std::string atPostModuleEvent_;
 

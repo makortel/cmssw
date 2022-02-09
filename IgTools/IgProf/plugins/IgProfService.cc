@@ -59,7 +59,9 @@ IgProfService::IgProfService(ParameterSet const &ps, ActivityRegistry &iRegistry
   atPostEvent_ = ps.getUntrackedParameter<std::string>("reportToFileAtPostEvent", atPostEvent_);
 
   modules_ = ps.getUntrackedParameter<std::vector<std::string>>("reportModules", modules_);
+  moduleTypes_ = ps.getUntrackedParameter<std::vector<std::string>>("reportModuleTypes", moduleTypes_);
   std::sort(modules_.begin(), modules_.end());
+  std::sort(moduleTypes_.begin(), moduleTypes_.end());
   atPreModuleEvent_ = ps.getUntrackedParameter<std::string>("reportToFileAtPreModuleEvent", atPreModuleEvent_);
   atPostModuleEvent_ = ps.getUntrackedParameter<std::string>("reportToFileAtPostModuleEvent", atPostModuleEvent_);
 
@@ -78,8 +80,10 @@ IgProfService::IgProfService(ParameterSet const &ps, ActivityRegistry &iRegistry
   iRegistry.watchPreEvent(this, &IgProfService::preEvent);
   iRegistry.watchPostEvent(this, &IgProfService::postEvent);
 
-  iRegistry.watchPreModuleEvent(this, &IgProfService::preModuleEvent);
-  iRegistry.watchPreModuleEvent(this, &IgProfService::postModuleEvent);
+  if (not modules_.empty() or not moduleTypes_.empty()) {
+    iRegistry.watchPreModuleEvent(this, &IgProfService::preModuleEvent);
+    iRegistry.watchPostModuleEvent(this, &IgProfService::postModuleEvent);
+  }
 
   iRegistry.watchPostGlobalEndLumi(this, &IgProfService::postEndLumi);
   iRegistry.watchPostGlobalEndRun(this, &IgProfService::postEndRun);
@@ -118,7 +122,8 @@ void IgProfService::preModuleEvent(StreamContext const &iStream, ModuleCallingCo
   nevent_ = iStream.eventID().event();
   if ((prescale_ > 0) && (nrecord_ >= mineventrecord_) && (((nrecord_ - mineventrecord_) % prescale_) == 0)) {
     auto const& moduleLabel = mcc.moduleDescription()->moduleLabel();
-    if (std::binary_search(modules_.begin(), modules_.end(), moduleLabel)) {
+    auto const& moduleType = mcc.moduleDescription()->moduleName();
+    if (std::binary_search(modules_.begin(), modules_.end(), moduleLabel) or std::binary_search(moduleTypes_.begin(), moduleTypes_.end(), moduleType)) {
       makeDump(atPreModuleEvent_, moduleLabel);
     }
   }
@@ -128,7 +133,8 @@ void IgProfService::postModuleEvent(StreamContext const &iStream, ModuleCallingC
   nevent_ = iStream.eventID().event();
   if ((prescale_ > 0) && (nrecord_ >= mineventrecord_) && (((nrecord_ - mineventrecord_) % prescale_) == 0)) {
     auto const& moduleLabel = mcc.moduleDescription()->moduleLabel();
-    if (std::binary_search(modules_.begin(), modules_.end(), moduleLabel)) {
+    auto const& moduleType = mcc.moduleDescription()->moduleName();
+    if (std::binary_search(modules_.begin(), modules_.end(), moduleLabel) or std::binary_search(moduleTypes_.begin(), moduleTypes_.end(), moduleType)) {
       makeDump(atPostModuleEvent_, moduleLabel);
     }
   }
