@@ -215,7 +215,7 @@ class Looper(_ConfigureComponent,_TypedParameterizable):
 # Need to be a module-level function for the configuration with a
 # SwitchProducer to be pickleable.
 def _switch_cpu(accelerators):
-    return ("cpu" in accelerators, 1)
+    return (True, 1)
 
 class SwitchProducer(EDProducer):
     """This purpose class is to provide a switch of EDProducers for a single module/product label.
