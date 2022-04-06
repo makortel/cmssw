@@ -38,6 +38,11 @@ pushd ${LOCAL_TMP_DIR}
   echo "Test provenance of reversely merged output (Task)"
   cmsRun ${LOCAL_TEST_DIR}/${test}ProvenanceAnalyzer_cfg.py testSwitchProducerTaskMerge2.root || die "cmsRun ${test}ProvenanceAnalyzer_cfg.py Task2" $?
 
+
+  echo "*************************************************"
+  echo "SwitchProducer in a ConditionalTask"
+  cmsRun -n ${NUMTHREADS} ${LOCAL_TEST_DIR}/${test}ConditionalTask_cfg.py || die "cmsRun ${test}ConditionalTask_cfg.py 1" $?
+
   
   echo "*************************************************"
   echo "SwitchProducer in a Path"
