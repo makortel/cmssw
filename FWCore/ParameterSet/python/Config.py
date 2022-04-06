@@ -3614,6 +3614,10 @@ process.addSubProcess(cms.SubProcess(process = childProcess, SelectEvents = cms.
                                          test1 = EDProducer("Bar",
                                                             aa = int32(11),
                                                             bb = PSet(cc = int32(12))))
+            self.assertEqual(proc.sp.label_(), "sp")
+            self.assertEqual(proc.sp.test1.label_(), "sp@test1")
+            self.assertEqual(proc.sp.test2.label_(), "sp@test2")
+
             proc.a = EDProducer("A")
             proc.s = Sequence(proc.a + proc.sp)
             proc.t = Task(proc.a, proc.sp)
