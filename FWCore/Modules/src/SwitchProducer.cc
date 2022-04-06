@@ -24,6 +24,7 @@ namespace edm {
     auto const& moduleLabel = iConfig.getParameter<std::string>("@module_label");
     auto const& chosenLabel = iConfig.getUntrackedParameter<std::string>("@chosen_case");
     auto const& processName = iConfig.getUntrackedParameter<std::string>("@process_name");
+    edm::LogPrint("foo") << "SwitchProducer ctor for module " << moduleLabel;
     callWhenNewProductsRegistered([=](edm::BranchDescription const& iBranch) {
       if (iBranch.moduleLabel() == chosenLabel and iBranch.processName() == processName) {
         if (iBranch.branchType() != InEvent) {
@@ -31,6 +32,7 @@ namespace edm {
               << "SwitchProducer does not support non-event branches. Got " << iBranch.branchType()
               << " for SwitchProducer with label " << moduleLabel << " whose chosen case is " << chosenLabel << ".";
         }
+        edm::LogPrint("foo") << "SwitchProducer callWhenNewProductsRegistered for module " << moduleLabel;
 
         // With consumes, create the connection to the chosen case EDProducer for prefetching
         this->consumes(edm::TypeToGet{iBranch.unwrappedTypeID(), PRODUCT_TYPE},

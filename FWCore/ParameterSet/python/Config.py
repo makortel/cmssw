@@ -1479,6 +1479,7 @@ class Process(object):
             if serviceObject in nodeVisitor.services or not (serviceObject in processNodeVisitor.services):
                 serviceObject.insertInto(ServiceInjectorAdaptor(adaptor,services))
         adaptor.addVPSet(False,"services",services)
+        #print(processPSet.dump())
         return processPSet
 
     def validate(self):

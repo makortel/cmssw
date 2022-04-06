@@ -13,6 +13,8 @@
 #include "FWCore/Utilities/interface/Algorithms.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+
 namespace {
   const edm::ParentageID s_emptyParentage;
 }
@@ -164,12 +166,14 @@ namespace edm {
       commit_aux(putProducts(), previousParentageId);
     }
     auto sz = iShouldPut.size();
+    edm::LogWarning("foo") << "Event::commit_ sz " << sz << " nPut " << nPut;
     if (sz != 0 and sz != nPut) {
       //some were missed
       auto& p = provRecorder_.principal();
       for (auto index : iShouldPut) {
         auto resolver = p.getProductResolverByIndex(index);
         if (not resolver->productResolved()) {
+          edm::LogPrint("foo") << "Event::commit_ for branch " << resolver->branchDescription().moduleLabel();
           dynamic_cast<ProductPutterBase const*>(resolver)->putProduct(std::unique_ptr<WrapperBase>());
         }
       }

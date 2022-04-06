@@ -165,6 +165,7 @@ namespace edm {
     std::vector<std::string> const& pathNames = tns.getTrigPaths();
     std::vector<std::string> const& endPathNames = tns.getEndPaths();
 
+    edm::LogPrint("Foo") << "StreamSchedule constructor, filling workers";
     int trig_bitpos = 0;
     trig_paths_.reserve(pathNames.size());
     for (auto const& trig_name : pathNames) {
@@ -484,6 +485,7 @@ namespace edm {
               }
             }
             if (productFromConditionalModule) {
+              edm::LogPrint("foo") << "  tryToPlaceConditionalModules: alias to " << productModuleLabel;
               itFound = conditionalModules.find(productModuleLabel);
             }
           } else {
@@ -524,6 +526,7 @@ namespace edm {
                                                            prealloc,
                                                            processConfiguration);
             returnValue.insert(returnValue.end(), dependents.begin(), dependents.end());
+            edm::LogPrint("foo") << "  trytoPlaceConditionalModules: inserting " << productModuleLabel;
             returnValue.push_back(condWorker);
           }
         }
@@ -540,6 +543,7 @@ namespace edm {
                                    bool ignoreFilters,
                                    PathWorkers& out,
                                    std::vector<std::string> const& endPathNames) {
+    edm::LogPrint("foo") << "StreamSchedule::fillWorkers() for path " << pathName;
     vstring modnames = proc_pset.getParameter<vstring>(pathName);
     PathWorkers tmpworkers;
 
@@ -559,6 +563,13 @@ namespace edm {
       //the last entry should be ignored since it is required to be "@"
       conditionalmods = std::unordered_set<std::string>(
           std::make_move_iterator(itCondBegin + 1), std::make_move_iterator(modnames.begin() + modnames.size() - 1));
+      {
+        edm::LogPrint l("foo");
+        l << " conditionalmods";
+        for (auto const& m : conditionalmods) {
+          l << " " << m;
+        }
+      }
 
       for (auto const& cond : conditionalmods) {
         //force the creation of the conditional modules so alias check can work
@@ -587,6 +598,7 @@ namespace edm {
                 originalInstance = aliasPSet.getParameter<std::string>("fromProductInstance");
               }
 
+              edm::LogPrint("foo") << " alias " << alias << " -> " << mod;
               aliasMap.emplace(alias, AliasInfo{type, instance, originalInstance, mod});
             }
           }
@@ -596,6 +608,8 @@ namespace edm {
         //find branches created by the conditional modules
         for (auto const& prod : preg.productList()) {
           if (conditionalmods.find(prod.first.moduleLabel()) != conditionalmods.end()) {
+
+            edm::LogPrint("foo").format(" conditionalModsBranches {} -> {}", prod.first.moduleLabel(), prod.second.moduleLabel());
             conditionalModsBranches.emplace(prod.first.moduleLabel(), &prod.second);
           }
         }
@@ -663,6 +677,12 @@ namespace edm {
 
       tmpworkers.emplace_back(worker, filterAction, placeInPath, runConcurrently);
       ++placeInPath;
+    }
+
+    edm::LogPrint l("foo");
+    l << " modules";
+    for (auto const& wrk : tmpworkers) {
+      l << " " << wrk.getWorker()->description()->moduleLabel();
     }
 
     out.swap(tmpworkers);

@@ -147,6 +147,7 @@ namespace edm {
     // Therefore, on this first pass, skip current EDAliases.
     bool hasAliases = false;
     bool hasSwitchAliases = false;
+    edm::LogPrint("Foo") << "Principal constructor";
     for (auto const& prod : prodsList) {
       BranchDescription const& bd = prod.second;
       if (bd.branchType() == branchType_) {
@@ -202,6 +203,7 @@ namespace edm {
           // to prevent the switch-aliased-for EDProducers from
           // being run when the SwitchProducer is in a Path after a
           // failing EDFilter.
+          edm::LogPrint("foo") << "SwitchProducer module " << bd.moduleLabel() << " on demand? " << bd.onDemand();
           if (bd.onDemand()) {
             addSwitchAliasProduct(cbd);
           } else {

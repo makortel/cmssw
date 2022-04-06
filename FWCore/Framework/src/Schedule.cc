@@ -778,6 +778,11 @@ namespace edm {
     // ones of unscheduled workers to be on-demand.
     if (nUnscheduledModules > 0) {
       std::set<std::string> unscheduledModules(modulesToUse.begin(), modulesToUse.begin() + nUnscheduledModules);
+      edm::LogPrint l("foo");
+      l << "Schedule constructor, unscheduled modules: ";
+      for (auto const& m : unscheduledModules) {
+        l << m << " ";
+      }
       preg.setUnscheduledProducts(unscheduledModules);
     }
 
