@@ -81,7 +81,7 @@ def customiseCommon(process):
         if process.schedule is not None:
             process.schedule.append(process.Status_OnGPU)
 
-    # make the ScoutingCaloMuonOutput endpath compatible with using Tasks in the Scouting paths
+    # make the ScoutingCaloMuonOutput endpath compatible with using ConditionalTasks in the Scouting paths
     if 'hltOutputScoutingCaloMuon' in process.__dict__ and not 'hltPreScoutingCaloMuonOutputSmart' in process.__dict__:
         process.hltPreScoutingCaloMuonOutputSmart = cms.EDFilter( "TriggerResultsFilter",
             l1tIgnoreMaskAndPrescale = cms.bool( False ),
@@ -92,7 +92,7 @@ def customiseCommon(process):
         )
         insert_modules_after(process, process.hltPreScoutingCaloMuonOutput, process.hltPreScoutingCaloMuonOutputSmart)
 
-    # make the ScoutingPFOutput endpath compatible with using Tasks in the Scouting paths
+    # make the ScoutingPFOutput endpath compatible with using ConditionalTasks in the Scouting paths
     if 'hltOutputScoutingPF' in process.__dict__ and not 'hltPreScoutingPFOutputSmart' in process.__dict__:
         process.hltPreScoutingPFOutputSmart = cms.EDFilter( "TriggerResultsFilter",
             l1tIgnoreMaskAndPrescale = cms.bool( False ),
@@ -257,7 +257,7 @@ def customisePixelLocalReconstruction(process):
     # Tasks and Sequences
 
     if 'HLTDoLocalPixelTask' not in process.__dict__:
-        process.HLTDoLocalPixelTask = cms.Task(
+        process.HLTDoLocalPixelTask = cms.ConditionalTask(
             process.hltOnlineBeamSpotToCUDA,   # transfer the beamspot to the gpu
             process.hltSiPixelClustersCUDA,    # reconstruct the pixel digis and clusters on the gpu
             process.hltSiPixelRecHitsCUDA,     # reconstruct the pixel rechits on the gpu
@@ -272,8 +272,8 @@ def customisePixelLocalReconstruction(process):
             process.hltSiPixelRecHits,         # SwitchProducer wrapping the legacy pixel rechit producer or the transfer of the pixel rechits to the host and the conversion from SoA
         )
 
-    elif not isinstance(process.HLTDoLocalPixelTask, cms.Task):
-        raise Exception('unsupported configuration: "process.HLTDoLocalPixelTask" already exists, but it is not a Task')
+    elif not isinstance(process.HLTDoLocalPixelTask, cms.ConditionalTask):
+        raise Exception('unsupported configuration: "process.HLTDoLocalPixelTask" already exists, but it is not a ConditionalTask')
 
     # redefine HLTDoLocalPixelSequence (it was emptied at the start of this function)
     process.HLTDoLocalPixelSequence = cms.Sequence(process.HLTDoLocalPixelTask)
@@ -409,15 +409,15 @@ def customisePixelTrackReconstruction(process):
     # Tasks and Sequences
 
     if 'HLTRecoPixelTracksTask' not in process.__dict__:
-        process.HLTRecoPixelTracksTask = cms.Task(
+        process.HLTRecoPixelTracksTask = cms.ConditionalTask(
             process.hltPixelTracksTrackingRegions,         # from the original sequence
             process.hltPixelTracksCUDA,                    # pixel ntuplets on gpu, in SoA format
             process.hltPixelTracksSoA,                     # pixel ntuplets on cpu, in SoA format
             process.hltPixelTracks,                        # pixel tracks on cpu, in legacy format
         )
 
-    elif not isinstance(process.HLTRecoPixelTracksTask, cms.Task):
-        raise Exception('unsupported configuration: "process.HLTRecoPixelTracksTask" already exists, but it is not a Task')
+    elif not isinstance(process.HLTRecoPixelTracksTask, cms.ConditionalTask):
+        raise Exception('unsupported configuration: "process.HLTRecoPixelTracksTask" already exists, but it is not a ConditionalTask')
 
     # redefine HLTRecoPixelTracksSequence (it was emptied at the start of this function)
     process.HLTRecoPixelTracksSequence = cms.Sequence(process.HLTRecoPixelTracksTask)
@@ -425,7 +425,7 @@ def customisePixelTrackReconstruction(process):
     if hasHLTPixelVertexReco:
 
         if 'HLTRecopixelvertexingTask' not in process.__dict__:
-            process.HLTRecopixelvertexingTask = cms.Task(
+            process.HLTRecopixelvertexingTask = cms.ConditionalTask(
                 process.HLTRecoPixelTracksTask,
                 process.hltPixelVerticesCUDA,              # pixel vertices on gpu, in SoA format
                 process.hltPixelVerticesSoA,               # pixel vertices on cpu, in SoA format
@@ -433,8 +433,8 @@ def customisePixelTrackReconstruction(process):
                 process.hltTrimmedPixelVertices,           # from the original sequence
             )
 
-        elif not isinstance(process.HLTRecopixelvertexingTask, cms.Task):
-            raise Exception('unsupported configuration: "process.HLTRecopixelvertexingTask" already exists, but it is not a Task')
+        elif not isinstance(process.HLTRecopixelvertexingTask, cms.ConditionalTask):
+            raise Exception('unsupported configuration: "process.HLTRecopixelvertexingTask" already exists, but it is not a ConditionalTask')
 
         # redefine HLTRecopixelvertexingSequence (it was emptied at the start of this function)
         process.HLTRecopixelvertexingSequence = cms.Sequence(
@@ -631,7 +631,7 @@ def customiseEcalLocalReconstruction(process):
     # Tasks and Sequences
 
     if 'HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask' not in process.__dict__:
-        process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask = cms.Task(
+        process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask = cms.ConditionalTask(
             process.hltEcalDigisGPU,             # unpack ECAL digis on gpu
             process.hltEcalDigisLegacy,          # legacy producer, referenced in the SwitchProducer
             process.hltEcalDigis,                # SwitchProducer
@@ -644,8 +644,8 @@ def customiseEcalLocalReconstruction(process):
             process.hltEcalRecHit,               # legacy producer
         )
 
-    elif not isinstance(process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask, cms.Task):
-        raise Exception('unsupported configuration: "process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask" already exists, but it is not a Task')
+    elif not isinstance(process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask, cms.ConditionalTask):
+        raise Exception('unsupported configuration: "process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask" already exists, but it is not a ConditionalTask')
 
     # redefine HLTDoFullUnpackingEgammaEcalWithoutPreshowerSequence (it was emptied at the start of this function)
     process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerSequence = cms.Sequence(
@@ -655,25 +655,25 @@ def customiseEcalLocalReconstruction(process):
     if hasHLTEcalPreshowerSeq:
 
         if 'HLTPreshowerTask' not in process.__dict__:
-            process.HLTPreshowerTask = cms.Task(
+            process.HLTPreshowerTask = cms.ConditionalTask(
                 process.hltEcalPreshowerDigis,   # unpack ECAL preshower digis on the host
                 process.hltEcalPreshowerRecHit,  # build ECAL preshower rechits on the host
             )
 
-        elif not isinstance(process.HLTPreshowerTask, cms.Task):
-            raise Exception('unsupported configuration: "process.HLTPreshowerTask" already exists, but it is not a Task')
+        elif not isinstance(process.HLTPreshowerTask, cms.ConditionalTask):
+            raise Exception('unsupported configuration: "process.HLTPreshowerTask" already exists, but it is not a ConditionalTask')
 
         # redefine HLTPreshowerSequence (it was emptied at the start of this function)
         process.HLTPreshowerSequence = cms.Sequence(process.HLTPreshowerTask)
 
         if 'HLTDoFullUnpackingEgammaEcalTask' not in process.__dict__:
-            process.HLTDoFullUnpackingEgammaEcalTask = cms.Task(
+            process.HLTDoFullUnpackingEgammaEcalTask = cms.ConditionalTask(
                 process.HLTDoFullUnpackingEgammaEcalWithoutPreshowerTask,
                 process.HLTPreshowerTask,
             )
 
-        elif not isinstance(process.HLTDoFullUnpackingEgammaEcalTask, cms.Task):
-            raise Exception('unsupported configuration: "process.HLTDoFullUnpackingEgammaEcalTask" already exists, but it is not a Task')
+        elif not isinstance(process.HLTDoFullUnpackingEgammaEcalTask, cms.ConditionalTask):
+            raise Exception('unsupported configuration: "process.HLTDoFullUnpackingEgammaEcalTask" already exists, but it is not a ConditionalTask')
 
         # redefine sequences (they were emptied at the start of this function)
         process.HLTDoFullUnpackingEgammaEcalSequence = cms.Sequence(process.HLTDoFullUnpackingEgammaEcalTask)
@@ -776,7 +776,7 @@ def customiseHcalLocalReconstruction(process):
 
     if hasHLTDoLocalHcalSeq:
         if 'HLTDoLocalHcalTask' not in process.__dict__:
-            process.HLTDoLocalHcalTask = cms.Task(
+            process.HLTDoLocalHcalTask = cms.ConditionalTask(
                 process.hltHcalDigis,       # legacy producer, unpack HCAL digis on cpu
                 process.hltHcalDigisGPU,    # copy to gpu and convert to SoA format
                 process.hltHbherecoGPU,     # run the HCAL local reconstruction (including Method 0 and MAHI) on gpu
@@ -787,14 +787,14 @@ def customiseHcalLocalReconstruction(process):
                 process.hltHoreco           # legacy producer
             )
 
-        elif not isinstance(process.HLTDoLocalHcalTask, cms.Task):
-            raise Exception('unsupported configuration: "process.HLTDoLocalHcalTask" already exists, but it is not a Task')
+        elif not isinstance(process.HLTDoLocalHcalTask, cms.ConditionalTask):
+            raise Exception('unsupported configuration: "process.HLTDoLocalHcalTask" already exists, but it is not a ConditionalTask')
 
         # redefine HLTDoLocalHcalSequence (it was emptied at the start of this function)
         process.HLTDoLocalHcalSequence = cms.Sequence(process.HLTDoLocalHcalTask)
 
     if 'HLTStoppedHSCPLocalHcalRecoTask' not in process.__dict__:
-        process.HLTStoppedHSCPLocalHcalRecoTask = cms.Task(
+        process.HLTStoppedHSCPLocalHcalRecoTask = cms.ConditionalTask(
             process.hltHcalDigis,           # legacy producer, unpack HCAL digis on cpu
             process.hltHcalDigisGPU,        # copy to gpu and convert to SoA format
             process.hltHbherecoGPU,         # run the HCAL local reconstruction (including Method 0 and MAHI) on gpu
@@ -802,8 +802,8 @@ def customiseHcalLocalReconstruction(process):
             process.hltHbhereco             # SwitchProducer between the legacy producer and the copy from gpu with conversion
         )
 
-    elif not isinstance(process.HLTStoppedHSCPLocalHcalRecoTask, cms.Task):
-        raise Exception('unsupported configuration: "process.HLTStoppedHSCPLocalHcalRecoTask" already exists, but it is not a Task')
+    elif not isinstance(process.HLTStoppedHSCPLocalHcalRecoTask, cms.ConditionalTask):
+        raise Exception('unsupported configuration: "process.HLTStoppedHSCPLocalHcalRecoTask" already exists, but it is not a ConditionalTask')
 
     # redefine HLTStoppedHSCPLocalHcalReco (it was emptied at the start of this function)
     process.HLTStoppedHSCPLocalHcalReco = cms.Sequence(process.HLTStoppedHSCPLocalHcalRecoTask)
