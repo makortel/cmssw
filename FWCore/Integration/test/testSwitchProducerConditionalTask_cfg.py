@@ -21,7 +21,7 @@ process.maxEvents = cms.untracked.PSet(
 )
 
 process.out = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string('testSwitchProducerTask%d.root' % (1 if enableTest2 else 2,)),
+    fileName = cms.untracked.string('testSwitchProducerConditionalTask%d.root' % (1 if enableTest2 else 2,)),
     outputCommands = cms.untracked.vstring(
         'keep *_intProducer_*_*',
         'keep *_intProducerOther_*_*',
@@ -70,9 +70,8 @@ process.intProducerDep1 = cms.EDProducer("AddIntsProducer", labels = cms.VInputT
 process.intProducerDep2 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer"))
 process.intProducerDep3 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer"))
 
-process.t = cms.Task(process.intProducer, process.intProducerOther, process.intProducerAlias, process.intProducerAlias2,
-                     process.intProducerDep1, process.intProducerDep2, process.intProducerDep3,
-                     process.intProducer1, process.intProducer2, process.intProducer3, process.intProducer4)
-process.p = cms.Path(process.t)
+process.ct = cms.ConditionalTask(process.intProducer, process.intProducerOther, process.intProducerAlias, process.intProducerAlias2,
+                                 process.intProducer1, process.intProducer2, process.intProducer3, process.intProducer4)
+process.p = cms.Path(process.intProducerDep1+process.intProducerDep2+process.intProducerDep3, process.ct)
 
 process.e = cms.EndPath(process.out)
