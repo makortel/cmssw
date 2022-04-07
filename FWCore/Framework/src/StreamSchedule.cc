@@ -396,6 +396,8 @@ namespace edm {
     return workerManager.getWorker(*modpset, preg, prealloc, processConfiguration, moduleLabel);
   }
 
+  static std::string prefix;
+
   std::vector<Worker*> StreamSchedule::tryToPlaceConditionalModules(
       Worker* worker,
       std::unordered_set<std::string>& conditionalModules,
@@ -408,11 +410,13 @@ namespace edm {
     std::vector<Worker*> returnValue;
     auto const& consumesInfo = worker->consumesInfo();
     auto moduleLabel = worker->description()->moduleLabel();
+    edm::LogPrint("foo") << prefix << "tryToPlaceConditionalModules for worker " << moduleLabel;
     using namespace productholderindexhelper;
     for (auto const& ci : consumesInfo) {
       if (not ci.skipCurrentProcess() and
           (ci.process().empty() or ci.process() == processConfiguration->processName())) {
         auto productModuleLabel = ci.label();
+        edm::LogPrint("foo") << prefix << " consuming " << productModuleLabel;
         if (productModuleLabel.empty()) {
           //this is a consumesMany request
           for (auto const& branch : conditionalModuleBranches) {
@@ -485,7 +489,7 @@ namespace edm {
               }
             }
             if (productFromConditionalModule) {
-              edm::LogPrint("foo") << "  tryToPlaceConditionalModules: alias to " << productModuleLabel;
+              edm::LogPrint("foo") << prefix << "  alias to " << productModuleLabel;
               itFound = conditionalModules.find(productModuleLabel);
             }
           } else {
@@ -517,6 +521,7 @@ namespace edm {
 
             conditionalModules.erase(itFound);
 
+            prefix += "  ";
             auto dependents = tryToPlaceConditionalModules(condWorker,
                                                            conditionalModules,
                                                            conditionalModuleBranches,
@@ -525,8 +530,9 @@ namespace edm {
                                                            preg,
                                                            prealloc,
                                                            processConfiguration);
+            prefix = prefix.substr(0, prefix.size()-2);
             returnValue.insert(returnValue.end(), dependents.begin(), dependents.end());
-            edm::LogPrint("foo") << "  trytoPlaceConditionalModules: inserting " << productModuleLabel;
+            edm::LogPrint("foo") << prefix << "  inserting " << productModuleLabel;
             returnValue.push_back(condWorker);
           }
         }
@@ -609,8 +615,11 @@ namespace edm {
         for (auto const& prod : preg.productList()) {
           if (conditionalmods.find(prod.first.moduleLabel()) != conditionalmods.end()) {
 
-            edm::LogPrint("foo").format(" conditionalModsBranches {} -> {}", prod.first.moduleLabel(), prod.second.moduleLabel());
+            edm::LogPrint("foo").format(" conditionalModsBranches for {}", prod.first.moduleLabel());
             conditionalModsBranches.emplace(prod.first.moduleLabel(), &prod.second);
+          }
+          if (prod.second.isSwitchAlias()) {
+            edm::LogPrint("foo").format(" switchAlias {} -> {}", prod.first.moduleLabel(), prod.second.switchAliasModuleLabel());
           }
         }
       }
@@ -668,6 +677,7 @@ namespace edm {
         runConcurrently = false;
       }
 
+      prefix = "  ";
       auto condModules = tryToPlaceConditionalModules(
           worker, conditionalmods, conditionalModsBranches, aliasMap, proc_pset, preg, prealloc, processConfiguration);
       for (auto condMod : condModules) {
