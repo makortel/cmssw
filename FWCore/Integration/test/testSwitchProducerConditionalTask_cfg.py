@@ -70,8 +70,19 @@ process.intProducerDep1 = cms.EDProducer("AddIntsProducer", labels = cms.VInputT
 process.intProducerDep2 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer"))
 process.intProducerDep3 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer"))
 
+# Test SwitchProducer depending on SwitchProducer that is an alias
+process.intProducerAliasDepSwitch = SwitchProducerTest(
+    test1 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducerAlias")),
+    test2 = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducerAlias")),
+)
+process.intProducerAliasDepSwitchDep = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducerAliasDepSwitch"))
+process.intProducer3Dep = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer3"))
+
 process.ct = cms.ConditionalTask(process.intProducer, process.intProducerOther, process.intProducerAlias, process.intProducerAlias2,
+                                 process.intProducerAliasDepSwitch,
                                  process.intProducer1, process.intProducer2, process.intProducer3, process.intProducer4)
-process.p = cms.Path(process.intProducerDep1+process.intProducerDep2+process.intProducerDep3, process.ct)
+process.p = cms.Path(process.intProducerDep1+process.intProducerDep2+process.intProducerDep3 +
+                     process.intProducerAliasDepSwitchDep+process.intProducer3Dep,
+                     process.ct)
 
 process.e = cms.EndPath(process.out)
