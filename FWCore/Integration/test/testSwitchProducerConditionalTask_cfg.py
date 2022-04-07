@@ -79,10 +79,11 @@ process.intProducerAliasDepSwitchDep = cms.EDProducer("AddIntsProducer", labels 
 process.intProducer3Dep = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag("intProducer3"))
 
 process.ct = cms.ConditionalTask(process.intProducer, process.intProducerOther, process.intProducerAlias, process.intProducerAlias2,
-                                 process.intProducerAliasDepSwitch,
+#                                 process.intProducerAliasDepSwitch,
                                  process.intProducer1, process.intProducer2, process.intProducer3, process.intProducer4)
 process.p = cms.Path(process.intProducerDep1+process.intProducerDep2+process.intProducerDep3 +
-                     process.intProducerAliasDepSwitchDep+process.intProducer3Dep,
+#                     process.intProducerAliasDepSwitchDep+process.intProducer3Dep,
+                     process.intProducerAlias+process.intProducer3Dep,
                      process.ct)
 
 process.e = cms.EndPath(process.out)
