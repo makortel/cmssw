@@ -85,7 +85,7 @@ namespace edm {
 
   namespace detail {
     void processEDAliases(std::vector<std::string> const& aliasNamesToProcess,
-                          std::set<std::string> const& aliasModulesToProcess,
+                          std::unordered_set<std::string> const& aliasModulesToProcess,
                           ParameterSet const& proc_pset,
                           std::string const& processName,
                           ProductRegistry& preg) {

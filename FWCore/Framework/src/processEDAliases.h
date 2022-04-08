@@ -4,7 +4,7 @@
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include <set>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
@@ -18,7 +18,7 @@ namespace edm::detail {
    * aliasModulesToProcess are processed.
    */
   void processEDAliases(std::vector<std::string> const& aliasNamesToProcess,
-                        std::set<std::string> const& aliasModulesToProcess,
+                        std::unordered_set<std::string> const& aliasModulesToProcess,
                         ParameterSet const& proc_pset,
                         std::string const& processName,
                         ProductRegistry& preg);
