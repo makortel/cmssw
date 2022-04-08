@@ -612,11 +612,11 @@ namespace edm {
       }
       //find SwitchProducers whose chosen case is an alias
       {
-        auto all_modules = proc_pset.getParameter<std::vector<std::string>>("@all_modules");
+        auto const& all_modules = proc_pset.getParameter<std::vector<std::string>>("@all_modules");
         for (auto const& module : all_modules) {
-          auto mod_pset = proc_pset.getParameter<edm::ParameterSet>(module);
+          auto const& mod_pset = proc_pset.getParameter<edm::ParameterSet>(module);
           if (mod_pset.getParameter<std::string>("@module_type") == "SwitchProducer") {
-            auto chosen_case = mod_pset.getUntrackedParameter<std::string>("@chosen_case");
+            auto const& chosen_case = mod_pset.getUntrackedParameter<std::string>("@chosen_case");
             auto range = aliasMap.equal_range(chosen_case);
             for (auto it = range.first; it != range.second; ++it) {
               edm::LogPrint("foo").format(" switch alias {} -> {}", module, it->second.originalModuleLabel);
