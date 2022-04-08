@@ -337,6 +337,9 @@ namespace edm {
       for (auto const& aliasEntry : aliasMap) {
         ProductRegistry::ProductList::const_iterator it = preg.productList().find(aliasEntry.first);
         assert(it != preg.productList().end());
+        edm::LogPrint("foo").format("Schedule.cc:processEDAliases(): adding alias {} -> {}",
+                                    aliasEntry.second.moduleLabel(),
+                                    it->second.moduleLabel());
         preg.addLabelAlias(it->second, aliasEntry.second.moduleLabel(), aliasEntry.second.productInstanceName());
       }
     }
