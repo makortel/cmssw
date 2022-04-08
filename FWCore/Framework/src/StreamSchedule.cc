@@ -530,7 +530,7 @@ namespace edm {
                                                            preg,
                                                            prealloc,
                                                            processConfiguration);
-            prefix = prefix.substr(0, prefix.size()-2);
+            prefix = prefix.substr(0, prefix.size() - 2);
             returnValue.insert(returnValue.end(), dependents.begin(), dependents.end());
             edm::LogPrint("foo") << prefix << "  inserting " << productModuleLabel;
             returnValue.push_back(condWorker);
@@ -629,12 +629,12 @@ namespace edm {
         //find branches created by the conditional modules
         for (auto const& prod : preg.productList()) {
           if (conditionalmods.find(prod.first.moduleLabel()) != conditionalmods.end()) {
-
             edm::LogPrint("foo").format(" conditionalModsBranches for {}", prod.first.moduleLabel());
             conditionalModsBranches.emplace(prod.first.moduleLabel(), &prod.second);
           }
           if (prod.second.isSwitchAlias()) {
-            edm::LogPrint("foo").format(" switchAlias {} -> {}", prod.first.moduleLabel(), prod.second.switchAliasModuleLabel());
+            edm::LogPrint("foo").format(
+                " switchAlias {} -> {}", prod.first.moduleLabel(), prod.second.switchAliasModuleLabel());
           }
         }
       }
