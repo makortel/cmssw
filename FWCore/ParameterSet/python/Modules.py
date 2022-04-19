@@ -583,6 +583,11 @@ if __name__ == "__main__":
             del sp.test1
             sp.test1 = EDProducer("Wilma")
             self.assertEqual(sp.test1.label_(), "sp@test1")
+            sp.setLabel(None)
+            sp.setLabel("other")
+            self.assertEqual(sp.label_(), "other")
+            self.assertEqual(sp.test1.label_(), "other@test1")
+            self.assertEqual(sp.test2.label_(), "other@test2")
 
             # Case decision
             accelerators = ["test1", "test2", "test3"]
