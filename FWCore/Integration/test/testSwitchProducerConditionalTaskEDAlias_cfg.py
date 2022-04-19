@@ -16,9 +16,7 @@ process.source = cms.Source("EmptySource")
 if enableTest2:
     process.source.firstLuminosityBlock = cms.untracked.uint32(2)
 
-process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(3)
-)
+process.maxEvents.input = 3
 
 process.out = cms.OutputModule("PoolOutputModule",
     fileName = cms.untracked.string('testSwitchProducerConditionalTaskEDAlias%d.root' % (1 if enableTest2 else 2,)),
