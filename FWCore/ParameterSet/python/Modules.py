@@ -254,6 +254,8 @@ class SwitchProducer(EDProducer):
 
     def setLabel(self, label):
         super().setLabel(label)
+        # SwitchProducer owns the contained modules, and therefore
+        # need to set / unset the label for them explicitly here
         for case in self.parameterNames_():
             producer = self.__dict__[case]
             producer.setLabel(self.caseLabel_(label, case) if label is not None else None)
