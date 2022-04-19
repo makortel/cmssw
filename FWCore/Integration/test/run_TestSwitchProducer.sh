@@ -4,6 +4,8 @@ test=testSwitchProducer
 
 function die { echo Failure $1: status $2 ; exit $2 ; }
 
+# Running on multiple threads and streams to test any behavior that
+# occurs when there are many of them
 NUMTHREADS=4
 
 pushd ${LOCAL_TMP_DIR}
