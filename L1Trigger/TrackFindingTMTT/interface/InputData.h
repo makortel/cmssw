@@ -1,12 +1,10 @@
 #ifndef L1Trigger_TrackFindingTMTT_InputData_h
 #define L1Trigger_TrackFindingTMTT_InputData_h
 
-#include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "L1Trigger/TrackFindingTMTT/interface/TP.h"
 #include "L1Trigger/TrackFindingTMTT/interface/TrackerModule.h"
 #include "L1Trigger/TrackFindingTMTT/interface/Stub.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Utilities/interface/InputTag.h"
 #include <list>
 
 namespace tmtt {
