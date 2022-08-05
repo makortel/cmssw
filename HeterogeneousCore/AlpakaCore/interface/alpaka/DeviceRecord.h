@@ -1,0 +1,92 @@
+#ifndef HeterogeneousCore_AlpakaCore_interface_alpaka_DeviceRecord_h
+#define HeterogeneousCore_AlpakaCore_interface_alpaka_DeviceRecord_h
+
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/ESTransientHandle.h"
+#include "FWCore/Utilities/interface/ESGetToken.h"
+#include "HeterogeneousCore/AlpakaCore/interface/QueueCache.h"
+#include "HeterogeneousCore/AlpakaCore/interface/alpaka/ESDeviceGetToken.h"
+#include "HeterogeneousCore/AlpakaCore/interface/alpaka/ESDeviceProduct.h"
+#include "HeterogeneousCore/AlpakaInterface/interface/devices.h"
+
+namespace ALPAKA_ACCELERATOR_NAMESPACE {
+  /**
+   * The DeviceRecord class template mimics the EventSetup Record
+   * classes, and provides access to ESProducts in the host memory
+   * space, and in the device memory space defined by the backend
+   * (i.e. ALPAKA_ACCELERATOR_NAMESPACE), that exist in the TRecord
+   * Record. The DeviceRecord also gives access to the Queue object
+   * the ESProducer should use to queue all the device operations.
+   *
+   * Access to device memory space products is synchronized properly.
+   *
+   * Note that not full interface of EventSetup Record is replicated
+   * here. If something important is missing, that can be added.
+   */
+  template <typename TRecord>
+  class DeviceRecord {
+  public:
+    // TODO: support for multiple devices will be added later
+    DeviceRecord(TRecord const& record)
+        : record_(record),
+          queue_(cms::alpakatools::getQueueCache<Queue>().get(cms::alpakatools::devices<Platform>().at(0))) {}
+
+    // Alpaka operations do not accept a temporary as an argument
+    // TODO: Returning non-const reference here is BAD
+    Queue& queue() const { return *queue_; }
+
+    // getHandle()
+
+    template <typename TProduct, typename TDepRecord>
+    edm::ESHandle<TProduct> getHandle(edm::ESGetToken<TProduct, TDepRecord> const& iToken) const {
+      return record_.getHandle(iToken);
+    }
+
+    template <typename TProduct, typename TDepRecord>
+    edm::ESHandle<TProduct> getHandle(ESDeviceGetToken<TProduct, TDepRecord> const& iToken) const {
+      auto handle = record_.getHandle(iToken.underlyingToken());
+      if (not handle) {
+        return edm::ESHandle<TProduct>(handle.whyFailedFactory());
+      }
+      return edm::ESHandle<TProduct>(&handle->get(), handle.description());
+    }
+
+    // getTransientHandle()
+
+    template <typename TProduct, typename TDepRecord>
+    edm::ESTransientHandle<TProduct> getTransientHandle(edm::ESGetToken<TProduct, TDepRecord> const& iToken) const {
+      return record_.getTransientHandle(iToken);
+    }
+
+    template <typename TProduct, typename TDepRecord>
+    edm::ESTransientHandle<TProduct> getTransientHandle(ESDeviceGetToken<TProduct, TDepRecord> const& iToken) const {
+      auto handle = record_.getTransientHandle(iToken.underlyingToken());
+      if (not handle) {
+        return edm::ESTransientHandle<TProduct>();
+      }
+      if (handle.failedToGet()) {
+        return edm::ESTransientHandle<TProduct>(handle.whyFailedFactory());
+      }
+      return edm::ESTransientHandle<TProduct>(&handle->get(), handle.description());
+    }
+
+    // get()
+
+    template <typename TProduct, typename TDepRecord>
+    TProduct const& get(edm::ESGetToken<TProduct, TDepRecord> const& iToken) const {
+      return record_.get(iToken);
+    }
+
+    template <typename TProduct, typename TDepRecord>
+    TProduct const& get(ESDeviceGetToken<TProduct, TDepRecord> const& iToken) const {
+      auto const& product = record_.get(iToken.underlyingToken());
+      return product.get();
+    }
+
+  private:
+    TRecord const& record_;
+    std::shared_ptr<Queue> queue_;
+  };
+}  // namespace ALPAKA_ACCELERATOR_NAMESPACE
+
+#endif
