@@ -24,8 +24,8 @@ public:
 
 private:
   float barycenter_ = 0;
-  cms_uint8_t width_ = 0;
   float avgCharge_ = 0;
+  cms_uint8_t width_ = 0;
   bool isSaturated_ = false;
 };
 #endif  // DataFormats_SiStripCluster_SiStripApproximateCluster_h
