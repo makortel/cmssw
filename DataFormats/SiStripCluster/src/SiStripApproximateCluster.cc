@@ -1,4 +1,7 @@
+#include <algorithm>
+
 #include "DataFormats/SiStripCluster/interface/SiStripApproximateCluster.h"
+#include "DataFormats/SiStripCluster/interface/SiStripCluster.h"
 
 SiStripApproximateCluster::SiStripApproximateCluster(const SiStripCluster& cluster, unsigned int maxNSat) {
   barycenter_ = cluster.barycenter();
