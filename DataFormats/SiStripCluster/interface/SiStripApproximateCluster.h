@@ -4,6 +4,12 @@
 #include "FWCore/Utilities/interface/typedefs.h"
 
 class SiStripCluster;
+
+/**
+ * This class is part of RAW data. It must be kept simple by using
+ * fundamental types only. Any modifications need to be made with
+ * care. Please consult core software group if in doubt.
+ */
 class SiStripApproximateCluster {
 public:
   SiStripApproximateCluster() {}
