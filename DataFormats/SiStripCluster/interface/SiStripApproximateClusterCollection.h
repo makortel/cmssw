@@ -1,6 +1,7 @@
 #ifndef DataFormats_SiStripCluster_SiStripApproximateClusterCollection_h
 #define DataFormats_SiStripCluster_SiStripApproximateClusterCollection_h
 
+#include <iterator>
 #include <vector>
 
 #include "DataFormats/SiStripCluster/interface/SiStripApproximateCluster.h"
@@ -17,13 +18,18 @@ public:
   // Helper classes to make creation and iteration easier
   class Filler {
   public:
-    void push_back(SiStripApproximateCluster const& cluster) { clusters_.push_back(cluster); }
+    void push_back(SiStripApproximateCluster const& cluster) {
+      clusters_.push_back(cluster);
+      ++offsetToEnd_;
+    }
 
   private:
     friend SiStripApproximateClusterCollection;
-    Filler(std::vector<SiStripApproximateCluster>& clusters) : clusters_(clusters) {}
+    Filler(std::vector<SiStripApproximateCluster>& clusters, unsigned short& offsetToEnd)
+        : clusters_(clusters), offsetToEnd_(offsetToEnd) {}
 
     std::vector<SiStripApproximateCluster>& clusters_;
+    unsigned short& offsetToEnd_;
   };
 
   class const_iterator;
@@ -31,36 +37,33 @@ public:
   public:
     using const_iterator = std::vector<SiStripApproximateCluster>::const_iterator;
 
-    unsigned int id() const { return coll_->detIds_[detIndex_]; }
+    unsigned int id() const { return id_; }
 
-    const_iterator begin() const { return coll_->clusters_.begin() + clusBegin_; }
+    const_iterator begin() const { return clusBegin_; }
     const_iterator cbegin() const { return begin(); }
-    const_iterator end() const { return coll_->clusters_.begin() + clusEnd_; }
+    const_iterator end() const { return clusEnd_; }
     const_iterator cend() const { return end(); }
 
   private:
     friend SiStripApproximateClusterCollection::const_iterator;
-    DetSet(SiStripApproximateClusterCollection const* coll, unsigned int detIndex)
-        : coll_(coll),
-          detIndex_(detIndex),
-          clusBegin_(coll_->beginIndices_[detIndex]),
-          clusEnd_(detIndex == coll_->beginIndices_.size() - 1 ? coll_->beginIndices_.size()
-                                                               : coll_->beginIndices_[detIndex + 1]) {}
+    DetSet(unsigned int id, const_iterator begin, const_iterator end) : id_(id), clusBegin_(begin), clusEnd_(end) {}
 
-    SiStripApproximateClusterCollection const* const coll_;
-    unsigned int const detIndex_;
-    unsigned int const clusBegin_;
-    unsigned int const clusEnd_;
+    unsigned int id_;
+    const_iterator clusBegin_;
+    const_iterator clusEnd_;
   };
 
   class const_iterator {
   public:
-    DetSet operator*() const { return DetSet(coll_, index_); }
+    DetSet operator*() const { return DetSet(coll_->detIds_[detIndex_], clusBegin_, clusEnd_); }
 
     const_iterator& operator++() {
-      ++index_;
-      if (index_ == coll_->detIds_.size()) {
+      ++detIndex_;
+      if (detIndex_ == coll_->detIds_.size()) {
         *this = const_iterator();
+      } else {
+        clusBegin_ = clusEnd_;
+        clusEnd_ = std::next(clusBegin_, coll_->offsetsToEnd_[detIndex_]);
       }
       return *this;
     }
@@ -71,7 +74,7 @@ public:
       return clone;
     }
 
-    bool operator==(const_iterator const& other) const { return coll_ == other.coll_ and index_ == other.index_; }
+    bool operator==(const_iterator const& other) const { return coll_ == other.coll_ and detIndex_ == other.detIndex_; }
     bool operator!=(const_iterator const& other) const { return not operator==(other); }
 
   private:
@@ -80,8 +83,12 @@ public:
     const_iterator() = default;
     const_iterator(SiStripApproximateClusterCollection const* coll) : coll_(coll) {}
 
+    using clusterIterator = std::vector<SiStripApproximateCluster>::const_iterator;
+
     SiStripApproximateClusterCollection const* coll_ = nullptr;
-    unsigned int index_ = 0;
+    unsigned int detIndex_ = 0;
+    clusterIterator clusBegin_;
+    clusterIterator clusEnd_;
   };
 
   // Actual public interface
@@ -97,11 +104,21 @@ public:
   const_iterator cend() const { return end(); }
 
 private:
-  // The detIds_ and beginIndices_ have one element for each Det. An
-  // element of beginIndices_ points to the first cluster of the Det
-  // in clusters_.
+  // DetID for the Det
   std::vector<unsigned int> detIds_;  // DetId for the Det
-  std::vector<unsigned int> beginIndices_;
+
+  // Offset to the *end* of the Det
+  // unsigned short is fine as a module can not have more than 65536
+  // clusters. But see note below for possible further evolution
+  std::vector<unsigned short> offsetsToEnd_;
+
+  // Note: if you would be sure that there would be no more than 2^7 =
+  // 128 clusters on a given SiStrip module, you could use the highest
+  // 7 bits of the DetID to store the offset (the Det and SubDet parts
+  // of the DetId practically hardcoded here). Looking at the SiStrip
+  // tracker DetId definition there is actually even more free space,
+  // 12 bits, which would give you space for 2^12 = 4096 clusters per
+  // module (which is already more than possible).
   std::vector<SiStripApproximateCluster> clusters_;
 };
 

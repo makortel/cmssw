@@ -30,7 +30,7 @@
   <version ClassVersion="3" checksum="2041370183"/>
  </class>
  <class name="SiStripApproximateClusterCollection" ClassVersion="3">
-  <version ClassVersion="3" checksum="3101417750"/>
+  <version ClassVersion="3" checksum="2560603199"/>
  </class>
 
  <class name="edmNew::DetSetVector<SiStripApproximateCluster>"/>

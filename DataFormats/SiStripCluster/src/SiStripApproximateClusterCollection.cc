@@ -2,12 +2,12 @@
 
 void SiStripApproximateClusterCollection::reserve(size_t dets, size_t clusters) {
   detIds_.reserve(dets);
-  beginIndices_.reserve(dets);
+  offsetsToEnd_.reserve(dets);
   clusters_.reserve(clusters);
 }
 
 SiStripApproximateClusterCollection::Filler SiStripApproximateClusterCollection::beginDet(unsigned int detId) {
   detIds_.push_back(detId);
-  beginIndices_.push_back(clusters_.size());
-  return Filler(clusters_);
+  offsetsToEnd_.push_back(0);  // updated in Filler()
+  return Filler(clusters_, offsetsToEnd_.back());
 }
