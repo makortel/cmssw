@@ -12,11 +12,6 @@ if '--' in argv:
     argv.remove("--")
 args, unknown = parser.parse_known_args(argv)
 
-# TODO: just a temporary mechanism until we get something better that
-# works also for ES modules. Absolutely NOT for wider use.
-def setToCUDA(m):
-    m._TypedParameterizable__type = m._TypedParameterizable__type.replace("alpaka_serial_sync", "alpaka_cuda_async")
-
 process = cms.Process('TEST')
 
 process.source = cms.Source('EmptySource',
@@ -26,10 +21,8 @@ process.source = cms.Source('EmptySource',
 process.maxEvents.input = 10
 
 process.load('Configuration.StandardSequences.Accelerators_cff')
-process.AlpakaServiceSerialSync = cms.Service('AlpakaServiceSerialSync')
-if args.cuda:
-    process.AlpakaServiceSerialSync.enabled = cms.untracked.bool(False)
-    process.AlpakaServiceCudaAsync = cms.Service('AlpakaServiceCudaAsync')
+process.load("HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA_cfi")
+process.load("HeterogeneousCore.AlpakaCore.ProcessAcceleratorAlpaka_cfi")
 
 process.alpakaESRecordASource = cms.ESSource("EmptyESSource",
     recordName = cms.string('AlpakaESTestRecordA'),
@@ -51,15 +44,10 @@ process.esProducerA = cms.ESProducer("cms::alpakatest::TestESProducerA", value =
 process.esProducerB = cms.ESProducer("cms::alpakatest::TestESProducerB", value = cms.int32(314159))
 process.esProducerC = cms.ESProducer("cms::alpakatest::TestESProducerC", value = cms.int32(27))
 
-process.alpakaESProducerA = cms.ESProducer("alpaka_serial_sync::TestAlpakaESProducerA")
-process.alpakaESProducerB = cms.ESProducer("alpaka_serial_sync::TestAlpakaESProducerB")
-process.alpakaESProducerC = cms.ESProducer("alpaka_serial_sync::TestAlpakaESProducerC")
-process.alpakaESProducerD = cms.ESProducer("alpaka_serial_sync::TestAlpakaESProducerD")
-if args.cuda:
-    setToCUDA(process.alpakaESProducerA)
-    setToCUDA(process.alpakaESProducerB)
-    setToCUDA(process.alpakaESProducerC)
-    setToCUDA(process.alpakaESProducerD)
+process.alpakaESProducerA = cms.ESProducer("TestAlpakaESProducerA")
+process.alpakaESProducerB = cms.ESProducer("TestAlpakaESProducerB")
+process.alpakaESProducerC = cms.ESProducer("TestAlpakaESProducerC")
+process.alpakaESProducerD = cms.ESProducer("TestAlpakaESProducerD")
 
 process.intProduct = cms.EDProducer("IntProducer", ivalue = cms.int32(42))
 
