@@ -19,7 +19,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
    */
   class DeviceEventSetup {
   public:
-    DeviceEventSetup(edm::EventSetup const& iSetup) : setup_(iSetup) {}
+    DeviceEventSetup(edm::EventSetup const& iSetup, Device const& dev) : setup_(iSetup), device_(dev) {}
 
     // getData()
 
@@ -31,7 +31,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     template <typename T, typename R>
     T const& getData(ESDeviceGetToken<T, R> const& iToken) const {
       auto const& product = setup_.getData(iToken.underlyingToken());
-      return product.get();
+      return product.get(device_);
     }
 
     // getHandle()
@@ -47,7 +47,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       if (not handle) {
         return edm::ESHandle<T>(handle.whyFailedFactory());
       }
-      return edm::ESHandle<T>(&handle->get(), handle.description());
+      return edm::ESHandle<T>(&handle->get(device_), handle.description());
     }
 
     // getTransientHandle() is intentionally omitted for now. It makes
@@ -58,6 +58,10 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
   private:
     edm::EventSetup const& setup_;
+    // Taking a copy because alpaka::getDev() returns a temporary. To
+    // be removed after a proper treatment of multiple devices per
+    // backend is implemented in Eventsetup
+    Device const device_;
   };
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE
 

@@ -7,9 +7,10 @@
 #include "HeterogeneousCore/AlpakaCore/interface/QueueCache.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/ESDeviceGetToken.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/ESDeviceProduct.h"
-#include "HeterogeneousCore/AlpakaInterface/interface/devices.h"
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
+  class ESProducer;
+
   /**
    * The DeviceRecord class template mimics the EventSetup Record
    * classes, and provides access to ESProducts in the host memory
@@ -27,9 +28,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
   class DeviceRecord {
   public:
     // TODO: support for multiple devices will be added later
-    DeviceRecord(TRecord const& record)
-        : record_(record),
-          queue_(cms::alpakatools::getQueueCache<Queue>().get(cms::alpakatools::devices<Platform>().at(0))) {}
+    DeviceRecord(TRecord const& record, Device const& device)
+        : record_(record), queue_(cms::alpakatools::getQueueCache<Queue>().get(device)) {}
 
     // Alpaka operations do not accept a temporary as an argument
     // TODO: Returning non-const reference here is BAD
@@ -48,7 +48,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       if (not handle) {
         return edm::ESHandle<TProduct>(handle.whyFailedFactory());
       }
-      return edm::ESHandle<TProduct>(&handle->get(), handle.description());
+      return edm::ESHandle<TProduct>(&handle->get(alpaka::getDev(*queue_)), handle.description());
     }
 
     // getTransientHandle()
@@ -67,7 +67,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       if (handle.failedToGet()) {
         return edm::ESTransientHandle<TProduct>(handle.whyFailedFactory());
       }
-      return edm::ESTransientHandle<TProduct>(&handle->get(), handle.description());
+      return edm::ESTransientHandle<TProduct>(&handle->get(alpaka::getDev(*queue_)), handle.description());
     }
 
     // get()
@@ -80,10 +80,14 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     template <typename TProduct, typename TDepRecord>
     TProduct const& get(ESDeviceGetToken<TProduct, TDepRecord> const& iToken) const {
       auto const& product = record_.get(iToken.underlyingToken());
-      return product.get();
+      return product.get(alpaka::getDev(*queue_));
     }
 
   private:
+    friend ESProducer;
+
+    std::shared_ptr<Queue> queuePtr() const { return queue_; }
+
     TRecord const& record_;
     std::shared_ptr<Queue> queue_;
   };

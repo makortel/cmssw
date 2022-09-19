@@ -5,6 +5,7 @@
 #include "FWCore/Framework/interface/produce_helpers.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/DeviceRecord.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/ESDeviceProduct.h"
+#include "HeterogeneousCore/AlpakaInterface/interface/devices.h"
 
 #include <functional>
 
@@ -42,17 +43,48 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       using ReturnType = detail::ESDeviceProductWithStorage<TProduct, TReturn>;
       return Base::setWhatProduced(
           [iThis, iMethod](TRecord const& record) -> std::unique_ptr<ProductType> {
-            DeviceRecord<TRecord> const deviceRecord(record);
-            auto ret = std::invoke(iMethod, iThis, deviceRecord);
-            // TODO: to be changed asynchronous later
-            alpaka::wait(deviceRecord.queue());
-            if (ret) {
-              return std::make_unique<ReturnType>(std::move(ret));
+            // TODO: move the multiple device support into EventSetup system itself
+            auto const& devices = cms::alpakatools::devices<Platform>();
+            std::vector<std::shared_ptr<Queue>> queues;
+            queues.reserve(devices.size());
+            auto ret = std::make_unique<ReturnType>(devices.size());
+            bool allnull = true;
+            bool anynull = false;
+            for (auto const& dev : devices) {
+              DeviceRecord<TRecord> const deviceRecord(record, dev);
+              auto prod = std::invoke(iMethod, iThis, deviceRecord);
+              if (prod) {
+                allnull = false;
+                ret->insert(dev, std::move(prod));
+              } else {
+                anynull = true;
+              }
+              queues.push_back(deviceRecord.queuePtr());
             }
-            return nullptr;
+            // TODO: to be changed asynchronous later
+            for (auto& queuePtr : queues) {
+              alpaka::wait(*queuePtr);
+            }
+            if (allnull) {
+              return nullptr;
+            } else if (anynull) {
+              // TODO: throwing an exception if the iMethod() returns
+              // null for some of th devices of one backend is
+              // suboptimal. On the other hand, in the near term
+              // multiple devices per backend is useful only for
+              // private tests (not production), and the plan is to
+              // make the EventSetup system itself aware of multiple
+              // devies (or memory spaces). I hope this exception
+              // would be good-enough until we get there.
+              ESProducer::throwSomeNullException();
+            }
+            return ret;
           },
           label);
     }
+
+  private:
+    static void throwSomeNullException();
   };
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE
 
