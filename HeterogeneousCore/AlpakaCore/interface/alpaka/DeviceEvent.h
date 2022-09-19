@@ -53,6 +53,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       return metadata_->queue();
     }
 
+    // Note: this function is planned to be removed after a more
+    // proper treatment of multiple devices per backend is implemented
+    // in EventSetup
+    Device device() const { return alpaka::getDev(metadata_->queue()); }
+
     // get()
 
     template <typename T>

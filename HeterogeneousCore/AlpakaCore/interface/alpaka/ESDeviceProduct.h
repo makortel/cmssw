@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "HeterogeneousCore/AlpakaInterface/interface/config.h"
 
@@ -20,14 +21,16 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
   public:
     virtual ~ESDeviceProduct() {}
 
-    T const& get() const { return *cache_; }
+    T const& get(Device const& dev) const { return *cache_[alpaka::getNativeHandle(dev)]; }
 
   protected:
-    void setCache(T const* data) { cache_ = data; }
+    explicit ESDeviceProduct(size_t ndevices) : cache_(ndevices, nullptr) {}
+
+    void setCache(size_t idev, T const* data) { cache_[idev] = data; }
 
   private:
     // trading memory to avoid virtual function
-    T const* cache_;
+    std::vector<T const*> cache_;
   };
 
   namespace detail {
@@ -40,11 +43,19 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
      */
     template <typename TProduct, typename TStorage>
     class ESDeviceProductWithStorage : public ESDeviceProduct<TProduct> {
+      using Base = ESDeviceProduct<TProduct>;
+
     public:
-      ESDeviceProductWithStorage(TStorage data) : data_(std::move(data)) { this->setCache(&*data_); }
+      explicit ESDeviceProductWithStorage(size_t ndevices) : Base(ndevices), data_(ndevices) {}
+
+      void insert(Device const& dev, TStorage data) {
+        auto const idev = alpaka::getNativeHandle(dev);
+        data_[idev] = std::move(data);
+        this->setCache(idev, &*data_[idev]);
+      }
 
     private:
-      TStorage data_;
+      std::vector<TStorage> data_;
     };
   }  // namespace detail
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE
