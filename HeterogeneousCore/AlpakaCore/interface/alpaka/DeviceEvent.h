@@ -5,6 +5,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "FWCore/Utilities/interface/EDPutToken.h"
+#include "HeterogeneousCore/AlpakaCore/interface/alpaka/DeviceProductType.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDDeviceGetToken.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDDevicePutToken.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDMetadata.h"
@@ -68,16 +69,14 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     template <typename T>
     T const& get(EDDeviceGetToken<T> const& token) const {
       auto const& deviceProduct = constEvent_.get(token.underlyingToken());
-#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-      // all backends with synchronous Queue
-      return deviceProduct;
-#else
-      // all backends with asynchronous Queue
-      // try to re-use queue from deviceProduct if our queue has not yet been used
-      T const& product = deviceProduct.template getSynchronized<EDMetadata>(*metadata_, not queueUsed_);
-      queueUsed_ = true;
-      return product;
-#endif
+      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+        return deviceProduct;
+      } else {
+        // try to re-use queue from deviceProduct if our queue has not yet been used
+        T const& product = deviceProduct.template getSynchronized<EDMetadata>(*metadata_, not queueUsed_);
+        queueUsed_ = true;
+        return product;
+      }
     }
 
     // getHandle()
@@ -90,19 +89,17 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     template <typename T>
     edm::Handle<T> getHandle(EDDeviceGetToken<T> const& token) const {
       auto deviceProductHandle = constEvent_.getHandle(token.underlyingToken());
-#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-      // all backends with synchronous Queue
-      return deviceProductHandle;
-#else
-      // all backends with asynchronous Queue
-      if (not deviceProductHandle) {
-        return edm::Handle<T>(deviceProductHandle.whyFailedFactory());
+      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+        return deviceProductHandle;
+      } else {
+        if (not deviceProductHandle) {
+          return edm::Handle<T>(deviceProductHandle.whyFailedFactory());
+        }
+        // try to re-use queue from deviceProduct if our queue has not yet been used
+        T const& product = deviceProductHandle->getSynchronized(*metadata_, not queueUsed_);
+        queueUsed_ = true;
+        return edm::Handle<T>(&product, deviceProductHandle.provenance());
       }
-      // try to re-use queue from deviceProduct if our queue has not yet been used
-      T const& product = deviceProductHandle->getSynchronized(*metadata_, not queueUsed_);
-      queueUsed_ = true;
-      return edm::Handle<T>(&product, deviceProductHandle.provenance());
-#endif
     }
 
     // emplace()
@@ -116,13 +113,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     // The idea for Ref-like things in this domain differs from earlier Refs anyway
     template <typename T, typename... Args>
     void emplace(EDDevicePutToken<T> const& token, Args&&... args) {
-#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-      // all backends with synchronous Queue
-      event_->emplace(token.underlyingToken(), std::forward<Args>(args)...);
-#else
-      // all backends with asynchronous Queue
-      event_->emplace(token.underlyingToken(), metadata_, std::forward<Args>(args)...);
-#endif
+      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+        event_->emplace(token.underlyingToken(), std::forward<Args>(args)...);
+      } else {
+        event_->emplace(token.underlyingToken(), metadata_, std::forward<Args>(args)...);
+      }
     }
 
     // put()
@@ -134,13 +129,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
     template <typename T>
     void put(EDDevicePutToken<T> const& token, std::unique_ptr<T> product) {
-#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-      // all backends with synchronous Queue
-      event_->emplace(token.underlyingToken(), std::move(*product));
-#else
-      // all backends with asynchronous Queue
-      event_->emplace(token.underlyingToken(), metadata_, std::move(*product));
-#endif
+      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+        event_->emplace(token.underlyingToken(), std::move(*product));
+      } else {
+        event_->emplace(token.underlyingToken(), metadata_, std::move(*product));
+      }
     }
 
   private:

@@ -3,6 +3,7 @@
 
 #include "DataFormats/Common/interface/DeviceProduct.h"
 #include "FWCore/Utilities/interface/EDPutToken.h"
+#include "HeterogeneousCore/AlpakaCore/interface/alpaka/DeviceProductType.h"
 #include "HeterogeneousCore/AlpakaInterface/interface/config.h"
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
@@ -16,13 +17,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
    */
   template <typename TProduct>
   class EDDevicePutToken {
-#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-    // host synchronous backends can use TProduct directly
-    using ProductType = TProduct;
-#else
-    // all device and asynchronous backends need to be wrapped
-    using ProductType = edm::DeviceProduct<TProduct>;
-#endif
+    using ProductType = typename detail::DeviceProductType<TProduct>::type;
 
   public:
     constexpr EDDevicePutToken() noexcept = default;
