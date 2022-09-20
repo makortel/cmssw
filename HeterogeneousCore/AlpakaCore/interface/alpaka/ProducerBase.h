@@ -3,6 +3,8 @@
 
 #include "DataFormats/Common/interface/DeviceProduct.h"
 #include "FWCore/Framework/interface/moduleAbilities.h"
+#include "FWCore/Utilities/interface/EDPutToken.h"
+#include "FWCore/Utilities/interface/Transition.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDMetadataSentry.h"
 #include "HeterogeneousCore/AlpakaCore/interface/EventCache.h"
 #include "HeterogeneousCore/AlpakaCore/interface/QueueCache.h"
