@@ -64,6 +64,21 @@ namespace cms::alpakatools {
   template <typename T>
   constexpr bool is_queue_v = is_queue<T>::value;
 
+  // is_queue_blocking
+
+  template <typename T>
+  struct is_queue_blocking {
+    constexpr static bool value = false;
+  };
+
+  template <>
+  struct is_queue_blocking<alpaka::QueueCpuBlocking> {
+    constexpr static bool value = true;
+  };
+
+  template <typename T>
+  constexpr bool is_queue_blocking_v = is_queue_blocking<T>::value;
+
 }  // namespace cms::alpakatools
 
 #endif  // HeterogeneousCore_AlpakaInterface_interface_traits_h
