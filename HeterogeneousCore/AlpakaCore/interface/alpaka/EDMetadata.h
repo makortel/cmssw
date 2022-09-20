@@ -25,10 +25,17 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
    * EDMetadata is used as the Metadata class for
    * edm::DeviceProduct<T>, and is an implementation detail (not
    * visible to user code).
+   *
+   * TODO: What to do with device-synchronous backends? The data
+   * product needs to be wrapped into the edm::DeviceProduct, but the
+   * EDMetadata class used there does not need anything except "dummy"
+   * implementation of synchronize(). The question is clearly
+   * solvable, so maybe leave it to the time we would actually need
+   * one?
    */
 
 #ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-  // All backends with a synchronous queue
+  // Host backends with a synchronous queue
 
   class EDMetadata {
   public:
@@ -43,6 +50,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
   private:
     std::shared_ptr<Queue> queue_;
   };
+
+  // TODO: else if device backends with a synchronous queue
 
 #else
   // All backends with an asynchronous queue
