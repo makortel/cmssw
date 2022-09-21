@@ -1,9 +1,13 @@
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDMetadata.h"
 
-namespace ALPAKA_ACCELERATOR_NAMESPACE {
-#ifndef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-  EDMetadata::~EDMetadata() {
+template <typename TQueue>
+using enable_if_async_t =
+    std::enable_if_t<cms::alpakatools::is_queue_v<TQueue> and not cms::alpakatools::is_queue_blocking_v<TQueue>>;
+
+namespace cms::alpakatools {
+  template <typename TQueue>
+  EDMetadataImpl<TQueue, enable_if_async_t<TQueue>>::~EDMetadataImpl() {
     // Make sure that the production of the product in the GPU is
     // complete before destructing the product. This is to make sure
     // that the EDM stream does not move to the next event before all
@@ -20,7 +24,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }
   }
 
-  void EDMetadata::enqueueCallback(edm::WaitingTaskWithArenaHolder holder) {
+  template <typename TQueue>
+  void EDMetadataImpl<TQueue, enable_if_async_t<TQueue>>::enqueueCallback(edm::WaitingTaskWithArenaHolder holder) {
     alpaka::enqueue(*queue_, alpaka::HostOnlyTask([holder = std::move(holder)]() {
       // The functor is required to be const, but the original waitingTaskHolder_
       // needs to be notified...
@@ -28,7 +33,9 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }));
   }
 
-  void EDMetadata::synchronize(EDMetadata& consumer, bool tryReuseQueue) const {
+  template <typename TQueue>
+  void EDMetadataImpl<TQueue, enable_if_async_t<TQueue>>::synchronize(EDMetadataImpl& consumer,
+                                                                      bool tryReuseQueue) const {
     if (*queue_ == *consumer.queue_) {
       return;
     }
@@ -55,7 +62,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }
   }
 
-  std::shared_ptr<Queue> EDMetadata::tryReuseQueue_() const {
+  template <typename TQueue>
+  std::shared_ptr<TQueue> EDMetadataImpl<TQueue, enable_if_async_t<TQueue>>::tryReuseQueue_() const {
     bool expected = true;
     if (mayReuseQueue_.compare_exchange_strong(expected, false)) {
       // If the current thread is the one flipping the flag, it may
@@ -64,5 +72,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }
     return nullptr;
   }
+
+#ifdef ALPAKA_ACC_GPU_CUDA_ENABLED
+  template class cms::alpakatools::EDMetadataImpl<alpaka_cuda_async::Queue>;
 #endif
-}  // namespace ALPAKA_ACCELERATOR_NAMESPACE
+}  // namespace cms::alpakatools

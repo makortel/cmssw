@@ -3,12 +3,84 @@
 
 #include <atomic>
 #include <memory>
+#include <type_traits>
 
 #include <alpaka/alpaka.hpp>
 
 #include "FWCore/Concurrency/interface/WaitingTaskWithArenaHolder.h"
 #include "HeterogeneousCore/AlpakaInterface/interface/config.h"
+#include "HeterogeneousCore/AlpakaInterface/interface/traits.h"
 #include "HeterogeneousCore/AlpakaInterface/interface/HostOnlyTask.h"
+
+namespace cms::alpakatools {
+  template <typename TQueue, typename TSfinae = void>
+  class EDMetadataImpl;
+
+  // Host backends with a synchronous queue
+  template <typename TQueue>
+  class EDMetadataImpl<TQueue,
+                       std::enable_if_t<is_queue_v<TQueue> and is_queue_blocking_v<TQueue> and
+                                        std::is_same_v<alpaka::Dev<TQueue>, alpaka_common::DevHost>>> {
+  public:
+    using Queue = TQueue;
+
+    EDMetadataImpl(std::shared_ptr<Queue> queue) : queue_(std::move(queue)) {}
+
+    // Alpaka operations do not accept a temporary as an argument
+    // TODO: Returning non-const reference here is BAD
+    Queue& queue() const { return *queue_; }
+
+    void recordEvent() {}
+
+  private:
+    std::shared_ptr<Queue> queue_;
+  };
+
+  // TODO: device backends with a synchronous queue
+
+  // All backends with an asynchronous queue
+  template <typename TQueue>
+  class EDMetadataImpl<TQueue, std::enable_if_t<is_queue_v<TQueue> and not is_queue_blocking_v<TQueue>>> {
+  public:
+    using Queue = TQueue;
+    using Event = alpaka::Event<Queue>;
+
+    EDMetadataImpl(std::shared_ptr<Queue> queue, std::shared_ptr<Event> event)
+        : queue_(std::move(queue)), event_(std::move(event)) {}
+    ~EDMetadataImpl();
+
+    // Alpaka operations do not accept a temporary as an argument
+    // TODO: Returning non-const reference here is BAD
+    Queue& queue() const { return *queue_; }
+
+    void enqueueCallback(edm::WaitingTaskWithArenaHolder holder);
+
+    void recordEvent() { alpaka::enqueue(*queue_, *event_); }
+
+    /**
+     * Synchronizes 'consumer' metadata wrt. 'this' in the event product
+     */
+    void synchronize(EDMetadataImpl& consumer, bool tryReuseQueue) const;
+
+  private:
+    /**
+     * Returns a shared_ptr to the Queue if it can be reused, or a
+     * null shared_ptr if not
+     */
+    std::shared_ptr<Queue> tryReuseQueue_() const;
+
+    std::shared_ptr<Queue> queue_;
+    std::shared_ptr<Event> event_;
+    // This flag tells whether the Queue may be reused by a
+    // consumer or not. The goal is to have a "chain" of modules to
+    // queue their work to the same queue.
+    mutable std::atomic<bool> mayReuseQueue_ = true;
+  };
+
+#ifdef ALPAKA_ACC_GPU_CUDA_ENABLED
+  extern template class EDMetadataImpl<alpaka_cuda_async::Queue>;
+#endif
+}  // namespace cms::alpakatools
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
   /**
@@ -34,62 +106,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
    * one?
    */
 
-#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-  // Host backends with a synchronous queue
-
-  class EDMetadata {
-  public:
-    EDMetadata(std::shared_ptr<Queue> queue) : queue_(std::move(queue)) {}
-
-    // Alpaka operations do not accept a temporary as an argument
-    // TODO: Returning non-const reference here is BAD
-    Queue& queue() const { return *queue_; }
-
-    void recordEvent() {}
-
-  private:
-    std::shared_ptr<Queue> queue_;
-  };
-
-  // TODO: else if device backends with a synchronous queue
-
-#else
-  // All backends with an asynchronous queue
-
-  class EDMetadata {
-  public:
-    EDMetadata(std::shared_ptr<Queue> queue, std::shared_ptr<Event> event)
-        : queue_(std::move(queue)), event_(std::move(event)) {}
-    ~EDMetadata();
-
-    // Alpaka operations do not accept a temporary as an argument
-    // TODO: Returning non-const reference here is BAD
-    Queue& queue() const { return *queue_; }
-
-    void enqueueCallback(edm::WaitingTaskWithArenaHolder holder);
-
-    void recordEvent() { alpaka::enqueue(*queue_, *event_); }
-
-    /**
-     * Synchronizes 'consumer' metadata wrt. 'this' in the event product
-     */
-    void synchronize(EDMetadata& consumer, bool tryReuseQueue) const;
-
-  private:
-    /**
-     * Returns a shared_ptr to the Queue if it can be reused, or a
-     * null shared_ptr if not
-     */
-    std::shared_ptr<Queue> tryReuseQueue_() const;
-
-    std::shared_ptr<Queue> queue_;
-    std::shared_ptr<Event> event_;
-    // This flag tells whether the Queue may be reused by a
-    // consumer or not. The goal is to have a "chain" of modules to
-    // queue their work to the same queue.
-    mutable std::atomic<bool> mayReuseQueue_ = true;
-  };
-#endif
+  using EDMetadata = cms::alpakatools::EDMetadataImpl<Queue>;
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE
 
 #endif
