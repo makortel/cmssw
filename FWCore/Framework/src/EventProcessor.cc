@@ -40,6 +40,7 @@
 #include "FWCore/Framework/interface/ensureAvailableAccelerators.h"
 #include "FWCore/Framework/interface/globalTransitionAsync.h"
 #include "FWCore/Framework/interface/TriggerNamesService.h"
+#include "FWCore/Framework/interface/ModuleTypeResolverMakerFactory.h"
 #include "FWCore/Framework/src/SendSourceTerminationSignalIfException.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -108,6 +109,15 @@ namespace {
   private:
     edm::SerialTaskQueue& queue_;
   };
+
+  std::unique_ptr<edm::ModuleTypeResolverMaker> makeModuleTypeResolverMaker(edm::ParameterSet const& pset) {
+    auto const& name = pset.getUntrackedParameter<std::string>("@module_type_resolver");
+    if (name.empty()) {
+      return nullptr;
+    }
+    auto const& resolverPSet = pset.getUntrackedParameter<edm::ParameterSet>("@module_type_resolver_pset");
+    return edm::ModuleTypeResolverMakerFactory::get()->create(name, resolverPSet);
+  }
 }  // namespace
 
 namespace edm {
@@ -220,7 +230,8 @@ namespace edm {
         branchIDListHelper_(),
         serviceToken_(),
         input_(),
-        espController_(new eventsetup::EventSetupsController),
+        moduleTypeResolverMaker_(makeModuleTypeResolverMaker(*parameterSet)),
+        espController_(std::make_unique<eventsetup::EventSetupsController>(moduleTypeResolverMaker_.get())),
         esp_(),
         act_table_(),
         processConfiguration_(),
@@ -256,7 +267,8 @@ namespace edm {
         branchIDListHelper_(),
         serviceToken_(),
         input_(),
-        espController_(new eventsetup::EventSetupsController),
+        moduleTypeResolverMaker_(makeModuleTypeResolverMaker(*parameterSet)),
+        espController_(std::make_unique<eventsetup::EventSetupsController>(moduleTypeResolverMaker_.get())),
         esp_(),
         act_table_(),
         processConfiguration_(),
@@ -292,7 +304,8 @@ namespace edm {
         branchIDListHelper_(),
         serviceToken_(),
         input_(),
-        espController_(new eventsetup::EventSetupsController),
+        moduleTypeResolverMaker_(makeModuleTypeResolverMaker(*processDesc->getProcessPSet())),
+        espController_(std::make_unique<eventsetup::EventSetupsController>(moduleTypeResolverMaker_.get())),
         esp_(),
         act_table_(),
         processConfiguration_(),
