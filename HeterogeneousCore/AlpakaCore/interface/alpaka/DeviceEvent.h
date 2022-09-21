@@ -5,7 +5,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "FWCore/Utilities/interface/EDPutToken.h"
-#include "HeterogeneousCore/AlpakaCore/interface/alpaka/DeviceProductType.h"
+#include "HeterogeneousCore/AlpakaCore/interface/DeviceProductType.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDDeviceGetToken.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDDevicePutToken.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/EDMetadata.h"
@@ -69,7 +69,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     template <typename T>
     T const& get(EDDeviceGetToken<T> const& token) const {
       auto const& deviceProduct = constEvent_.get(token.underlyingToken());
-      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+      if constexpr (std::is_same_v<cms::alpakatools::DeviceProductType<T, Queue>, T>) {
         return deviceProduct;
       } else {
         // try to re-use queue from deviceProduct if our queue has not yet been used
@@ -89,7 +89,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     template <typename T>
     edm::Handle<T> getHandle(EDDeviceGetToken<T> const& token) const {
       auto deviceProductHandle = constEvent_.getHandle(token.underlyingToken());
-      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+      if constexpr (std::is_same_v<cms::alpakatools::DeviceProductType<T, Queue>, T>) {
         return deviceProductHandle;
       } else {
         if (not deviceProductHandle) {
@@ -113,7 +113,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     // The idea for Ref-like things in this domain differs from earlier Refs anyway
     template <typename T, typename... Args>
     void emplace(EDDevicePutToken<T> const& token, Args&&... args) {
-      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+      if constexpr (std::is_same_v<cms::alpakatools::DeviceProductType<T, Queue>, T>) {
         event_->emplace(token.underlyingToken(), std::forward<Args>(args)...);
       } else {
         event_->emplace(token.underlyingToken(), metadata_, std::forward<Args>(args)...);
@@ -129,7 +129,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
     template <typename T>
     void put(EDDevicePutToken<T> const& token, std::unique_ptr<T> product) {
-      if constexpr (std::is_same_v<typename detail::DeviceProductType<T>::type, T>) {
+      if constexpr (std::is_same_v<cms::alpakatools::DeviceProductType<T, Queue>, T>) {
         event_->emplace(token.underlyingToken(), std::move(*product));
       } else {
         event_->emplace(token.underlyingToken(), metadata_, std::move(*product));

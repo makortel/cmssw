@@ -3,7 +3,7 @@
 
 #include "DataFormats/Common/interface/DeviceProduct.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
-#include "HeterogeneousCore/AlpakaCore/interface/alpaka/DeviceProductType.h"
+#include "HeterogeneousCore/AlpakaCore/interface/DeviceProductType.h"
 #include "HeterogeneousCore/AlpakaInterface/interface/config.h"
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
@@ -24,7 +24,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
    */
   template <typename TProduct>
   class EDDeviceGetToken {
-    using ProductType = typename detail::DeviceProductType<TProduct>::type;
+    using ProductType = cms::alpakatools::DeviceProductType<TProduct, Queue>;
 
   public:
     constexpr EDDeviceGetToken() = default;
