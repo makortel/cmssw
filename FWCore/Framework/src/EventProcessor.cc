@@ -502,7 +502,8 @@ namespace edm {
           // initialize the Schedule
           ServiceRegistry::Operate operate(serviceToken_);
           auto const& tns = ServiceRegistry::instance().get<service::TriggerNamesService>();
-          madeModules = items.initModules(*parameterSet, tns, preallocations_, &processContext_);
+          madeModules =
+              items.initModules(*parameterSet, tns, preallocations_, &processContext_, moduleTypeResolverMaker_.get());
         });
 
         group.run([&, this, tempReg]() {
@@ -596,7 +597,8 @@ namespace edm {
                                    token,
                                    serviceregistry::kConfigurationOverrides,
                                    preallocations_,
-                                   &processContext_);
+                                   &processContext_,
+                                   moduleTypeResolverMaker_);
       }
     } catch (...) {
       //in case of an exception, make sure Services are available
