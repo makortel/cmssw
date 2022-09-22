@@ -2,6 +2,8 @@
 #define FWCore_Framework_test_TestTypeResolvers_h
 
 #include "FWCore/Framework/interface/ModuleTypeResolverBase.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/EDMException.h"
 
 #include <memory>
 #include <string>
@@ -46,6 +48,47 @@ namespace edm::test {
     ComplexTestTypeResolverMaker() = default;
     std::shared_ptr<ModuleTypeResolverBase const> makeResolver(edm::ParameterSet const&) const final {
       return std::make_shared<ComplexTestTypeResolver>();
+    }
+  };
+
+  class ConfigurableTestTypeResolver : public edm::ModuleTypeResolverBase {
+  public:
+    ConfigurableTestTypeResolver(std::string variant) : variant_(std::move(variant)) {}
+    std::pair<std::string, int> resolveType(std::string basename, int index) const final {
+      constexpr auto kGeneric = "generic::";
+      constexpr auto kOther = "edm::test::other::";
+      constexpr auto kCPU = "edm::test::cpu::";
+      if (index != kInitialIndex and index != kLastIndex) {
+        basename.replace(basename.find(kOther), strlen(kOther), kCPU);
+        return {basename, kLastIndex};
+      }
+      if (index == kInitialIndex and basename.find(kGeneric) != std::string::npos) {
+        if (not variant_.empty()) {
+          if (variant_ == "other") {
+            basename.replace(basename.find(kGeneric), strlen(kGeneric), kOther);
+          } else if (variant_ == "cpu") {
+            basename.replace(basename.find(kGeneric), strlen(kGeneric), kCPU);
+          }
+          return {basename, kLastIndex};
+        }
+        basename.replace(basename.find(kGeneric), strlen(kGeneric), kOther);
+        return {basename, kInitialIndex + 1};
+      }
+      return {basename, kLastIndex};
+    }
+
+  private:
+    std::string const variant_;
+  };
+  class ConfigurableTestTypeResolverMaker : public edm::ModuleTypeResolverMaker {
+  public:
+    ConfigurableTestTypeResolverMaker() = default;
+    std::shared_ptr<ModuleTypeResolverBase const> makeResolver(edm::ParameterSet const& pset) const final {
+      auto variant = pset.getUntrackedParameter<std::string>("variant");
+      if (not variant.empty() and variant != "other" and variant != "cpu") {
+        throw edm::Exception(edm::errors::Configuration) << "variant can be empty, 'other', or 'cpu'. Got " << variant;
+      }
+      return std::make_shared<ConfigurableTestTypeResolver>(variant);
     }
   };
 }  // namespace edm::test
