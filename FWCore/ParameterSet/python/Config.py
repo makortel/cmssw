@@ -1502,9 +1502,22 @@ class Process(object):
         # 'cpu' accelerator is always implicitly there
         allAccelerators = set(["cpu"])
         availableAccelerators = set(["cpu"])
+        moduleTypeResolver = ""
+        moduleTypeResolverPSet = untracked.PSet()
         for acc in self.__dict__['_Process__accelerators'].values():
             allAccelerators.update(acc.labels())
             availableAccelerators.update(acc.enabledLabels())
+            (resolverName, resolverPSet) = acc.moduleTypeResolver()
+            if not isinstance(resolverPSet, PSet):
+                raise TypeError("{}.moduleTypeResolver()'s return tuple's second element must be of type cms.untracked.PSet, got {}".format(acc.__class__.__name__,
+                                                                                                                                            PSet.__class__.__name__))
+            if resolverPSet.isTracked():
+                raise TypeError("{}.moduleTypeResolver()'s return tuple's second element must be untracked, got a tracked PSet".format(acc.__class__.__name__))
+            if resolverName != "":
+                if moduleTypeResolver != "":
+                    raise RuntimeError("Module type resolver was already set to {} when {} tried to set it to {}. A job can have at most one ProcessAccelerator that sets module type resolver.".format(moduleTypeResolver, acc.__class__.__name__, resolverName))
+                moduleTypeResolver = resolverName
+                moduleTypeResolverPSet = resolverPSet
         availableAccelerators = sorted(list(availableAccelerators))
         parameterSet.addVString(False, "@available_accelerators", availableAccelerators)
 
@@ -1533,6 +1546,8 @@ class Process(object):
                     ",".join(sorted(list(allAccelerators)))))
             selectedAccelerators = sorted(list(resolved))
         parameterSet.addVString(False, "@selected_accelerators", selectedAccelerators)
+        parameterSet.addString(False, "@module_type_resolver", moduleTypeResolver)
+        moduleTypeResolverPSet.insertInto(parameterSet, "@module_type_resolver_pset")
 
         # Customize
         wrapped = ProcessForProcessAccelerator(self)
@@ -1977,6 +1992,13 @@ class ProcessAccelerator(_ConfigureComponent,_Unlabelable):
         """Override to return a list of strings for the accelerator labels
         that are enabled in the system the job is being run on."""
         return []
+    def moduleTypeResolver(self):
+        """Override to return a tuple of
+        * name of module type name resolver, and
+        * PSet for the resolver configuration (can be empty)
+        At most one of the ProcessAccelerators in a job can return a
+        non-empty string"""
+        return ("", untracked.PSet())
     def apply(self, process, accelerators):
         """Override if need to customize the Process at worker node. The
         selected available accelerator labels are given in the
@@ -2127,10 +2149,14 @@ if __name__=="__main__":
     specialImportRegistry.registerSpecialImportForType(SwitchProducerTest2, "from test import SwitchProducerTest2")
 
     class ProcessAcceleratorTest(ProcessAccelerator):
-        def __init__(self, enabled=["test1", "test2", "anothertest3"]):
-            super(ProcessAcceleratorTest,self).__init__()
+        def __init__(self, enabled=["test1", "test2", "anothertest3"], moduleTypeResolver=None):
+            super().__init__()
             self._labels = ["test1", "test2", "anothertest3"]
             self.setEnabled(enabled)
+            if moduleTypeResolver is None:
+                moduleTypeResolver = super().moduleTypeResolver()
+            self._moduleTypeResolver = moduleTypeResolver[0]
+            self._moduleTypeResolverPSet = moduleTypeResolver[1]
         def setEnabled(self, enabled):
             invalid = set(enabled).difference(set(self._labels))
             if len(invalid) > 0:
@@ -2144,15 +2170,21 @@ if __name__=="__main__":
             return self._labels
         def enabledLabels(self):
             return self._enabled
+        def moduleTypeResolver(self):
+            return (self._moduleTypeResolver, self._moduleTypeResolverPSet)
         def apply(self, process, accelerators):
             process.AcceleratorTestService = Service("AcceleratorTestService")
     specialImportRegistry.registerSpecialImportForType(ProcessAcceleratorTest, "from test import ProcessAcceleratorTest")
 
     class ProcessAcceleratorTest2(ProcessAccelerator):
-        def __init__(self, enabled=["anothertest3", "anothertest4"]):
-            super(ProcessAcceleratorTest2,self).__init__()
+        def __init__(self, enabled=["anothertest3", "anothertest4"], moduleTypeResolver=None):
+            super().__init__()
             self._labels = ["anothertest3", "anothertest4"]
             self.setEnabled(enabled)
+            if moduleTypeResolver is None:
+                moduleTypeResolver = super().moduleTypeResolver()
+            self._moduleTypeResolver = moduleTypeResolver[0]
+            self._moduleTypeResolverPSet = moduleTypeResolver[1]
         def setEnabled(self, enabled):
             invalid = set(enabled).difference(set(self._labels))
             if len(invalid) > 0:
@@ -2166,6 +2198,8 @@ if __name__=="__main__":
             return self._labels
         def enabledLabels(self):
             return self._enabled
+        def moduleTypeResolver(self):
+            return (self._moduleTypeResolver, self._moduleTypeResolverPSet)
         def apply(self, process, accelerators):
             pass
     specialImportRegistry.registerSpecialImportForType(ProcessAcceleratorTest2, "from test import ProcessAcceleratorTest2")
@@ -4512,6 +4546,10 @@ process.schedule = cms.Schedule(*[ process.path1, process.path2 ])""")
             self.assertTrue(["cpu"], p.values["@available_accelerators"][1])
             self.assertFalse(p.values["@selected_accelerators"][0])
             self.assertTrue(["cpu"], p.values["@selected_accelerators"][1])
+            self.assertFalse(p.values["@module_type_resolver"][0])
+            self.assertEqual("", p.values["@module_type_resolver"][1])
+            self.assertFalse(p.values["@module_type_resolver_pset"][0])
+            self.assertEqual(len(p.values["@module_type_resolver_pset"][1].values), 0)
 
             proc = Process("TEST")
             self.assertRaises(TypeError, setattr, proc, "processAcceleratorTest", ProcessAcceleratorTest())
@@ -4579,6 +4617,10 @@ process.ProcessAcceleratorTest = ProcessAcceleratorTest(
             self.assertEqual("AcceleratorTestService", p.values["services"][1][0].values["@service_type"][1])
             self.assertFalse(p.values["@available_accelerators"][0])
             self.assertTrue(["anothertest3", "cpu", "test1", "test2"], p.values["@available_accelerators"][1])
+            self.assertFalse(p.values["@module_type_resolver"][0])
+            self.assertEqual("", p.values["@module_type_resolver"][1])
+            self.assertFalse(p.values["@module_type_resolver_pset"][0])
+            self.assertEqual(len(p.values["@module_type_resolver_pset"][1].values), 0)
 
             proc = Process("TEST")
             proc.ProcessAcceleratorTest = ProcessAcceleratorTest(enabled=["test1"])
@@ -4711,6 +4753,48 @@ process.ProcessAcceleratorTest = ProcessAcceleratorTest(
                                                              aa = int32(11),
                                                              bb = PSet(cc = int32(12))))
             proc.p = Path(proc.sp)
+            p = TestMakePSet()
+            self.assertRaises(RuntimeError, proc.fillProcessDesc, p)
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest(moduleTypeResolver=("FooResolver", untracked.PSet()))
+            proc.ProcessAcceleratorTest2 = ProcessAcceleratorTest2()
+            p = TestMakePSet()
+            proc.fillProcessDesc(p)
+            self.assertEqual("FooResolver", p.values["@module_type_resolver"][1])
+            self.assertEqual(len(p.values["@module_type_resolver_pset"][1].values), 0)
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest(moduleTypeResolver=("FooResolver",
+                                                                                     untracked.PSet(
+                                                                                         foo = untracked.int32(42)
+                                                                                     )))
+            proc.ProcessAcceleratorTest2 = ProcessAcceleratorTest2()
+            p = TestMakePSet()
+            proc.fillProcessDesc(p)
+            self.assertEqual("FooResolver", p.values["@module_type_resolver"][1])
+            self.assertFalse(p.values["@module_type_resolver_pset"][1].values["foo"][0])
+            self.assertEqual(p.values["@module_type_resolver_pset"][1].values["foo"][1], 42)
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest(moduleTypeResolver=("FooResolver",
+                                                                                     untracked.string("wrong type")))
+            proc.ProcessAcceleratorTest2 = ProcessAcceleratorTest2()
+            p = TestMakePSet()
+            self.assertRaises(TypeError, proc.fillProcessDesc, p)
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest(moduleTypeResolver=("FooResolver",
+                                                                                     PSet(
+                                                                                         foo = untracked.int32(42)
+                                                                                     )))
+            proc.ProcessAcceleratorTest2 = ProcessAcceleratorTest2()
+            p = TestMakePSet()
+            self.assertRaises(TypeError, proc.fillProcessDesc, p)
+
+            proc = Process("TEST")
+            proc.ProcessAcceleratorTest = ProcessAcceleratorTest(moduleTypeResolver=("FooResolver",untracked.PSet()))
+            proc.ProcessAcceleratorTest2 = ProcessAcceleratorTest2(moduleTypeResolver=("BarResolver",untracked.PSet()))
             p = TestMakePSet()
             self.assertRaises(RuntimeError, proc.fillProcessDesc, p)
 
