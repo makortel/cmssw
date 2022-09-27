@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 class AlpakaModuleTypeResolver:
-    def __init__(self, accelerators):
+    def __init__(self, accelerators, backend):
         # first element is used as the default is nothing is set
         self._valid_backends = []
         if "gpu-nvidia" in accelerators:
@@ -10,6 +10,13 @@ class AlpakaModuleTypeResolver:
             self._valid_backends.append("serial_sync")
         if len(self._valid_backends) == 0:
             raise Exception("The job was configured to use {} accelerators, but Alpaka does not support any of them.".format(", ".join(accelerators)))
+        if backend is not None:
+            if not backend in self._valid_backends:
+                raise Exception("The ProcessAcceleratorAlpaka was configured to use {} backend, but it is not available for the job. The job was configured to use {} accelerators, which translates to {} Alpaka backends.".format(
+                    backend, ", ".join(accelerators), ", ".join(self._valid_backends)))
+            if backend != self._valid_backends[0]:
+                self._valid_backends.remove(backend)
+                self._valid_backends.insert(0, backend)
 
     def pluginAndConfiguration(self):
         return ("AlpakaModuleTypeResolver", cms.untracked.PSet())
@@ -37,8 +44,13 @@ class ProcessAcceleratorAlpaka(cms.ProcessAccelerator):
     """
     def __init__(self):
         super(ProcessAcceleratorAlpaka,self).__init__()
+        self._backend = None
+    # User-facing interface
+    def setBackend(self, backend):
+        self._pset.backend = backend
+    # Framework-facing interface
     def moduleTypeResolver(self, accelerators):
-        return AlpakaModuleTypeResolver(accelerators)
+        return AlpakaModuleTypeResolver(accelerators, backend)
     def apply(self, process, accelerators):
         if not hasattr(process, "AlpakaServiceSerialSync"):
             from HeterogeneousCore.AlpakaServices.AlpakaServiceSerialSync_cfi import AlpakaServiceSerialSync
