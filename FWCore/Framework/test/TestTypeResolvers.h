@@ -5,6 +5,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 
+#include <cstring>
 #include <memory>
 #include <string>
 #include <utility>
