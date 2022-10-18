@@ -15,7 +15,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     class EDMetadataAcquireSentry {
     public:
       // TODO: WaitingTaskWithArenaHolder not really needed for host synchronous case
+      // Constructor overload to be called from acquire()
       EDMetadataAcquireSentry(edm::StreamID stream, edm::WaitingTaskWithArenaHolder holder);
+
+      // Constructor overload to be called from registerTransformAsync()
+      EDMetadataAcquireSentry(Device const& device, edm::WaitingTaskWithArenaHolder holder);
 
       EDMetadataAcquireSentry(EDMetadataAcquireSentry const&) = delete;
       EDMetadataAcquireSentry& operator=(EDMetadataAcquireSentry const&) = delete;

@@ -6,8 +6,10 @@
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
   namespace detail {
     EDMetadataAcquireSentry::EDMetadataAcquireSentry(edm::StreamID streamID, edm::WaitingTaskWithArenaHolder holder)
+        : EDMetadataAcquireSentry(detail::chooseDevice(streamID), std::move(holder)) {}
+
+    EDMetadataAcquireSentry::EDMetadataAcquireSentry(Device const& device, edm::WaitingTaskWithArenaHolder holder)
         : waitingTaskHolder_(std::move(holder)) {
-      auto const& device = detail::chooseDevice(streamID);
 #ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
       // all synchronous backends
       metadata_ = std::make_shared<EDMetadata>(cms::alpakatools::getQueueCache<Queue>().get(device));
