@@ -17,6 +17,7 @@
 #include <functional>
 #include <memory>
 #include <any>
+#include <optional>
 
 namespace edm {
   class ProducerBase;
