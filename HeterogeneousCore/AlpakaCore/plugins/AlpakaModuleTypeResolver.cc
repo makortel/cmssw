@@ -47,6 +47,7 @@ public:
   std::shared_ptr<edm::ModuleTypeResolverBase const> makeResolver(edm::ParameterSet const& modulePSet) const final {
     auto backend =
         modulePSet.getUntrackedParameter<edm::ParameterSet>("alpaka").getUntrackedParameter<std::string>("backend");
+    // TODO: this check is not really needed
     ensureValidBackendName(backend);
     auto prefix = fmt::format("alpaka_{}::", backend);
 
