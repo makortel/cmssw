@@ -83,9 +83,12 @@ public:
   }
 
   std::shared_ptr<edm::ModuleTypeResolverBase const> makeResolver(edm::ParameterSet const& modulePSet) const final {
-#ifdef NOTYET
-    auto backend =
-        modulePSet.getUntrackedParameter<edm::ParameterSet>("alpaka").getUntrackedParameter<std::string>("backend");
+    // this code is called before the PSet validation, so we can't benefit from it
+    std::string backend;
+    if (modulePSet.existsAs<edm::ParameterSet>("alpaka", false)) {
+      backend = modulePSet.getUntrackedParameter<edm::ParameterSet>("alpaka").getUntrackedParameter<std::string>(
+          "backend", "");
+    }
     if (backend.empty()) {
       if (availableBackends_.empty()) {
         edm::Exception ex(edm::errors::UnavailableAccelerator);
@@ -107,18 +110,6 @@ public:
         throw ex;
       }
     }
-#else
-    if (availableBackends_.empty()) {
-      if (availableBackends_.empty()) {
-        edm::Exception ex(edm::errors::UnavailableAccelerator);
-        ex << "AlpakaModuleTypeResolver had no backends available because of the combination of job configuration and "
-              "accelerator availability on the machine";
-        ex.addContext("Calling AlpakaModuleTypeResolverMaker::makeResolver()");
-        throw ex;
-      }
-    }
-    auto const& backend = availableBackends_.front();
-#endif
     auto prefix = fmt::format("alpaka_{}::", backend);
 
     LogDebug("AlpakaModuleTypeResolver")
