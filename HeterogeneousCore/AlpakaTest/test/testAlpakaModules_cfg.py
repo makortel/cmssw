@@ -5,6 +5,7 @@ import argparse
 parser = argparse.ArgumentParser(prog=sys.argv[0], description='Test various Alpaka module types')
 
 parser.add_argument("--accelerators", type=str, help="Set process.options.accelerators (comma-separated string, default is to use default)", default="")
+parser.add_argument("--moduleBackend", type=str, help="Set Alpaka backend for module instances", default="")
 parser.add_argument("--run", type=int, help="Run number (default: 1)", default=1)
 
 argv = sys.argv[:]
@@ -74,6 +75,12 @@ process.alpakaStreamConsumer = cms.EDAnalyzer("TestAlpakaAnalyzer",
 process.alpakaStreamSynchronizingConsumer = cms.EDAnalyzer("TestAlpakaAnalyzer",
     source = cms.InputTag("alpakaStreamSynchronizingProducer")
 )
+
+if args.moduleBackend != "":
+    for name in ["ESProducerA", "ESProducerB", "ESProducerC", "ESProducerD",
+                 "GlobalProducer", "StreamProducer", "StreamSynchronizingProducer"]:
+        mod = getattr(process, "alpaka"+name)
+        mod.alpaka = cms.untracked.PSet(backend = cms.untracked.string(args.moduleBackend))
 
 process.output = cms.OutputModule('PoolOutputModule',
     fileName = cms.untracked.string('testAlpaka.root'),
