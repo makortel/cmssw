@@ -27,6 +27,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       tokenB_ = cc.consumes();
     }
 
+    static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+      edm::ParameterSetDescription desc;
+      descriptions.addWithDefaultLabel(desc);
+    }
+
     std::optional<AlpakaESTestDataDDevice> produce(DeviceRecord<AlpakaESTestRecordD> const& iRecord) {
       auto const& dataA = iRecord.get(tokenA_);
       auto const& dataB = iRecord.get(tokenB_);

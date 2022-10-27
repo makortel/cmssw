@@ -28,6 +28,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       }
     }
 
+    static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+      edm::ParameterSetDescription desc;
+      descriptions.addWithDefaultLabel(desc);
+    }
+
     std::optional<cms::alpakatest::AlpakaESTestDataB<DevHost>> produceHost(AlpakaESTestRecordB const& iRecord) {
       auto const& input = iRecord.get(token_);
 
