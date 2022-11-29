@@ -4,3 +4,4 @@
 TYPELOOKUP_DATA_REG(cms::alpakatest::ESTestDataA);
 TYPELOOKUP_DATA_REG(cms::alpakatest::ESTestDataB);
 TYPELOOKUP_DATA_REG(cms::alpakatest::ESTestDataC);
+TYPELOOKUP_DATA_REG(cms::alpakatest::ESTestDataE);

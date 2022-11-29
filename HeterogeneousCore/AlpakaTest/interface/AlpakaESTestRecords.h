@@ -15,4 +15,6 @@ class AlpakaESTestRecordD
                                                             edm::mpl::Vector<AlpakaESTestRecordA, AlpakaESTestRecordB>> {
 };
 
+class AlpakaESTestRecordE : public edm::eventsetup::EventSetupRecordImplementation<AlpakaESTestRecordE> {};
+
 #endif

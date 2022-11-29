@@ -12,6 +12,10 @@ namespace cms::alpakatest {
 
   using AlpakaESTestSoAC = AlpakaESTestSoALayoutC<>;
   using AlpakaESTestSoAD = AlpakaESTestSoALayoutD<>;
+
+  // Model 4
+  GENERATE_SOA_LAYOUT(AlpakaESTestSoALayoutE, SOA_COLUMN(int, z))
+  using AlpakaESTestSoAE = AlpakaESTestSoALayoutE<>;
 }  // namespace cms::alpakatest
 
 #endif

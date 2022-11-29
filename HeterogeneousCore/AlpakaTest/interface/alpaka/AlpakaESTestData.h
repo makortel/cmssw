@@ -33,6 +33,10 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
   using AlpakaESTestDataDHost = cms::alpakatest::AlpakaESTestDataDHost;
   using AlpakaESTestDataDDevice = PortableCollection<cms::alpakatest::AlpakaESTestSoAD>;
+
+  // Model 4
+  using AlpakaESTestDataEHost = cms::alpakatest::AlpakaESTestDataEHost;
+  using AlpakaESTestDataEDevice = PortableCollection<cms::alpakatest::AlpakaESTestSoAE>;
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE
 
 #endif

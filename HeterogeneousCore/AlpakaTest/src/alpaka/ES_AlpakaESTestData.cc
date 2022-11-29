@@ -11,3 +11,6 @@ TYPELOOKUP_ALPAKA_TEMPLATED_DATA_REG(cms::alpakatest::AlpakaESTestDataB);
 // Model 3
 TYPELOOKUP_ALPAKA_DATA_REG(AlpakaESTestDataCDevice);
 TYPELOOKUP_ALPAKA_DATA_REG(AlpakaESTestDataDDevice);
+
+// Model 4
+TYPELOOKUP_ALPAKA_DATA_REG(AlpakaESTestDataEDevice);

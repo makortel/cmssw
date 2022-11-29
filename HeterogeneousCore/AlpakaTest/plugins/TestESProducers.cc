@@ -29,8 +29,10 @@ namespace cms::alpakatest {
   using TestESProducerA = TestESProducerT<cms::alpakatest::ESTestDataA, AlpakaESTestRecordA>;
   using TestESProducerB = TestESProducerT<cms::alpakatest::ESTestDataB, AlpakaESTestRecordB>;
   using TestESProducerC = TestESProducerT<cms::alpakatest::ESTestDataC, AlpakaESTestRecordC>;
+  using TestESProducerE = TestESProducerT<cms::alpakatest::ESTestDataE, AlpakaESTestRecordE>;
 }  // namespace cms::alpakatest
 
 DEFINE_FWK_EVENTSETUP_MODULE(cms::alpakatest::TestESProducerA);
 DEFINE_FWK_EVENTSETUP_MODULE(cms::alpakatest::TestESProducerB);
 DEFINE_FWK_EVENTSETUP_MODULE(cms::alpakatest::TestESProducerC);
+DEFINE_FWK_EVENTSETUP_MODULE(cms::alpakatest::TestESProducerE);

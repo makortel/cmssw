@@ -28,6 +28,15 @@ namespace cms::alpakatest {
   private:
     int value_;
   };
+
+  class ESTestDataE {
+  public:
+    ESTestDataE(int v) { value_ = v; }
+    int value() const { return value_; }
+
+  private:
+    int value_;
+  };
 }  // namespace cms::alpakatest
 
 #endif

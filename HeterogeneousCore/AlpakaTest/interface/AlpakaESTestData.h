@@ -30,6 +30,9 @@ namespace cms::alpakatest {
   // Model 3
   using AlpakaESTestDataCHost = PortableHostCollection<AlpakaESTestSoAC>;
   using AlpakaESTestDataDHost = PortableHostCollection<AlpakaESTestSoAD>;
+
+  // Model 4
+  using AlpakaESTestDataEHost = PortableHostCollection<AlpakaESTestSoAE>;
 }  // namespace cms::alpakatest
 
 #endif
