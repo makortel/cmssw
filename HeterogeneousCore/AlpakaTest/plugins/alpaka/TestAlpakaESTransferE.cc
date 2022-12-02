@@ -21,27 +21,18 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
   class TestAlpakaESTransferE : public ESProducer {
   public:
     TestAlpakaESTransferE(edm::ParameterSet const& iConfig) {
-      auto cc = setWhatProduced(this);
-      token_ = cc.consumes();
+      // TODO: in principle in this model the transfer to device could be automated
+      callToTransfer<AlpakaESTestRecordE>([](Queue& queue, AlpakaESTestDataEHost const& hostProduct) {
+        AlpakaESTestDataEDevice deviceProduct(hostProduct->metadata().size(), queue);
+        alpaka::memcpy(queue, deviceProduct.buffer(), hostProduct.buffer());
+        return deviceProduct;
+      });
     }
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
       edm::ParameterSetDescription desc;
       descriptions.addWithDefaultLabel(desc);
     }
-
-    // TODO: in principle in this model the transfer to device could be automated
-    std::optional<AlpakaESTestDataEDevice> produce(device::Record<AlpakaESTestRecordE> const& iRecord) {
-      auto hostHandle = iRecord.getTransientHandle(token_);
-      auto const& hostProduct = *hostHandle;
-      AlpakaESTestDataEDevice deviceProduct(hostProduct->metadata().size(), iRecord.queue());
-      alpaka::memcpy(iRecord.queue(), deviceProduct.buffer(), hostProduct.buffer());
-
-      return deviceProduct;
-    }
-
-  private:
-    edm::ESGetToken<AlpakaESTestDataEHost, AlpakaESTestRecordE> token_;
   };
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE
 
