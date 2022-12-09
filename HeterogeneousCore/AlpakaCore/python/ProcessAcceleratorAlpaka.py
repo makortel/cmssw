@@ -47,10 +47,10 @@ class ProcessAcceleratorAlpaka(cms.ProcessAccelerator):
         self._backend = None
     # User-facing interface
     def setBackend(self, backend):
-        self._pset.backend = backend
+        self._backend = backend
     # Framework-facing interface
     def moduleTypeResolver(self, accelerators):
-        return AlpakaModuleTypeResolver(accelerators, backend)
+        return AlpakaModuleTypeResolver(accelerators, self._backend)
     def apply(self, process, accelerators):
         if not hasattr(process, "AlpakaServiceSerialSync"):
             from HeterogeneousCore.AlpakaServices.AlpakaServiceSerialSync_cfi import AlpakaServiceSerialSync
