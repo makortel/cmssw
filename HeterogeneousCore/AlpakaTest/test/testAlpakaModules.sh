@@ -25,6 +25,7 @@ fi
 function runSuccess {
     echo "cmsRun testAlpakaModules_cfg.py $1"
     cmsRun ${TEST_DIR}/testAlpakaModules_cfg.py $1|| die "cmsRun testAlpakaModules_cfg.py $1" $?
+    echo
 }
 function runFailure {
     echo "cmsRun testAlpakaModules_cfg.py $1 (job itself is expected to fail)"
