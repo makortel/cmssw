@@ -26,6 +26,6 @@ echo "cmsRun testAlpakaModules_cfg.py"
 cmsRun ${TEST_DIR}/testAlpakaModules_cfg.py || die "cmsRun testAlpakaModules_cfg.py" $?
 
 if [ "x${TARGET}" == "xcuda" ]; then
-    echo "cmsRun testAlpakaModules_cfg.py --cuda"
-    cmsRun ${TEST_DIR}/testAlpakaModules_cfg.py -- --cuda || die "cmsRun testAlpakaModules_cfg.py --cuda" $?
+    echo "cmsRun testAlpakaModules_cfg.py --expectBackend=cuda_async"
+    cmsRun ${TEST_DIR}/testAlpakaModules_cfg.py -- --cuda || die "cmsRun testAlpakaModules_cfg.py --expectBackend=cuda_async" $?
 fi
