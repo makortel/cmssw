@@ -9,10 +9,10 @@ class AlpakaModuleTypeResolver:
         if "cpu" in accelerators:
             self._valid_backends.append("serial_sync")
         if len(self._valid_backends) == 0:
-            raise Exception("The job was configured to use {} accelerators, but Alpaka does not support any of them.".format(", ".join(accelerators)))
+            raise Exception("AlpakaModuleTypeResolver had no backends available because of the combination of the job configuration and accelerator availability of on the machine. The job sees {} accelerators.".format(", ".join(accelerators)))
         if backend is not None:
             if not backend in self._valid_backends:
-                raise Exception("The ProcessAcceleratorAlpaka was configured to use {} backend, but it is not available for the job. The job was configured to use {} accelerators, which translates to {} Alpaka backends.".format(
+                raise Exception("The ProcessAcceleratorAlpaka was configured to use {} backend, but that backend is not available because of the combination of the job configuration and accelerator availability on the machine. The job was configured to use {} accelerators, which translates to {} Alpaka backends.".format(
                     backend, ", ".join(accelerators), ", ".join(self._valid_backends)))
             if backend != self._valid_backends[0]:
                 self._valid_backends.remove(backend)
@@ -27,7 +27,7 @@ class AlpakaModuleTypeResolver:
             if hasattr(module, "alpaka"):
                 if hasattr(module.alpaka, "backend"):
                     if module.alpaka.backend.value() not in self._valid_backends:
-                        raise Exception("Module {} has the Alpaka backend set explicitly, but its accelerator is not available for the job. The following Alpaka backends are available for the job {}.".format(module.label_(), ", ".join(self._valid_backends)))
+                        raise Exception("Module {} has the Alpaka backend set explicitly, but its accelerator is not available for the job because of the combination of the job configuration and accelerator availability on the machine. The following Alpaka backends are available for the job {}.".format(module.label_(), ", ".join(self._valid_backends)))
                 else:
                     module.alpaka.backend = cms.untracked.string(defaultBackend)
             else:
