@@ -6,7 +6,7 @@ TEST=testModuleTypeResolver_cfg.py
 function die { echo Failure $1: status $2 ; exit $2 ; }
 function runSuccess {
     echo "cmsRun ${TESTDIR}/${TEST} $1"
-    cmsRun ${TESTDIR}/${TEST} $1 || die "cmsRun ${TEST} $1"
+    cmsRun ${TESTDIR}/${TEST} $1 || die "cmsRun ${TEST} $1" $?
     echo
 }
 function runFailure {
