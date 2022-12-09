@@ -37,7 +37,7 @@ class TestModuleTypeResolver:
         ))
 
     def setModuleBackend(self, module):
-        if "generic::" in module.type_():
+        if module.type_().startswith("generic::"):
             if hasattr(module, "variant"):
                 if module.variant.value() not in self._variants:
                     raise Exception("Module {} has the Test variant set explicitly to {}, but its accelerator is not available for the job".format(module.label_(), module.variant.value()))
