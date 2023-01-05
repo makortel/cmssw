@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "FWCore/Framework/interface/ModuleTypeResolverBase.h"
+#include "FWCore/Framework/interface/ModuleTypeResolverMaker.h"
 
 namespace edm {
   class ParameterSet;

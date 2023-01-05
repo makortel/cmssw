@@ -26,8 +26,6 @@
 
 // forward declarations
 namespace edm {
-  class ParameterSet;
-
   class ModuleTypeResolverBase {
   public:
     static constexpr int kInitialIndex = 0;
@@ -41,21 +39,6 @@ namespace edm {
     **/
     virtual std::pair<std::string, int> resolveType(std::string basename, int index) const = 0;
   };
-
-  class ModuleTypeResolverMaker {
-  public:
-    virtual ~ModuleTypeResolverMaker() = default;
-
-    /**
-     * This function creates an implementation of the ModuleTypeResolverBase class based on the module PSet.
-     *
-     * The return value reflects that the implementation
-     * ModuleTypeResolverBase may cache the Resolver objects if it
-     * wants to.
-     */
-    virtual std::shared_ptr<ModuleTypeResolverBase const> makeResolver(edm::ParameterSet const& modulePSet) const = 0;
-  };
-
 }  // namespace edm
 
 #endif

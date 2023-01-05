@@ -2,6 +2,7 @@
 #define FWCore_Framework_interface_resolveMaker_h
 
 #include "FWCore/Framework/interface/ModuleTypeResolverBase.h"
+#include "FWCore/Framework/interface/ModuleTypeResolverMaker.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
 

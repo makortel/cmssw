@@ -26,7 +26,7 @@
 // user include files
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "FWCore/Utilities/interface/propagate_const.h"
-#include "FWCore/Framework/interface/ModuleTypeResolverBase.h"
+#include "FWCore/Framework/interface/ModuleTypeResolverMaker.h"
 
 // forward declarations
 namespace edm {
