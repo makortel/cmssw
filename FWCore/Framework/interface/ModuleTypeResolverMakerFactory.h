@@ -9,7 +9,7 @@
 namespace edm {
   class ModuleTypeResolverMaker;
 
-  using ModuleTypeResolverMakerFactory = edmplugin::PluginFactory<ModuleTypeResolverMaker*()>;
+  using ModuleTypeResolverMakerFactory = edmplugin::PluginFactory<ModuleTypeResolverMaker const*()>;
 }  // namespace edm
 
 #endif

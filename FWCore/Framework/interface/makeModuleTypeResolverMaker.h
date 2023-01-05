@@ -8,7 +8,7 @@
 namespace edm {
   class ParameterSet;
 
-  std::unique_ptr<edm::ModuleTypeResolverMaker> makeModuleTypeResolverMaker(edm::ParameterSet const& pset);
+  std::unique_ptr<edm::ModuleTypeResolverMaker const> makeModuleTypeResolverMaker(edm::ParameterSet const& pset);
 }  // namespace edm
 
 #endif
