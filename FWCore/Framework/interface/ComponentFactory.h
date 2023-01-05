@@ -63,11 +63,10 @@ namespace edm {
         Maker* maker = nullptr;
 
         if (it == makers_.end()) {
-          bool insertSucceeded;
-          std::tie(maker, insertSucceeded) = detail::resolveMaker<edmplugin::PluginFactory<ComponentMakerBase<T>*()>>(
+          maker = detail::resolveMaker<edmplugin::PluginFactory<ComponentMakerBase<T>*()>>(
               modtype, resolverMaker, iConfiguration, makers_);
 
-          if (not insertSucceeded) {
+          if (not maker) {
             Exception::throwThis(errors::Configuration, "Maker Factory map insert failed");
           }
         } else {

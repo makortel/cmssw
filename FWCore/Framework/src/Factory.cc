@@ -27,8 +27,7 @@ namespace edm {
     if (it != makers_.end()) {
       return it->second.get();
     }
-    auto [maker, insertSucceeded] = detail::resolveMaker<MakerPluginFactory>(modtype, resolverMaker, *p.pset_, makers_);
-    return maker;
+    return detail::resolveMaker<MakerPluginFactory>(modtype, resolverMaker, *p.pset_, makers_);
   }
 
   std::shared_ptr<maker::ModuleHolder> Factory::makeModule(

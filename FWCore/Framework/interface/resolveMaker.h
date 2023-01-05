@@ -14,16 +14,13 @@ namespace edm::detail {
                                                 std::string const& modtype,
                                                 ModuleTypeResolverBase const* resolver);
 
-  // Returns a tuple of
-  // - non-owning pointer to the maker
-  // - boolean indicating if insertion to cache was successful
-  //  * true: insertion successful, or maker was found from the cache
-  //  * false: failed to insert the maker to cache
+  // Returns a non-owning pointer to the maker. Can be nullptr if
+  // failed to insert the maker to the cache
   template <typename TFactory, typename TCache>
   auto resolveMaker(std::string const& moduleType,
                     ModuleTypeResolverMaker const* resolverMaker,
                     edm::ParameterSet const& modulePSet,
-                    TCache& makerCache) -> std::tuple<typename TCache::mapped_type::element_type*, bool> {
+                    TCache& makerCache) -> typename TCache::mapped_type::element_type* {
     if (resolverMaker) {
       auto resolver = resolverMaker->makeResolver(modulePSet);
       auto index = resolver->kInitialIndex;
@@ -35,7 +32,7 @@ namespace edm::detail {
         // try the maker cache first
         auto found = makerCache.find(newType);
         if (found != makerCache.end()) {
-          return {found->second.get(), true};
+          return found->second.get();
         }
 
         // if not in cache, then try to create
@@ -44,16 +41,16 @@ namespace edm::detail {
           //FDEBUG(1) << "Factory:  created worker of type " << newType << std::endl;
           auto [it, succeeded] = makerCache.emplace(newType, std::move(m));
           if (not succeeded) {
-            return {nullptr, false};
+            return nullptr;
           }
-          return {it->second.get(), true};
+          return it->second.get();
         }
         // not found, try next one
       } while (index != resolver->kLastIndex);
       try {
         //failed to find a plugin
         auto m = TFactory::get()->create(moduleType);
-        return {nullptr, false};  // dummy return, the create() call throws an exception
+        return nullptr;  // dummy return, the create() call throws an exception
       } catch (cms::Exception& iExcept) {
         detail::annotateResolverMakerExceptionAndRethrow(iExcept, moduleType, resolver.get());
       }
@@ -61,9 +58,9 @@ namespace edm::detail {
     auto [it, succeeded] = makerCache.emplace(moduleType, TFactory::get()->create(moduleType));
     //FDEBUG(1) << "Factory:  created worker of type " << moduleType << std::endl;
     if (not succeeded) {
-      return {nullptr, false};
+      return nullptr;
     }
-    return {it->second.get(), true};
+    return it->second.get();
   }
 }  // namespace edm::detail
 
