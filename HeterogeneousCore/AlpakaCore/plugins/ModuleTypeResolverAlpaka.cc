@@ -1,4 +1,4 @@
-#include "FWCore/Framework/interface/ModuleTypeResolverBase.h"
+#include "FWCore/Framework/interface/ModuleTypeResolverMaker.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/EDMException.h"
@@ -9,9 +9,9 @@
 #include <string>
 #include <vector>
 
-class AlpakaModuleTypeResolver : public edm::ModuleTypeResolverBase {
+class ModuleTypeResolverAlpaka : public edm::ModuleTypeResolverBase {
 public:
-  AlpakaModuleTypeResolver(std::string backendPrefix) : backendPrefix_(std::move(backendPrefix)) {}
+  ModuleTypeResolverAlpaka(std::string backendPrefix) : backendPrefix_(std::move(backendPrefix)) {}
 
   std::pair<std::string, int> resolveType(std::string basename, int index) const final {
     assert(index == kInitialIndex);
@@ -31,9 +31,9 @@ private:
   std::string const backendPrefix_;
 };
 
-class AlpakaModuleTypeResolverMaker : public edm::ModuleTypeResolverMaker {
+class ModuleTypeResolverMakerAlpaka : public edm::ModuleTypeResolverMaker {
 public:
-  AlpakaModuleTypeResolverMaker(edm::ParameterSet const& iConfig) {}
+  ModuleTypeResolverMakerAlpaka() {}
 
   std::shared_ptr<edm::ModuleTypeResolverBase const> makeResolver(edm::ParameterSet const& modulePSet) const final {
     std::string prefix = "";
@@ -48,9 +48,9 @@ public:
                 prefix);
 
     }
-    return std::make_shared<AlpakaModuleTypeResolver>(prefix);
+    return std::make_shared<ModuleTypeResolverAlpaka>(prefix);
   }
 };
 
 #include "FWCore/Framework/interface/ModuleTypeResolverMakerFactory.h"
-DEFINE_EDM_PLUGIN(edm::ModuleTypeResolverMakerFactory, AlpakaModuleTypeResolverMaker, "AlpakaModuleTypeResolver");
+DEFINE_EDM_PLUGIN(edm::ModuleTypeResolverMakerFactory, ModuleTypeResolverMakerAlpaka, "ModuleTypeResolverAlpaka");

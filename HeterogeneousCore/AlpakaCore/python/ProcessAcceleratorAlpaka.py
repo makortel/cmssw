@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-class AlpakaModuleTypeResolver:
+class ModuleTypeResolverAlpaka:
     def __init__(self, accelerators, backend):
         # first element is used as the default is nothing is set
         self._valid_backends = []
@@ -9,25 +9,27 @@ class AlpakaModuleTypeResolver:
         if "cpu" in accelerators:
             self._valid_backends.append("serial_sync")
         if len(self._valid_backends) == 0:
-            raise Exception("AlpakaModuleTypeResolver had no backends available because of the combination of the job configuration and accelerator availability of on the machine. The job sees {} accelerators.".format(", ".join(accelerators)))
+            raise cms.EDMException(cms.edm.errors.UnavailableAccelerators, "AlpakaModuleTypeResolver had no backends available because of the combination of the job configuration and accelerator availability of on the machine. The job sees {} accelerators.".format(", ".join(accelerators)))
         if backend is not None:
             if not backend in self._valid_backends:
-                raise Exception("The ProcessAcceleratorAlpaka was configured to use {} backend, but that backend is not available because of the combination of the job configuration and accelerator availability on the machine. The job was configured to use {} accelerators, which translates to {} Alpaka backends.".format(
+                raise cms.EDMException(cms.edm.errors.UnavailableAccelerators, "The ProcessAcceleratorAlpaka was configured to use {} backend, but that backend is not available because of the combination of the job configuration and accelerator availability on the machine. The job was configured to use {} accelerators, which translates to {} Alpaka backends.".format(
                     backend, ", ".join(accelerators), ", ".join(self._valid_backends)))
             if backend != self._valid_backends[0]:
                 self._valid_backends.remove(backend)
                 self._valid_backends.insert(0, backend)
 
-    def pluginAndConfiguration(self):
-        return ("AlpakaModuleTypeResolver", cms.untracked.PSet())
+    def plugin(self):
+        return "ModuleTypeResolverAlpaka"
 
     def setModuleVariant(self, module):
         if module.type_().endswith("@alpaka"):
             defaultBackend = self._valid_backends[0]
             if hasattr(module, "alpaka"):
                 if hasattr(module.alpaka, "backend"):
-                    if module.alpaka.backend.value() not in self._valid_backends:
-                        raise Exception("Module {} has the Alpaka backend set explicitly, but its accelerator is not available for the job because of the combination of the job configuration and accelerator availability on the machine. The following Alpaka backends are available for the job {}.".format(module.label_(), ", ".join(self._valid_backends)))
+                    if module.alpaka.backend == "":
+                        module.alpaka.backend = defaultBackend
+                    elif module.alpaka.backend.value() not in self._valid_backends:
+                        raise cms.EDMException(cms.edm.errors.UnavailableAccelerators, "Module {} has the Alpaka backend set explicitly, but its accelerator is not available for the job because of the combination of the job configuration and accelerator availability on the machine. The following Alpaka backends are available for the job {}.".format(module.label_(), ", ".join(self._valid_backends)))
                 else:
                     module.alpaka.backend = cms.untracked.string(defaultBackend)
             else:
