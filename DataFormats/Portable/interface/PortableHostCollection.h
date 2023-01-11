@@ -75,7 +75,7 @@ public:
     newObj->layout_.ROOTReadStreamer(layout);
   }
 
-private:
+  //private:
   std::optional<Buffer> buffer_;  //!
   Layout layout_;                 //
   View view_;                     //!

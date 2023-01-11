@@ -9,6 +9,12 @@
     embed="false">
   <![CDATA[
     portabletest::TestHostCollection::ROOTReadStreamer(newObj, onfile.layout_);
+    delete onfile.layout_.x_; onfile.layout_.x_ = nullptr;
+    delete onfile.layout_.y_; onfile.layout_.y_ = nullptr;
+    delete onfile.layout_.z_; onfile.layout_.z_ = nullptr;
+    delete onfile.layout_.id_; onfile.layout_.id_ = nullptr;
+    delete onfile.layout_.m_; onfile.layout_.m_ = nullptr;
+    delete onfile.layout_.r_; onfile.layout_.r_ = nullptr;
   ]]>
   </read>
   <class name="edm::Wrapper<portabletest::TestHostCollection>" splitLevel="0"/>

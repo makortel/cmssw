@@ -567,7 +567,7 @@
     template <typename T>                                                                                              \
     SOA_HOST_ONLY friend void dump();                                                                                  \
                                                                                                                        \
-  private:                                                                                                             \
+  public:                                                                                                              \
     /* Helper method for the user provided storage constructor and ROOT streamer */                                    \
     void organizeColumnsFromBuffer() {                                                                                 \
       if constexpr (alignmentEnforcement == cms::soa::AlignmentEnforcement::enforced)                                  \
