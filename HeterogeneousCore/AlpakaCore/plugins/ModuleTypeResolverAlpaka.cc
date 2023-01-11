@@ -2,11 +2,13 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/EDMException.h"
+#include "FWCore/Utilities/interface/thread_safety_macros.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class ModuleTypeResolverAlpaka : public edm::ModuleTypeResolverBase {
@@ -49,8 +51,17 @@ public:
                   modulePSet.getParameter<std::string>("@module_label"),
                   prefix);
     }
-    return std::make_shared<ModuleTypeResolverAlpaka>(prefix);
+    auto found = cache_.find(prefix);
+    if (found == cache_.end()) {
+      bool inserted;
+      std::tie(found, inserted) = cache_.emplace(prefix, std::make_shared<ModuleTypeResolverAlpaka>(prefix));
+    }
+    return found->second;
   }
+
+private:
+  // no protection needed because this object is used only in single-thread context
+  CMS_SA_ALLOW mutable std::unordered_map<std::string, std::shared_ptr<ModuleTypeResolverAlpaka const>> cache_;
 };
 
 #include "FWCore/Framework/interface/ModuleTypeResolverMakerFactory.h"
