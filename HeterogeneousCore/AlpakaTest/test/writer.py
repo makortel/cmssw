@@ -6,39 +6,14 @@ process = cms.Process('Writer')
 process.source = cms.Source('EmptySource')
 
 process.load('Configuration.StandardSequences.Accelerators_cff')
+process.load('HeterogeneousCore.AlpakaCore.ProcessAcceleratorAlpaka_cfi')
 
 # enable logging for the AlpakaService and TestAlpakaAnalyzer
 process.MessageLogger.TestAlpakaAnalyzer = cms.untracked.PSet()
-process.MessageLogger.AlpakaService = cms.untracked.PSet()
-
-# enable alpaka-based heterogeneous modules
-process.AlpakaServiceCudaAsync = cms.Service('AlpakaServiceCudaAsync')
-process.AlpakaServiceSerialSync = cms.Service('AlpakaServiceSerialSync')
-
-# run the producer on a CUDA gpu (if available)
-process.testProducerCuda = cms.EDProducer('alpaka_cuda_async::TestAlpakaProducer',
-    size = cms.int32(42)
-)
-
-# run the producer on the cpu
-process.testProducerCpu = cms.EDProducer('alpaka_serial_sync::TestAlpakaProducer',
-    size = cms.int32(42)
-)
 
 # either run the producer on a CUDA gpu (if available) and copy the product to the cpu, or run the producer directly on the cpu
-#
-# TODO: the cuda case needs currently explicitly to restrict the
-# host-only data products. In the near future the constraints of
-# SwichProducer will be relaxed to not consider transient data
-# products (as defined in classes_def.xml) after which the explicit
-# set of data products can be removed.
-process.testProducer = SwitchProducerCUDA(
-    cpu = cms.EDAlias(
-        testProducerCpu = cms.VPSet(cms.PSet(type = cms.string('*')))
-    ),
-    cuda = cms.EDAlias(
-        testProducerCuda = cms.VPSet(cms.PSet(type = cms.string('128falseportabletestTestSoALayoutPortableHostCollection')))
-    )
+process.testProducer = cms.EDProducer('TestAlpakaProducer@alpaka',
+    size = cms.int32(42)
 )
 
 # analyse the product
@@ -47,8 +22,11 @@ process.testAnalyzer = cms.EDAnalyzer('TestAlpakaAnalyzer',
 )
 
 # run a second producer explicitly on the cpu
-process.testProducerSerial = cms.EDProducer('alpaka_serial_sync::TestAlpakaProducer',
-    size = cms.int32(99)
+process.testProducerSerial = cms.EDProducer('TestAlpakaProducer@alpaka',
+    size = cms.int32(99),
+    alpaka = cms.untracked.PSet(
+        backend = cms.untracked.string("serial_sync")
+    )
 )
 
 # analyse the second product
@@ -66,12 +44,9 @@ process.output = cms.OutputModule('PoolOutputModule',
   )
 )
 
-process.producer_task = cms.Task(process.testProducerCuda, process.testProducerCpu)
-
 process.process_path = cms.Path(
     process.testProducer +
-    process.testAnalyzer,
-    process.producer_task)
+    process.testAnalyzer)
 
 process.serial_path = cms.Path(
     process.testProducerSerial +
