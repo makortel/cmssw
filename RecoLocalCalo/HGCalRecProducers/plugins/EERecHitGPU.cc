@@ -21,12 +21,13 @@
 #include "CUDADataFormats/HGCal/interface/HGCUncalibRecHitDevice.h"
 #include "CUDADataFormats/HGCal/interface/HGCUncalibRecHitHost.h"
 
-class EERecHitGPU : public edm::stream::EDProducer<> {
+class EERecHitGPU : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit EERecHitGPU(const edm::ParameterSet &ps);
   ~EERecHitGPU() override;
   void beginRun(edm::Run const &, edm::EventSetup const &) override;
 
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event &, const edm::EventSetup &) override;
 
 private:
@@ -54,6 +55,8 @@ private:
   HGCUncalibRecHitHost<HGCeeUncalibratedRecHitCollection> h_uncalib_;
 
   KernelConstantData<HGCeeUncalibRecHitConstantData> *kcdata_;
+
+  cms::cuda::ContextState ctxState_;
 };
 
 EERecHitGPU::EERecHitGPU(const edm::ParameterSet &ps)
@@ -108,8 +111,8 @@ void EERecHitGPU::assert_sizes_constants_(const HGCConstantVectorData &vd) {
 
 void EERecHitGPU::beginRun(edm::Run const &, edm::EventSetup const &setup) {}
 
-void EERecHitGPU::produce(edm::Event &event, const edm::EventSetup &setup) {
-  cms::cuda::ScopedContextProduce ctx{event.streamID()};
+void EERecHitGPU::acquire(const edm::Event& event, const edm::EventSetup& setup, edm::WaitingTaskWithArenaHolder waitingTaskHolder)  {
+  cms::cuda::ScopedContextAcquire ctx{event.streamID(), std::move(waitingTaskHolder), ctxState_};
 
   const auto &hits = event.get(uncalibRecHitCPUToken_);
   const unsigned nhits(hits.size());
@@ -125,6 +128,9 @@ void EERecHitGPU::produce(edm::Event &event, const edm::EventSetup &setup) {
   KernelManagerHGCalRecHit km(h_uncalib_.get(), d_uncalib_.get(), prod_.get());
   km.run_kernels(kcdata_, ctx.stream());
 
+}
+void EERecHitGPU::produce(edm::Event &event, const edm::EventSetup &setup) {
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
   ctx.emplace(event, recHitGPUToken_, std::move(prod_));
 }
 

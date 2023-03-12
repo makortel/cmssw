@@ -6,7 +6,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/global/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -23,7 +23,7 @@
 #include "CUDADataFormats/Track/interface/PixelTrackHeterogeneous.h"
 #include "CUDADataFormats/TrackingRecHit/interface/TrackingRecHit2DHeterogeneous.h"
 
-class CAHitNtupletCUDA : public edm::global::EDProducer<> {
+class CAHitNtupletCUDA : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit CAHitNtupletCUDA(const edm::ParameterSet& iConfig);
   ~CAHitNtupletCUDA() override = default;
@@ -31,10 +31,11 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
-  void beginJob() override;
-  void endJob() override;
+  void beginStream(edm::StreamID) override;
+  void endStream() override;
 
-  void produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   bool onGPU_;
 
@@ -45,6 +46,9 @@ private:
   edm::EDPutTokenT<PixelTrackHeterogeneous> tokenTrackCPU_;
 
   CAHitNtupletGeneratorOnGPU gpuAlgo_;
+
+  PixelTrackHeterogeneous data_;
+  cms::cuda::ContextState ctxState_;
 };
 
 CAHitNtupletCUDA::CAHitNtupletCUDA(const edm::ParameterSet& iConfig)
@@ -69,23 +73,34 @@ void CAHitNtupletCUDA::fillDescriptions(edm::ConfigurationDescriptions& descript
   descriptions.add("pixelTracksCUDA", desc);
 }
 
-void CAHitNtupletCUDA::beginJob() { gpuAlgo_.beginJob(); }
+void CAHitNtupletCUDA::beginStream(edm::StreamID) { gpuAlgo_.beginJob(); }
 
-void CAHitNtupletCUDA::endJob() { gpuAlgo_.endJob(); }
+void CAHitNtupletCUDA::endStream() { gpuAlgo_.endJob(); }
 
-void CAHitNtupletCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& es) const {
+void CAHitNtupletCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& es, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   auto bf = 1. / es.getData(tokenField_).inverseBzAtOriginInGeV();
 
   if (onGPU_) {
     auto hHits = iEvent.getHandle(tokenHitGPU_);
 
-    cms::cuda::ScopedContextProduce ctx{*hHits};
+    cms::cuda::ScopedContextAcquire ctx{iEvent.streamID(), std::move(waitingTaskHolder), ctxState_};
     auto const& hits = ctx.get(*hHits);
 
-    ctx.emplace(iEvent, tokenTrackGPU_, gpuAlgo_.makeTuplesAsync(hits, bf, ctx.stream()));
+    data_ = gpuAlgo_.makeTuplesAsync(hits, bf, ctx.stream());
   } else {
     auto const& hits = iEvent.get(tokenHitCPU_);
-    iEvent.emplace(tokenTrackCPU_, gpuAlgo_.makeTuples(hits, bf));
+    data_ = gpuAlgo_.makeTuples(hits, bf);
+    auto holder = waitingTaskHolder.makeWaitingTaskHolderAndRelease();
+    holder.doneWaiting(nullptr);
+  }
+}
+
+void CAHitNtupletCUDA::produce(edm::Event& iEvent, const edm::EventSetup& es) {
+  if (onGPU_) {
+    cms::cuda::ScopedContextProduce ctx{ctxState_};
+    ctx.emplace(iEvent, tokenTrackGPU_, std::move(data_));
+  } else {
+    iEvent.emplace(tokenTrackCPU_, std::move(data_));
   }
 }
 

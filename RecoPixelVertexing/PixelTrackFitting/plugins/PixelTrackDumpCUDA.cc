@@ -82,4 +82,4 @@ void PixelTrackDumpCUDA::analyze(edm::StreamID streamID,
   }
 }
 
-DEFINE_FWK_MODULE(PixelTrackDumpCUDA);
+//DEFINE_FWK_MODULE(PixelTrackDumpCUDA);

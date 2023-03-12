@@ -9,7 +9,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/global/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
@@ -23,7 +23,7 @@
 
 #include "PixelRecHitGPUKernel.h"
 
-class SiPixelRecHitCUDA : public edm::global::EDProducer<> {
+class SiPixelRecHitCUDA : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit SiPixelRecHitCUDA(const edm::ParameterSet& iConfig);
   ~SiPixelRecHitCUDA() override = default;
@@ -31,7 +31,8 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
-  void produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   const edm::ESGetToken<PixelClusterParameterEstimator, TkPixelCPERecord> cpeToken_;
   const edm::EDGetTokenT<cms::cuda::Product<BeamSpotCUDA>> tBeamSpot;
@@ -40,6 +41,9 @@ private:
   const edm::EDPutTokenT<cms::cuda::Product<TrackingRecHit2DGPU>> tokenHit_;
 
   const pixelgpudetails::PixelRecHitGPUKernel gpuAlgo_;
+
+  TrackingRecHit2DGPU data_;
+  cms::cuda::ContextState ctxState_;
 };
 
 SiPixelRecHitCUDA::SiPixelRecHitCUDA(const edm::ParameterSet& iConfig)
@@ -58,7 +62,7 @@ void SiPixelRecHitCUDA::fillDescriptions(edm::ConfigurationDescriptions& descrip
   descriptions.add("siPixelRecHitCUDA", desc);
 }
 
-void SiPixelRecHitCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& es) const {
+void SiPixelRecHitCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& es, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   PixelCPEFast const* fcpe = dynamic_cast<const PixelCPEFast*>(&es.getData(cpeToken_));
   if (not fcpe) {
     throw cms::Exception("Configuration") << "SiPixelRecHitSoAFromLegacy can only use a CPE of type PixelCPEFast";
@@ -67,7 +71,7 @@ void SiPixelRecHitCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, cons
   edm::Handle<cms::cuda::Product<SiPixelClustersCUDA>> hclusters;
   iEvent.getByToken(token_, hclusters);
 
-  cms::cuda::ScopedContextProduce ctx{*hclusters};
+  cms::cuda::ScopedContextAcquire ctx{*hclusters, std::move(waitingTaskHolder), ctxState_};
   auto const& clusters = ctx.get(*hclusters);
 
   edm::Handle<cms::cuda::Product<SiPixelDigisCUDA>> hdigis;
@@ -78,10 +82,13 @@ void SiPixelRecHitCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, cons
   iEvent.getByToken(tBeamSpot, hbs);
   auto const& bs = ctx.get(*hbs);
 
+  data_ = gpuAlgo_.makeHitsAsync(digis, clusters, bs, fcpe->getGPUProductAsync(ctx.stream()), fcpe->isPhase2(), ctx.stream());
+}
+
+void SiPixelRecHitCUDA::produce(edm::Event& iEvent, const edm::EventSetup& es) {
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
   ctx.emplace(iEvent,
-              tokenHit_,
-              gpuAlgo_.makeHitsAsync(
-                  digis, clusters, bs, fcpe->getGPUProductAsync(ctx.stream()), fcpe->isPhase2(), ctx.stream()));
+              tokenHit_, std::move(data_));
 }
 
 DEFINE_FWK_MODULE(SiPixelRecHitCUDA);

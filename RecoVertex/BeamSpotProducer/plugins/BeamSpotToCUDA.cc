@@ -6,7 +6,7 @@
 #include "DataFormats/BeamSpot/interface/BeamSpotPOD.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/global/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
@@ -40,26 +40,28 @@ namespace {
 
 }  // namespace
 
-class BeamSpotToCUDA : public edm::global::EDProducer<edm::StreamCache<BeamSpotHost>> {
+class BeamSpotToCUDA : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit BeamSpotToCUDA(const edm::ParameterSet& iConfig);
   ~BeamSpotToCUDA() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-  std::unique_ptr<BeamSpotHost> beginStream(edm::StreamID) const override {
+  void beginStream(edm::StreamID) override {
     edm::Service<CUDAService> cs;
     if (cs->enabled()) {
-      return std::make_unique<BeamSpotHost>();
-    } else {
-      return nullptr;
+      beamSpotHost_ = std::make_unique<BeamSpotHost>();
     }
   }
-  void produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
 private:
   const edm::EDGetTokenT<reco::BeamSpot> bsGetToken_;
   const edm::EDPutTokenT<cms::cuda::Product<BeamSpotCUDA>> bsPutToken_;
+  std::unique_ptr<BeamSpotHost> beamSpotHost_;
+  BeamSpotCUDA beamSpotDevice_;
+  cms::cuda::ContextState ctxState_;
 };
 
 BeamSpotToCUDA::BeamSpotToCUDA(const edm::ParameterSet& iConfig)
@@ -72,12 +74,12 @@ void BeamSpotToCUDA::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   descriptions.add("offlineBeamSpotToCUDA", desc);
 }
 
-void BeamSpotToCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
-  cms::cuda::ScopedContextProduce ctx{streamID};
+void BeamSpotToCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  cms::cuda::ScopedContextAcquire ctx{iEvent.streamID(), std::move(waitingTaskHolder), ctxState_};
 
   const reco::BeamSpot& bs = iEvent.get(bsGetToken_);
 
-  auto& bsHost = streamCache(streamID)->ptr();
+  auto& bsHost = beamSpotHost_->ptr();
 
   bsHost->x = bs.x0();
   bsHost->y = bs.y0();
@@ -94,8 +96,12 @@ void BeamSpotToCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, const e
 
   BeamSpotCUDA bsDevice(ctx.stream());
   cms::cuda::copyAsync(bsDevice.ptr(), bsHost, ctx.stream());
+  beamSpotDevice_ = std::move(bsDevice);
+}
 
-  ctx.emplace(iEvent, bsPutToken_, std::move(bsDevice));
+void BeamSpotToCUDA::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
+  ctx.emplace(iEvent, bsPutToken_, std::move(beamSpotDevice_));
 }
 
 DEFINE_FWK_MODULE(BeamSpotToCUDA);

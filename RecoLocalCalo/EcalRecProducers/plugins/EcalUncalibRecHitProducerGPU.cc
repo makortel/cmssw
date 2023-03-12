@@ -30,13 +30,14 @@
 #include "DeclsForKernels.h"
 #include "EcalUncalibRecHitMultiFitAlgoGPU.h"
 
-class EcalUncalibRecHitProducerGPU : public edm::stream::EDProducer<> {
+class EcalUncalibRecHitProducerGPU : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit EcalUncalibRecHitProducerGPU(edm::ParameterSet const& ps);
   ~EcalUncalibRecHitProducerGPU() override;
   static void fillDescriptions(edm::ConfigurationDescriptions&);
 
 private:
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event&, edm::EventSetup const&) override;
 
 private:
@@ -59,6 +60,9 @@ private:
 
   // configuration parameters
   ecal::multifit::ConfigurationParameters configParameters_;
+
+  ecal::multifit::EventOutputDataGPU eventOutputDataGPU;
+  cms::cuda::ContextState ctxState_;
 };
 
 void EcalUncalibRecHitProducerGPU::fillDescriptions(edm::ConfigurationDescriptions& confDesc) {
@@ -180,17 +184,15 @@ EcalUncalibRecHitProducerGPU::EcalUncalibRecHitProducerGPU(const edm::ParameterS
 
 EcalUncalibRecHitProducerGPU::~EcalUncalibRecHitProducerGPU() {}
 
-void EcalUncalibRecHitProducerGPU::produce(edm::Event& event, edm::EventSetup const& setup) {
+void EcalUncalibRecHitProducerGPU::acquire(const edm::Event& event, const edm::EventSetup& setup, edm::WaitingTaskWithArenaHolder waitingTaskHolder)  {
   //DurationMeasurer<std::chrono::milliseconds> timer{std::string{"produce duration"}};
 
   // cuda products
   auto const& ebDigisProduct = event.get(digisTokenEB_);
   auto const& eeDigisProduct = event.get(digisTokenEE_);
-  // event data
-  ecal::multifit::EventOutputDataGPU eventOutputDataGPU;
 
   // raii
-  cms::cuda::ScopedContextProduce ctx{ebDigisProduct};
+  cms::cuda::ScopedContextAcquire ctx{ebDigisProduct, std::move(waitingTaskHolder), ctxState_};
 
   // get actual obj
   auto const& ebDigis = ctx.get(ebDigisProduct);
@@ -254,10 +256,14 @@ void EcalUncalibRecHitProducerGPU::produce(edm::Event& event, edm::EventSetup co
   // set the size of eb and ee
   eventOutputDataGPU.recHitsEB.size = neb;
   eventOutputDataGPU.recHitsEE.size = nee;
+}
 
+void EcalUncalibRecHitProducerGPU::produce(edm::Event& event, edm::EventSetup const& setup) {
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
   // put into the event
   ctx.emplace(event, recHitsTokenEB_, std::move(eventOutputDataGPU.recHitsEB));
   ctx.emplace(event, recHitsTokenEE_, std::move(eventOutputDataGPU.recHitsEE));
 }
+
 
 DEFINE_FWK_MODULE(EcalUncalibRecHitProducerGPU);

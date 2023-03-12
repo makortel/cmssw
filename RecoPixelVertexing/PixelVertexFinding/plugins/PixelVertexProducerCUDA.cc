@@ -6,7 +6,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/global/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -21,7 +21,7 @@
 
 #undef PIXVERTEX_DEBUG_PRODUCE
 
-class PixelVertexProducerCUDA : public edm::global::EDProducer<> {
+class PixelVertexProducerCUDA : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit PixelVertexProducerCUDA(const edm::ParameterSet& iConfig);
   ~PixelVertexProducerCUDA() override = default;
@@ -29,9 +29,13 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
-  void produceOnGPU(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const;
-  void produceOnCPU(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const;
-  void produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const override;
+  void acquireOnGPU(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder);
+  void acquireOnCPU(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
+
+  void produceOnGPU(edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void produceOnCPU(edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
   bool onGPU_;
 
@@ -41,6 +45,9 @@ private:
   edm::EDPutTokenT<ZVertexHeterogeneous> tokenCPUVertex_;
 
   const gpuVertexFinder::Producer gpuAlgo_;
+
+  ZVertexHeterogeneous data_;
+  cms::cuda::ContextState ctxState_;
 
   // Tracking cuts before sending tracks to vertex algo
   const float ptMin_;
@@ -94,23 +101,29 @@ void PixelVertexProducerCUDA::fillDescriptions(edm::ConfigurationDescriptions& d
   descriptions.add(label, desc);
 }
 
-void PixelVertexProducerCUDA::produceOnGPU(edm::StreamID streamID,
-                                           edm::Event& iEvent,
-                                           const edm::EventSetup& iSetup) const {
+void PixelVertexProducerCUDA::acquireOnGPU(const edm::Event& iEvent,
+                                           const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   edm::Handle<cms::cuda::Product<PixelTrackHeterogeneous>> hTracks;
   iEvent.getByToken(tokenGPUTrack_, hTracks);
 
-  cms::cuda::ScopedContextProduce ctx{*hTracks};
+  cms::cuda::ScopedContextAcquire ctx{*hTracks, std::move(waitingTaskHolder), ctxState_};
   auto const* tracks = ctx.get(*hTracks).get();
 
   assert(tracks);
 
-  ctx.emplace(iEvent, tokenGPUVertex_, gpuAlgo_.makeAsync(ctx.stream(), tracks, ptMin_, ptMax_));
+  data_ = gpuAlgo_.makeAsync(ctx.stream(), tracks, ptMin_, ptMax_);
 }
 
-void PixelVertexProducerCUDA::produceOnCPU(edm::StreamID streamID,
-                                           edm::Event& iEvent,
-                                           const edm::EventSetup& iSetup) const {
+void PixelVertexProducerCUDA::produceOnGPU(edm::Event& iEvent,
+                                           const edm::EventSetup& iSetup) {
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
+  ctx.emplace(iEvent, tokenGPUVertex_, std::move(data_));
+}
+
+
+
+void PixelVertexProducerCUDA::acquireOnCPU(const edm::Event& iEvent,
+                                           const edm::EventSetup& iSetup) {
   auto const* tracks = iEvent.get(tokenCPUTrack_).get();
   assert(tracks);
 
@@ -129,15 +142,29 @@ void PixelVertexProducerCUDA::produceOnCPU(edm::StreamID streamID,
   }
   std::cout << "found " << nt << " tracks in cpu SoA for Vertexing at " << tracks << std::endl;
 #endif  // PIXVERTEX_DEBUG_PRODUCE
-
-  iEvent.emplace(tokenCPUVertex_, gpuAlgo_.make(tracks, ptMin_, ptMax_));
+  data_ = gpuAlgo_.make(tracks, ptMin_, ptMax_);
 }
 
-void PixelVertexProducerCUDA::produce(edm::StreamID streamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+void PixelVertexProducerCUDA::produceOnCPU(edm::Event& iEvent,
+                                           const edm::EventSetup& iSetup) {
+  iEvent.emplace(tokenCPUVertex_, std::move(data_));
+}
+
+void PixelVertexProducerCUDA::acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
   if (onGPU_) {
-    produceOnGPU(streamID, iEvent, iSetup);
+    acquireOnGPU(iEvent, iSetup, std::move(waitingTaskHolder));
   } else {
-    produceOnCPU(streamID, iEvent, iSetup);
+    acquireOnCPU(iEvent, iSetup);
+    auto holder = waitingTaskHolder.makeWaitingTaskHolderAndRelease();
+    holder.doneWaiting(nullptr);
+  }
+}
+
+void PixelVertexProducerCUDA::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+  if (onGPU_) {
+    produceOnGPU(iEvent, iSetup);
+  } else {
+    produceOnCPU(iEvent, iSetup);
   }
 }
 

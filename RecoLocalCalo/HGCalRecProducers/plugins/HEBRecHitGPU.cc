@@ -21,12 +21,13 @@
 #include "CUDADataFormats/HGCal/interface/HGCUncalibRecHitDevice.h"
 #include "CUDADataFormats/HGCal/interface/HGCUncalibRecHitHost.h"
 
-class HEBRecHitGPU : public edm::stream::EDProducer<> {
+class HEBRecHitGPU : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
   explicit HEBRecHitGPU(const edm::ParameterSet &ps);
   ~HEBRecHitGPU() override;
   void beginRun(edm::Run const &, edm::EventSetup const &) override;
 
+  void acquire(const edm::Event& iEvent, const edm::EventSetup& iSetup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   void produce(edm::Event &, const edm::EventSetup &) override;
 
 private:
@@ -55,6 +56,8 @@ private:
   HGCUncalibRecHitHost<HGChebUncalibratedRecHitCollection> h_uncalib_;
 
   KernelConstantData<HGChebUncalibRecHitConstantData> *kcdata_;
+
+  cms::cuda::ContextState ctxState_;
 };
 
 HEBRecHitGPU::HEBRecHitGPU(const edm::ParameterSet &ps)
@@ -90,8 +93,8 @@ void HEBRecHitGPU::assert_sizes_constants_(const HGCConstantVectorData &vd) {
 
 void HEBRecHitGPU::beginRun(edm::Run const &, edm::EventSetup const &setup) {}
 
-void HEBRecHitGPU::produce(edm::Event &event, const edm::EventSetup &setup) {
-  cms::cuda::ScopedContextProduce ctx{event.streamID()};
+void HEBRecHitGPU::acquire(const edm::Event& event, const edm::EventSetup& setup, edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  cms::cuda::ScopedContextAcquire ctx{event.streamID(), std::move(waitingTaskHolder), ctxState_};
 
   const auto &hits = event.get(uncalibRecHitCPUToken_);
   unsigned int nhits(hits.size());
@@ -106,7 +109,10 @@ void HEBRecHitGPU::produce(edm::Event &event, const edm::EventSetup &setup) {
 
   KernelManagerHGCalRecHit km(h_uncalib_.get(), d_uncalib_.get(), prod_.get());
   km.run_kernels(kcdata_, ctx.stream());
+}
 
+void HEBRecHitGPU::produce(edm::Event &event, const edm::EventSetup &setup) {
+  cms::cuda::ScopedContextProduce ctx{ctxState_};
   ctx.emplace(event, recHitGPUToken_, std::move(prod_));
 }
 
