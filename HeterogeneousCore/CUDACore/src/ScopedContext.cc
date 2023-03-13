@@ -6,7 +6,8 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/StreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
-#include "async.h"
+//#include "async.h"
+#include "PollingThread.h"
 #include "chooseDevice.h"
 
 #ifdef NOT_NEEDED
@@ -92,9 +93,7 @@ namespace cms::cuda {
 #endif
       SharedEventPtr event = getEventCache().get();
       cudaEventRecord(event.get(), stream);
-      edm::async(std::move(waitingTaskHolder_), [event = std::move(event)]() mutable {
-          cudaCheck(cudaEventSynchronize(event.get()));
-        });
+      eventContinuation(std::move(event), std::move(waitingTaskHolder_));
     }
   }  // namespace impl
 
