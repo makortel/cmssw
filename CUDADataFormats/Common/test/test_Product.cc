@@ -45,7 +45,7 @@ TEST_CASE("Use of cms::cuda::Product template", "[CUDACore]") {
       REQUIRE(data.isValid());
       REQUIRE(data.device() == defaultDevice);
       REQUIRE(data.stream() == ctx.stream());
-      REQUIRE(data.event() != nullptr);
+      //REQUIRE(data.event() != nullptr);
     }
 
     SECTION("Move constructor") {

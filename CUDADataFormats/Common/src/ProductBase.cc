@@ -2,6 +2,7 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/eventWorkHasCompleted.h"
 
 namespace cms::cuda {
+#ifdef NOT_NEEDED
   bool ProductBase::isAvailable() const {
     // if default-constructed, the product is not available
     if (not event_) {
@@ -26,4 +27,5 @@ namespace cms::cuda {
       cudaEventSynchronize(event_.get());
     }
   }
+#endif
 }  // namespace cms::cuda

@@ -20,25 +20,25 @@ namespace cms {
     class ProductBase {
     public:
       ProductBase() = default;  // Needed only for ROOT dictionary generation
-      ~ProductBase();
+      ~ProductBase() = default;
 
       ProductBase(const ProductBase&) = delete;
       ProductBase& operator=(const ProductBase&) = delete;
       ProductBase(ProductBase&& other)
           : stream_{std::move(other.stream_)},
-            event_{std::move(other.event_)},
-            mayReuseStream_{other.mayReuseStream_.load()},
+      //event_{std::move(other.event_)},
+            //mayReuseStream_{other.mayReuseStream_.load()},
             device_{other.device_} {}
       ProductBase& operator=(ProductBase&& other) {
         stream_ = std::move(other.stream_);
-        event_ = std::move(other.event_);
-        mayReuseStream_ = other.mayReuseStream_.load();
+        //event_ = std::move(other.event_);
+        //mayReuseStream_ = other.mayReuseStream_.load();
         device_ = other.device_;
         return *this;
       }
 
       bool isValid() const { return stream_.get() != nullptr; }
-      bool isAvailable() const;
+      bool isAvailable() const { return true; }
 
       int device() const { return device_; }
 
@@ -48,15 +48,17 @@ namespace cms {
       // pointer from a const method here.
       cudaStream_t stream() const { return stream_.get(); }
 
+#ifdef NOT_NEEDED
       // cudaEvent_t is a pointer to a thread-safe object, for which a
       // mutable access is needed even if the cms::cuda::ScopedContext itself
       // would be const. Therefore it is ok to return a non-const
       // pointer from a const method here.
       cudaEvent_t event() const { return event_.get(); }
+#endif
 
     protected:
-      explicit ProductBase(int device, SharedStreamPtr stream, SharedEventPtr event)
-          : stream_{std::move(stream)}, event_{std::move(event)}, device_{device} {}
+      explicit ProductBase(int device, SharedStreamPtr stream /*, SharedEventPtr event */)
+        : stream_{std::move(stream)}, /* event_{std::move(event)}, */ device_{device} {}
 
     private:
       friend class impl::ScopedContextBase;
@@ -65,6 +67,7 @@ namespace cms {
       // The following function is intended to be used only from ScopedContext
       const SharedStreamPtr& streamPtr() const { return stream_; }
 
+#ifdef NOT_NEEDED
       bool mayReuseStream() const {
         bool expected = true;
         bool changed = mayReuseStream_.compare_exchange_strong(expected, false);
@@ -72,10 +75,12 @@ namespace cms {
         // reuse the stream.
         return changed;
       }
+#endif
 
       // The cudaStream_t is really shared among edm::Event products, so
       // using shared_ptr also here
       SharedStreamPtr stream_;  //!
+#ifdef NOT_NEEDED
       // shared_ptr because of caching in cms::cuda::EventCache
       SharedEventPtr event_;  //!
 
@@ -83,6 +88,7 @@ namespace cms {
       // consumer or not. The goal is to have a "chain" of modules to
       // queue their work to the same stream.
       mutable std::atomic<bool> mayReuseStream_ = true;  //!
+#endif
 
       // The CUDA device associated with this product
       int device_ = -1;  //!

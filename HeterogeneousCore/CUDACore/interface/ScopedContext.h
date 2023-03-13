@@ -56,7 +56,9 @@ namespace cms {
       public:
         template <typename T>
         const T& get(const Product<T>& data) {
+#ifdef NOT_NEEDED
           synchronizeStreams(data.device(), data.stream(), data.isAvailable(), data.event());
+#endif
           return data.data_;
         }
 
@@ -69,7 +71,9 @@ namespace cms {
         template <typename... Args>
         ScopedContextGetterBase(Args&&... args) : ScopedContextBase(std::forward<Args>(args)...) {}
 
+#ifdef NOT_NEEDED
         void synchronizeStreams(int dataDevice, cudaStream_t dataStream, bool available, cudaEvent_t dataEvent);
+#endif
       };
 
       class ScopedContextHolderHelper {
@@ -159,17 +163,17 @@ namespace cms {
           : ScopedContextGetterBase(state.device(), state.releaseStreamPtr()) {}
 
       /// Record the CUDA event, all asynchronous work must have been queued before the destructor
-      ~ScopedContextProduce();
+      //~ScopedContextProduce();
 
       template <typename T>
       std::unique_ptr<Product<T>> wrap(T data) {
         // make_unique doesn't work because of private constructor
-        return std::unique_ptr<Product<T>>(new Product<T>(device(), streamPtr(), event_, std::move(data)));
+        return std::unique_ptr<Product<T>>(new Product<T>(device(), streamPtr(), /*event_, */ std::move(data)));
       }
 
       template <typename T, typename... Args>
       auto emplace(edm::Event& iEvent, edm::EDPutTokenT<T> token, Args&&... args) {
-        return iEvent.emplace(token, device(), streamPtr(), event_, std::forward<Args>(args)...);
+        return iEvent.emplace(token, device(), streamPtr(), /*event_, */ std::forward<Args>(args)...);
       }
 
     private:
@@ -177,10 +181,12 @@ namespace cms {
 
       // This construcor is only meant for testing
       explicit ScopedContextProduce(int device, SharedStreamPtr stream, SharedEventPtr event)
-          : ScopedContextGetterBase(device, std::move(stream)), event_{std::move(event)} {}
+        : ScopedContextGetterBase(device, std::move(stream)) /*, event_{std::move(event)} */ {}
 
+#ifdef NOT_NEEDED
       // create the CUDA Event upfront to catch possible errors from its creation
       SharedEventPtr event_ = getEventCache().get();
+#endif
     };
 
     /**

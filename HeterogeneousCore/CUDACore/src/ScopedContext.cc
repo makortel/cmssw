@@ -45,11 +45,13 @@ namespace cms::cuda {
 
     ScopedContextBase::ScopedContextBase(const ProductBase& data) : currentDevice_(data.device()) {
       cudaCheck(cudaSetDevice(currentDevice_));
+      /*
       if (data.mayReuseStream()) {
-        stream_ = data.streamPtr();
       } else {
         stream_ = getStreamCache().get();
       }
+      */
+      stream_ = data.streamPtr();
     }
 
     ScopedContextBase::ScopedContextBase(int device, SharedStreamPtr stream)
@@ -59,6 +61,7 @@ namespace cms::cuda {
 
     ////////////////////
 
+#ifdef NOT_NEEDED
     void ScopedContextGetterBase::synchronizeStreams(int dataDevice,
                                                      cudaStream_t dataStream,
                                                      bool available,
@@ -81,6 +84,7 @@ namespace cms::cuda {
         }
       }
     }
+#endif
 
     void ScopedContextHolderHelper::enqueueCallback(int device, cudaStream_t stream) {
       cudaCheck(
@@ -105,12 +109,14 @@ namespace cms::cuda {
 
   ////////////////////
 
+#ifdef NOT_NEEDED
   ScopedContextProduce::~ScopedContextProduce() {
     // Intentionally not checking the return value to avoid throwing
     // exceptions. If this call would fail, we should get failures
     // elsewhere as well.
     cudaEventRecord(event_.get(), stream());
   }
+#endif
 
   ////////////////////
 
