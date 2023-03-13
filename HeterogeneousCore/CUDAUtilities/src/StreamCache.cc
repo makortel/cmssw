@@ -15,15 +15,18 @@ namespace cms::cuda {
 
   // StreamCache should be constructed by the first call to
   // getStreamCache() only if we have CUDA devices present
-  StreamCache::StreamCache() : cache_(deviceCount()) {}
+  StreamCache::StreamCache() : cache_(deviceCount()) {
+    for (size_t i = 0; i<cache_.size(); ++i) {
+      ScopedSetDevice guard(i);
+      cudaStream_t stream;
+      cudaCheck(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
+      cache_[i] = std::shared_ptr<BareStream>(stream, Deleter{static_cast<int>(i)});
+    }
+  }
 
   SharedStreamPtr StreamCache::get() {
     const auto dev = currentDevice();
-    return cache_[dev].makeOrGet([dev]() {
-      cudaStream_t stream;
-      cudaCheck(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
-      return std::unique_ptr<BareStream, Deleter>(stream, Deleter{dev});
-    });
+    return cache_[dev];
   }
 
   void StreamCache::clear() {
@@ -34,6 +37,12 @@ namespace cms::cuda {
     // multiple shutdowns of the framework).
     cache_.clear();
     cache_.resize(deviceCount());
+    for (size_t i = 0; i<cache_.size(); ++i) {
+      ScopedSetDevice guard(i);
+      cudaStream_t stream;
+      cudaCheck(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
+      cache_[i] = std::shared_ptr<BareStream>(stream, Deleter{static_cast<int>(i)});
+    }
   }
 
   StreamCache& getStreamCache() {
