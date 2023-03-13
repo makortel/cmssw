@@ -6,8 +6,10 @@
 #include "HeterogeneousCore/CUDAUtilities/interface/StreamCache.h"
 #include "HeterogeneousCore/CUDAUtilities/interface/cudaCheck.h"
 
+#include "async.h"
 #include "chooseDevice.h"
 
+#ifdef NOT_NEEDED
 namespace {
   struct CallbackData {
     edm::WaitingTaskWithArenaHolder holder;
@@ -35,6 +37,7 @@ namespace {
     }
   }
 }  // namespace
+#endif
 
 namespace cms::cuda {
   namespace impl {
@@ -83,8 +86,15 @@ namespace cms::cuda {
     }
 
     void ScopedContextHolderHelper::enqueueCallback(int device, cudaStream_t stream) {
+#ifdef NOT_NEEDED
       cudaCheck(
           cudaStreamAddCallback(stream, cudaScopedContextCallback, new CallbackData{waitingTaskHolder_, device}, 0));
+#endif
+      SharedEventPtr event = getEventCache().get();
+      cudaEventRecord(event.get(), stream);
+      edm::async(std::move(waitingTaskHolder_), [event = std::move(event)]() mutable {
+          cudaCheck(cudaEventSynchronize(event.get()));
+        });
     }
   }  // namespace impl
 
