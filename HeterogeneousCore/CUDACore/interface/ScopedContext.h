@@ -163,7 +163,7 @@ namespace cms {
           : ScopedContextGetterBase(state.device(), state.releaseStreamPtr()) {}
 
       /// Record the CUDA event, all asynchronous work must have been queued before the destructor
-      //~ScopedContextProduce();
+      ~ScopedContextProduce();
 
       template <typename T>
       std::unique_ptr<Product<T>> wrap(T data) {

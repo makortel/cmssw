@@ -1,5 +1,6 @@
 #include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 
+#include "FWCore/Concurrency/interface/WaitingTaskHolder.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -87,8 +88,13 @@ namespace cms::cuda {
 #endif
 
     void ScopedContextHolderHelper::enqueueCallback(int device, cudaStream_t stream) {
+#ifdef NOT_NEEDED
       cudaCheck(
           cudaStreamAddCallback(stream, cudaScopedContextCallback, new CallbackData{waitingTaskHolder_, device}, 0));
+#endif
+      cudaCheck(cudaStreamSynchronize(stream));
+      auto holder = waitingTaskHolder_.makeWaitingTaskHolderAndRelease();
+      holder.doneWaiting(nullptr);
     }
   }  // namespace impl
 
@@ -109,14 +115,15 @@ namespace cms::cuda {
 
   ////////////////////
 
-#ifdef NOT_NEEDED
   ScopedContextProduce::~ScopedContextProduce() {
     // Intentionally not checking the return value to avoid throwing
     // exceptions. If this call would fail, we should get failures
     // elsewhere as well.
+#ifdef NOT_NEEDED
     cudaEventRecord(event_.get(), stream());
-  }
 #endif
+    cudaStreamSynchronize(stream());
+  }
 
   ////////////////////
 
