@@ -223,7 +223,18 @@ CUDAService::CUDAService(edm::ParameterSet const& config) : verbose_(config.getU
 
     // TODO if a device is in exclusive use, skip it and remove it from the list, instead of failing with abort()
     cudaCheck(cudaSetDevice(i));
-    cudaCheck(cudaSetDeviceFlags(cudaDeviceScheduleAuto | cudaDeviceMapHost));
+    auto const schedule = config.getUntrackedParameter<std::string>("schedule");
+    if (schedule.empty()) {
+      cudaCheck(cudaSetDeviceFlags(cudaDeviceScheduleAuto | cudaDeviceMapHost));
+    } else if(schedule == "spin") {
+      cudaCheck(cudaSetDeviceFlags(cudaDeviceScheduleSpin | cudaDeviceMapHost));
+    } else if(schedule == "yield") {
+      cudaCheck(cudaSetDeviceFlags(cudaDeviceScheduleYield | cudaDeviceMapHost));
+    } else if(schedule == "blockingSync") {
+      cudaCheck(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync | cudaDeviceMapHost));
+    } else {
+      throw cms::Exception("Foo") << "Unkown value for schedule " << schedule;
+    }
 
     // read the free and total amount of memory available for allocation by the device, in bytes.
     // see the documentation of cudaMemGetInfo() for more information.
@@ -396,6 +407,8 @@ void CUDAService::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   edm::ParameterSetDescription desc;
   desc.addUntracked<bool>("enabled", true);
   desc.addUntracked<bool>("verbose", false);
+
+  desc.addUntracked<std::string>("schedule", "");
 
   edm::ParameterSetDescription limits;
   limits.addUntracked<int>("cudaLimitPrintfFifoSize", -1)
