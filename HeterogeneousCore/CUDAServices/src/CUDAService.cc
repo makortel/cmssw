@@ -370,7 +370,7 @@ CUDAService::CUDAService(edm::ParameterSet const& config) : verbose_(config.getU
     cms::cuda::allocator::cachingAllocatorsConstruct();
   }
   cms::cuda::getEventCache().clear();
-  cms::cuda::getStreamCache().clear();
+  cms::cuda::getStreamCache().get();
 
   if (verbose_) {
     log << '\n' << "CUDAService fully initialized";

@@ -36,6 +36,7 @@ namespace cms::cuda {
     // StreamCache lives through multiple tests (and go through
     // multiple shutdowns of the framework).
     cache_.clear();
+    /*
     cache_.resize(deviceCount());
     for (size_t i = 0; i<cache_.size(); ++i) {
       ScopedSetDevice guard(i);
@@ -43,6 +44,7 @@ namespace cms::cuda {
       cudaCheck(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
       cache_[i] = std::shared_ptr<BareStream>(stream, Deleter{static_cast<int>(i)});
     }
+    */
   }
 
   StreamCache& getStreamCache() {
