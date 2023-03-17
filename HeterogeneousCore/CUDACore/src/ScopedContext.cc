@@ -90,10 +90,8 @@ namespace cms::cuda {
       cudaCheck(
           cudaStreamAddCallback(stream, cudaScopedContextCallback, new CallbackData{waitingTaskHolder_, device}, 0));
 #endif
-      SharedEventPtr event = getEventCache().get();
-      cudaEventRecord(event.get(), stream);
-      edm::async(std::move(waitingTaskHolder_), [event = std::move(event)]() mutable {
-          cudaCheck(cudaEventSynchronize(event.get()));
+      edm::async(std::move(waitingTaskHolder_), [stream]() mutable {
+          cudaCheck(cudaStreamSynchronize(stream));
         });
     }
   }  // namespace impl
