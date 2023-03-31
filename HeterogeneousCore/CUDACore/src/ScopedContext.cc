@@ -14,25 +14,10 @@ namespace {
     int device;
   };
 
-  void CUDART_CB cudaScopedContextCallback(cudaStream_t streamId, cudaError_t status, void* data) {
+  void CUDART_CB cudaScopedContextCallback(void* data) {
     std::unique_ptr<CallbackData> guard{reinterpret_cast<CallbackData*>(data)};
     edm::WaitingTaskWithArenaHolder& waitingTaskHolder = guard->holder;
-    int device = guard->device;
-    if (status == cudaSuccess) {
-      LogTrace("ScopedContext") << " GPU kernel finished (in callback) device " << device << " CUDA stream "
-                                << streamId;
-      waitingTaskHolder.doneWaiting(nullptr);
-    } else {
-      // wrap the exception in a try-catch block to let GDB "catch throw" break on it
-      try {
-        auto error = cudaGetErrorName(status);
-        auto message = cudaGetErrorString(status);
-        throw cms::Exception("CUDAError") << "Callback of CUDA stream " << streamId << " in device " << device
-                                          << " error " << error << ": " << message;
-      } catch (cms::Exception&) {
-        waitingTaskHolder.doneWaiting(std::current_exception());
-      }
-    }
+    waitingTaskHolder.doneWaiting(nullptr);
   }
 }  // namespace
 
@@ -84,7 +69,7 @@ namespace cms::cuda {
 
     void ScopedContextHolderHelper::enqueueCallback(int device, cudaStream_t stream) {
       cudaCheck(
-          cudaStreamAddCallback(stream, cudaScopedContextCallback, new CallbackData{waitingTaskHolder_, device}, 0));
+          cudaLaunchHostFunc(stream, cudaScopedContextCallback, new CallbackData{waitingTaskHolder_, device}));
     }
   }  // namespace impl
 
