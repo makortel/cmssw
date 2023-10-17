@@ -377,6 +377,7 @@ namespace edm {
 
     ConditionalTaskHelper conditionalTaskHelper(
         proc_pset, preg, &prealloc, processConfiguration, workerManager_, pathNames);
+    std::unordered_set<std::string> nonConsumedConditionalModules;
 
     int trig_bitpos = 0;
     trig_paths_.reserve(pathNames.size());
@@ -389,7 +390,8 @@ namespace edm {
                    trig_name,
                    results(),
                    endPathNames,
-                   conditionalTaskHelper);
+                   conditionalTaskHelper,
+                   nonConsumedConditionalModules);
       ++trig_bitpos;
       hasPath = true;
     }
@@ -406,18 +408,34 @@ namespace edm {
     int bitpos = 0;
     end_paths_.reserve(endPathNames.size());
     for (auto const& end_path_name : endPathNames) {
-      fillEndPath(
-          proc_pset, preg, &prealloc, processConfiguration, bitpos, end_path_name, endPathNames, conditionalTaskHelper);
+      fillEndPath(proc_pset,
+                  preg,
+                  &prealloc,
+                  processConfiguration,
+                  bitpos,
+                  end_path_name,
+                  endPathNames,
+                  conditionalTaskHelper,
+                  nonConsumedConditionalModules);
       ++bitpos;
     }
 
     makePathStatusInserters(pathStatusInserters, endPathStatusInserters, actions);
+
+    // Delete conditional modules that were not consumed in none of their associated Paths
+    for (auto const& modLabel : nonConsumedConditionalModules) {
+      // TODO: activity registry signals, must be called from Schedule ...
+      edm::LogPrint("foo").format("Deleting {}", modLabel);
+      deleteModule(modLabel);
+    }
 
     //See if all modules were used
     std::set<std::string> usedWorkerLabels;
     for (auto const& worker : allWorkers()) {
       usedWorkerLabels.insert(worker->description()->moduleLabel());
     }
+    // Consider non-consumed conditional modules as "used"
+    usedWorkerLabels.insert(nonConsumedConditionalModules.begin(), nonConsumedConditionalModules.end());
     std::vector<std::string> modulesInConfig(proc_pset.getParameter<std::vector<std::string>>("@all_modules"));
     std::set<std::string> modulesInConfigSet(modulesInConfig.begin(), modulesInConfig.end());
     std::vector<std::string> unusedLabels;
@@ -434,6 +452,7 @@ namespace edm {
       // 2) if it is a WorkerT<EDProducer>, add it to our list
       // 3) hand list to our delayed reader
       for (auto const& label : unusedLabels) {
+        edm::LogPrint("foo").format("Adding to unscheduled {}", label);
         bool isTracked;
         ParameterSet* modulePSet(proc_pset.getPSetForUpdate(label, isTracked));
         assert(isTracked);
@@ -753,7 +772,8 @@ namespace edm {
                                    bool ignoreFilters,
                                    PathWorkers& out,
                                    std::vector<std::string> const& endPathNames,
-                                   ConditionalTaskHelper const& conditionalTaskHelper) {
+                                   ConditionalTaskHelper const& conditionalTaskHelper,
+                                   std::unordered_set<std::string>& nonConsumedConditionalModules) {
     vstring modnames = proc_pset.getParameter<vstring>(pathName);
     PathWorkers tmpworkers;
 
@@ -775,6 +795,16 @@ namespace edm {
 
       conditionalModsBranches = conditionalTaskHelper.conditionalModuleBranches(conditionalmods);
       modnames.erase(std::prev(condRange.first), modnames.end());
+
+      // Remove the conditional modules that may be consumed in this
+      // Path from the set of non-consumed conditional modules. If
+      // those modules are non-consumed also in this Path, they will
+      // get added back later.
+      for (auto const& mod : conditionalmods) {
+        if (nonConsumedConditionalModules.find(mod) != nonConsumedConditionalModules.end()) {
+          nonConsumedConditionalModules.erase(mod);
+        }
+      }
     }
 
     unsigned int placeInPath = 0;
@@ -845,6 +875,9 @@ namespace edm {
       ++placeInPath;
     }
 
+    // Add conditional modules not consumed by anything in this Path to the set
+    nonConsumedConditionalModules.merge(std::move(conditionalmods));
+
     out.swap(tmpworkers);
   }
 
@@ -856,10 +889,19 @@ namespace edm {
                                     std::string const& name,
                                     TrigResPtr trptr,
                                     std::vector<std::string> const& endPathNames,
-                                    ConditionalTaskHelper const& conditionalTaskHelper) {
+                                    ConditionalTaskHelper const& conditionalTaskHelper,
+                                    std::unordered_set<std::string>& nonConsumedConditionalModules) {
     PathWorkers tmpworkers;
-    fillWorkers(
-        proc_pset, preg, prealloc, processConfiguration, name, false, tmpworkers, endPathNames, conditionalTaskHelper);
+    fillWorkers(proc_pset,
+                preg,
+                prealloc,
+                processConfiguration,
+                name,
+                false,
+                tmpworkers,
+                endPathNames,
+                conditionalTaskHelper,
+                nonConsumedConditionalModules);
 
     // an empty path will cause an extra bit that is not used
     if (!tmpworkers.empty()) {
@@ -880,10 +922,19 @@ namespace edm {
                                    int bitpos,
                                    std::string const& name,
                                    std::vector<std::string> const& endPathNames,
-                                   ConditionalTaskHelper const& conditionalTaskHelper) {
+                                   ConditionalTaskHelper const& conditionalTaskHelper,
+                                   std::unordered_set<std::string>& nonConsumedConditionalModules) {
     PathWorkers tmpworkers;
-    fillWorkers(
-        proc_pset, preg, prealloc, processConfiguration, name, true, tmpworkers, endPathNames, conditionalTaskHelper);
+    fillWorkers(proc_pset,
+                preg,
+                prealloc,
+                processConfiguration,
+                name,
+                true,
+                tmpworkers,
+                endPathNames,
+                conditionalTaskHelper,
+                nonConsumedConditionalModules);
 
     if (!tmpworkers.empty()) {
       end_paths_.emplace_back(bitpos,

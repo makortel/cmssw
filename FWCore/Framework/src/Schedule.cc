@@ -1333,6 +1333,7 @@ namespace edm {
     unsigned int i = 0;
     for (auto const& worker : allWorkers()) {
       ModuleDescription const* p = worker->description();
+      edm::LogPrint("foo").format("fillModuleAndConsumesInfo(): worker {}", p->moduleLabel());
       allModuleDescriptions.push_back(p);
       moduleIDToIndex.push_back(std::pair<unsigned int, unsigned int>(p->id(), i));
       labelToDesc[p->moduleLabel()] = p;
