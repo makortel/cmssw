@@ -21,6 +21,7 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -37,6 +38,7 @@ namespace edm {
 
     void initialize(Schedule const*, std::shared_ptr<ProductRegistry const>);
 
+    void removeModules(std::unordered_set<std::string> const& modules);
     void removeModules(std::vector<ModuleDescription const*> const& modules);
 
     std::vector<ModuleProcessName> const& modulesInPreviousProcessesWhoseProductsAreConsumedBy(

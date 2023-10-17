@@ -51,6 +51,18 @@ namespace edm {
                                         *preg);
   }
 
+  void PathsAndConsumesOfModules::removeModules(std::unordered_set<std::string> const& modules) {
+    // this feels silly way to achieve the effect
+    std::vector<ModuleDescription const*> moduleDescriptions;
+    moduleDescriptions.reserve(modules.size());
+    for (auto const* description : allModuleDescriptions_) {
+      if (modules.find(description->moduleLabel()) != modules.end()) {
+        moduleDescriptions.push_back(description);
+      }
+    }
+    removeModules(moduleDescriptions);
+  }
+
   void PathsAndConsumesOfModules::removeModules(std::vector<ModuleDescription const*> const& modules) {
     // First check that no modules on Paths are removed
     auto checkPath = [&modules](auto const& paths) {

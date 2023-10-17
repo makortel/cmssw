@@ -685,7 +685,10 @@ namespace edm {
           schedule_->deleteModule(description->moduleLabel(), actReg_.get());
         }
       }
-      schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
+      if (not unusedModuleLabels.empty()) {
+        pathsAndConsumesOfModules_.removeModules(unusedModuleLabels);
+        schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
+      }
     }
     // Initialize after the deletion of non-consumed unscheduled
     // modules to avoid non-consumed non-run modules to keep the

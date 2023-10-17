@@ -279,7 +279,10 @@ namespace edm {
           schedule_->deleteModule(description->moduleLabel(), actReg_.get());
         }
       }
-      schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
+      if (not unusedModuleLabels.empty()) {
+        pathsAndConsumesOfModules_.removeModules(unusedModuleLabels);
+        schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
+      }
     }
 
     // Products possibly consumed from the parent (Sub)Process
