@@ -237,6 +237,12 @@ namespace edm {
     /// modules-in-path, modules-in-endpath, and modules.
     void getTriggerReport(TriggerReport& rep) const;
 
+    /// Labels of ConditionalTask modules whose data products are not
+    /// consumed by any other module in their associated Paths
+    std::unordered_set<std::string> const& nonConsumedConditionalModules() const {
+      return nonConsumedConditionalModules_;
+    }
+
     ///  Clear all the counters in the trigger report.
     void clearCounters();
 
@@ -316,8 +322,7 @@ namespace edm {
                      bool ignoreFilters,
                      PathWorkers& out,
                      std::vector<std::string> const& endPathNames,
-                     ConditionalTaskHelper const& conditionalTaskHelper,
-                     std::unordered_set<std::string>& nonConsumedConditionalModules);
+                     ConditionalTaskHelper const& conditionalTaskHelper);
     void fillTrigPath(ParameterSet& proc_pset,
                       ProductRegistry& preg,
                       PreallocationConfiguration const* prealloc,
@@ -326,8 +331,7 @@ namespace edm {
                       std::string const& name,
                       TrigResPtr,
                       std::vector<std::string> const& endPathNames,
-                      ConditionalTaskHelper const& conditionalTaskHelper,
-                      std::unordered_set<std::string>& nonConsumedConditionalModules);
+                      ConditionalTaskHelper const& conditionalTaskHelper);
     void fillEndPath(ParameterSet& proc_pset,
                      ProductRegistry& preg,
                      PreallocationConfiguration const* prealloc,
@@ -335,8 +339,7 @@ namespace edm {
                      int bitpos,
                      std::string const& name,
                      std::vector<std::string> const& endPathNames,
-                     ConditionalTaskHelper const& conditionalTaskHelper,
-                     std::unordered_set<std::string>& nonConsumedConditionalModules);
+                     ConditionalTaskHelper const& conditionalTaskHelper);
 
     void addToAllWorkers(Worker* w);
 
@@ -378,6 +381,8 @@ namespace edm {
     //There is one EarlyDeleteHelper per Module which are reading data that
     // has been marked for early deletion
     std::vector<EarlyDeleteHelper> earlyDeleteHelpers_;
+
+    std::unordered_set<std::string> nonConsumedConditionalModules_;
 
     int total_events_;
     int total_passed_;
