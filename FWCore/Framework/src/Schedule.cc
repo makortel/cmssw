@@ -1256,11 +1256,11 @@ namespace edm {
     moduleRegistry_->deleteModule(iLabel, areg->preModuleDestructionSignal_, areg->postModuleDestructionSignal_);
   }
 
-  void Schedule::keepOnlyPathConsumedConditionalModules(std::unordered_set<std::string> const& unusedModules, ActivityRegistry* areg) {
+  std::unordered_set<std::string> Schedule::keepOnlyPathConsumedConditionalModules(std::unordered_set<std::string> const& unusedUnscheduledModules, ActivityRegistry* areg) {
     // Need to remove completely non-consumed modules from the
     // non-consumed-within-Path set, as they are deleted separately
     auto nonConsumedConditionalModules = streamSchedules_[0]->nonConsumedConditionalModules();
-    for (auto const& mod : unusedModules) {
+    for (auto const& mod : unusedUnscheduledModules) {
       auto found = nonConsumedConditionalModules.find(mod);
       if (found != nonConsumedConditionalModules.end()) {
         nonConsumedConditionalModules.erase(found);
@@ -1275,6 +1275,7 @@ namespace edm {
     for (auto const& modLabel : nonConsumedConditionalModules) {
       deleteModule(modLabel, areg);
     }
+    return nonConsumedConditionalModules;
   }
 
   void Schedule::initializeEarlyDelete(std::vector<std::string> const& branchesToDeleteEarly,

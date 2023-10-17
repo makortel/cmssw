@@ -686,8 +686,8 @@ namespace edm {
         }
       }
       if (not unusedModuleLabels.empty()) {
-        pathsAndConsumesOfModules_.removeModules(unusedModuleLabels);
-        schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
+        auto unusedConditionalModuleLabels = schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
+        pathsAndConsumesOfModules_.removeModules(unusedConditionalModuleLabels);
       }
     }
     // Initialize after the deletion of non-consumed unscheduled

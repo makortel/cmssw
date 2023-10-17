@@ -55,7 +55,15 @@ namespace edm {
     // this feels silly way to achieve the effect
     std::vector<ModuleDescription const*> moduleDescriptions;
     moduleDescriptions.reserve(modules.size());
+    {
+      edm::LogPrint l("foo");
+      l << "PathsAndConsumesOfModules::removeModules2 should remove modules ";
+      for (auto const& lab : modules) {
+        l << lab << ",";
+      }
+    }
     for (auto const* description : allModuleDescriptions_) {
+      edm::LogPrint("foo") << "PathsAndConsumesOfModules::removeModules2 allModule " << description->moduleLabel();
       if (modules.find(description->moduleLabel()) != modules.end()) {
         moduleDescriptions.push_back(description);
       }
@@ -83,6 +91,7 @@ namespace edm {
     for (auto iModule = 0U; iModule != allModuleDescriptions_.size(); ++iModule) {
       auto found = std::find(modules.begin(), modules.end(), allModuleDescriptions_[iModule]);
       if (found != modules.end()) {
+        edm::LogPrint("foo") << "PathsAndConsumesOfModules::removeModules removing module " << (*found)->moduleLabel();
         allModuleDescriptions_.erase(allModuleDescriptions_.begin() + iModule);
         for (auto iBranchType = 0U; iBranchType != NumBranchTypes; ++iBranchType) {
           modulesWhoseProductsAreConsumedBy_[iBranchType].erase(
