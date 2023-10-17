@@ -419,20 +419,24 @@ namespace edm {
 
     makePathStatusInserters(pathStatusInserters, endPathStatusInserters, actions);
 
+#ifdef OLD
     // Delete conditional modules that were not consumed in none of their associated Paths
     for (auto const& modLabel : nonConsumedConditionalModules_) {
       // TODO: activity registry signals, must be called from Schedule ...
       edm::LogPrint("foo").format("Deleting {}", modLabel);
       deleteModule(modLabel);
     }
+#endif
 
     //See if all modules were used
     std::set<std::string> usedWorkerLabels;
     for (auto const& worker : allWorkers()) {
       usedWorkerLabels.insert(worker->description()->moduleLabel());
     }
+#ifdef OLD
     // Consider non-consumed conditional modules as "used"
     usedWorkerLabels.insert(nonConsumedConditionalModules_.begin(), nonConsumedConditionalModules_.end());
+#endif
     std::vector<std::string> modulesInConfig(proc_pset.getParameter<std::vector<std::string>>("@all_modules"));
     std::set<std::string> modulesInConfigSet(modulesInConfig.begin(), modulesInConfig.end());
     std::vector<std::string> unusedLabels;

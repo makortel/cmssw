@@ -674,8 +674,7 @@ namespace edm {
 
         edm::LogInfo("DeleteModules").log([&unusedModules](auto& l) {
           l << "Following modules are not in any Path or EndPath, nor is their output consumed by any other module, "
-               "and "
-               "therefore they are deleted before beginJob transition.";
+               "and therefore they are deleted before beginJob transition.";
           for (auto const& description : unusedModules) {
             l << "\n " << description->moduleLabel();
           }
@@ -684,6 +683,7 @@ namespace edm {
           schedule_->deleteModule(description->moduleLabel(), actReg_.get());
         }
       }
+      schedule_->keepOnlyPathConsumedConditionalModules(actReg_.get());
     }
     // Initialize after the deletion of non-consumed unscheduled
     // modules to avoid non-consumed non-run modules to keep the

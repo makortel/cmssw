@@ -277,6 +277,7 @@ namespace edm {
           schedule_->deleteModule(description->moduleLabel(), actReg_.get());
         }
       }
+      schedule_->keepOnlyPathConsumedConditionalModules(actReg_.get());
     }
 
     // Products possibly consumed from the parent (Sub)Process

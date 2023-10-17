@@ -1256,6 +1256,18 @@ namespace edm {
     moduleRegistry_->deleteModule(iLabel, areg->preModuleDestructionSignal_, areg->postModuleDestructionSignal_);
   }
 
+  void Schedule::keepOnlyPathConsumedConditionalModules(ActivityRegistry* areg) {
+    edm::LogWarning("DeleteModules").log([this](auto& l) {
+      l << "The output of the following ConditionalTask modules are not consumed by any other module in any of their associated Path or EndPath, and therefore they are deleted before beginJob transition.";
+      for (auto const& modLabel : streamSchedules_[0]->nonConsumedConditionalModules()) {
+        l << "\n " << modLabel;
+      }
+    });
+    for (auto const& modLabel : streamSchedules_[0]->nonConsumedConditionalModules()) {
+      deleteModule(modLabel, areg);
+    }
+  }
+
   void Schedule::initializeEarlyDelete(std::vector<std::string> const& branchesToDeleteEarly,
                                        std::multimap<std::string, std::string> const& referencesToBranches,
                                        std::vector<std::string> const& modulesToSkip,

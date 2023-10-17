@@ -101,5 +101,5 @@ process.intAnalyzerDelete = cms.EDAnalyzer("edmtest::TestModuleDeleteAnalyzer")
 
 process.endp = cms.EndPath(process.tst+process.intAnalyzerDelete+process.nonconsumedNonPathConsumer)
 
-#process.add_(cms.Service("Tracer"))
+process.add_(cms.Service("Tracer"))
 #process.options.wantSummary=True
