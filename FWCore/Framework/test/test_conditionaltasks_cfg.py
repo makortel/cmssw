@@ -28,24 +28,26 @@ process.c = cms.EDProducer("IntProducer", ivalue = cms.int32(2))
 process.d = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag(cms.InputTag("c")))
 process.e = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag(cms.InputTag("d")))
 
-process.nonconsumedevent = cms.EDProducer("edmtest::TestModuleDeleteProducer")
-process.nonconsumedprocess = cms.EDProducer("edmtest::TestModuleDeleteInProcessProducer")
-process.nonconsumedlumi = cms.EDProducer("edmtest::TestModuleDeleteInLumiProducer",
-    srcBeginProcess = cms.untracked.VInputTag("nonconsumedprocess")
+process.nonConsumedEvent = cms.EDProducer("edmtest::TestModuleDeleteProducer")
+process.nonPathConsumedEvent = cms.EDProducer("edmtest::TestModuleDeleteProducer")
+process.nonPathConsumedProcess = cms.EDProducer("edmtest::TestModuleDeleteInProcessProducer")
+process.nonPathConsumedLumi = cms.EDProducer("edmtest::TestModuleDeleteInLumiProducer",
+    srcBeginProcess = cms.untracked.VInputTag("nonPathConsumedProcess")
 )
-process.nonconsumedrun = cms.EDProducer("edmtest::TestModuleDeleteInRunProducer",
-    srcBeginLumi = cms.untracked.VInputTag("nonconsumedlumi")
+process.nonPathConsumedRun = cms.EDProducer("edmtest::TestModuleDeleteInRunProducer",
+    srcBeginLumi = cms.untracked.VInputTag("nonPathConsumedLumi")
 )
-process.nonconsumedconsumer = cms.EDProducer("edmtest::TestModuleDeleteProducer",
-    srcEvent = cms.untracked.VInputTag("nonconsumed1"),
-    srcBeginRun = cms.untracked.VInputTag("nonconsumedrun"),
+process.nonPathConsumedConsumer = cms.EDProducer("edmtest::TestModuleDeleteProducer",
+    srcEvent = cms.untracked.VInputTag("nonPathConsumedEvent"),
+    srcBeginRun = cms.untracked.VInputTag("nonPathConsumedRun"),
 )
-process.nonconsumedConditionalTask = cms.ConditionalTask(
-    process.nonconsumedevent,
-    process.nonconsumedprocess,
-    process.nonconsumedlumi,
-    process.nonconsumedrun,
-    process.nonconsumedconsumer
+process.nonConsumedConditionalTask = cms.ConditionalTask(
+    process.nonConsumedEvent,
+    process.nonPathConsumedEvent,
+    process.nonPathConsumedProcess,
+    process.nonPathConsumedLumi,
+    process.nonPathConsumedRun,
+    process.nonPathConsumedConsumer
 )
 
 process.prodOnPath = cms.EDProducer("AddIntsProducer", labels = cms.VInputTag(cms.InputTag("d"), cms.InputTag("e")))
@@ -89,17 +91,18 @@ if args.testAlias:
   )
 
 
-process.p = cms.Path(process.f1+process.prodOnPath+process.f2+process.f3, cms.ConditionalTask(process.a, process.b, process.c, process.d, process.e, process.f, process.nonconsumedConditionalTask))
+process.p = cms.Path(process.f1+process.prodOnPath+process.f2+process.f3, cms.ConditionalTask(process.a, process.b, process.c, process.d, process.e, process.f, process.nonConsumedConditionalTask))
 
 process.tst = cms.EDAnalyzer("IntTestAnalyzer", moduleLabel = cms.untracked.InputTag("f"), valueMustMatch = cms.untracked.int32(3), 
                                                        valueMustBeMissing = cms.untracked.bool(not args.filterSucceeds))
-process.nonconsumedNonPathConsumer = cms.EDAnalyzer("edmtest::GenericIntsAnalyzer",
+process.nonConsumedNonPathConsumer = cms.EDAnalyzer("edmtest::GenericIntsAnalyzer",
     inputShouldBeMissing = cms.untracked.bool(True),
-    srcEvent = cms.untracked.VInputTag("nonconsumedconsumer")
+    srcEvent = cms.untracked.VInputTag("nonPathConsumedConsumer")
 )
 process.intAnalyzerDelete = cms.EDAnalyzer("edmtest::TestModuleDeleteAnalyzer")
 
-process.endp = cms.EndPath(process.tst+process.intAnalyzerDelete+process.nonconsumedNonPathConsumer)
+process.endp = cms.EndPath(process.tst+process.intAnalyzerDelete+process.nonConsumedNonPathConsumer)
 
-process.add_(cms.Service("Tracer"))
+#process.add_(cms.Service("Tracer"))
 #process.options.wantSummary=True
+process.MessageLogger.DeleteModules = dict()

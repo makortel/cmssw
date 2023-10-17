@@ -668,6 +668,7 @@ namespace edm {
     // Note: all these may throw
     checkForModuleDependencyCorrectness(pathsAndConsumesOfModules_, printDependencies_);
     if (deleteNonConsumedUnscheduledModules_) {
+      std::unordered_set<std::string> unusedModuleLabels;
       if (auto const unusedModules = nonConsumedUnscheduledModules(pathsAndConsumesOfModules_, consumedBySubProcesses);
           not unusedModules.empty()) {
         pathsAndConsumesOfModules_.removeModules(unusedModules);
@@ -680,10 +681,11 @@ namespace edm {
           }
         });
         for (auto const& description : unusedModules) {
+          unusedModuleLabels.insert(description->moduleLabel());
           schedule_->deleteModule(description->moduleLabel(), actReg_.get());
         }
       }
-      schedule_->keepOnlyPathConsumedConditionalModules(actReg_.get());
+      schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
     }
     // Initialize after the deletion of non-consumed unscheduled
     // modules to avoid non-consumed non-run modules to keep the

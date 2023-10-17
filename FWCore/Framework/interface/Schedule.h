@@ -289,7 +289,7 @@ namespace edm {
     /// Deletes module with label iLabel
     void deleteModule(std::string const& iLabel, ActivityRegistry* areg);
 
-    void keepOnlyPathConsumedConditionalModules(ActivityRegistry* areg);
+    void keepOnlyPathConsumedConditionalModules(std::unordered_set<std::string> const& unusedModules, ActivityRegistry* areg);
 
     void initializeEarlyDelete(std::vector<std::string> const& branchesToDeleteEarly,
                                std::multimap<std::string, std::string> const& referencesToBranches,

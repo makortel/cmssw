@@ -1256,14 +1256,23 @@ namespace edm {
     moduleRegistry_->deleteModule(iLabel, areg->preModuleDestructionSignal_, areg->postModuleDestructionSignal_);
   }
 
-  void Schedule::keepOnlyPathConsumedConditionalModules(ActivityRegistry* areg) {
-    edm::LogWarning("DeleteModules").log([this](auto& l) {
+  void Schedule::keepOnlyPathConsumedConditionalModules(std::unordered_set<std::string> const& unusedModules, ActivityRegistry* areg) {
+    // Need to remove completely non-consumed modules from the
+    // non-consumed-within-Path set, as they are deleted separately
+    auto nonConsumedConditionalModules = streamSchedules_[0]->nonConsumedConditionalModules();
+    for (auto const& mod : unusedModules) {
+      auto found = nonConsumedConditionalModules.find(mod);
+      if (found != nonConsumedConditionalModules.end()) {
+        nonConsumedConditionalModules.erase(found);
+      }
+    }
+    edm::LogInfo("DeleteModules").log([&nonConsumedConditionalModules](auto& l) {
       l << "The output of the following ConditionalTask modules are not consumed by any other module in any of their associated Path or EndPath, and therefore they are deleted before beginJob transition.";
-      for (auto const& modLabel : streamSchedules_[0]->nonConsumedConditionalModules()) {
+      for (auto const& modLabel : nonConsumedConditionalModules) {
         l << "\n " << modLabel;
       }
     });
-    for (auto const& modLabel : streamSchedules_[0]->nonConsumedConditionalModules()) {
+    for (auto const& modLabel : nonConsumedConditionalModules) {
       deleteModule(modLabel, areg);
     }
   }
