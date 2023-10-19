@@ -55,6 +55,7 @@ namespace edm {
     // this feels silly way to achieve the effect
     std::vector<ModuleDescription const*> moduleDescriptions;
     moduleDescriptions.reserve(modules.size());
+    /*
     {
       edm::LogPrint l("foo");
       l << "PathsAndConsumesOfModules::removeModules2 should remove modules ";
@@ -62,8 +63,9 @@ namespace edm {
         l << lab << ",";
       }
     }
+    */
     for (auto const* description : allModuleDescriptions_) {
-      edm::LogPrint("foo") << "PathsAndConsumesOfModules::removeModules2 allModule " << description->moduleLabel();
+      //edm::LogPrint("foo") << "PathsAndConsumesOfModules::removeModules2 allModule " << description->moduleLabel();
       if (modules.find(description->moduleLabel()) != modules.end()) {
         moduleDescriptions.push_back(description);
       }
@@ -94,14 +96,36 @@ namespace edm {
         edm::LogPrint("foo") << "PathsAndConsumesOfModules::removeModules removing module " << (*found)->moduleLabel();
         allModuleDescriptions_.erase(allModuleDescriptions_.begin() + iModule);
         for (auto iBranchType = 0U; iBranchType != NumBranchTypes; ++iBranchType) {
+          // Remove the entry of the module to be removed
           modulesWhoseProductsAreConsumedBy_[iBranchType].erase(
               modulesWhoseProductsAreConsumedBy_[iBranchType].begin() + iModule);
+          // For not-consumed-in-any-Path ConditionalTask modules, remove them from the consumedBy vector of all modules
+          int iOther = 0;
+          for (auto& otherModuleConsumes : modulesWhoseProductsAreConsumedBy_[iBranchType]) {
+            auto foundInConsumes = std::find(otherModuleConsumes.begin(), otherModuleConsumes.end(), *found);
+            if (foundInConsumes != otherModuleConsumes.end()) {
+              edm::LogPrint("foo") << " removing the module from the consumes list of module " << allModuleDescriptions_[iOther]->moduleLabel();
+              otherModuleConsumes.erase(foundInConsumes);
+            }
+            ++iOther;
+          }
         }
         modulesInPreviousProcessesWhoseProductsAreConsumedBy_.erase(
             modulesInPreviousProcessesWhoseProductsAreConsumedBy_.begin() + iModule);
+        // TODO: probably need to prevent subprocesses to cause non-Path-consumed ConditionalTask modules to run
         for (auto& idToIndex : moduleIDToIndex_) {
           if (idToIndex.second >= iModule) {
-            idToIndex.second--;
+            edm::LogPrint l("foo");
+            l.format("removeModules() idToIndex.second {} iModule {}", idToIndex.second, iModule);
+            // Keep the underflown ones at the unsigned maximum to denote a deleted module
+            if (idToIndex.second == iModule) {
+              // TODO: reorganize
+              l.format(" ModuleID {}", idToIndex.first);
+              idToIndex.second = std::numeric_limits<unsigned int>::max();
+            }
+            if (idToIndex.second != std::numeric_limits<unsigned int>::max()) {
+              idToIndex.second--;
+            }
           }
         }
         --iModule;
@@ -151,6 +175,7 @@ namespace edm {
   }
 
   unsigned int PathsAndConsumesOfModules::moduleIndex(unsigned int moduleID) const {
+    edm::LogPrint("foo").format("moduleIndex() for moduleID {}", moduleID);
     unsigned int dummy = 0;
     auto target = std::make_pair(moduleID, dummy);
     std::vector<std::pair<unsigned int, unsigned int>>::const_iterator iter =
@@ -168,6 +193,7 @@ namespace {
   void findAllConsumedModules(edm::PathsAndConsumesOfModulesBase const& iPnC,
                               edm::ModuleDescription const* module,
                               std::unordered_set<unsigned int>& consumedModules) {
+    edm::LogPrint("foo").format("findAllConsumedModules() for module {}", module->moduleLabel());
     // If this node of the DAG has been processed already, no need to
     // reprocess again
     if (consumedModules.find(module->id()) != consumedModules.end()) {

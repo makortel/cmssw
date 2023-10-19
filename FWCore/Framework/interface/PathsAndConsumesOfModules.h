@@ -76,7 +76,11 @@ namespace edm {
     // following data member
     std::vector<std::pair<unsigned int, unsigned int> > moduleIDToIndex_;
 
+    // Array index is the branch type
+    // Outer vector index is moduleIndex(moduleID)
+    // Inner vector contains the modules, whose products are consumed by the outer-vector-index-module
     std::array<std::vector<std::vector<ModuleDescription const*> >, NumBranchTypes> modulesWhoseProductsAreConsumedBy_;
+
     std::vector<std::vector<ModuleProcessName> > modulesInPreviousProcessesWhoseProductsAreConsumedBy_;
 
     Schedule const* schedule_;

@@ -260,7 +260,8 @@ namespace edm {
 
     // Non-consumed unscheduled modules in this SubProcess, take into account of the consumes from child SubProcesses
     if (deleteModules) {
-      std::unordered_set<std::string> unusedModuleLabels;
+      pathsAndConsumesOfModules_.removeModules(schedule_->nonPathConsumedConditionalModules());
+      schedule_->keepOnlyPathConsumedConditionalModules(actReg_.get());
       if (auto const unusedModules = nonConsumedUnscheduledModules(pathsAndConsumesOfModules_, consumedByChildren);
           not unusedModules.empty()) {
         pathsAndConsumesOfModules_.removeModules(unusedModules);
@@ -275,13 +276,8 @@ namespace edm {
           }
         });
         for (auto const& description : unusedModules) {
-          unusedModuleLabels.insert(description->moduleLabel());
           schedule_->deleteModule(description->moduleLabel(), actReg_.get());
         }
-      }
-      if (not unusedModuleLabels.empty()) {
-        auto unusedConditionalModuleLabels = schedule_->keepOnlyPathConsumedConditionalModules(unusedModuleLabels, actReg_.get());
-        pathsAndConsumesOfModules_.removeModules(unusedConditionalModuleLabels);
       }
     }
 

@@ -99,11 +99,13 @@ process.nonConsumedNonPathConsumer = cms.EDAnalyzer("edmtest::GenericIntsAnalyze
     inputShouldBeMissing = cms.untracked.bool(True),
     srcEvent = cms.untracked.VInputTag("nonPathConsumedConsumer")
 )
-process.intAnalyzerDelete = cms.EDAnalyzer("edmtest::TestModuleDeleteAnalyzer")
+#process.intAnalyzerDelete = cms.EDAnalyzer("edmtest::TestModuleDeleteAnalyzer")
 
-process.endp = cms.EndPath(process.tst+process.intAnalyzerDelete+process.nonConsumedNonPathConsumer)
+process.endp = cms.EndPath(process.tst
+                           #+process.intAnalyzerDelete
+                           +process.nonConsumedNonPathConsumer)
 
 #process.add_(cms.Service("Tracer"))
-process.add_(cms.Service("Tracer", dumpPathsAndConsumes=cms.untracked.bool(True)))
+#process.add_(cms.Service("Tracer", dumpPathsAndConsumes=cms.untracked.bool(True)))
 #process.options.wantSummary=True
 process.MessageLogger.DeleteModules = dict()

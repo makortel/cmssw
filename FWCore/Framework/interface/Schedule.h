@@ -289,10 +289,11 @@ namespace edm {
     /// Deletes module with label iLabel
     void deleteModule(std::string const& iLabel, ActivityRegistry* areg);
 
-    // Argument set contains the unscheduled modules that are not consumed by anything
-    // Returns a set of ConditionalTask modules that are not consumed by other modules in any of the associated Paths
-    // TODO: it could be better to remove first the non-path-consumed modules, to avoid a non-Path-consumed module keeping an otherwise non-consumed-unscheduled module alive
-    std::unordered_set<std::string> keepOnlyPathConsumedConditionalModules(std::unordered_set<std::string> const& unusedUnscheduledModules, ActivityRegistry* areg);
+    std::unordered_set<std::string> const& nonPathConsumedConditionalModules() const {
+      // TODO: rename the called function
+      return streamSchedules_[0]->nonConsumedConditionalModules();
+    }
+    void keepOnlyPathConsumedConditionalModules(ActivityRegistry* areg);
 
     void initializeEarlyDelete(std::vector<std::string> const& branchesToDeleteEarly,
                                std::multimap<std::string, std::string> const& referencesToBranches,
