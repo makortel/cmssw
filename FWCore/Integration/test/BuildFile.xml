@@ -37,6 +37,8 @@
   <test name="TestIntegration_TestEDAlias" command="run_TestEDAlias.sh"/>
   <test name="TestIntegrationProcessAccelerator" command="run_TestProcessAccelerator.sh"/>
   <test name="TestFWCoreIntegrationModuleTypeResolver" command="run_TestModuleTypeResolver.sh"/>
+  <test name="TestFWCoreIntegrationModuleTypeResolverRefRootFormat" command="run_TestModuleTypeResolverRefRootFormat.sh"/>
+  <test name="TestFWCoreIntegrationModuleTypeResolverRefStreamerFormat" command="run_TestModuleTypeResolverRefStreamerFormat.sh"/>
   <test name="CatchStdExceptiontest" command="CatchStdExceptiontest.sh"/>
   <test name="CatchCmsExceptiontest" command="CatchCmsExceptiontest.sh"/>
   <test name="TestIntegrationExistingDictionary" command="run_TestExistingDictionary.sh"/>

@@ -97,10 +97,34 @@ void TrackProducerAlgorithm<T>::runWithTrack(const TrackingGeometry* theG,
   const TkTransientTrackingRecHitBuilder* builder = dynamic_cast<TkTransientTrackingRecHitBuilder const*>(gbuilder);
   assert(builder);
   int cont = 0;
+
+  if (not theTCollection.empty()) {
+    if (true or not theTCollection.begin()->extra().isAvailable()) {
+      edm::LogWarning l("foo");
+      l.format("Track extra not available in first track\n");
+      int n = 0;
+      for (auto i = theTCollection.begin(); i != theTCollection.end(); i++) {
+        const T* theT = &(*i);
+        l.format(" track {} algo {} ProdID {} extra ProdID {}\n",
+                 n,
+                 i->algoName(),
+                 theTCollection.ptrAt(n).id(),
+                 i->extra().id());
+        ++n;
+      }
+    }
+  }
+
   for (auto i = theTCollection.begin(); i != theTCollection.end(); i++) {
     try {
       const T* theT = &(*i);
       float ndof = 0;
+
+      if (not theT->extra().isAvailable()) {
+        edm::LogWarning("foo").format(
+            "TrackExtra not available for track {}, algo {}", std::distance(theTCollection.begin(), i), i->algoName());
+      }
+
       PropagationDirection seedDir = theT->seedDirection();
 
       // WARNING: here we assume that the hits are correcly sorted according to seedDir
