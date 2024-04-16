@@ -1035,6 +1035,11 @@ namespace edm::test {
       edm::EDPutTokenT<edmtest::IntProduct> token_;
       int value_;
     };
+    // The idea is that the other::IntTransformer produces an
+    // additional *transient* data product compared to
+    // cpu::IntTransformer. The cpu::IntTransformer would be
+    // functionally equivalent to cpu::IntProducer, so can simply use
+    // a type alias.
     using IntTransformer = IntProducer;
   }  // namespace cpu
 }  // namespace edm::test
