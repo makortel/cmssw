@@ -12,13 +12,17 @@ function runFailure {
     echo
 }
 
+# Produce two files with different ProductID metadata
 runSuccess ${SCRAM_TEST_PATH}/testRefProductIDMetadataConsistencyStreamer_cfg.py
 runSuccess ${SCRAM_TEST_PATH}/testRefProductIDMetadataConsistencyStreamer_cfg.py --enableOther
 
+# Processing the two files together works
 runSuccess ${SCRAM_TEST_PATH}/testRefProductIDMetadataConsistencyStreamerTest_cfg.py --input refconsistency_1.dat --input refconsistency_10.dat
 
+# Concatenating the two files by keeping the Init message of only first file ...
 echo "Concatenating streamer files"
 CatStreamerFiles refconsistency_cat.dat refconsistency_1.dat refconsistency_10.dat
 echo
 
+# ... fails
 runFailure ${SCRAM_TEST_PATH}/testModuleTypeResolverRefTest_cfg.py --input moduletyperesolver_ref_cat.dat
