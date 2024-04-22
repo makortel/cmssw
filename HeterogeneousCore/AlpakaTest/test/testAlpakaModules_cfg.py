@@ -97,11 +97,21 @@ process.alpakaStreamSynchronizingProducer = cms.EDProducer("TestAlpakaStreamSync
     intSource = cms.InputTag("intProduct"),
     expectedInt = cms.int32(84) # sum of intProduct and esProducerA
 )
+process.alpakaStreamSynchronizingProducerToDevice = cms.EDProducer("TestAlpakaStreamSynchronizingProducerToDevice@alpaka",
+    size = cms.PSet(
+        alpaka_serial_sync = cms.int32(1),
+        alpaka_cuda_async = cms.int32(2),
+        alpaka_rocm_async = cms.int32(3),
+    )
+)
 
 process.alpakaGlobalConsumer = cms.EDAnalyzer("TestAlpakaAnalyzer",
     source = cms.InputTag("alpakaGlobalProducer"),
     expectSize = cms.int32(10),
     expectBackend = cms.string("SerialSync")
+)
+process.alpakaGlobalDeviceConsumer = cms.EDProducer("TestAlpakaGlobalProducerNoOutput@alpaka",
+    source = cms.InputTag("alpakaGlobalProducer")
 )
 process.alpakaGlobalConsumerE = process.alpakaGlobalConsumer.clone(
     source = "alpakaGlobalProducerE",
@@ -111,6 +121,9 @@ process.alpakaStreamConsumer = cms.EDAnalyzer("TestAlpakaAnalyzer",
     source = cms.InputTag("alpakaStreamProducer"),
     expectSize = cms.int32(5),
     expectBackend = cms.string("SerialSync")
+)
+process.alpakaStreamDeviceConsumer = process.alpakaGlobalDeviceConsumer.clone(
+    source = "alpakaStreamProducer"
 )
 process.alpakaStreamInstanceConsumer = cms.EDAnalyzer("TestAlpakaAnalyzer",
     source = cms.InputTag("alpakaStreamInstanceProducer", "testInstance"),
@@ -122,6 +135,10 @@ process.alpakaStreamSynchronizingConsumer = cms.EDAnalyzer("TestAlpakaAnalyzer",
     expectSize = cms.int32(10),
     expectBackend = cms.string("SerialSync")
 )
+process.alpakaStreamSynchronizingProducerToDeviceDeviceConsumer1 = process.alpakaGlobalDeviceConsumer.clone(
+    source = "alpakaStreamSynchronizingProducerToDevice"
+)
+process.alpakaStreamSynchronizingProducerToDeviceDeviceConsumer2 = process.alpakaStreamSynchronizingProducerToDeviceDeviceConsumer1.clone()
 process.alpakaNullESConsumer = cms.EDProducer("TestAlpakaGlobalProducerNullES@alpaka",
     eventSetupSource = cms.ESInputTag("", "null")
 )
@@ -173,14 +190,19 @@ process.t = cms.Task(
     process.alpakaGlobalProducerE,
     process.alpakaStreamProducer,
     process.alpakaStreamInstanceProducer,
-    process.alpakaStreamSynchronizingProducer
+    process.alpakaStreamSynchronizingProducer,
+    process.alpakaStreamSynchronizingProducerToDevice
 )
 process.p = cms.Path(
     process.alpakaGlobalConsumer+
+    process.alpakaGlobalDeviceConsumer+
     process.alpakaGlobalConsumerE+
     process.alpakaStreamConsumer+
+    process.alpakaStreamDeviceConsumer+
     process.alpakaStreamInstanceConsumer+
     process.alpakaStreamSynchronizingConsumer+
+    process.alpakaStreamSynchronizingProducerToDeviceDeviceConsumer1+
+    process.alpakaStreamSynchronizingProducerToDeviceDeviceConsumer2+
     process.alpakaNullESConsumer,
     process.t
 )
