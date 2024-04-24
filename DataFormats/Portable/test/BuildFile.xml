@@ -4,7 +4,6 @@
   <use name="catch2"/>
 </bin>
 
-<!-- for now this test makes sense only for non-CPU backends -->
 <bin name="TestDataFormatsPortableCollection" file="alpaka/test_catch2_*.cc">
   <use name="DataFormats/Portable"/>
   <use name="DataFormats/SoATemplate"/>
