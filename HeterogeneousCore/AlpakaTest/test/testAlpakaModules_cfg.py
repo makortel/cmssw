@@ -149,7 +149,10 @@ if args.moduleBackend != "":
     for name in ["ESProducerA", "ESProducerB", "ESProducerC", "ESProducerD", "ESProducerE",
                  "ESProducerNull",
                  "GlobalProducer", "GlobalProducerE",
-                 "StreamProducer", "StreamInstanceProducer", "StreamSynchronizingProducer",
+                 "StreamProducer", "StreamInstanceProducer",
+                 "StreamSynchronizingProducer", "StreamSynchronizingProducerToDevice",
+                 "GlobalDeviceConsumer", "StreamDeviceConsumer",
+                 "StreamSynchronizingProducerToDeviceDeviceConsumer1", "StreamSynchronizingProducerToDeviceDeviceConsumer2",
                  "NullESConsumer"]:
         mod = getattr(process, "alpaka"+name)
         mod.alpaka = cms.untracked.PSet(backend = cms.untracked.string(args.moduleBackend))
