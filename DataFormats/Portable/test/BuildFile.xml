@@ -13,4 +13,3 @@
   <use name="catch2"/>
   <flags ALPAKA_BACKENDS="1"/>
 </bin>
-

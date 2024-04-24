@@ -27,8 +27,6 @@ TEST_CASE("PortableCollection<T, TDev>", s_tag) {
          "the test will be skipped.");
   }
 
-#ifndef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-
   SECTION("Default constructor") {
     PortableHostCollection<TestSoA> coll_h;
     REQUIRE(coll_h.size() == 0);
@@ -38,6 +36,8 @@ TEST_CASE("PortableCollection<T, TDev>", s_tag) {
     //coll->num() = 42;
     //REQUIRE(coll->num() == 42);
 
+    // CopyToDevice<PortableHostCollection<T>> is not defined
+#ifndef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
     for (auto const& device : devices) {
       auto queue = Queue(device);
       auto coll_d = cms::alpakatools::CopyToDevice<PortableHostCollection<TestSoA>>::copyAsync(queue, coll_h);
@@ -45,14 +45,20 @@ TEST_CASE("PortableCollection<T, TDev>", s_tag) {
       REQUIRE(not coll_d.isValid());
       alpaka::wait(queue);
     }
+#endif
   }
 
   SECTION("Zero size") {
     int constexpr size = 0;
     PortableHostCollection<TestSoA> coll_h(size, cms::alpakatools::host());
     REQUIRE(coll_h.isValid());
+    REQUIRE(coll_h->metadata().size() == size);
     coll_h->num() = 42;
 
+    // CopyToDevice<PortableHostCollection<T>> is not defined
+#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
+    REQUIRE(coll_h->num() == 42);
+#else
     for (auto const& device : devices) {
       auto queue = Queue(device);
       auto coll_d = cms::alpakatools::CopyToDevice<PortableHostCollection<TestSoA>>::copyAsync(queue, coll_h);
@@ -70,6 +76,7 @@ TEST_CASE("PortableCollection<T, TDev>", s_tag) {
           coll_d.const_view());
       alpaka::wait(queue);
     }
+#endif
   }
 
   SECTION("Non-zero size") {
@@ -82,6 +89,12 @@ TEST_CASE("PortableCollection<T, TDev>", s_tag) {
       coll_h->id(i) = i * 2 + 1;
     }
 
+    // CopyToDevice<PortableHostCollection<T>> is not defined
+#ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
+    for (int i = 0; i < size; ++i) {
+      assert(coll_h->id(i) == i * 2 + 1);
+    }
+#else
     for (auto const& device : devices) {
       auto queue = Queue(device);
       auto coll_d = cms::alpakatools::CopyToDevice<PortableHostCollection<TestSoA>>::copyAsync(queue, coll_h);
@@ -95,7 +108,7 @@ TEST_CASE("PortableCollection<T, TDev>", s_tag) {
           [] ALPAKA_FN_ACC(Acc1D const& acc, TestSoA::ConstView view) {
             assert(view.metadata().size() == size);
             assert(view.num() == 20);
-            for (int i = 0; i < size; ++i) {
+            for (int i : cms::alpakatools::uniform_elements(acc)) {
               assert(view.id(i) == i * 2 + 1);
             }
           },
@@ -103,7 +116,6 @@ TEST_CASE("PortableCollection<T, TDev>", s_tag) {
 
       alpaka::wait(queue);
     }
-  }
-
 #endif
+  }
 }
