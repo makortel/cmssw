@@ -1,8 +1,8 @@
 #ifndef FWCore_Concurrency_WaitingThreadPool_h
 #define FWCore_Concurrency_WaitingThreadPool_h
 
+#include "FWCore/Utilities/interface/ConvertException.h"
 #include "FWCore/Utilities/interface/ReusableObjectHolder.h"
-#include "FWCore/Utilities/interface/thread_safety_macros.h"
 #include "FWCore/Concurrency/interface/WaitingTaskWithArenaHolder.h"
 
 #include <condition_variable>
@@ -21,11 +21,19 @@ namespace edm {
       WaitingThread(WaitingThread&&) = delete;
       WaitingThread& operator=(WaitingThread const&) = delete;
 
-      template <typename F>
-      void run(WaitingTaskWithArenaHolder holder, F&& func, std::shared_ptr<WaitingThread> thisPtr) {
+      template <typename F, typename G>
+      void run(WaitingTaskWithArenaHolder holder,
+               F&& func,
+               G&& errorContextFunc,
+               std::shared_ptr<WaitingThread> thisPtr) {
         std::unique_lock lk(mutex_);
-        func_ = [holder = std::move(holder), func = std::forward<F>(func)]() mutable {
-          CMS_SA_ALLOW try { func(); } catch (...) {
+        func_ = [holder = std::move(holder),
+                 func = std::forward<F>(func),
+                 errorContext = std::forward<G>(errorContextFunc)]() mutable {
+          try {
+            convertException::wrap([&func]() { func(); });
+          } catch (cms::Exception& e) {
+            e.addContext(errorContext());
             holder.doneWaiting(std::current_exception());
           }
         };
@@ -73,10 +81,10 @@ namespace edm {
     WaitingThreadPool(WaitingThreadPool&&) = delete;
     WaitingThreadPool& operator=(WaitingThreadPool&&) = delete;
 
-    template <typename F>
-    void runAsync(WaitingTaskWithArenaHolder holder, F&& func) {
+    template <typename F, typename G>
+    void runAsync(WaitingTaskWithArenaHolder holder, F&& func, G&& errorContextFunc) {
       auto thread = pool_.makeOrGet([]() { return std::make_unique<impl::WaitingThread>(); });
-      thread->run(std::move(holder), std::forward<F>(func), std::move(thread));
+      thread->run(std::move(holder), std::forward<F>(func), std::forward<G>(errorContextFunc), std::move(thread));
     }
 
   private:
