@@ -29,6 +29,8 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
 
+#include "pauseMaxMemoryPreload.h"
+
 namespace edmplugin {
   //
   // constants, enums and typedefs
@@ -47,7 +49,9 @@ namespace edmplugin {
         throw cms::Exception("PluginMangerCacheProblem")
             << "Unable to open the cache file '" << cacheFile.string() << "'. Please check permissions on file";
       }
+      pauseMaxMemoryPreload();
       CacheParser::read(file, dir, categoryToInfos);
+      unpauseMaxMemoryPreload();
       return true;
     }
     return false;
