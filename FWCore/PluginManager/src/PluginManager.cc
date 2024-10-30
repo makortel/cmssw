@@ -29,7 +29,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
 
-#include "pauseMaxMemoryPreload.h"
+#include "PauseMaxMemoryPreloadSentry.h"
 
 namespace edmplugin {
   //
@@ -49,9 +49,8 @@ namespace edmplugin {
         throw cms::Exception("PluginMangerCacheProblem")
             << "Unable to open the cache file '" << cacheFile.string() << "'. Please check permissions on file";
       }
-      pauseMaxMemoryPreload();
+      edm::PauseMaxMemoryPreloadSentry pauseSentry;;
       CacheParser::read(file, dir, categoryToInfos);
-      unpauseMaxMemoryPreload();
       return true;
     }
     return false;
