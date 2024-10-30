@@ -12,6 +12,6 @@ namespace edm {
     PauseMaxMemoryPreloadSentry& operator=(const PauseMaxMemoryPreloadSentry&) = delete;
     PauseMaxMemoryPreloadSentry& operator=(PauseMaxMemoryPreloadSentry&&) = delete;
   };
-}
+}  // namespace edm
 
 #endif

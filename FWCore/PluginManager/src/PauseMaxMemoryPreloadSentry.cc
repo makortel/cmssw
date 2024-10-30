@@ -6,11 +6,6 @@ void pauseMaxMemoryPreload() {}
 void unpauseMaxMemoryPreload() {}
 
 namespace edm {
-  PauseMaxMemoryPreloadSentry::PauseMaxMemoryPreloadSentry() {
-    pauseMaxMemoryPreload();
-  }
-  PauseMaxMemoryPreloadSentry::~PauseMaxMemoryPreloadSentry(){
-    unpauseMaxMemoryPreload();
-  }
-}
-
+  PauseMaxMemoryPreloadSentry::PauseMaxMemoryPreloadSentry() { pauseMaxMemoryPreload(); }
+  PauseMaxMemoryPreloadSentry::~PauseMaxMemoryPreloadSentry() { unpauseMaxMemoryPreload(); }
+}  // namespace edm

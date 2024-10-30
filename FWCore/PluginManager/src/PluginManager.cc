@@ -49,7 +49,8 @@ namespace edmplugin {
         throw cms::Exception("PluginMangerCacheProblem")
             << "Unable to open the cache file '" << cacheFile.string() << "'. Please check permissions on file";
       }
-      edm::PauseMaxMemoryPreloadSentry pauseSentry;;
+      edm::PauseMaxMemoryPreloadSentry pauseSentry;
+      ;
       CacheParser::read(file, dir, categoryToInfos);
       return true;
     }
