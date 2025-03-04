@@ -1,0 +1,9 @@
+<use name="root_interface"/>
+<flags REM_LDFLAGS="-Wl,--as-needed"/>
+<flags REM_LDFLAGS="-Wl,-z,defs"/>
+<flags LDFLAGS="-Wl,--no-as-needed -ldl"/>
+<!-- <flags LDFLAGS="-Wl,-z,undefs"/> -->
+<export>
+  <lib name="1"/>
+</export>
+  
