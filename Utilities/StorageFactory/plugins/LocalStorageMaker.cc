@@ -24,8 +24,7 @@ namespace edm::storage {
       else
         mode |= IOFlags::OpenUnbuffered;
 
-      auto file = std::make_unique<File>(path, mode);
-      return f->wrapNonLocalFile(std::move(file), proto, path, mode);
+      return std::make_unique<File>(path, mode);
     }
 
     bool check(const std::string & /*proto*/,
@@ -41,6 +40,15 @@ namespace edm::storage {
 
       return true;
     }
+
+    // Once upon a time it was possible to use the lazy-download
+    // (LocalCacheFile) with the local storage (really means POSIX
+    // IO), if the LocalFileSystem code determined the file resided on
+    // a "non-local" file system. Later this feature was deemed as an
+    // unnecessary complication, and now the local storage just
+    // declares it uses a local file, i.e. LocalFileCache should not
+    // be used.
+    UseLocalFile usesLocalFile() const override { return UseLocalFile::kCheckFromPath; }
   };
 }  // namespace edm::storage
 
