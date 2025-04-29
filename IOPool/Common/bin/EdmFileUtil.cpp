@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
       "JSON,j", "JSON output format.  Any arguments listed below are ignored")("ls,l", "list file content")(
       "print,P", "Print all")("verbose,v", "Verbose printout")("printBranchDetails,b",
                                                                "Call Print()sc for all branches")(
+      "printClusters", "Print detailed information about baskets and clusters for all branches")(
       "tree,t", boost::program_options::value<std::string>(), "Select tree used with -P and -b options")(
       "events,e",
       "Print list of all Events, Runs, and LuminosityBlocks in the file sorted by run number, luminosity block number, "
@@ -109,6 +110,7 @@ int main(int argc, char* argv[]) {
     bool tree = more && (vm.count("tree") > 0 ? true : false);
     bool print = more && (vm.count("print") > 0 ? true : false);
     bool printBranchDetails = more && (vm.count("printBranchDetails") > 0 ? true : false);
+    bool printClusters = more && (vm.count("printClusters") > 0 ? true : false);
     bool onlyDecodeLFN =
         decodeLFN && !(uuid || adler32 || allowRecovery || json || events || tree || ls || print || printBranchDetails);
     std::string selectedTree = tree ? vm["tree"].as<std::string>() : edm::poolNames::eventTreeName();
@@ -267,6 +269,16 @@ int main(int argc, char* argv[]) {
           return 1;
         }
         edm::longBranchPrint(printTree);
+      }
+
+      if (printClusters) {
+        TTree* printTree = (TTree*)tfile->Get(selectedTree.c_str());
+        if (printTree == nullptr) {
+          std::cout << "Tree " << selectedTree << " appears to be missing. Could not find it in the file.\n";
+          std::cout << "Exiting\n";
+          return 1;
+        }
+        edm::clusterPrint(printTree);
       }
 
       // Print out event lists
