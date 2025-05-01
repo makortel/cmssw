@@ -315,7 +315,7 @@ namespace edm {
         ->setComment(
             "True:  Bypass release version check.\n"
             "False: Throw exception if reading file in a release prior to the release in which the file was written.");
-    desc.addUntracked<int>("treeMaxVirtualSize", -1)
+    desc.addUntracked<int>("treeMaxVirtualSize", 0)
         ->setComment("Size of ROOT TTree TBasket cache. Affects performance.");
     desc.addUntracked<bool>("dropDescendantsOfDroppedBranches", true)
         ->setComment("If True, also drop on input any descendent of any branch dropped on input.");

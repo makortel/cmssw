@@ -204,8 +204,12 @@ namespace edm {
   }
 
   void RootTree::setTreeMaxVirtualSize(int treeMaxVirtualSize) {
-    if (treeMaxVirtualSize >= 0)
+    if (treeMaxVirtualSize != 0) {
+      if (treeMaxVirtualSize < 0) {
+        tree_->SetClusterPrefetch(true);
+      }
       tree_->SetMaxVirtualSize(static_cast<Long64_t>(treeMaxVirtualSize));
+    }
   }
 
   bool RootTree::nextWithCache() {
