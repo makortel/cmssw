@@ -88,12 +88,8 @@ namespace edm {
       bool noEventSort = false;
       bool usingGoToEvent = false;
     };
-    struct TTreeOptions {
-      unsigned int treeCacheSize = 0U;
-      int treeMaxVirtualSize;
-      bool enablePrefetching;
-    };
 
+    using TTreeOptions = RootTree::Options;
     struct ProductChoices {
       ProductSelectorRules const& productSelectorRules;
       std::vector<BranchID> const* associationsFromSecondary = nullptr;
@@ -127,8 +123,10 @@ namespace edm {
 
     void reportOpened(std::string const& inputType);
     void close();
-    std::tuple<bool, bool> readCurrentEvent(EventPrincipal& cache, bool assertOnFailure = true);
-    bool readEvent(EventPrincipal& cache);
+    std::tuple<bool, bool> readCurrentEvent(EventPrincipal& cache,
+                                            bool assertOnFailure = true,
+                                            bool readAllProducts = false);
+    bool readEvent(EventPrincipal& cache, bool readAllProducts = false);
 
     std::shared_ptr<LuminosityBlockAuxiliary> readLuminosityBlockAuxiliary_();
     std::shared_ptr<RunAuxiliary> readRunAuxiliary_();
@@ -206,8 +204,7 @@ namespace edm {
 
   private:
     void makeProcessBlockRootTrees(std::shared_ptr<InputFile> filePtr,
-                                   int treeMaxVirtualSize,
-                                   bool enablePrefetching,
+                                   TTreeOptions const& ttreeOptions,
                                    InputType inputType,
                                    StoredProcessBlockHelper const& storedProcessBlockHelper);
     bool skipThisEntry();
