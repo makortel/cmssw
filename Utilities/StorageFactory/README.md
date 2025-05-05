@@ -48,6 +48,13 @@ The plugin as a configuration parameter for a pattern for the trace files. The p
 
 There is an `edmStorageTracer.py` script for doing some analyses of the traces.
 
+The `StorageTracerProxy` also provides a way to correlate the trace entries with the rest of the framework via [MessageLogger](../../FWCore/MessageService/Readme.md) messages. These messages are issued with the DEBUG severity and `IOTrace` category. There are additional, higher-level messages as part of the `PoolSource`. To see these messages, compile the `Utilities/Storage` and `IOPool/Input` packages with `USER_CXXFLAGS="-DEDM_ML_DEBUG", and customize the MessageLogger configuration along
+```py
+process.MessageLogger.cerr.threshold = "DEBUG"
+process.MessageLogger.debugModules = ["*"]
+process.MessageLogger.IOTrace = dict()
+```
+
 #### `StorageAddLatencyProxy`
 
 The `edm::storage::StorageAddLatencyProxy` (and the corresponding `edm::storage::StorageAddLatencyProxyMaker`) can be used to add artifical latency to the IO operations. The plugin has configuration parameters for latencies of singular reads, vector reads, singular writes, and vector writes.
