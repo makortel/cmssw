@@ -141,8 +141,9 @@ std::unique_ptr<Storage> StorageFactory::open(const std::string &url, const int 
       stats = std::make_unique<StorageAccount::Stamp>(StorageAccount::counter(token, StorageAccount::Operation::open));
     }
     try {
-      if (ret = maker->open(
-              protocol, rest, mode, StorageMaker::AuxSettings{}.setDebugLevel(m_debugLevel).setTimeout(m_timeout))) {
+      ret = maker->open(
+          protocol, rest, mode, StorageMaker::AuxSettings{}.setDebugLevel(m_debugLevel).setTimeout(m_timeout));
+      if (ret) {
         // Inject proxy wrappers at the lowest level, in the order
         // specified in the configuration
         for (auto const &proxyMaker : m_storageProxyMakers_) {
