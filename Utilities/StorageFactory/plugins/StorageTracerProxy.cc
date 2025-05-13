@@ -241,7 +241,7 @@ namespace edm::storage {
               "Pattern for the output trace file names. Must contain '%I' for the counter of different files.");
     }
 
-    std::unique_ptr<Storage> wrap(std::string const& url, std::unique_ptr<Storage> storage) const {
+    std::unique_ptr<Storage> wrap(std::string const& url, std::unique_ptr<Storage> storage) const override {
       auto value = fileCounter_.fetch_add(1);
       std::string fname = filenamePattern_;
       boost::replace_all(fname, "%I", std::to_string(value));
