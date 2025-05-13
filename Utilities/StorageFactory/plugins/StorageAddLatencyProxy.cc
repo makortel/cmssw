@@ -108,7 +108,7 @@ namespace edm::storage {
               "regexes in this parameter");
     }
 
-    std::unique_ptr<Storage> wrap(std::string const& url, std::unique_ptr<Storage> storage) const {
+    std::unique_ptr<Storage> wrap(std::string const& url, std::unique_ptr<Storage> storage) const override {
       for (auto const& pattern : exclude_) {
         if (std::regex_search(url, pattern)) {
           return storage;
