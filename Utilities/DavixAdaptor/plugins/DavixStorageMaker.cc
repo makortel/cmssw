@@ -15,7 +15,6 @@ namespace edm::storage {
                                   const std::string &path,
                                   int mode,
                                   AuxSettings const &aux) const override {
-      const StorageFactory *f = StorageFactory::get();
       std::string newurl((proto == "web" ? "http" : proto) + ":" + path);
       return std::make_unique<DavixFile>(newurl, mode);
     }
