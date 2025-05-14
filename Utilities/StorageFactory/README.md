@@ -42,7 +42,7 @@ The convention is to use the proxy class name as the plugin name for the maker, 
 
 #### `StorageTracerProxy`
 
-The `edm::storage::StorageTracerProxy` (and the corresponding `edm::storage::StorageTracerProxyMaker`) produce a text file with a trace of all IO operations at the `StorageFactory` level. The behavior of each concrete `Storage` object (such as further splitting of read requests in `XrdAdaptor`) is not captured in these tracers. The structure of the trace file is described in a preamble in the trace file.
+The `edm::storage::StorageTracerProxy` (and the corresponding `edm::storage::StorageTracerProxyMaker`) produces a text file with a trace of all IO operations at the `StorageFactory` level. The behavior of each concrete `Storage` object (such as further splitting of read requests in `XrdAdaptor`) is not captured in these tracers. The structure of the trace file is described in a preamble in the trace file.
 
 The plugin as a configuration parameter for a pattern for the trace files. The pattern must contain at least one `%I`. The maker has an atomic counter for the files, and all occurrences of `%I` are replaced with the value of that counter for the given file.
 
