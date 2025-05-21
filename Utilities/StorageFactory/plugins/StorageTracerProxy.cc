@@ -12,9 +12,14 @@
 #include <string_view>
 #include <tuple>
 #include <type_traits>
+#include <iostream>
 
 #include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
+
+namespace debug {
+  void breakpoint_function() {}
+}
 
 namespace edm::storage {
   class StorageTracerProxy : public Storage {
@@ -81,12 +86,14 @@ namespace edm::storage {
       auto const offset = baseStorage_->position();
       auto const [result, message] = operate([this, into, n]() { return baseStorage_->read(into, n); });
       file_.write(fmt::format("{} {} {} {} {}\n", kRead, message, offset, n, result));
+      debug::breakpoint_function();
       return result;
     }
 
     IOSize read(void* into, IOSize n, IOOffset pos) override {
       auto const [result, message] = operate([this, into, n, pos]() { return baseStorage_->read(into, n, pos); });
       file_.write(fmt::format("{} {} {} {} {}\n", kRead, message, pos, n, result));
+      debug::breakpoint_function();
       return result;
     }
 
@@ -101,6 +108,7 @@ namespace edm::storage {
         offset += into[i].size();
       }
       file_.write(fmt::format("{} {} {} {} {}\n", kReadv, message, total, result, n) + elements);
+      debug::breakpoint_function();
       return result;
     }
 
@@ -113,6 +121,7 @@ namespace edm::storage {
         total += into[i].size();
       }
       file_.write(fmt::format("{} {} {} {} {}\n", kReadv, message, total, result, n) + elements);
+      debug::breakpoint_function();
       return result;
     }
 
@@ -196,7 +205,9 @@ namespace edm::storage {
       auto const begin = now();
       auto const result = func();
       auto const end = now();
-      LogTrace("IOTrace").format("IOTrace {} id {}", traceId_, id);
+      //LogTrace("IOTrace").format("IOTrace {} id {}", traceId_, id);
+      edm::LogAbsolute("IOTrace").format("IOTrace {} id {} debugEnabled {}", traceId_, id, edm::MessageDrop::instance()->debugEnabled);
+      //std::cerr << "IOTrace " << traceId_ << " id " << id << " thread " << std::this_thread::get_id() << std::endl;
       return std::tuple(result,
                         fmt::format("{} {} {}",
                                     id,
@@ -211,7 +222,9 @@ namespace edm::storage {
       auto const begin = now();
       func();
       auto const end = now();
-      LogTrace("IOTrace").format("IOTrace {} id {}", traceId_, id);
+      //LogTrace("IOTrace").format("IOTrace {} id {}", traceId_, id);
+      edm::LogAbsolute("IOTrace").format("IOTrace {} id {} debugEnabled {}", traceId_, id, edm::MessageDrop::instance()->debugEnabled);
+      //std::cerr << "IOTrace " << traceId_ << " id " << id << " thread " << std::this_thread::get_id() << std::endl;
       return fmt::format("{} {} {}",
                          id,
                          std::chrono::round<std::chrono::milliseconds>(begin.time_since_epoch()).count(),

@@ -1,5 +1,6 @@
 #include "RootTree.h"
 #include "RootDelayedReader.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "DataFormats/Provenance/interface/BranchType.h"
@@ -384,6 +385,7 @@ namespace edm {
   }
 
   void RootTree::getEntry(TBranch* branch, EntryNumber entryNumber) const {
+    edm::LogAbsolute("IOTrace").format("RootTree::getEntry() begin for branch {} entry {}", branch->GetName(), entryNumber);
     try {
       TTreeCache* cache = selectCache(branch, entryNumber);
       filePtr_->SetCacheRead(cache);
@@ -409,6 +411,7 @@ namespace edm {
       t.addContext(std::string("Reading branch ") + branch->GetName());
       throw t;
     }
+    edm::LogAbsolute("IOTrace").format("RootTree::getEntry() end for branch {} entry {}", branch->GetName(), entryNumber);
   }
 
   bool RootTree::skipEntries(unsigned int& offset) {
