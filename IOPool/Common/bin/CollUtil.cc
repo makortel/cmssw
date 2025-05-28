@@ -18,6 +18,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <ranges>
 
 namespace edm {
 
@@ -263,9 +264,8 @@ namespace edm {
         std::cout << "\n"
                   << std::setw(15) << "Begin" << std::setw(15) << "End" << std::setw(15) << "Entries" << std::setw(15);
         i = 0;
-        for (auto const &p : branchProcessors) {
-          std::cout << std::setw(5) << (std::string("[") + std::to_string(i) + "]");
-          ++i;
+        for (auto j : std::views::iota(0U, branchProcessors.size())) {
+          std::cout << std::setw(5) << (std::string("[") + std::to_string(j) + "]");
         }
         std::cout << std::endl;
       }
