@@ -14,8 +14,8 @@ namespace edm {
     IntrusiveMonitorBase& operator=(IntrusiveMonitorBase&&) = delete;
     virtual ~IntrusiveMonitorBase();
 
-    // T either std::string or std::string_view
     template <typename T>
+      requires std::is_same_v<T, std::string> or std::is_same_v<T, std::string_view>
     class Guard {
     public:
       Guard(IntrusiveMonitorBase& mon, T name) : monitor_(mon), name_(std::move(name)) { monitor_.start(); }
