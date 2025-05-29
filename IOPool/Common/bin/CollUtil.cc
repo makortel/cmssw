@@ -256,7 +256,7 @@ namespace edm {
     struct BasketPrinter {
       void header(TTree const *tr, std::vector<BranchBasketBytes> const &branchProcessors) const {
         std::cout << "Printing cluster boundaries in terms of tree entries of the tree " << tr->GetName()
-                  << ". Note that end boundary is exclusive." << std::endl;
+                  << ". Note that the end boundary is exclusive." << std::endl;
         std::cout << "\nBranches for which number of baskets in each cluster are printed\n";
         for (int i = 0; auto const &p : branchProcessors) {
           std::cout << "[" << i << "] " << p.name() << std::endl;
