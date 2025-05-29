@@ -194,19 +194,21 @@ namespace edm {
       }
 
       printer.header(tr, processors);
-      // Record branches whose baskets do not align with cluster boundaires
+      // Record branches whose baskets do not align with cluster boundaries
       std::set<std::string_view> nonAlignedBranches;
-      Long64_t clusterBegin;
-      while ((clusterBegin = clusterIter()) < nentries) {
-        Long64_t clusterEnd = clusterIter.GetNextEntry();
-        printer.beginCluster(clusterBegin, clusterEnd);
-        for (auto &p : processors) {
-          if (p.isAlignedWithClusterBoundaries()) {
-            auto const [bytes, baskets] = p.bytesInNextCluster(clusterBegin, clusterEnd, nonAlignedBranches);
-            printer.processBranch(bytes, baskets);
+      {
+        Long64_t clusterBegin;
+        while ((clusterBegin = clusterIter()) < nentries) {
+          Long64_t clusterEnd = clusterIter.GetNextEntry();
+          printer.beginCluster(clusterBegin, clusterEnd);
+          for (auto &p : processors) {
+            if (p.isAlignedWithClusterBoundaries()) {
+              auto const [bytes, baskets] = p.bytesInNextCluster(clusterBegin, clusterEnd, nonAlignedBranches);
+              printer.processBranch(bytes, baskets);
+            }
           }
+          printer.endCluster();
         }
-        printer.endCluster();
       }
 
       if (not nonAlignedBranches.empty()) {
@@ -225,7 +227,7 @@ namespace edm {
     struct ClusterPrinter {
       void header(TTree const *tr, std::vector<BranchBasketBytes> const &branchProcessors) const {
         std::cout << "Printing cluster boundaries in terms of tree entries of the tree " << tr->GetName()
-                  << ". Note that end boundary is exclusive." << std::endl;
+                  << ". Note that the end boundary is exclusive." << std::endl;
         std::cout << std::setw(15) << "Begin" << std::setw(15) << "End" << std::setw(15) << "Entries" << std::setw(15)
                   << "Max baskets" << std::setw(15) << "Bytes" << std::endl;
       }
@@ -256,16 +258,14 @@ namespace edm {
         std::cout << "Printing cluster boundaries in terms of tree entries of the tree " << tr->GetName()
                   << ". Note that end boundary is exclusive." << std::endl;
         std::cout << "\nBranches for which number of baskets in each cluster are printed\n";
-        int i = 0;
-        for (auto const &p : branchProcessors) {
+        for (int i = 0; auto const &p : branchProcessors) {
           std::cout << "[" << i << "] " << p.name() << std::endl;
           ++i;
         }
         std::cout << "\n"
                   << std::setw(15) << "Begin" << std::setw(15) << "End" << std::setw(15) << "Entries" << std::setw(15);
-        i = 0;
-        for (auto j : std::views::iota(0U, branchProcessors.size())) {
-          std::cout << std::setw(5) << (std::string("[") + std::to_string(j) + "]");
+        for (auto i : std::views::iota(0U, branchProcessors.size())) {
+          std::cout << std::setw(5) << (std::string("[") + std::to_string(i) + "]");
         }
         std::cout << std::endl;
       }
