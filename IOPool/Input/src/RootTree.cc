@@ -439,7 +439,8 @@ namespace edm {
   }
 
   inline void RootTree::getEntryUsingCache(TBranch* branch, EntryNumber entryNumber, TTreeCache* cache) const {
-    LogTrace("IOTrace").format("RootTree::getEntryUsingCache() begin for branch {} entry {}", branch->GetName(), entryNumber);
+    LogTrace("IOTrace").format(
+        "RootTree::getEntryUsingCache() begin for branch {} entry {}", branch->GetName(), entryNumber);
     try {
       auto guard = filePtr_->setCacheReadTemporarily(cache, tree_);
       branch->GetEntry(entryNumber);
@@ -460,7 +461,8 @@ namespace edm {
       t.addContext(std::string("Reading branch ") + branch->GetName());
       throw t;
     }
-    LogTrace("IOTrace").format("RootTree::getEntryUsingCache() end for branch {} entry {}", branch->GetName(), entryNumber);
+    LogTrace("IOTrace").format(
+        "RootTree::getEntryUsingCache() end for branch {} entry {}", branch->GetName(), entryNumber);
   }
 
   bool RootTree::skipEntries(unsigned int& offset) {
