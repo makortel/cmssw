@@ -10,12 +10,11 @@ namespace edmtest {
   class UnitTestService_Hd {
   public:
     UnitTestService_Hd(edm::ParameterSet const& iConfig, edm::ActivityRegistry& iRegistry) {
-      iRegistry.watchPreSourceNextTransition([]() {
-                                               LogDebug("cat_S") << "Message from watchPreSourceNextTransition";
-                                             });
+      iRegistry.watchPreSourceNextTransition(
+          []() { LogDebug("cat_S") << "Message from watchPreSourceNextTransition"; });
     }
   };
-}
+}  // namespace edmtest
 
 #include "FWCore/ServiceRegistry/interface/ServiceMaker.h"
 DEFINE_FWK_SERVICE(edmtest::UnitTestService_Hd);
