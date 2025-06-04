@@ -919,8 +919,8 @@ namespace edm {
         topDesc.addUntracked<std::vector<std::string>>("suppressError", {});
         topDesc.addUntracked<std::vector<std::string>>("debugModules", {})
             ->setComment(
-                "Set to limit the DEBUG-level messages to these modules. If empty or contains '*', all DEBUG messages "
-                "(also those outside modules) will be issued (if allowed by the threshold parameter).");
+                "Set to limit the DEBUG-level messages to modules with these labels. If empty or contains '*', all "
+                "DEBUG messages (also those outside modules) will be issued (if allowed by the threshold parameter).");
 
         edm::ParameterSetDescription category;
         category.addUntracked<int>("reportEvery", 1);

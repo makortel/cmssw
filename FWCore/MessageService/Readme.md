@@ -91,7 +91,7 @@ process.MessageLogger.cerr.threshold = "DEBUG"
 process.MessageLogger.debugModules = ["myModule"]
 ```
 
-For backwards compatibility setting `debugModules` to `*` has the same effet as setting `debugModules` empty, i.e. showing all debug messages.
+For backwards compatibility, setting `debugModules` to `*` has the same effect as setting `debugModules` empty, i.e. showing all debug messages.
 ```python
 process.MessageLogger.cerr.threshold = "DEBUG"
 process.MessageLogger.debugModules = ["*"]
