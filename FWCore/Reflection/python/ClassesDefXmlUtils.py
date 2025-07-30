@@ -104,9 +104,22 @@ def initROOT(library, enableAutoParsing=True):
         if ROOT.gSystem.Load(library) < 0 :
             raise RuntimeError("failed to load library '"+library+"'")
 
-    if not enableAutoParsing:
-        print("### Setting SetClassAutoparsing False", flush=True)
-        ROOT.gInterpreter.SetClassAutoparsing(False)
+    #if not enableAutoParsing:
+    #    print("### Setting SetClassAutoparsing False", flush=True)
+    #    ROOT.gInterpreter.SetClassAutoparsing(False)
+
+    import warnings
+    warnings.filterwarnings("error", message=".*no dictionary.*")
+
+#    ROOT.gROOT.ProcessLine("auto cmsUtilsRootPreviousErrorHandler = GetErrorHandler();");
+#    ROOT.gROOT.ProcessLine("""void RootErrorHandler(int level, bool b, char const* location, char const* message) {
+#  if (level >= kWarning) {
+#    throw std::runtime_error(std::string(message)); // + \"\nfrom \" + std::string(location));
+#  }
+#  cmsUtilsRootPreviousErrorHandler(level, b, location, message);
+#}
+#}""");
+#    ROOT.gROOT.ProcessLine("SetErrorHandler(RootErrorHandler);")
 
 def initCheckClass():
     """Must be called before checkClass()"""
