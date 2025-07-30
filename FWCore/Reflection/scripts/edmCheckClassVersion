@@ -86,7 +86,14 @@ def checkWrappers(wrappers):
     import ROOT
     success = True
     for w in wrappers:
-        cl = ROOT.TClass.GetClass(w)
+        try:
+            cl = ROOT.TClass.GetClass(w)
+        except SystemError as e:
+            #help(e)
+            print(e)
+            print(f"Dictionary of {e} is missing")
+            success = False
+            continue
         if not cl:
             print(f"{w} TClass::GetClass returned null")
             success = False
@@ -147,11 +154,12 @@ def main(args):
     if (len(foundErrors)>0 and not args.generate) or (args.generate and foundRootDoesNotMatchError) or missingDict:
         return 1
 
-    print("### Calling checkWrappers", flush=True)
-    success = checkWrappers(p.wrappers)
-    if not success:
-        return 1
-    print("### Calling checkWrappers done", flush=True)
+    if True:
+        print("### Calling checkWrappers", flush=True)
+        success = checkWrappers(p.wrappers)
+        if not success:
+            return 1
+        print("### Calling checkWrappers done", flush=True)
 
     if args.generate:
         generate(args.xmlfile, 'classes_def.xml.generated', originalToNormalizedNames, p.classes, foundErrors)
