@@ -22,3 +22,6 @@ runFailure test_def_nameMissing.xml "There is an element 'class' without 'name' 
 runFailure test_def_ClassVersionMissingInClass.xml "Class element for type 'edmtest::reflection::IntObject' contains a 'version' element, but 'ClassVersion' attribute is missing from the 'class' element"
 runFailure test_def_ClassVersionMissingInVersion.xml "Version element for type 'edmtest::reflection::IntObject' is missing 'ClassVersion' attribute"
 runFailure test_def_checksumMissingInVersion.xml "Version element for type 'edmtest::reflection::IntObject' is missing 'checksum' attribute"
+
+LIBFILE=libFWCoreReflectionTestObjectsWithoutDictionary.so
+runFailure classes_WithoutDictionary_def.xml "no dictionary for class edmtest::reflection::IntObjectWithoutDictionary"
