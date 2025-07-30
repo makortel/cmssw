@@ -82,6 +82,15 @@ def checkErrors(foundErrors, classes, generate):
             print ('   <version ClassVersion="'+str(classVersion)+'" checksum="'+str(classChecksum)+'"/>')
     return (foundRootDoesNotMatchError, originalToNormalizedNames)
 
+def checkWrappers(wrappers):
+    import ROOT
+    success = True
+    for w in wrappers:
+        cl = ROOT.TClass.GetClass(w)
+        if not cl:
+            print(f"{w} TClass::GetClass returned null")
+            success = False
+    return success
 
 def generate(oldfile, newfile, originalToNormalizedNames, classes, foundErrors):
     with open(oldfile) as f, open(newfile, 'w') as outFile:
@@ -121,7 +130,7 @@ def generate(oldfile, newfile, originalToNormalizedNames, classes, foundErrors):
         outFile.writelines(out)
 
 def main(args):
-    ClassesDefUtils.initROOT(args.library)
+    ClassesDefUtils.initROOT(args.library, enableAutoParsing=False)
     if args.library is None and args.checkdict:
         print ("Dictionary checks require a specific library")
     ClassesDefUtils.initCheckClass()
@@ -137,6 +146,12 @@ def main(args):
 
     if (len(foundErrors)>0 and not args.generate) or (args.generate and foundRootDoesNotMatchError) or missingDict:
         return 1
+
+    print("### Calling checkWrappers", flush=True)
+    success = checkWrappers(p.wrappers)
+    if not success:
+        return 1
+    print("### Calling checkWrappers done", flush=True)
 
     if args.generate:
         generate(args.xmlfile, 'classes_def.xml.generated', originalToNormalizedNames, p.classes, foundErrors)

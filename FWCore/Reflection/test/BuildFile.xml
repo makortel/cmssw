@@ -1,6 +1,12 @@
-<library file="stubs/*.cc" name="FWCoreReflectionTestObjects">
+<library file="stubs/TestObjects.cc" name="FWCoreReflectionTestObjects">
   <flags LCG_DICT_HEADER="stubs/classes.h"/>
   <flags LCG_DICT_XML="stubs/classes_def.xml"/>
+  <use name="DataFormats/Common"/>
+</library>
+
+<library file="stubs/TestObjectsWithoutDictionary.cc" name="FWCoreReflectionTestObjectsWithoutDictionary">
+  <flags LCG_DICT_HEADER="stubs/classes_WithoutDictionary.h"/>
+  <flags LCG_DICT_XML="stubs/classes_WithoutDictionary_def.xml"/>
   <use name="DataFormats/Common"/>
 </library>
 
