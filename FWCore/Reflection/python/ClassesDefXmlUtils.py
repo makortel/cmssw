@@ -13,6 +13,7 @@ class XmlParser(object):
     def __init__(self, filename, includeNonVersionedClasses=False, normalizeClassNames=True):
         self._file = filename
         self.classes = dict()
+        self.wrappers = list()
         self._presentClass = None
         self._presentClassForVersion = None
         self._includeNonVersionedClasses = includeNonVersionedClasses
@@ -52,6 +53,9 @@ class XmlParser(object):
                     # skip transient data products
                     if not ('persistent' in attrs and attrs['persistent'] == "false"):
                         self.classes[normalizedName]=[attrs['name'],-1,[]]
+                # collect all non-transient edm::Wrapper's
+                if self._presentClass.startswith("edm::Wrapper<") and not ('persistent' in attrs and attrs['persistent'] == "false"):
+                    self.wrappers.append(self._presentClass)
             else:
                 raise RuntimeError(f"There is an element '{name}' without 'name' attribute.")
         if name == 'version':
@@ -88,7 +92,7 @@ class XmlParser(object):
         n_name = n_name.replace(' ','')
         return n_name
 
-def initROOT(library):
+def initROOT(library, enableAutoParsing=True):
     #Need to not have ROOT load .rootlogon.(C|py) since it can cause interference.
     import ROOT
     ROOT.PyConfig.DisableRootLogon = True
@@ -99,6 +103,10 @@ def initROOT(library):
     if library is not None:
         if ROOT.gSystem.Load(library) < 0 :
             raise RuntimeError("failed to load library '"+library+"'")
+
+    if not enableAutoParsing:
+        print("### Setting SetClassAutoparsing False", flush=True)
+        ROOT.gInterpreter.SetClassAutoparsing(False)
 
 def initCheckClass():
     """Must be called before checkClass()"""
