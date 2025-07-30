@@ -1,0 +1,3 @@
+<bin name="edmCheckWrappers" file="EdmCheckWrappers.cc">
+  <use name="rootcling"/>
+</bin>
