@@ -41,8 +41,13 @@ namespace {
     while (auto line = nextLine()) {
       auto entriesPos = line->find("# Entries:");
       if (entriesPos != std::string_view::npos) {
-        //unsigned int entries{};
-        return std::atol(line->substr(line->find_first_not_of(" ", entriesPos + 12)).data());
+        auto tmp = line->substr(line->find_first_not_of(" ", entriesPos + 12));
+        unsigned int entries{};
+        auto [ptr, ec] = std::from_chars(tmp.begin(), tmp.end(), entries);
+        if (ec != std::errc{}) {
+          return {};
+        }
+        return entries;
       }
     }
     return {};
@@ -74,7 +79,13 @@ namespace {
     nextLine();         // avg page size
     line = nextLine();  // size on storage
     //std::cout <<line->substr(line->find_first_not_of(" ",line->find_first_of(":")+1))<<std::endl;
-    info.compressedSize = std::atoll(line->substr(line->find_first_not_of(" ", line->find_first_of(":") + 1)).data());
+    {
+      auto tmp = line->substr(line->find_first_not_of(" ", line->find_first_of(":") + 1));
+      auto [ptr, ec] = std::from_chars(tmp.begin(), tmp.end(), info.compressedSize);
+      if (ec != std::errc{}) {
+        return {};
+      }
+    }
     if (info.compressedSize > 0) {  // avoid nans
       line = nextLine();            // compression factor
       auto tmp = line->substr(line->find_first_not_of(" ", line->find_first_of(":") + 1));
