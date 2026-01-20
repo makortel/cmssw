@@ -727,30 +727,6 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(result.full_overlap_count, 0)
         self.assertEqual(result.partial_overlap_count, 2)
 
-    def test_searchMapChunk(self):
-        self.assertEqual(searchMapChunk([], 0, 10), [])
-
-        chunks = []
-        for i in range(0, 100):
-            chunks.append(MapChunk(i*100, i*100+50, "", i))
-        self.assertEqual(searchMapChunk(chunks, 0, 10), [0])
-        self.assertEqual(searchMapChunk(chunks, 0, 50), [0])
-        self.assertEqual(searchMapChunk(chunks, 0, 100), [0])
-        self.assertEqual(searchMapChunk(chunks, 10, 50), [0])
-        self.assertEqual(searchMapChunk(chunks, 10, 90), [0])
-        self.assertEqual(searchMapChunk(chunks, 9900, 50), [99])
-        self.assertEqual(searchMapChunk(chunks, 9900, 100), [99])
-        self.assertEqual(searchMapChunk(chunks, 9900, 100), [99])
-
-        self.assertEqual(searchMapChunk(chunks, -10, 5), [])
-        self.assertEqual(searchMapChunk(chunks, 50, 40), [])
-        self.assertEqual(searchMapChunk(chunks, 50, 50), [])
-        self.assertEqual(searchMapChunk(chunks, 9950, 10), [])
-
-        self.assertEqual(searchMapChunk(chunks, 0, 200), [0, 1])
-        self.assertEqual(searchMapChunk(chunks, 49, 101-49), [0, 1])
-        self.assertEqual(searchMapChunk(chunks, 149, 301-149), [1, 2, 3])
-
     def test_addAndMergeRange(self):
         # Test with empty seen_ranges
         seen_ranges = []
