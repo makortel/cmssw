@@ -18,6 +18,7 @@ namespace edm::rntuple_temp {
     EmbeddedRNTupleTempSource::Optimizations fromConfig(edm::ParameterSet const& iConfig) {
       EmbeddedRNTupleTempSource::Optimizations opts;
       opts.useClusterCache = iConfig.getUntrackedParameter<bool>("useClusterCache");
+      opts.enableIMT = iConfig.getUntrackedParameter<bool>("enableIMT");
       return opts;
     }
 
@@ -105,6 +106,8 @@ namespace edm::rntuple_temp {
       ParameterSetDescription rntupleReadOptions;
       rntupleReadOptions.addUntracked<bool>("useClusterCache", true)
           ->setComment("True: use ROOT cluster cache. False: do not use cluster cache.");
+      rntupleReadOptions.addUntracked<bool>("enableIMT", true)
+          ->setComment("True: use the global Implicit MT setting. False: disable IMT in RNTuple reading.");
       desc.addUntracked("rntupleReadOptions", rntupleReadOptions);
     }
 
