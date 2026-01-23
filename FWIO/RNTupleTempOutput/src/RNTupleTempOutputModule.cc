@@ -20,6 +20,9 @@
 #include "FWCore/Utilities/interface/TimeOfDay.h"
 #include "FWCore/Utilities/interface/WrappedClassName.h"
 
+#include "FWCore/AbstractServices/interface/IntrusiveMonitorBase.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+
 #include "TObjArray.h"
 #include "RVersion.h"
 #include "TDictAttributeMap.h"
@@ -110,6 +113,8 @@ namespace edm::rntuple_temp {
                            .getUntrackedParameter<std::vector<edm::ParameterSet>>("overrideDataProductStreamer"))),
         allProductsUseStreamer_(
             pset.getUntrackedParameterSet("fieldLevelOptimizations").getUntrackedParameter<bool>("useStreamer")) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::constructor()");
     if (pset.getUntrackedParameter<bool>("writeStatusFile")) {
       std::ostringstream statusfilename;
       statusfilename << moduleLabel_ << '_' << getpid();
@@ -142,6 +147,8 @@ namespace edm::rntuple_temp {
   void RNTupleTempOutputModule::beginJob() {}
 
   void RNTupleTempOutputModule::initialRegistry(edm::ProductRegistry const& iReg) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::initialRegistry()");
     reg_ = std::make_unique<ProductRegistry>(iReg.productList());
   }
 
@@ -174,6 +181,9 @@ namespace edm::rntuple_temp {
   void RNTupleTempOutputModule::fillSelectedItemList(BranchType branchType,
                                                      std::string const& processName,
                                                      OutputItemList& outputItemList) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::fillSelectedItemList()");
+
     SelectedProducts const& keptVector = keptProducts()[branchType];
 
     // Fill outputItemList with an entry for each branch.
@@ -188,6 +198,8 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::beginInputFile(FileBlock const& fb) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::beginInputFile()");
     if (isFileOpen()) {
       //Faster to read ChildrenBranches directly from input
       // file than to build it every event
@@ -202,6 +214,8 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::openFile(FileBlock const& fb) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::openFile()");
     if (!isFileOpen()) {
       reallyOpenFile();
       beginInputFile(fb);
@@ -209,6 +223,8 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::respondToOpenInputFile(FileBlock const& fb) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::respondToOpenInputFile()");
     if (!initializedFromInput_) {
       std::vector<std::string> const& processesWithProcessBlockProducts =
           outputProcessBlockHelper().processesWithProcessBlockProducts();
@@ -238,17 +254,23 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::respondToCloseInputFile(FileBlock const& fb) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::respondToCloseInputFile()");
     if (rootOutputFile_)
       rootOutputFile_->respondToCloseInputFile(fb);
   }
 
   void RNTupleTempOutputModule::setProcessesWithSelectedMergeableRunProducts(std::set<std::string> const& processes) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::setProcessesWithSelectedMergeableRunProducts()");
     processesWithSelectedMergeableRunProducts_.assign(processes.begin(), processes.end());
   }
 
   RNTupleTempOutputModule::~RNTupleTempOutputModule() {}
 
   void RNTupleTempOutputModule::write(EventForOutput const& e) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::write()");
     updateBranchParents(e);
     rootOutputFile_->writeOne(e);
     if (!statusFileName_.empty()) {
@@ -259,10 +281,14 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::writeLuminosityBlock(LuminosityBlockForOutput const& lb) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::writeLuminosityBlock()");
     rootOutputFile_->writeLuminosityBlock(lb);
   }
 
   void RNTupleTempOutputModule::writeRun(RunForOutput const& r) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::writeRun()");
     if (!reg_ or (reg_->size() < r.productRegistry().size())) {
       reg_ = std::make_unique<ProductRegistry>(r.productRegistry().productList());
     }
@@ -270,10 +296,14 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::writeProcessBlock(ProcessBlockForOutput const& pb) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::writeProcessBlock()");
     rootOutputFile_->writeProcessBlock(pb);
   }
 
   void RNTupleTempOutputModule::reallyCloseFile() {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::reallyCloseFile()");
     fillDependencyGraph();
     branchParents_.clear();
     startEndFile();
@@ -290,11 +320,25 @@ namespace edm::rntuple_temp {
   // At some later date, we may move functionality from finishEndFile() to here.
   void RNTupleTempOutputModule::startEndFile() {}
 
-  void RNTupleTempOutputModule::writeMetaData() { rootOutputFile_->writeMetaData(*reg_); }
+  void RNTupleTempOutputModule::writeMetaData() {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::writeMetaData()");
+    rootOutputFile_->writeMetaData(*reg_);
+  }
 
-  void RNTupleTempOutputModule::writeParameterSetRegistry() { rootOutputFile_->writeParameterSetRegistry(); }
-  void RNTupleTempOutputModule::writeParentageRegistry() { rootOutputFile_->writeParentageRegistry(); }
+  void RNTupleTempOutputModule::writeParameterSetRegistry() {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::writeParameterSetRegistry()");
+    rootOutputFile_->writeParameterSetRegistry();
+  }
+  void RNTupleTempOutputModule::writeParentageRegistry() {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::writeParentageRegistry()");
+    rootOutputFile_->writeParentageRegistry();
+  }
   void RNTupleTempOutputModule::finishEndFile() {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::finishEndFile()");
     rootOutputFile_->finishEndFile();
     rootOutputFile_ = nullptr;
   }  // propagate_const<T> has no reset() function
@@ -303,6 +347,8 @@ namespace edm::rntuple_temp {
   bool RNTupleTempOutputModule::shouldWeCloseFile() const { return rootOutputFile_->shouldWeCloseFile(); }
 
   std::pair<std::string, std::string> RNTupleTempOutputModule::physicalAndLogicalNameForNewFile() {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::physicalAndLogicalNameForNewFile()");
     if (inputFileCount_ == 0) {
       throw edm::Exception(errors::LogicError) << "Attempt to open output file before input file. "
                                                << "Please report this to the core framework developers.\n";
@@ -330,6 +376,8 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::reallyOpenFile() {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::reallyOpenFile()");
     auto names = physicalAndLogicalNameForNewFile();
     rootOutputFile_ = std::make_unique<RootOutputFile>(this,
                                                        names.first,
@@ -343,6 +391,8 @@ namespace edm::rntuple_temp {
 
   void RNTupleTempOutputModule::updateBranchParentsForOneBranch(ProductProvenanceRetriever const* provRetriever,
                                                                 BranchID const& branchID) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::updateBranchParentsForOneBranch()");
     ProductProvenance const* provenance = provRetriever->branchIDToProvenanceForProducedOnly(branchID);
     if (provenance != nullptr) {
       BranchParents::iterator it = branchParents_.find(branchID);
@@ -354,6 +404,8 @@ namespace edm::rntuple_temp {
   }
 
   void RNTupleTempOutputModule::updateBranchParents(EventForOutput const& e) {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::updateBranchParents()");
     ProductProvenanceRetriever const* provRetriever = e.productProvenanceRetrieverPtr();
     if (producedBranches_.empty()) {
       for (auto const& prod : e.productRegistry().productList()) {
@@ -371,6 +423,8 @@ namespace edm::rntuple_temp {
   void RNTupleTempOutputModule::preActionBeforeRunEventAsync(WaitingTaskHolder iTask,
                                                              ModuleCallingContext const& iModuleCallingContext,
                                                              Principal const& iPrincipal) const noexcept {
+    edm::Service<IntrusiveMonitorBase> monitor;
+    auto guard = monitor->startMonitoring("RNTupleTempOutputModule::preActionBeforeRunEventAsync()");
     if (DropAll != dropMetaData_) {
       auto const* ep = dynamic_cast<EventPrincipal const*>(&iPrincipal);
       if (ep) {
