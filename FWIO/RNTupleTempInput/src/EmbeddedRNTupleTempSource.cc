@@ -18,7 +18,7 @@ namespace edm::rntuple_temp {
     EmbeddedRNTupleTempSource::Optimizations fromConfig(edm::ParameterSet const& iConfig) {
       EmbeddedRNTupleTempSource::Optimizations opts;
       opts.useClusterCache = iConfig.getUntrackedParameter<bool>("useClusterCache");
-      opts.enableIMT = iConfig.getUntrackedParameter<bool>("enableIMT");
+      opts.enableIMT = iConfig.getUntrackedParameter<bool>("enableIMT", true);
       return opts;
     }
 
