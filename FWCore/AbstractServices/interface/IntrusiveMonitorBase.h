@@ -64,7 +64,7 @@ namespace edm {
     IntrusiveMonitorBase& monitor_;
   };
 
-  IntrusiveMonitorBase::Guard<std::string_view> IntrusiveMonitorBase::startMonitoring(std::string_view name) {
+  inline IntrusiveMonitorBase::Guard<std::string_view> IntrusiveMonitorBase::startMonitoring(std::string_view name) {
     return Guard<std::string_view>(*this, name);
   }
 
