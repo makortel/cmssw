@@ -24,7 +24,7 @@ namespace {
         auto v = ++m_count;
         if (v > m_skip) {
           std::cout << std::format(
-                           "abort threshold reached count: {} request: {} presentActual: {}", v, iRequested, after)
+                           "abort threshold reached count: {} allocation request: {} presentActual: {}", v, iRequested, after)
                     << std::endl;
           abort();
         }
@@ -36,7 +36,17 @@ namespace {
         return;
       auto const present = m_presentActual.load(std::memory_order_acquire);
       if (present >= iActual) {
-        m_presentActual.fetch_sub(iActual, std::memory_order_acq_rel);
+        auto const before = m_presentActual.fetch_sub(iActual, std::memory_order_acq_rel);
+        auto const after = before - iActual;
+        if (before >= m_threshold and after < m_threshold) {
+          auto v = ++m_count;
+          if (v > m_skip) {
+            std::cout << std::format(
+                                     "abort threshold reached count: {} deallocating: {} presentActual: {}", v, iActual, after)
+                      << std::endl;
+            abort();
+          }
+        }
       }
     }
 
@@ -58,11 +68,11 @@ public:
     edm::ParameterSetDescription desc;
     desc.addUntracked<unsigned int>("skipCount", 0)
         ->setComment(
-            "Number of times the present allocated memory crossing the thresholdmust be met before doing an abort. A "
+            "Number of times the present allocated memory crossing the threshold must be met before doing an abort. A "
             "value of 0 will happen the first "
             "time.");
     desc.addUntracked<unsigned long long>("threshold")
-        ->setComment("Present allocated memory going over this limit triggers the abort. The units are bytes.");
+        ->setComment("Present allocated memory going over or under this limit triggers the abort. Each crossing of the threshold counts for skipCount. The units are bytes.");
     iConfig.addDefault(desc);
   }
 };
