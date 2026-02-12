@@ -20,7 +20,6 @@ namespace {
     void reportAndReset(std::string_view name) {
       deactivate();
       auto const requested = requested_.exchange(0, std::memory_order_acq_rel);
-      auto const maxActual = maxActual_.exchange(0, std::memory_order_acq_rel);
       auto const nAllocations = nAllocations_.exchange(0, std::memory_order_acq_rel);
       auto const nDeallocations = nDeallocations_.exchange(0, std::memory_order_acq_rel);
       auto const maxSingleRequested = maxSingleRequested_.exchange(0, std::memory_order_acq_rel);
@@ -29,6 +28,9 @@ namespace {
       auto const presentActual = presentActual_.load(std::memory_order_acquire);
       auto const previousPresentActual = previousPresentActual_.exchange(presentActual, std::memory_order_acq_rel);
       auto const added = presentActual - previousPresentActual;
+
+      // use the presentActual as the starting point for the maximum of the next measurement
+      auto const maxActual = maxActual_.exchange(presentActual, std::memory_order_acq_rel);
 
       edm::LogAbsolute("PhaseAllocMonitor")
           .format(

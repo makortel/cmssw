@@ -72,7 +72,7 @@ This service is multi-thread safe. Note that when run multi-threaded the maximum
 
 ### PhaseAllocMonitor
 
-This service registers a monitor at the end of service construction, and on a predefined set of other signals that correspond to framework's "phases". Each such signal corresponds to global synchronization point of the framework. This can be useful to understand how memory is being used in different phases of a job. The monitor reports the following quantities measured during the period from the previous signal to the current signal
+This service registers a monitor at the end of service construction, and on a predefined set of other signals that correspond to framework's "phases". Each such signal corresponds to a global synchronization point of the framework. This can be useful to understand how memory is being used in different phases of a job. The monitor reports the following quantities measured during the period from the previous signal to the current signal
 
 | Field | Description |
 |-------|-------------|
