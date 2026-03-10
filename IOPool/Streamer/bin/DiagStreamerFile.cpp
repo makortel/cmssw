@@ -34,7 +34,6 @@
 #include <iostream>
 #include <map>
 #include <memory>
-#include <optional>
 
 using namespace edm::streamer;
 
