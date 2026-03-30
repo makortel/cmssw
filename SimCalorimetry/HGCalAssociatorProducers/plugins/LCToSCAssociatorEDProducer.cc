@@ -22,6 +22,10 @@
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "SimDataFormats/Associations/interface/LayerClusterToSimClusterAssociator.h"
 
+#include "FWCore/AbstractServices/interface/IntrusiveMonitorBase.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+
+
 //
 // class declaration
 //
@@ -48,6 +52,9 @@ private:
 
 template <typename CLUSTER>
 LCToSCAssociatorEDProducerT<CLUSTER>::LCToSCAssociatorEDProducerT(const edm::ParameterSet &pset) {
+  //edm::Service<edm::IntrusiveMonitorBase> monitor;
+  //auto guard = monitor->startMonitoring("LCToSCAssociatorEDProducerT constructor");
+    
   produces<ticl::SimToRecoCollectionWithSimClustersT<CLUSTER>>();
   produces<ticl::RecoToSimCollectionWithSimClustersT<CLUSTER>>();
 

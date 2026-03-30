@@ -10,6 +10,9 @@
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
 
+#include "FWCore/AbstractServices/interface/IntrusiveMonitorBase.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+
 #include <sstream>
 #include <exception>
 namespace edm {
@@ -84,10 +87,20 @@ namespace edm {
     try {
       convertException::wrap([&]() {
         pre.emit(md);
-        module = makeModule(*(p.pset_));
-        module->finishModuleInitialization(md, *p.preallocate_, p.reg_);
-        // if exception then post will be called in the catch block
-        postCalled = true;
+        auto const label = p.pset_->getParameter<std::string>("@module_label");
+        if (label == "hltPFClusterSimClusterAssociationProducerECAL") {
+          edm::Service<edm::IntrusiveMonitorBase> monitor;
+          auto guard = monitor->startMonitoring(std::format("Constructor for {}",  label));
+          module = makeModule(*(p.pset_));
+          module->finishModuleInitialization(md, *p.preallocate_, p.reg_);
+          // if exception then post will be called in the catch block
+          postCalled = true;
+        } else {
+          module = makeModule(*(p.pset_));
+          module->finishModuleInitialization(md, *p.preallocate_, p.reg_);
+          // if exception then post will be called in the catch block
+          postCalled = true;
+        }
         post.emit(md);
       });
     } catch (cms::Exception& iException) {
