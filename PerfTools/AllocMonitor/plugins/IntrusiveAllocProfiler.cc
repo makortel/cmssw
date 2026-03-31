@@ -529,6 +529,20 @@ namespace {
               auto deallocEntries = deallocTraceStrings | std::views::reverse;
 
               auto [it_alloc, it_dealloc] = std::ranges::mismatch(allocEntries, deallocEntries);
+              if (not(it_alloc != allocEntries.end() and it_dealloc != deallocEntries.end())) {
+                edm::LogSystem log("IntrusiveAllocProfiler");
+                log.format("Assertion failure follows. allocEntries {} deallocEntries\n",
+                           it_alloc != allocEntries.end(),
+                           it_dealloc != deallocEntries.end());
+                log.format("allocEntries:\n");
+                for (auto const& e : allocEntries) {
+                  log.format(" {}\n", e);
+                }
+                log.format("deallocEntries:\n");
+                for (auto const& e : deallocEntries) {
+                  log.format(" {}\n", e);
+                }
+              }
               assert(it_alloc != allocEntries.end() and it_dealloc != deallocEntries.end());
 
               // Because the comparisons were done with strings, the
