@@ -20,6 +20,7 @@
   </class>
   <class name="std::vector<reco::CaloJet>"/>
   <class name="edm::RefProd<std::vector<reco::CaloJet> >"/>
+  <class name="edm::refhelper::FindUsingAdvance<vector<reco::CaloJet>,reco::CaloJet>"/>
   <class name="edm::RefVector<std::vector<reco::CaloJet>,reco::CaloJet,edm::refhelper::FindUsingAdvance<std::vector<reco::CaloJet>,reco::CaloJet> >"/>
   <class name="std::vector<edm::Ref<std::vector<reco::CaloJet>,reco::CaloJet,edm::refhelper::FindUsingAdvance<std::vector<reco::CaloJet>,reco::CaloJet> > >"/>
   <class name="edm::Ref<std::vector<reco::CaloJet>,reco::CaloJet,edm::refhelper::FindUsingAdvance<std::vector<reco::CaloJet>,reco::CaloJet> >"/>

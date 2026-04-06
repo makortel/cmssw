@@ -277,6 +277,7 @@
 
   <class name="std::vector<reco::Conversion>"/>
   <class name="edm::Wrapper<std::vector<reco::Conversion> >"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<reco::Conversion>,reco::Conversion>"/>
   <class name="edm::Ref<std::vector<reco::Conversion>,reco::Conversion,edm::refhelper::FindUsingAdvance<std::vector<reco::Conversion>,reco::Conversion> >"/>
   <class name="edm::RefProd<std::vector<reco::Conversion> >"/>
   <class name="edm::RefVector<std::vector<reco::Conversion>,reco::Conversion,edm::refhelper::FindUsingAdvance<std::vector<reco::Conversion>,reco::Conversion> >"/>
