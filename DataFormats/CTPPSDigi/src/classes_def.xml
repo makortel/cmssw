@@ -9,8 +9,8 @@
   <class name="edm::Wrapper<edm::DetSet<io_v1::TotemRPDigi> >"/>
   <class name="edm::Wrapper<edm::DetSetVector<io_v1::TotemRPDigi> >"/>
 
-  <class name="TotemTriggerCounters" ClassVersion="2">
-    <version ClassVersion="2" checksum="719923071"/>
+  <class name="TotemTriggerCounters" ClassVersion="3">
+    <version ClassVersion="3" checksum="719923071"/>
   </class>
   <class name="edm::Wrapper<TotemTriggerCounters>"/>
 
