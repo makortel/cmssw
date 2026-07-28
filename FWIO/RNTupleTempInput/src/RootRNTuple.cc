@@ -83,6 +83,9 @@ namespace edm::rntuple_temp {
           << "The ROOT file does not contain a RNTuple named " << productTreeName
           << "\n This is either not an edm RNTuple ROOT file or is one that has been corrupted.";
     }
+    if (promptRead_) {
+      promptReadEntry_ = reader_->GetModel().CreateEntry();
+    }
     entries_ = reader_->GetNEntries();
   }
 
@@ -181,16 +184,17 @@ namespace edm::rntuple_temp {
       std::unordered_map<unsigned int, std::unique_ptr<edm::WrapperBase>>& iFields) const {
     LogTrace("IOTrace").format("RootRNTuple::getEntryForAllBranches() begin for entry {}", entryNumber_);
     oneapi::tbb::this_task_arena::isolate([&]() {
-      auto entry = reader_->GetModel().CreateEntry();
+      assert(promptReadEntry_);
+
       for (auto& iField : iFields) {
         auto const& prod = branches_.find(iField.first);
         if (prod == nullptr or not prod->valid()) {
           continue;
         }
         iField.second = prod->newWrapper();
-        entry->BindRawPtr(prod->token(), reinterpret_cast<void*>(iField.second.get()));
+        promptReadEntry_->BindRawPtr(prod->token(), reinterpret_cast<void*>(iField.second.get()));
       }
-      reader_->LoadEntry(entryNumber_, *entry);
+      reader_->LoadEntry(entryNumber_, *promptReadEntry_);
     });
     LogTrace("IOTrace").format("RootRNTuple::getEntryForAllBranches() end for entry {}", entryNumber_);
   }
