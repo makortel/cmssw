@@ -1295,6 +1295,12 @@ namespace edm::rntuple_temp {
                                  eventToProcessBlockIndexes_,
                                  *provRetriever,
                                  eventTree_.resetAndGetRootDelayedReader());
+    if (readAllProducts) {
+      for (auto const& prod : eventTree_.branches()) {
+        auto const& resolver = principal.getProductResolver(edm::BranchID(prod.first));
+        resolver->resolveProduct(principal, nullptr, nullptr);
+      }
+    }
 
     // If this next assert shows up in performance profiling or significantly affects memory, then these three lines should be deleted.
     // The IndexIntoFile should guarantee that it never fails.
