@@ -281,6 +281,12 @@ namespace edm {
     m_waitingTasks.add(waitTask);
 
     if (prefetchRequested) {
+      // bail out early if the product has already been resolved
+      if (productResolved()) {
+        m_waitingTasks.doneWaiting(nullptr);
+        return;
+      }
+
       ServiceWeakToken weakToken = token;
       auto workToDo = [this, mcc, &principal, weakToken]() {
         //need to make sure Service system is activated on the reading thread
