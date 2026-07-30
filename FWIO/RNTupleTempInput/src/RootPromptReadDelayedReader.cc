@@ -34,7 +34,7 @@ namespace edm::rntuple_temp {
   RootPromptReadDelayedReader::~RootPromptReadDelayedReader() {}
 
   std::pair<SharedResourcesAcquirer*, std::recursive_mutex*> RootPromptReadDelayedReader::sharedResources_() const {
-    return std::make_pair(resourceAcquirer_.get(), mutex_.get());
+    return std::make_pair(nullptr, mutex_.get());
   }
 
   namespace {
