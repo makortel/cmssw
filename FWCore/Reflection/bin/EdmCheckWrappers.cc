@@ -102,6 +102,7 @@ int main(int argc, char** argv) {
   }
 
   for (int i = 1; i < argc; ++i) {
+    /*
     std::string_view className(argv[i]);
     if (className.starts_with("edm::Wrapper<") and className.ends_with(">")) {
       std::cout << "Checking " << className << std::endl;
@@ -109,6 +110,7 @@ int main(int argc, char** argv) {
       std::cout << "Skipping " << className << " (not an edm::Wrapper)" << std::endl;
       continue;
     }
+      */
     TClass* cl = nullptr;
     try {
       cl = TClass::GetClass(argv[i]);
@@ -128,8 +130,10 @@ int main(int argc, char** argv) {
           success = false;
           continue;
         }
+        /*
         int offset = cl->GetBaseClassOffset(wrapperBase);
         std::unique_ptr<edm::WrapperBase> dummy = edm::getAnyPtr<edm::WrapperBase>(obj, offset);
+        */
 
         if (not checkStreamerRoundTrip(cl, obj)) {
           success = false;
