@@ -11,6 +11,8 @@
 #include "THashTable.h"
 #include "TInterpreter.h"
 #include "TList.h"
+#include "TMemFile.h"
+#include "TTree.h"
 
 // Would be good to avoid...
 #include "DataFormats/Common/interface/WrapperBase.h"
@@ -44,6 +46,30 @@ bool checkStreamerRoundTrip(TClass* cl, void* obj) {
     return false;
   }
   cl->Streamer(newObj, readBuffer);
+  cl->Destructor(newObj);
+  return true;
+}
+
+// Round-trips obj through a TTree branch stored in a ROOT in-memory file, verifying (de)serialization works.
+bool checkTTreeRoundTrip(TClass* cl, void* obj) {
+  TMemFile file("checkTTreeRoundTrip.root", "RECREATE");
+  TTree tree("t", "t");
+  int splitlevel = 0;
+  TBranch* branch = tree.Branch(cl->GetName(), cl->GetName(), &obj, 32000, splitlevel);
+  if (not branch) {
+    std::cout << "Could not create TTree branch for " << cl->GetName() << std::endl;
+    return false;
+  }
+  tree.Fill();
+
+  void* newObj = cl->New();
+  if (not newObj) {
+    std::cout << "Could not construct object for TTree read-back of " << cl->GetName() << std::endl;
+    return false;
+  }
+  // Pass cl explicitly: the void* template deduction can't identify the real class.
+  tree.SetBranchAddress(cl->GetName(), &newObj, cl, kOther_t, true);
+  tree.GetEntry(0);
   cl->Destructor(newObj);
   return true;
 }
@@ -136,6 +162,10 @@ int main(int argc, char** argv) {
         */
 
         if (not checkStreamerRoundTrip(cl, obj)) {
+          success = false;
+        }
+
+        if (not checkTTreeRoundTrip(cl, obj)) {
           success = false;
         }
 
