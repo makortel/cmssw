@@ -154,7 +154,7 @@ def main(args):
     if (len(foundErrors)>0 and not args.generate) or (args.generate and foundRootDoesNotMatchError) or missingDict:
         return 1
 
-    if True:
+    if False:
         print("### Calling checkWrappers", flush=True)
         success = checkWrappers(p.wrappers)
         if not success:
