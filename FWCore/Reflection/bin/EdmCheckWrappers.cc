@@ -11,6 +11,10 @@
 #include "TInterpreter.h"
 #include "TList.h"
 
+// Would be good to avoid...
+#include "DataFormats/Common/interface/WrapperBase.h"
+#include "FWCore/Utilities/interface/getAnyPtr.h"
+
 auto originalErrorHandler() {
   static auto handler = GetErrorHandler();
   return handler;
@@ -69,12 +73,25 @@ int main(int argc, char** argv) {
   bool success = true;
 
   originalErrorHandler();
-  //SetErrorHandler(RootErrorHandler);
+  SetErrorHandler(RootErrorHandler);
   //gInterpreter->SetClassAutoloading(true);
   gInterpreter->SetClassAutoparsing(false);
   //gEnv->SetValue("Root.TClass.GetClass.AutoParsing", true);
 
+  auto wrapperBase = TClass::GetClass("edm::WrapperBase");
+  if (not wrapperBase) {
+    std::cout << "Could not find TClass for edm::WrapperBase, something is badly wrong!" << std::endl;
+    return EXIT_FAILURE;
+  }
+
   for (int i = 1; i < argc; ++i) {
+    std::string_view className(argv[i]);
+    if (className.starts_with("edm::Wrapper<") and className.ends_with(">")) {
+      std::cout << "Checking " << className << std::endl;
+    } else {
+      std::cout << "Skipping " << className << " (not an edm::Wrapper)" << std::endl;
+      continue;
+    }
     TClass* cl = nullptr;
     try {
       cl = TClass::GetClass(argv[i]);
@@ -87,6 +104,15 @@ int main(int argc, char** argv) {
           std::cout << "Missing dictionary for " << item->GetName() << std::endl;
           success = false;
         }
+
+        void* obj = cl->New();
+        if (not obj) {
+          std::cout << " construction failed" << std::endl;
+          success = false;
+          continue;
+        }
+        int offset = cl->GetBaseClassOffset(wrapperBase);
+        std::unique_ptr<edm::WrapperBase> dummy = edm::getAnyPtr<edm::WrapperBase>(obj, offset);
 
         /*
         [[maybe_unused]] auto const* streamer = cl->GetStreamerInfo();

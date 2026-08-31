@@ -52,6 +52,7 @@ to have dictionaries.
 #include "FWCore/Utilities/interface/Algorithms.h"
 #include "FWCore/Reflection/interface/BaseWithDict.h"
 #include "FWCore/Utilities/interface/EDMException.h"
+#include "FWCore/Utilities/interface/getAnyPtr.h"
 #include "FWCore/Utilities/interface/TypeID.h"
 #include "FWCore/Reflection/interface/TypeWithDict.h"
 #include "FWCore/Utilities/interface/WrappedClassName.h"
