@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "TBaseClass.h"
+#include "TBufferFile.h"
 #include "TClass.h"
 #include "TError.h"
 #include "TEnv.h"
@@ -29,6 +30,22 @@ void RootErrorHandler(int level, bool b, char const* location, char const* messa
 bool hasHelp(const char* arg) {
   std::string_view view(arg);
   return view == "-h" or view == "--help";
+}
+
+// Round-trips obj through a ROOT streamer to a memory buffer and back, verifying the streamer works.
+bool checkStreamerRoundTrip(TClass* cl, void* obj) {
+  TBufferFile writeBuffer(TBuffer::kWrite);
+  cl->Streamer(obj, writeBuffer);
+
+  TBufferFile readBuffer(TBuffer::kRead, writeBuffer.BufferSize(), writeBuffer.Buffer(), kFALSE);
+  void* newObj = cl->New();
+  if (not newObj) {
+    std::cout << "Could not construct object for streamer read-back of " << cl->GetName() << std::endl;
+    return false;
+  }
+  cl->Streamer(newObj, readBuffer);
+  cl->Destructor(newObj);
+  return true;
 }
 
 /*
@@ -113,6 +130,10 @@ int main(int argc, char** argv) {
         }
         int offset = cl->GetBaseClassOffset(wrapperBase);
         std::unique_ptr<edm::WrapperBase> dummy = edm::getAnyPtr<edm::WrapperBase>(obj, offset);
+
+        if (not checkStreamerRoundTrip(cl, obj)) {
+          success = false;
+        }
 
         /*
         [[maybe_unused]] auto const* streamer = cl->GetStreamerInfo();
