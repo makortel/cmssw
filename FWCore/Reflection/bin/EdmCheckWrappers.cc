@@ -105,6 +105,36 @@ bool verifyBaseClasses(TClass* cl) {
 }
   */
 
+bool checkMissingDictionaries(TClass *cl) {
+  if (not cl) {
+    std::cout << "TClass is null" << std::endl;
+    return false;
+  }
+  bool success = true;
+
+  THashTable hashTable;
+  bool recursive = true;
+  cl->GetMissingDictionaries(hashTable, recursive);
+  for (auto const& item : hashTable) {
+    std::cout << "Missing dictionary for " << item->GetName() << std::endl;
+    success = false;
+  }
+  std::string name(cl->GetName());
+  if (name.starts_with("edm::Wrapper<")) {
+    auto subname = name.substr(13, name.size()-14);
+    std::cout << "Recursing to subname " << subname << std::endl;
+    success = success & checkMissingDictionaries(TClass::GetClass(subname.c_str()));
+  } else if (name.starts_with("vector<")) {
+    auto subname = name.substr(7, name.size()-8);
+    std::cout << "Recursing to subname " << subname << std::endl;
+    success = success & checkMissingDictionaries(TClass::GetClass(subname.c_str()));
+  } else if (name.starts_with("pair<")) {
+    
+  }
+  
+  return success;
+}
+
 int main(int argc, char** argv) {
   if (argc == 1 or (argc == 2 and hasHelp(argv[1]))) {
     std::cout << "Usage: edmCheckWrappers <list of edm::Wrapper class names>\n"
@@ -114,12 +144,16 @@ int main(int argc, char** argv) {
   }
 
   bool success = true;
+  constexpr bool autoParsing = true;
+  //constexpr bool autoParsing = false;
 
   originalErrorHandler();
   SetErrorHandler(RootErrorHandler);
   //gInterpreter->SetClassAutoloading(true);
-  gInterpreter->SetClassAutoparsing(false);
+  gInterpreter->SetClassAutoparsing(autoParsing);
   //gEnv->SetValue("Root.TClass.GetClass.AutoParsing", true);
+
+  std::cout << "Auto-parsing is enabled? " << autoParsing << std::endl;
 
   auto wrapperBase = TClass::GetClass("edm::WrapperBase");
   if (not wrapperBase) {
@@ -142,13 +176,15 @@ int main(int argc, char** argv) {
       cl = TClass::GetClass(argv[i]);
       if (cl) {
         std::cout << "Found TClass for " << cl->GetName() << std::endl;
+        /*
         THashTable hashTable;
         bool recursive = true;
         cl->GetMissingDictionaries(hashTable, recursive);
         for (auto const& item : hashTable) {
           std::cout << "Missing dictionary for " << item->GetName() << std::endl;
           success = false;
-        }
+          }*/
+        success = success & checkMissingDictionaries(cl);
 
         void* obj = cl->New();
         if (not obj) {
@@ -186,6 +222,9 @@ int main(int argc, char** argv) {
       success = false;
     }
   }
+
+  std::cout << "Auto-parsing report" << std::endl;
+  gInterpreter->Print("autoparsed");
 
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
