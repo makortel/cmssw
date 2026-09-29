@@ -6,6 +6,7 @@
 #include "TBaseClass.h"
 #include "TBufferFile.h"
 #include "TClass.h"
+#include "TClassEdit.h"
 #include "TError.h"
 #include "TEnv.h"
 #include "THashTable.h"
@@ -119,17 +120,28 @@ bool checkMissingDictionaries(TClass *cl) {
     std::cout << "Missing dictionary for " << item->GetName() << std::endl;
     success = false;
   }
-  std::string name(cl->GetName());
-  if (name.starts_with("edm::Wrapper<")) {
-    auto subname = name.substr(13, name.size()-14);
-    std::cout << "Recursing to subname " << subname << std::endl;
-    success = success & checkMissingDictionaries(TClass::GetClass(subname.c_str()));
-  } else if (name.starts_with("vector<")) {
-    auto subname = name.substr(7, name.size()-8);
-    std::cout << "Recursing to subname " << subname << std::endl;
-    success = success & checkMissingDictionaries(TClass::GetClass(subname.c_str()));
-  } else if (name.starts_with("pair<")) {
-    
+
+  std::vector<std::string> args;
+  int nestedLoc = 0;
+  TClassEdit::GetSplit(cl->GetName(), args, nestedLoc);
+  if (not args.empty()) {
+    if (args.front() == "edm::Wrapper") {
+      std::cout << "Recursing to template argument " << args[1] << std::endl;
+      success = success & checkMissingDictionaries(TClass::GetClass(args[1].c_str()));
+    } else if (args.front() == "vector") {
+      std::cout << "Recursing to template argument " << args[1] << std::endl;
+      success = success & checkMissingDictionaries(TClass::GetClass(args[1].c_str()));
+    } else if (args.front() == "unordered_map") {
+      std::cout << "Recursing to template argument " << args[1] << std::endl;
+      success = success & checkMissingDictionaries(TClass::GetClass(args[1].c_str()));
+      std::cout << "Recursing to template argument " << args[2] << std::endl;
+      success = success & checkMissingDictionaries(TClass::GetClass(args[2].c_str()));
+    } else if (args.front() == "pair") {
+      std::cout << "Recursing to template argument " << args[1] << std::endl;
+      success = success & checkMissingDictionaries(TClass::GetClass(args[1].c_str()));
+      std::cout << "Recursing to template argument " << args[2] << std::endl;
+      success = success & checkMissingDictionaries(TClass::GetClass(args[2].c_str()));
+    }
   }
   
   return success;
