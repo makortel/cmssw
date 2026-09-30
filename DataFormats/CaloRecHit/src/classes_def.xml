@@ -5,6 +5,8 @@
   <class name="reco::io_v1::CaloCluster" ClassVersion="3">
    <version ClassVersion="3" checksum="2132548181"/>
   </class>
+  <enum name="reco::io_v1::CaloCluster::AlgoId"/>
+
   <class name="std::vector<reco::io_v1::CaloCluster>"/>
   <class name="edm::Wrapper<std::vector<reco::io_v1::CaloCluster>>"/>
   <class name="edm::Wrapper<std::vector<std::pair<unsigned long,edm::Ptr<reco::io_v1::CaloCluster> > > >"/>
