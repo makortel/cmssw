@@ -18,6 +18,7 @@
 // Would be good to avoid...
 #include "DataFormats/Common/interface/WrapperBase.h"
 #include "FWCore/Utilities/interface/getAnyPtr.h"
+#include "FWCore/Utilities/interface/make_sentry.h"
 
 auto originalErrorHandler() {
   static auto handler = GetErrorHandler();
@@ -106,9 +107,13 @@ bool verifyBaseClasses(TClass* cl) {
 }
   */
 
+std::string g_prefix = "";
+
 bool checkMissingDictionaries(TClass *cl) {
+  g_prefix += " ";
+  auto sentry = edm::make_sentry(&g_prefix, [](std::string *s) { s->pop_back(); });
   if (not cl) {
-    std::cout << "TClass is null" << std::endl;
+    std::cout << g_prefix << "TClass is null" << std::endl;
     return false;
   }
   bool success = true;
@@ -117,13 +122,27 @@ bool checkMissingDictionaries(TClass *cl) {
   bool recursive = true;
   cl->GetMissingDictionaries(hashTable, recursive);
   for (auto const& item : hashTable) {
-    std::cout << "Missing dictionary for " << item->GetName() << std::endl;
+    std::cout << g_prefix << "Missing dictionary for " << item->GetName() << std::endl;
     success = false;
   }
-
-  std::vector<std::string> args;
+ 
+  /*
+    std::vector<std::string> args;
   int nestedLoc = 0;
-  TClassEdit::GetSplit(cl->GetName(), args, nestedLoc);
+  int n = TClassEdit::GetSplit(cl->GetName(), args, nestedLoc, TClassEdit::kDropStlDefault);
+  */
+  TClassEdit::TSplitType split(cl->GetName(), TClassEdit::kDropStlDefault);
+  // At least one template argument
+  //std::cout << g_prefix << cl->GetName() << " n " << n << " args.size() " << args.size() << std::endl;
+  if (split.IsTemplate()) {
+    for (auto it = split.fElements.begin()+1; it != split.fElements.end(); ++it) {
+      if (it->empty())
+        continue;
+      std::cout << g_prefix << "Recursing to template argument '" << *it << "'" << std::endl;
+      success = success & checkMissingDictionaries(TClass::GetClass(it->c_str()));
+    }
+  }
+  /*
   if (not args.empty()) {
     if (args.front() == "edm::Wrapper") {
       std::cout << "Recursing to template argument " << args[1] << std::endl;
@@ -143,6 +162,7 @@ bool checkMissingDictionaries(TClass *cl) {
       success = success & checkMissingDictionaries(TClass::GetClass(args[2].c_str()));
     }
   }
+  */
   
   return success;
 }
@@ -164,6 +184,7 @@ int main(int argc, char** argv) {
   //gInterpreter->SetClassAutoloading(true);
   gInterpreter->SetClassAutoparsing(autoParsing);
   //gEnv->SetValue("Root.TClass.GetClass.AutoParsing", true);
+  gDebug = 3;
 
   std::cout << "Auto-parsing is enabled? " << autoParsing << std::endl;
 
@@ -188,41 +209,24 @@ int main(int argc, char** argv) {
       cl = TClass::GetClass(argv[i]);
       if (cl) {
         std::cout << "Found TClass for " << cl->GetName() << std::endl;
-        /*
-        THashTable hashTable;
-        bool recursive = true;
-        cl->GetMissingDictionaries(hashTable, recursive);
-        for (auto const& item : hashTable) {
-          std::cout << "Missing dictionary for " << item->GetName() << std::endl;
-          success = false;
-          }*/
         success = success & checkMissingDictionaries(cl);
 
-        void* obj = cl->New();
-        if (not obj) {
-          std::cout << " construction failed" << std::endl;
-          success = false;
-          continue;
-        }
-        /*
-        int offset = cl->GetBaseClassOffset(wrapperBase);
-        std::unique_ptr<edm::WrapperBase> dummy = edm::getAnyPtr<edm::WrapperBase>(obj, offset);
-        */
+        if(not (cl->Property() & kIsAbstract)) {
+          void* obj = cl->New();
+          if (not obj) {
+            std::cout << " construction failed" << std::endl;
+            success = false;
+            continue;
+          }
 
-        if (not checkStreamerRoundTrip(cl, obj)) {
-          success = false;
-        }
+          if (not checkStreamerRoundTrip(cl, obj)) {
+            success = false;
+          }
 
-        if (not checkTTreeRoundTrip(cl, obj)) {
-          success = false;
+          if (not checkTTreeRoundTrip(cl, obj)) {
+            success = false;
+          }
         }
-
-        /*
-        [[maybe_unused]] auto const* streamer = cl->GetStreamerInfo();
-        if (not verifyBaseClasses(cl)) {
-          success = false;
-        }
-          */
       }
     } catch (std::runtime_error& e) {
       std::cout << e.what() << std::endl;
