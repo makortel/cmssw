@@ -1,21 +1,9 @@
 <lcgdict>
 
-  <class name="edm::RefToBase<reco::io_v1::CaloCluster>"  rntupleStreamerMode="true"/>
-  <class name="edm::reftobase::BaseHolder<reco::io_v1::CaloCluster>"/>
-  <class name="edm::reftobase::IndirectHolder<reco::io_v1::CaloCluster>" />
-
   <class name="edm::reftobase::Holder<reco::io_v1::CaloCluster, edm::Ref<std::vector<reco::io_v1::SuperCluster>, reco::io_v1::SuperCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::SuperCluster>,reco::io_v1::SuperCluster> > >"/>
   <class name="edm::reftobase::RefHolder<edm::Ref<std::vector<reco::io_v1::SuperCluster>, reco::io_v1::SuperCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::SuperCluster>,reco::io_v1::SuperCluster> > >"/>
-  <class name="edm::reftobase::Holder<reco::io_v1::CaloCluster, edm::Ref<std::vector<reco::BasicCluster>, reco::BasicCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::BasicCluster>,reco::BasicCluster> > >"/>
-  <class name="edm::reftobase::RefHolder<edm::Ref<std::vector<reco::BasicCluster>, reco::BasicCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::BasicCluster>,reco::BasicCluster> > >"/>
 
-  <class name="std::vector<reco::BasicCluster>"/>
-  <class name="edm::Wrapper<std::vector<reco::BasicCluster> >"/>
-  <class name="edm::Ref<std::vector<reco::BasicCluster>,reco::BasicCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::BasicCluster>,reco::BasicCluster> >"/>
-  <class name="edm::RefProd<std::vector<reco::BasicCluster> >"/>
-  <class name="edm::RefVector<std::vector<reco::BasicCluster>,reco::BasicCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::BasicCluster>,reco::BasicCluster> >"/>
-  <class name="edm::Wrapper<edm::RefVector<std::vector<reco::BasicCluster>,reco::BasicCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::BasicCluster>,reco::BasicCluster> > >"/>
-  <class name="std::vector<edm::Ref<std::vector<reco::BasicCluster>,reco::BasicCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::BasicCluster>,reco::BasicCluster> > >"/>
+  <typedef name="reco::BasicCluster"/>
 
   <class name="reco::io_v1::SuperCluster" ClassVersion="3">
    <version ClassVersion="3" checksum="1761520577"/>
