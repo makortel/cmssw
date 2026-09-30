@@ -5,6 +5,8 @@
   <class name="reco::io_v1::CaloCluster" ClassVersion="3">
    <version ClassVersion="3" checksum="2132548181"/>
   </class>
+  <class name="std::vector<reco::io_v1::CaloCluster>"/>
+  <class name="edm::Wrapper<std::vector<reco::io_v1::CaloCluster>>"/>
   <class name="edm::Wrapper<std::vector<std::pair<unsigned long,edm::Ptr<reco::io_v1::CaloCluster> > > >"/>
   <class name="std::vector<std::pair<unsigned long,edm::Ptr<reco::io_v1::CaloCluster> > >"/>
   <class name="std::pair<unsigned long, edm::Ptr<reco::io_v1::CaloCluster> >"/>
@@ -13,10 +15,20 @@
   <class name="edm::PtrVector<reco::io_v1::CaloCluster>"/>
   <class name="edm::Wrapper<edm::PtrVector<reco::io_v1::CaloCluster> >"/>
   <class name="std::vector<edm::Ptr<reco::io_v1::CaloCluster> >"/>
-  
-  <!-- FIXME: The following 2 entries are found already in DataFormats/EgammaReco with the typedef 'reco::BasicCluster' -->
-  <!-- <class name="std::vector<reco::io_v1::CaloCluster>" /> -->
-  <!-- <class name="edm::Wrapper<std::vector<reco::io_v1::CaloCluster> >" /> -->
+
+  <class name="edm::Ref<std::vector<reco::io_v1:CaloCluster>,reco::io_v1::CaloCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> >"/>
+  <class name="edm::RefProd<std::vector<reco::io_v1::CaloCluster> >"/>
+  <class name="edm::RefVector<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> >"/>
+  <class name="edm::Wrapper<edm::RefVector<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> > >"/>
+  <class name="std::vector<edm::Ref<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> > >"/>
+
+  <class name="edm::RefToBase<reco::io_v1::CaloCluster>" rntupleStreamerMode="true"/>
+  <class name="edm::reftobase::BaseHolder<reco::io_v1::CaloCluster>"/>
+  <class name="edm::reftobase::IndirectHolder<reco::io_v1::CaloCluster>" />
+
+  <class name="edm::reftobase::Holder<reco::io_v1::CaloCluster, edm::Ref<std::vector<reco::io_v1::CaloCluster>, reco::io_v1::CaloCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> > >"/>
+  <class name="edm::reftobase::RefHolder<edm::Ref<std::vector<reco::io_v1::CaloCluster>, reco::io_v1::CaloCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> > >"/>
+
   <class name="reco::CaloID" ClassVersion="3">
    <version ClassVersion="3" checksum="2360607337"/>
   </class>
