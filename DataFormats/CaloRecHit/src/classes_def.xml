@@ -27,6 +27,8 @@
   <class name="edm::reftobase::Holder<reco::io_v1::CaloCluster, edm::Ref<std::vector<reco::io_v1::CaloCluster>, reco::io_v1::CaloCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> > >"/>
   <class name="edm::reftobase::RefHolder<edm::Ref<std::vector<reco::io_v1::CaloCluster>, reco::io_v1::CaloCluster, edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> > >"/>
 
+  <enum name="reco::io_v1::CaloCluster::AlgoId"/>
+
   <class name="reco::CaloID" ClassVersion="3">
    <version ClassVersion="3" checksum="2360607337"/>
   </class>

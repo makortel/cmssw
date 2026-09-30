@@ -49,16 +49,12 @@ namespace reco {
       // hcal cluster flags (used for pf)
       enum HCalFlags { badHcalMarker = 1 };
 
-      //FIXME:
-      //temporary fix... to be removed before 310 final
-      typedef AlgoId AlgoID;
-
       /// default constructor. Sets energy and position to zero
       CaloCluster()
           : energy_(0), correctedEnergy_(-1.0), correctedEnergyUncertainty_(-1.0), algoID_(undefined), flags_(0) {}
 
       /// constructor with algoId, to be used in all child classes
-      CaloCluster(AlgoID algoID)
+      CaloCluster(AlgoId algoID)
           : energy_(0), correctedEnergy_(-1.0), correctedEnergyUncertainty_(-1.0), algoID_(algoID), flags_(0) {}
 
       CaloCluster(double energy, const math::XYZPoint& position, const CaloID& caloID)
@@ -83,7 +79,7 @@ namespace reco {
             flags_(0) {}
 
       CaloCluster(
-          double energy, const math::XYZPoint& position, const CaloID& caloID, const AlgoID& algoID, uint32_t flags = 0)
+          double energy, const math::XYZPoint& position, const CaloID& caloID, const AlgoId& algoID, uint32_t flags = 0)
           : energy_(energy),
             correctedEnergy_(-1.0),
             correctedEnergyUncertainty_(-1.0),
@@ -188,7 +184,7 @@ namespace reco {
 
       /// algorithm identifier
       AlgoId algo() const { return algoID_; }
-      AlgoID algoID() const { return algo(); }
+      AlgoId algoID() const { return algo(); }
 
       uint32_t flags() const { return flags_ & flagsMask_; }
       void setFlags(uint32_t flags) {
@@ -234,7 +230,7 @@ namespace reco {
       std::vector<std::pair<DetId, float> > hitsAndFractions_;
 
       // cluster algorithm Id
-      AlgoID algoID_;
+      AlgoId algoID_;
 
       /// DetId of seed
       DetId seedId_;
