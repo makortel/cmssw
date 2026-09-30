@@ -39,6 +39,7 @@
    <version ClassVersion="3" checksum="3535250021"/>
   </class>
 
+  <class name="std::default_delete<io_v1::BaseTrackerRecHit>" persistent="false"/>
   <class name="std::vector<std::unique_ptr<io_v1::BaseTrackerRecHit>>" persistent="false"/>
   <class name="edm::Wrapper<std::vector<std::unique_ptr<io_v1::BaseTrackerRecHit>>>" persistent="false"/>
 

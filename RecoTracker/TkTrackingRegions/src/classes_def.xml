@@ -1,5 +1,6 @@
 <lcgdict>
   <class name="TrackingRegion" persistent="false"/>
+  <class name="std::default_delete<TrackingRegion>" persistent="false"/>
   <class name="std::vector<std::unique_ptr<TrackingRegion>>" persistent="false"/>
   <class name="edm::Wrapper<std::vector<std::unique_ptr<TrackingRegion>>>" persistent="false"/>
 
