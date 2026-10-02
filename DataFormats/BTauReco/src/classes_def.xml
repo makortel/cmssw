@@ -417,6 +417,9 @@
   <class name="btagbtvdeep::BoostedDoubleSVTagInfoFeatures" ClassVersion="3">
     <version ClassVersion="3" checksum="683471882"/>
   </class>
+  <class name="btagbtvdeep::UnifiedParticleTransformerAK4Features" ClassVersion="3">
+    <version ClassVersion="3" checksum="445255474"/>
+  </class>
 
 
   <class name="reco::DeepFlavourTagInfo"/>
