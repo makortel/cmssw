@@ -462,7 +462,9 @@
   <class name="reco::DeepDoubleXTagInfoRefVector"/>
   <class name="edm::Wrapper<reco::DeepDoubleXTagInfoCollection>"/>
   
-  <class name="btagbtvdeep::DeepBoostedJetFeatures"/>
+  <class name="btagbtvdeep::DeepBoostedJetFeatures" ClassVersion="3">
+    <version ClassVersion="3" checksum="2145647894"/>
+  </class>
   <class name="btagbtvdeep::DeepBoostedJetFeaturesCollection"/>
   <class name="btagbtvdeep::DeepBoostedJetFeaturesRef"/>
   <class name="btagbtvdeep::DeepBoostedJetFeaturesFwdRef"/>
