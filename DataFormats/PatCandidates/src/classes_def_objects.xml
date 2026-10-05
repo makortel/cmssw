@@ -283,7 +283,13 @@
   <class name="edm::Wrapper<std::vector<pat::io_v1::PackedGenParticle> >"/>
 
   <!-- PAT Object References -->
-  <class name="edm::refhelper::FindUsingAdvance<vector<pat::PackedCandidate>,pat::PackedCandidate>"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<pat::io_v1::Electron>,pat::io_v1::Electron>"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<pat::io_v1::Muon>,pat::io_v1::Muon>"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<pat::io_v1::Tau>,pat::io_v1::Tau>"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<pat::io_v1::Photon>,pat::io_v1::Photon>"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<pat::io_v1::Jet>,pat::io_v1::Jet>"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<pat::io_v1::MET>,pat::io_v1::MET>"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<pat::io_v1::PackedCandidate>,pat::io_v1::PackedCandidate>"/>
   <class name="pat::ElectronRef" />
   <class name="pat::MuonRef" />
   <class name="pat::TauRef" />

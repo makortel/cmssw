@@ -13,6 +13,7 @@ initial version number of a class which has never been stored before.
   </class>
   <class name="std::vector<reco::io_v1::Muon>"/>
   <class name="edm::Wrapper<std::vector<reco::io_v1::Muon> >"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Muon>,reco::io_v1::Muon>"/>
   <class name="edm::Ref<std::vector<reco::io_v1::Muon>,reco::io_v1::Muon,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Muon>,reco::io_v1::Muon> >"/>
   <class name="edm::RefProd<std::vector<reco::io_v1::Muon> >"/>
   <class name="edm::helpers::Key<edm::RefProd<std::vector<reco::io_v1::Muon> > >"/>

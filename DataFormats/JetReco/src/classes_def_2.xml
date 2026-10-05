@@ -97,6 +97,7 @@
    </class>
    <class name="edm::Wrapper<reco::FFTJetPileupSummary>" />
 
+   <class name="edm::OneToMany<std::vector<reco::io_v1::PFJet>,std::vector<reco::io_v1::PFCandidate>,unsigned int>"/>
    <class name="edm::AssociationMap<edm::OneToMany<std::vector<reco::io_v1::PFJet>,std::vector<reco::io_v1::PFCandidate>,unsigned int> >">
      <field name="transientMap_" transient="true"/>
    </class>

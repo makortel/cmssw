@@ -117,6 +117,7 @@
   <class name="edm::helpers::KeyVal<edm::RefProd<std::vector<reco::io_v1::Vertex> >,edm::RefProd<std::vector<reco::io_v1::PFCandidate> > >" />  
   <class name="edm::helpers::KeyVal<edm::Ref<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex> >,std::vector<std::pair<edm::Ref<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate> >,float> > >" />
   <class name="std::map<unsigned int,edm::helpers::KeyVal<edm::Ref<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex> >,std::vector<std::pair<edm::Ref<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate> >,float> > > > " />
+  <class name="edm::OneToManyWithQuality<std::vector<reco::io_v1::Vertex>,std::vector<reco::io_v1::PFCandidate>,float,unsigned int>"/>
   <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<reco::io_v1::Vertex>,std::vector<reco::io_v1::PFCandidate>,float,unsigned int> >" >
     <field name="transientMap_" transient="true"/>
   </class>
@@ -127,6 +128,7 @@
   <class name="std::pair<edm::Ref<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate> >,float>" />	
   <class name="edm::helpers::KeyVal<edm::Ref<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex> >,std::vector<std::pair<edm::Ref<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate> >,int> > >" />
   <class name="std::map<unsigned int,edm::helpers::KeyVal<edm::Ref<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex> >,std::vector<std::pair<edm::Ref<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate> >,int> > > > " />
+  <class name="edm::OneToManyWithQuality<std::vector<reco::io_v1::Vertex>,std::vector<reco::io_v1::PFCandidate>,int,unsigned int>"/>
   <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<reco::io_v1::Vertex>,std::vector<reco::io_v1::PFCandidate>,int,unsigned int> >" >
     <field name="transientMap_" transient="true"/>
   </class>
@@ -138,6 +140,7 @@
   <class name="edm::helpers::KeyVal<edm::RefProd<std::vector<reco::io_v1::PFCandidate> >,edm::RefProd<std::vector<reco::io_v1::Vertex> > >" />  
   <class name="edm::helpers::KeyVal<edm::Ref<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate> >,std::vector<std::pair<edm::Ref<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex> >,int> > >" />
   <class name="std::map<unsigned int,edm::helpers::KeyVal<edm::Ref<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::PFCandidate>,reco::io_v1::PFCandidate> >,std::vector<std::pair<edm::Ref<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::Vertex>,reco::io_v1::Vertex> >,int> > > > " />
+  <class name="edm::OneToManyWithQuality<std::vector<reco::io_v1::PFCandidate>,std::vector<reco::io_v1::Vertex>,int,unsigned int>"/>
   <class name="edm::AssociationMap<edm::OneToManyWithQuality<std::vector<reco::io_v1::PFCandidate>,std::vector<reco::io_v1::Vertex>,int,unsigned int> >" >
     <field name="transientMap_" transient="true"/>
   </class>

@@ -173,6 +173,7 @@
   <class name="edm::Wrapper<edm::RefToBaseVector<reco::io_v1::GsfElectron> >" />
   <class name="edm::reftobase::BaseVectorHolder<reco::io_v1::GsfElectron>" />
   <class name="edm::Wrapper<std::vector<reco::io_v1::GsfElectron> >"/>
+  <class name="edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::GsfElectron>,reco::io_v1::GsfElectron>"/>
   <class name="edm::Ref<std::vector<reco::io_v1::GsfElectron>,reco::io_v1::GsfElectron,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::GsfElectron>,reco::io_v1::GsfElectron> >"/>
   <class name="std::vector<edm::Ref<std::vector<reco::io_v1::GsfElectron>,reco::io_v1::GsfElectron,edm::refhelper::FindUsingAdvance<std::vector<reco::io_v1::GsfElectron>,reco::io_v1::GsfElectron> > >"/>
   <class name="edm::RefProd<std::vector<reco::io_v1::GsfElectron> >"/>
